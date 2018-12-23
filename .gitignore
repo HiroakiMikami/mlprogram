@@ -2,6 +2,8 @@
 !*/
 !.gitignore
 !LICENSE.md
+!requirements.txt
+!gpu-requirements.txt
 !main.py
 !src/**/*.py
 !test/**/*.py
