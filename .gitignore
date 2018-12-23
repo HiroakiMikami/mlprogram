@@ -2,6 +2,8 @@
 !*/
 !.gitignore
 !LICENSE.md
+!README.md
+!django-loss.png
 !requirements.txt
 !gpu-requirements.txt
 !main.py
