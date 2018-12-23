@@ -3,3 +3,4 @@
 !.gitignore
 !src/**/*.py
 !test/**/*.py
+!test/test_dataset/*
