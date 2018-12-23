@@ -1,6 +1,7 @@
 *
 !*/
 !.gitignore
+!LICENSE.md
 !src/**/*.py
 !test/**/*.py
 !test/test_dataset/*
