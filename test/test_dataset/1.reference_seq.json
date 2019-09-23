@@ -1,1 +1,0 @@
-[[["root", false], [["-", ["ImportFrom", false]]]], [["ImportFrom", false], [["module", ["str", false]], ["names", ["alias", true]], ["level", ["int", false]]]], "threading", "CLOSE_NODE", [["alias", true], [["val0", ["alias", false]]]], [["alias", false], [["-", ["alias", false]]]], [["alias", false], [["name", ["str", false]]]], "foo", "CLOSE_NODE", "0", "CLOSE_NODE"]

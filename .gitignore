@@ -11,3 +11,6 @@
 !test/**/*.py
 !test/test_dataset/*
 !scripts/**/*.bash
+
+!/nl2code/**/*.py
+!/bin/*.bash

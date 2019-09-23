@@ -1,3 +1,5 @@
-nnabla ==1.0.8
+torch==1.2.0+cpu
 nltk >=3.3, <4.0
 transpyle >=0.5.1, <0.6.0
+flake8
+autopep8
