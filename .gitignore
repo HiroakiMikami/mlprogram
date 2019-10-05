@@ -16,3 +16,4 @@
 !/bin/*.bash
 !/examples/django/*.py
 !/examples/django/test/*.py
+!/examples/django/*.ipynb
