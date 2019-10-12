@@ -14,3 +14,5 @@
 
 !/nl2code/**/*.py
 !/bin/*.bash
+!/examples/django/*.py
+!/examples/django/test/*.py
