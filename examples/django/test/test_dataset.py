@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from examples.django import Entry, DatasetEncoder
-from examples.django import RawDataset, TrainDataset, ValidateDataset
+from examples.django import RawDataset, TrainDataset, EvalDataset
 from examples.django._dataset import tokenize_annotation, tokenize_token
 
 
@@ -105,14 +105,14 @@ class TestTrainDataset(unittest.TestCase):
         self.assertEqual(0, len(tdataset))
 
 
-class TestValidateDataset(unittest.TestCase):
+class TestEvalDataset(unittest.TestCase):
     def test_simple_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
         dataset = RawDataset(entries)
         d = dataset.samples
         d.words = ["foo", "bar"]
         encoder = DatasetEncoder(d, 0, 0)
-        vdataset = ValidateDataset(dataset, encoder, 100, 100)
+        vdataset = EvalDataset(dataset, encoder, 100, 100)
         query, code = vdataset[0]
         self.assertEqual(["foo", "bar"], query)
         self.assertEqual("\ny = (x + 1)\n", code)
@@ -124,10 +124,10 @@ class TestValidateDataset(unittest.TestCase):
         d.words = ["foo", "bar"]
         d.tokens = ["y", "1"]
         encoder = DatasetEncoder(d, 0, 0)
-        vdataset = ValidateDataset(dataset, encoder, 1, 100)
+        vdataset = EvalDataset(dataset, encoder, 1, 100)
         self.assertEqual(0, len(vdataset))
 
-        vdataset = ValidateDataset(dataset, encoder, 1, 100, False)
+        vdataset = EvalDataset(dataset, encoder, 1, 100, False)
         self.assertEqual(1, len(vdataset))
 
 

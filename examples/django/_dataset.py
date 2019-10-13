@@ -245,7 +245,7 @@ class TrainDataset(Dataset):
         return xs, ys, zs
 
 
-class ValidateDataset(Dataset):
+class EvalDataset(Dataset):
     def __init__(self, raw_dataset: RawDataset,
                  encoder: DatasetEncoder,
                  max_query_length: int,
