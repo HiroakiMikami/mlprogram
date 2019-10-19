@@ -32,11 +32,11 @@ class TestEmbeddingWithMask(unittest.TestCase):
 
 class TestEmbeddingInverse(unittest.TestCase):
     def test_parameters(self):
-        e_without_bias = EmbeddingInverse(nn.Embedding(2, 3), False)
+        e_without_bias = EmbeddingInverse(2, False)
         params = dict(e_without_bias.named_parameters())
         self.assertEqual(0, len(params))
 
-        e_with_bias = EmbeddingInverse(nn.Embedding(2, 3), True)
+        e_with_bias = EmbeddingInverse(2, True)
         params = dict(e_with_bias.named_parameters())
         self.assertEqual(1, len(params))
         self.assertEqual(["bias"], [key for key in params.keys()])
@@ -44,10 +44,10 @@ class TestEmbeddingInverse(unittest.TestCase):
 
     def test_forward(self):
         e = nn.Embedding(3, 3)
-        inv = EmbeddingInverse(e, False)
+        inv = EmbeddingInverse(3, False)
         x = torch.LongTensor([0, 1, 2])
         embed = e(x)
-        x2 = inv(embed)
+        x2 = inv(embed, e)
         self.assertEqual((3, 3), x2.shape)
 
 

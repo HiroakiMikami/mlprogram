@@ -43,13 +43,18 @@ class Loss(nn.Module):
         token = gt_token + (gt_token == -1).long() * (num_tokens + 1)
         copy = gt_copy + (gt_copy == -1).long() * (max_query_length) + 1
 
-        rule = torch.eye(num_rules + 1)[gt_rule]  # (L_a, B, num_rules + 1)
+        device = gt_rule.device
+
+        rule = torch.eye(num_rules + 1,
+                         device=device)[gt_rule]  # (L_a, B, num_rules + 1)
         rule = rule[:, :, :-1]  # (L_a, B, num_rules)
         # (L_a, B, num_tokens + 1)
-        token = torch.eye(num_tokens + 1)[gt_token]
+        token = torch.eye(num_tokens + 1,
+                          device=device)[gt_token]
         token = token[:, :, :-1]  # (L_a, B, num_tokens)
         # (L_a, B, max_query_length + 1)
-        copy = torch.eye(max_query_length + 1)[gt_copy]
+        copy = torch.eye(max_query_length + 1,
+                         device=device)[gt_copy]
         # (L_a, B, max_query_length)
         copy = copy[:, :, :-1]
 

@@ -40,29 +40,31 @@ class EmbeddingWithMask(nn.Embedding):
 
 
 class EmbeddingInverse(nn.Module):
-    def __init__(self, embedding: nn.Embedding, bias: bool = True):
+    def __init__(self, num_embeddings: int, bias: bool = True):
         """
         Parameters
         ----------
-        embedding: nn.Embedding
-            The embedding layer
+        num_embeddings: int
+            Size of the dictionary of embeddings
         bias: bool
             If se to `False`, the layer will not learn an additive bias.
         """
         super(EmbeddingInverse, self).__init__()
-        self._weight = embedding.weight.data
         if bias:
-            self.bias = nn.Parameter(torch.Tensor(embedding.num_embeddings))
+            self.bias = nn.Parameter(torch.Tensor(num_embeddings))
             nn.init.zeros_(self.bias)
         else:
             self.register_parameter("bias", None)
 
-    def forward(self, embedded: torch.FloatTensor) -> torch.FloatTensor:
+    def forward(self, embedded: torch.FloatTensor, embedding: nn.Embedding) \
+            -> torch.FloatTensor:
         """
         Parameters
         ----------
         embedded: torch.FloatTensor
             The embedded vector. The shape of
             (*, self._embedding.num_embeddings)
+        embedding: nn.Embedding
+            The embedding layer
         """
-        return F.linear(embedded, self._weight, self.bias)
+        return F.linear(embedded, embedding.weight, self.bias)

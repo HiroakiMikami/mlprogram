@@ -48,10 +48,12 @@ class Predictor(nn.Module):
         self._max_query_length = max_query_length
         self._rule_embed = EmbeddingWithMask(
             num_rules, embedding_size, num_rules)
-        self._rule_embed_inv = EmbeddingInverse(self._rule_embed)
+        self._rule_embed_inv = \
+            EmbeddingInverse(self._rule_embed.num_embeddings)
         self._token_embed = EmbeddingWithMask(
             num_tokens, embedding_size, num_tokens)
-        self._token_embed_inv = EmbeddingInverse(self._token_embed)
+        self._token_embed_inv = \
+            EmbeddingInverse(self._token_embed.num_embeddings)
         self._node_type_embed = EmbeddingWithMask(
             num_node_types, node_type_embedding_size, num_node_types)
         self._decoder = Decoder(query_size,
@@ -163,13 +165,16 @@ class Predictor(nn.Module):
         # Calculate probabilities
         # (L_a, B, embedding_size)
         rule_pred = torch.tanh(self._l_rule(output.data))
-        rule_pred = self._rule_embed_inv(rule_pred)  # (L_a, B, num_rules + 1)
+        rule_pred = self._rule_embed_inv(
+            rule_pred,
+            self._rule_embed)  # (L_a, B, num_rules + 1)
         rule_pred = torch.softmax(
             rule_pred[:, :, :-1], dim=2)  # (L_a, B, num_rules)
 
         token_pred = torch.tanh(self._l_token(dc))  # (L_a, B, embedding_size)
         token_pred = self._token_embed_inv(
-            token_pred)  # (L_a, B, num_tokens + 1)
+            token_pred,
+            self._token_embed)  # (L_a, B, num_tokens + 1)
         token_pred = torch.softmax(
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 

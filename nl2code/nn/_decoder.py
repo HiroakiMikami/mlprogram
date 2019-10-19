@@ -23,9 +23,10 @@ def query_history(history: torch.FloatTensor, index: torch.LongTensor):
         The hidden states of the specified indexes. The shape is (B, F)
     """
 
+    device = history.device
     L = history.shape[0]
     B = history.shape[1]
-    index_onehot = torch.eye(L)[index]  # (B, L)
+    index_onehot = torch.eye(L, device=device)[index]  # (B, L)
     index_onehot = index_onehot.reshape((B, 1, L))  # (B, 1, L)
     h = torch.matmul(index_onehot, history.permute([1, 0, 2]))  # (B, 1, *)
     h = h.reshape((B, *history.shape[2:]))  # (B, *)
@@ -132,7 +133,8 @@ class DecoderCell(nn.Module):
         ctx_vec = torch.sum(query.data * ctx_att, dim=0)  # (B, query_size)
 
         # Parent_history
-        h_root = torch.zeros(1, B, hidden_size)
+        device = history.device
+        h_root = torch.zeros(1, B, hidden_size, device=device)
         history = torch.cat([h_root, history], dim=0)
         h_parent = query_history(history, parent_index + 1)
 

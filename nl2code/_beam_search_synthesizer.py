@@ -96,10 +96,13 @@ class BeamSearchSynthesizer:
         candidates: List[Candidate] = []
         n_ids = 0
 
+        device = list(self._predictor.parameters())[0].device
+
         # Create initial hypothesis
-        h_0 = torch.zeros(self._hidden_size)  # (hidden_size)
-        c_0 = torch.zeros(self._hidden_size)  # (hidden_size)
-        hist_0 = torch.zeros(0, self._hidden_size)  # (0, hidden_size)
+        h_0 = torch.zeros(self._hidden_size, device=device)  # (hidden_size)
+        c_0 = torch.zeros(self._hidden_size, device=device)  # (hidden_size)
+        hist_0 = torch.zeros(0, self._hidden_size,
+                             device=device)  # (0, hidden_size)
         hs: List[Hypothesis] = \
             [Hypothesis(0, None, 0.0, Evaluator(), hist_0, h_0, c_0)]
         n_ids += 1
@@ -128,12 +131,14 @@ class BeamSearchSynthesizer:
                 action_tensor = self._action_sequence_encoder.encode(
                     elem.evaluator,
                     query)
-                action.append(action_tensor.action[-1].view(1, -1))  # (1, 3)
+                action.append(action_tensor.action[-1]
+                              .to(device).view(1, -1))  # (1, 3)
                 prev_action.append(
-                    action_tensor.previous_action[-1].view(1, -1))  # (1, 3)
-                hist.append(elem.history)
-                h_n.append(elem.h_n)
-                c_n.append(elem.c_n)
+                    action_tensor.previous_action[-1]
+                    .to(device).view(1, -1))  # (1, 3)
+                hist.append(elem.history.to(device))
+                h_n.append(elem.h_n.to(device))
+                c_n.append(elem.c_n.to(device))
             query_seq = \
                 pad_sequence(query_seq)  # (L_q, len(hs), query_state_size)
             action = pad_sequence(action)  # (1, len(hs), 3)

@@ -31,6 +31,9 @@ class MockPredictor:
         self.arguments = []
         self.hidden_size = 1
 
+    def parameters(self):
+        return [torch.zeros(1, 1)]
+
     def __call__(self, query, action, prev_action,
                  hist, states):
         i = len(self.arguments)

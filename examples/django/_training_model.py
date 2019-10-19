@@ -73,9 +73,12 @@ class TrainingModel(nn.Module):
         B = query_embed.data.shape[1]
 
         # Decode action sequence
-        history = torch.zeros(0, B, self.lstm_state_size)
-        h_0 = torch.zeros(B, self.lstm_state_size)
-        c_0 = torch.zeros(B, self.lstm_state_size)
+        history = torch.zeros(0, B, self.lstm_state_size,
+                              device=query_embed.data.device)
+        h_0 = torch.zeros(B, self.lstm_state_size,
+                          device=query_embed.data.device)
+        c_0 = torch.zeros(B, self.lstm_state_size,
+                          device=query_embed.data.device)
         action = nrnn.pad_packed_sequence(action, -1)  # (L_a, B, 3)
         previous_action = \
             nrnn.pad_packed_sequence(previous_action, -1)  # (L_a, B, 3)
