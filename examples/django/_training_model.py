@@ -16,7 +16,7 @@ class TrainingModel(nn.Module):
         self.lstm_state_size = lstm_state_size
         self.encoder = Encoder(encoder.annotation_encoder.vocab_size,
                                embedding_dim, lstm_state_size,
-                               max_query_length, dropout)
+                               dropout=dropout)
         self.predictor = nnn.Predictor(
             encoder.action_sequence_encoder._rule_encoder.vocab_size,
             encoder.action_sequence_encoder._token_encoder.vocab_size,
