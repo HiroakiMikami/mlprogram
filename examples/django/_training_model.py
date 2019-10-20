@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.utils.rnn as rnn
 from typing import Tuple
 import nl2code.nn as nnn
-import nl2code.nn.utils.rnn as nrnn
+import nl2code.nn.utils.rnn as rnn
 from examples.django import Encoder, DatasetEncoder
 
 
@@ -25,25 +24,25 @@ class TrainingModel(nn.Module):
             lstm_state_size, lstm_state_size, hidden_state_size, dropout
         )
 
-    def forward(self, query: rnn.PackedSequence,
-                action: rnn.PackedSequence,
-                previous_action: rnn.PackedSequence
+    def forward(self, query: rnn.PaddedSequenceWithMask,
+                action: rnn.PaddedSequenceWithMask,
+                previous_action: rnn.PaddedSequenceWithMask
                 ) -> Tuple[torch.FloatTensor, torch.FloatTensor,
                            torch.FloatTensor, torch.FloatTensor,
                            Tuple[torch.FloatTensor, torch.FloatTensor]]:
         """
         Parameters
         ----------
-        query: rnn.PackedSequence
+        query: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
             The shape of each sequence is (sequence_length).
-        aciton: rnn.PackedSequence
+        aciton: rnn.PaddedSequenceWithMask
             The action sequence.
             The encoded tensor with the shape of
             (len(action_sequence) + 1, 3). Each action will be encoded by
             the tuple of (ID of the node types, ID of the parent-action's rule,
             the index of the parent action).
-        previous_action: rnn.PackedSequence
+        previous_action: rnn.PaddedSequenceWithMask
             The previous action sequence.
             The encoded tensor with the shape of
             (len(action_sequence) + 1, 3). Each action will be encoded by
@@ -67,9 +66,7 @@ class TrainingModel(nn.Module):
         """
 
         # Encode query
-        query_embed, _ = self.encoder(query)  # PackedSequence
-        query_embed = nrnn.pad_packed_sequence(
-            query_embed, -1.0)  # Pad with mask
+        query_embed = self.encoder(query)  # PackedSequence
         B = query_embed.data.shape[1]
 
         # Decode action sequence
@@ -79,8 +76,5 @@ class TrainingModel(nn.Module):
                           device=query_embed.data.device)
         c_0 = torch.zeros(B, self.lstm_state_size,
                           device=query_embed.data.device)
-        action = nrnn.pad_packed_sequence(action, -1)  # (L_a, B, 3)
-        previous_action = \
-            nrnn.pad_packed_sequence(previous_action, -1)  # (L_a, B, 3)
         return self.predictor(query_embed, action, previous_action,
                               history, (h_0, c_0))

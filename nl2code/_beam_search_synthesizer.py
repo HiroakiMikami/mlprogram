@@ -199,15 +199,17 @@ class BeamSearchSynthesizer:
                     # Generate token
                     n_tokens = token.numel()
                     n_words = len(query)
+                    token_np = token.detach().cpu().numpy()
                     for j in range(1, n_tokens):  # 0 is UnknownToken
-                        x = token[j].detach().cpu().numpy()
+                        x = token_np[j]
                         if x < self._eps:
                             p = np.log(self._eps)
                         else:
                             p = np.log(x)
                         topk.add(h.score + p, (i, "token", j))
+                    copy_np = copy.detach().cpu().numpy()
                     for j in range(n_words):
-                        x = copy[j].detach().cpu().numpy()
+                        x = copy_np[j]
                         if x < self._eps:
                             p = np.log(self._eps)
                         else:
@@ -219,8 +221,9 @@ class BeamSearchSynthesizer:
                     # TODO
                     idx_to_rule = \
                         self._action_sequence_encoder._rule_encoder.vocab
+                    rule_np = rule.detach().cpu().numpy()
                     for j in range(1, n_rules):  # 0 is unknown rule
-                        x = rule[j].detach().cpu().numpy()
+                        x = rule_np[j]
                         if x < self._eps:
                             p = np.log(self._eps)
                         else:

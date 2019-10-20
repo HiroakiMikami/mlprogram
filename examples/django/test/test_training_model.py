@@ -1,6 +1,6 @@
 import torch
-import torch.nn.utils.rnn as rnn
 import unittest
+import nl2code.nn.utils.rnn as rnn
 from nl2code.language.action import NodeConstraint, NodeType
 from examples.django import TrainingModel, DatasetEncoder, Samples
 
@@ -12,7 +12,7 @@ class TestTrainingModel(unittest.TestCase):
                           ["token"])
         encoder = DatasetEncoder(samples, 0, 0)
         model = TrainingModel(encoder, 1, 2, 6, 5, 10, 0.0)
-        self.assertEqual(106, len(list(model.named_parameters())))
+        self.assertEqual(34, len(list(model.named_parameters())))
 
     def test_shape(self):
         samples = Samples(["foo"], ["mock-rule"],
@@ -26,11 +26,10 @@ class TestTrainingModel(unittest.TestCase):
         action1 = torch.LongTensor([[-1, -1, -1], [1, -1, -1]])
         prev_action0 = torch.LongTensor([[-1, -1, -1]])
         prev_action1 = torch.LongTensor([[-1, -1, -1], [1, -1, -1]])
-        query = rnn.pack_sequence([q0, q1], enforce_sorted=False)
+        query = rnn.pad_sequence([q0, q1])
 
-        action = rnn.pack_sequence([action0, action1], enforce_sorted=False)
-        prev_action = rnn.pack_sequence([prev_action0, prev_action1],
-                                        enforce_sorted=False)
+        action = rnn.pad_sequence([action0, action1], -1)
+        prev_action = rnn.pad_sequence([prev_action0, prev_action1], -1)
         results = model(query, action, prev_action)
         rule_prob = results[0]
         token_prob = results[1]
