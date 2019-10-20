@@ -1,4 +1,4 @@
-import ast as python_ast # noqa
+import ast as python_ast  # noqa
 # from typing import List
 
 import nl2code.language.ast as ast
@@ -11,8 +11,10 @@ def to_builtin_type(value: str, type_name: str) -> BuiltinType:
         return str(value).encode()
     elif type_name == "NoneType":
         return None
+    elif type_name == "str":
+        return value
     else:
-        return eval("{}(\"{}\")".format(type_name, value))
+        return eval("{}({})".format(type_name, value))
 
 
 def to_python_ast(target: ast.AST) -> PythonAST:

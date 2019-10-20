@@ -13,6 +13,7 @@ class TestToBuiltinType(unittest.TestCase):
 
     def test_bool(self):
         self.assertEqual(True, to_builtin_type("True", "bool"))
+        self.assertEqual(False, to_builtin_type("False", "bool"))
 
     def test_bytes(self):
         self.assertEqual(bytes([10, 10]),

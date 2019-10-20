@@ -29,7 +29,7 @@ def tokenize_annotation(annotation: str) -> Tuple[List[str], List[str]]:
     -------
     (query: List[str], query_with_placeholder: List[str])
         query is the list of words.
-        query_with_placeholder is also the list of wordsbut quoted string
+        query_with_placeholder is also the list of words but quoted string
         literals are replaced with placeholders.
     """
     # Preprocess annotation
@@ -79,7 +79,8 @@ def tokenize_token(value: str, split_camel_case: bool = False) -> List[str]:
             return [value]
     else:
         # Divide by space
-        return tokenizer.tokenize(value)
+        words = re.split(r"( +)", value)
+        return [word for word in words if word != ""]
 
 
 def to_action_sequence(code: str) -> ActionSequence:
