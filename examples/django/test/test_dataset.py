@@ -57,8 +57,8 @@ class TestRawDataset(unittest.TestCase):
         d = dataset.samples
         self.assertEqual(["foo", "bar", "test", "foo"], d.words)
         self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
-        self.assertEqual(13, len(d.rules))
-        self.assertEqual(29, len(d.node_types))
+        self.assertEqual(21, len(d.rules))
+        self.assertEqual(45, len(d.node_types))
 
 
 class TestTrainDataset(unittest.TestCase):
@@ -71,8 +71,8 @@ class TestTrainDataset(unittest.TestCase):
         tdataset = TrainDataset(dataset, encoder, 100, 100)
         query_tensor, action_tensor, prev_action_tensor = tdataset[0]
         self.assertTrue(np.array_equal([1, 2], query_tensor.numpy()))
-        self.assertEqual((13, 3), action_tensor.shape)
-        self.assertEqual((14, 3), prev_action_tensor.shape)
+        self.assertEqual((18, 3), action_tensor.shape)
+        self.assertEqual((19, 3), prev_action_tensor.shape)
 
     def test_long_query(self):
         entries = [Entry("foo bar", "y = x + 1")]

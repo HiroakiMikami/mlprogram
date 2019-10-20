@@ -25,6 +25,16 @@ def to_python_ast(target: ast.AST) -> PythonAST:
         for field_name in node._fields:
             setattr(node, field_name, None)
 
+        def unwrap_cast(field: ast.Field):
+            if isinstance(field.value, ast.Leaf):
+                return field.value
+            if len(field.value.fields) != 1:
+                return field.value
+            f = field.value.fields[0]
+            if f.name == "__cast":
+                return f.value
+            return field.value
+
         for field in target.fields:
             name = field.name
             if field.type_name.endswith("__list"):
@@ -32,10 +42,10 @@ def to_python_ast(target: ast.AST) -> PythonAST:
                 child: ast.Node = field.value
                 elems = []
                 for f in child.fields:
-                    elems.append(to_python_ast(f.value))
+                    elems.append(to_python_ast(unwrap_cast(f)))
                 setattr(node, name, elems)
             else:
-                setattr(node, name, to_python_ast(field.value))
+                setattr(node, name, to_python_ast(unwrap_cast(field)))
 
         return node
     else:
