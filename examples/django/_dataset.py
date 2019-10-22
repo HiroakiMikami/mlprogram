@@ -38,17 +38,23 @@ def tokenize_annotation(annotation: str) -> Tuple[List[str], List[str]]:
 
     # Replace quoted string literals with placeholders
     mappings = {}
+    word_to_placeholder = {}
     literal = r'\'\\\'\'|\"[^\"]+\"|\'[^\']+\'|`[^`]+`|"""[^"]+"""'
     while True:
         m = re.search(literal, annotation)
         if m is None:
             break
 
-        p = placeholder(len(mappings))
-        annotation = annotation[:m.start()] + p + annotation[m.end():]
         w = m.group(0)[1:len(m.group(0)) - 1]
+        if str(w) in word_to_placeholder:
+            p = word_to_placeholder[str(w)]
+        else:
+            p = placeholder(len(mappings))
+        annotation = annotation[:m.start()] + p + annotation[m.end():]
+
         assert (not ("####" in w))
         mappings[p] = str(w)
+        word_to_placeholder[str(w)] = p
 
     query = []
     query_with_placeholder = []

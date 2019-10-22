@@ -17,6 +17,11 @@ class TestTokenizeAnnotation(unittest.TestCase):
             tokenize_annotation('"quoted string" test')
         self.assertEqual(['quoted string', "test"], query)
         self.assertEqual(["####0####", "test"], query_with_placeholder)
+        query, query_with_placeholder = \
+            tokenize_annotation('"quoted string" "quoted string" test')
+        self.assertEqual(['quoted string', 'quoted string', "test"], query)
+        self.assertEqual(["####0####", "####0####", "test"],
+                         query_with_placeholder)
 
     def test_package_name_like_string(self):
         query, query_with_placeholder = \
@@ -104,6 +109,16 @@ class TestTrainDataset(unittest.TestCase):
         tdataset = TrainDataset(dataset, encoder, 1, 100)
         self.assertEqual(0, len(tdataset))
 
+    def test_placeholders(self):
+        entries = [Entry("'foo bar'", "x = 'foo bar'")]
+        dataset = RawDataset(entries)
+        d = dataset.samples
+        encoder = DatasetEncoder(d, 0, 0)
+        tdataset = TrainDataset(dataset, encoder, 1, 100)
+        self.assertEqual(set(["####0####"]), set(d.words))
+        self.assertEqual(set(["x", "foo", " ", "bar"]), set(d.tokens))
+        self.assertEqual(1, len(tdataset))
+
 
 class TestEvalDataset(unittest.TestCase):
     def test_simple_case(self):
@@ -129,6 +144,16 @@ class TestEvalDataset(unittest.TestCase):
 
         vdataset = EvalDataset(dataset, encoder, 1, 100, False)
         self.assertEqual(1, len(vdataset))
+
+    def test_placeholders(self):
+        entries = [Entry("'foo bar'", "x = 'foo bar'")]
+        dataset = RawDataset(entries)
+        d = dataset.samples
+        encoder = DatasetEncoder(d, 0, 0)
+        dataset = EvalDataset(dataset, encoder, 1, 100)
+        self.assertEqual(set(["####0####"]), set(d.words))
+        self.assertEqual(set(["x", "foo", " ", "bar"]), set(d.tokens))
+        self.assertEqual(1, len(dataset))
 
 
 if __name__ == "__main__":
