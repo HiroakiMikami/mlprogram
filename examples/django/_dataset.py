@@ -289,7 +289,8 @@ class EvalDataset(Dataset):
                     continue
                 if np.any(action_sequence_tensor.action[-1].numpy() != -1):
                     continue
-            self._entries.append((query, unparse(parse(code))))
+            self._entries.append((query, query_with_placeholder,
+                                  unparse(parse(code))))
         self._transform = transform
 
     def __len__(self):

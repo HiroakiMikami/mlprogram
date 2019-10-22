@@ -1,5 +1,6 @@
+import torch
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Union, Callable
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import re
 
@@ -38,7 +39,9 @@ class Result:
     bleu4: float
 
 
-def validate(dataset: EvalDataset, synthesizer: BeamSearchSynthesizer):
+def validate(dataset: EvalDataset,
+             encoder: Callable[[List[str]], torch.FloatTensor],
+             synthesizer: BeamSearchSynthesizer):
     """
     Validate the model by using the synthesizer
 
@@ -47,6 +50,8 @@ def validate(dataset: EvalDataset, synthesizer: BeamSearchSynthesizer):
     dataset: EvalDataset
         The dataset for validation. Each item contains
         the tuple of query (List[str]) and ground truth (str).
+    encoder: Callable[[List[str]], torch.FloatTensor]
+        The function to convert query (with placeholders) to query embeddings.
     synthesizer: BeamSearchSynthesizer
 
     Yields
@@ -54,8 +59,9 @@ def validate(dataset: EvalDataset, synthesizer: BeamSearchSynthesizer):
     Result
         The validation result
     """
-    for query, ground_truth in dataset:
-        progress, candidates = synthesizer.synthesize(query)
+    for query, query_with_placeholders, ground_truth in dataset:
+        progress, candidates = synthesizer.synthesize(
+            query, encoder(query_with_placeholders))
         candidate = None
         for c in candidates:
             if candidate is None:

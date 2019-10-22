@@ -1,7 +1,6 @@
 import torch
 import unittest
 import numpy as np
-from typing import List
 
 from nl2code import BeamSearchSynthesizer, Progress, Candidate
 from nl2code.language.ast import Node, Field, Leaf
@@ -9,15 +8,6 @@ from nl2code.language.action import NodeConstraint, NodeType
 from nl2code.language.action import ExpandTreeRule, CloseVariadicFieldRule
 from nl2code.language.action import ApplyRule, GenerateToken, CloseNode
 from nl2code.language.encoder import Encoder
-
-
-class MockQueryEmbedding:
-    def __init__(self):
-        self.arguments = []
-
-    def __call__(self, query: List[str]) -> torch.FloatTensor:
-        self.arguments.append([query])
-        return torch.FloatTensor(len(query), 1)
 
 
 class MockPredictor:
@@ -64,7 +54,6 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
     def test_apply_rule_generation(self):
         XtoY = ExpandTreeRule(X, [("value", Y)])
         YsubtoNone = ExpandTreeRule(Ysub, [])
-        query_embedding = MockQueryEmbedding()
         encoder = Encoder([XtoY, YsubtoNone], [X, Y, Ysub], ["foo"], 0)
 
         def is_subtype(arg0, arg1):
@@ -91,9 +80,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [rule0, rule1], [token0, token1], [copy0, copy1],
             [history0, history1], [h0, h1], [c0, c1])
 
-        synthesizer = BeamSearchSynthesizer(2, query_embedding,
+        synthesizer = BeamSearchSynthesizer(2,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["test"])
+        results = synthesizer.synthesize(["test"], torch.FloatTensor(1, 1))
         """
         [] -> [XtoY] -> [XtoY, YsubtoNone] (Complete)
            -> [YsubtoNone] (Complete)
@@ -127,7 +116,6 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
     def test_variadic_fields_generation(self):
         XtoY = ExpandTreeRule(X, [("value", Y_list)])
         YsubtoNone = ExpandTreeRule(Ysub, [])
-        query_embedding = MockQueryEmbedding()
         encoder = Encoder([XtoY, YsubtoNone], [X, Y, Ysub], ["foo"], 0)
 
         def is_subtype(arg0, arg1):
@@ -161,9 +149,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [copy0, copy1, copy2],
             [history0, history1, history2], [h0, h1, h2], [c0, c1, c2])
 
-        synthesizer = BeamSearchSynthesizer(3, query_embedding,
+        synthesizer = BeamSearchSynthesizer(3,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["test"])
+        results = synthesizer.synthesize(["test"], torch.FloatTensor(1, 1))
         """
         [] -> [XtoY] -> [XtoY, YsubtoNone] -> [XtoY, YsubtoNone, Close]
            -> [YsubtoNone] (Complete)
@@ -212,7 +200,6 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
     def test_token_generation(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
-        query_embedding = MockQueryEmbedding()
         encoder = Encoder([XtoStr], [X, Str], ["foo"], 0)
 
         def is_subtype(arg0, arg1):
@@ -246,9 +233,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [copy0, copy1, copy2],
             [history0, history1, history2], [h0, h1, h2], [c0, c1, c2])
 
-        synthesizer = BeamSearchSynthesizer(2, query_embedding,
+        synthesizer = BeamSearchSynthesizer(2,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["test"])
+        results = synthesizer.synthesize(["test"], torch.FloatTensor(1, 1))
         """
         [] -> [XtoStr] -> "foo" -> CloseNode (Complete)
                        -> CloseNode (Complete)
@@ -289,7 +276,6 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
     def test_copy_action_generation(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
-        query_embedding = MockQueryEmbedding()
         encoder = Encoder([XtoStr], [X, Str], ["xxx"], 0)
 
         def is_subtype(arg0, arg1):
@@ -323,9 +309,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [copy0, copy1, copy2],
             [history0, history1, history2], [h0, h1, h2], [c0, c1, c2])
 
-        synthesizer = BeamSearchSynthesizer(2, query_embedding,
+        synthesizer = BeamSearchSynthesizer(2,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["foo"])
+        results = synthesizer.synthesize(["foo"], torch.FloatTensor(1, 1))
         """
         [] -> [XtoStr] -> "foo" -> CloseNode (Complete)
                        -> CloseNode (Complete)

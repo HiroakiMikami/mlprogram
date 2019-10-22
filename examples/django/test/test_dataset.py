@@ -128,8 +128,9 @@ class TestEvalDataset(unittest.TestCase):
         d.words = ["foo", "bar"]
         encoder = DatasetEncoder(d, 0, 0)
         vdataset = EvalDataset(dataset, encoder, 100, 100)
-        query, code = vdataset[0]
+        query, query_with_placeholder, code = vdataset[0]
         self.assertEqual(["foo", "bar"], query)
+        self.assertEqual(["foo", "bar"], query_with_placeholder)
         self.assertEqual("\ny = (x + 1)\n", code)
 
     def test_impossible_case(self):

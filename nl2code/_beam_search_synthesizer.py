@@ -12,7 +12,6 @@ from nl2code.language.encoder import Encoder
 from nl2code._utils import TopKElement
 from nl2code.nn.utils.rnn import pad_sequence
 
-QueryEmbedding = Callable[[List[str]], torch.FloatTensor]
 """
 True if the argument 0 is subtype of the argument 1
 """
@@ -46,7 +45,7 @@ class Candidate:
 
 
 class BeamSearchSynthesizer:
-    def __init__(self, beam_size: int, query_embedding: QueryEmbedding,
+    def __init__(self, beam_size: int,
                  predictor: Predictor, action_sequence_encoder: Encoder,
                  is_subtype: IsSubtype, eps: float = 1e-8,
                  max_steps: Union[int, None] = None):
@@ -55,8 +54,6 @@ class BeamSearchSynthesizer:
         ----------
         beam_size: int
             The number of candidates
-        query_embedding: QueryEmbedding
-            The module to transform from query to query embedding
         predictor: Predictor
             The module to predict the probabilities of actions
         action_sequence_encoder: Encoder
@@ -67,7 +64,6 @@ class BeamSearchSynthesizer:
         max_steps: Union[int, None]
         """
         self._beam_size = beam_size
-        self._query_embedding = query_embedding
         self._predictor = predictor
         self._hidden_size = predictor.hidden_size  # TODO
         self._action_sequence_encoder = action_sequence_encoder
@@ -75,7 +71,8 @@ class BeamSearchSynthesizer:
         self._eps = eps
         self._max_steps = max_steps
 
-    def synthesize(self, query: List[str]) \
+    def synthesize(self, query: List[str],
+                   query_embedding: torch.FloatTensor) \
             -> Tuple[List[List[Progress]], List[Candidate]]:
         """
         Synthesize the program from the query
@@ -84,6 +81,8 @@ class BeamSearchSynthesizer:
         ----------
         query: List[str]
             The query
+        query_embedding: torch.FloatTensor
+            The embedding of query. The shape should be (len(query), *).
 
         Returns
         -------
@@ -106,10 +105,6 @@ class BeamSearchSynthesizer:
         hs: List[Hypothesis] = \
             [Hypothesis(0, None, 0.0, Evaluator(), hist_0, h_0, c_0)]
         n_ids += 1
-
-        # Convert query to query embedding
-        query_embedding = \
-            self._query_embedding(query)  # (L_q, query_state_size)
 
         steps = 0
         while len(candidates) < self._beam_size:

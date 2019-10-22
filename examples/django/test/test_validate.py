@@ -1,3 +1,4 @@
+import torch
 import unittest
 from typing import List
 from nl2code.language.python import to_ast
@@ -23,14 +24,17 @@ class TestValidate(unittest.TestCase):
                 self._progress = progress
                 self._candidates = candidates
 
-            def synthesize(self, query: List[str]):
+            def synthesize(self, query: List[str],
+                           embeddings: torch.FloatTensor):
                 return self._progress, self._candidates
 
         candidates = [
             Candidate(0.0, to_ast(parse("x = 10"))),
             Candidate(1.0, to_ast(parse("x = 20")))]
         synthesizer = MockSynthesizer([], candidates)
-        results = list(validate([([], "\nx = 20\n"), ([], "\nx = 10\n")],
+        results = list(validate([([], [], "\nx = 20\n"),
+                                 ([], [], "\nx = 10\n")],
+                                lambda x: torch.FloatTensor(len(x), 1),
                                 synthesizer))
         self.assertEqual(2, len(results))
         self.assertEqual([], results[0].query)
