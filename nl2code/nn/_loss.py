@@ -22,7 +22,7 @@ class Loss(nn.Module):
             The probabilities of gen-token. The shape is (L_a, B, num_tokens).
         copy_pred: PaddedSequenceWithMask
             The probabilities of copy-token. The shape is
-            (L_a, B, max_query_length).
+            (L_a, B, query_length).
         ground_truth_action: PaddedSequenceWithMask
             The input sequence of action. Each action is represented by
             the tuple of (ID of the applied rule, ID of the inserted token,
@@ -31,7 +31,7 @@ class Loss(nn.Module):
         """
         L_a, B, num_rules = rule_prob.data.shape
         _, _, num_tokens = token_prob.data.shape
-        _, _, max_query_length = copy_prob.data.shape
+        _, _, query_length = copy_prob.data.shape
 
         gt_rule, gt_token, gt_copy = torch.split(
             ground_truth_action.data, 1, dim=2)  # (L_a, B, 1)
@@ -41,7 +41,7 @@ class Loss(nn.Module):
         # Change padding value
         rule = gt_rule + (gt_rule == -1).long() * (num_rules + 1)
         token = gt_token + (gt_token == -1).long() * (num_tokens + 1)
-        copy = gt_copy + (gt_copy == -1).long() * (max_query_length) + 1
+        copy = gt_copy + (gt_copy == -1).long() * (query_length) + 1
 
         device = gt_rule.device
 
@@ -52,17 +52,17 @@ class Loss(nn.Module):
         token = torch.eye(num_tokens + 1,
                           device=device)[gt_token]
         token = token[:, :, :-1]  # (L_a, B, num_tokens)
-        # (L_a, B, max_query_length + 1)
-        copy = torch.eye(max_query_length + 1,
+        # (L_a, B, query_length + 1)
+        copy = torch.eye(query_length + 1,
                          device=device)[gt_copy]
-        # (L_a, B, max_query_length)
+        # (L_a, B, query_length)
         copy = copy[:, :, :-1]
 
         rule_prob = rule_prob.data * rule  # (L_a, B, num_rules)
         rule_prob = torch.sum(rule_prob, dim=2)  # (L_a, B)
         token_prob = token_prob.data * token  # (L_a, B, num_tokens)
         token_prob = torch.sum(token_prob, dim=2)  # (L_a, B)
-        copy_prob = copy_prob.data * copy  # (L_a, B, max_query_length)
+        copy_prob = copy_prob.data * copy  # (L_a, B, query_length)
         copy_prob = torch.sum(copy_prob, dim=2)  # (L_a, B)
 
         prob = rule_prob + token_prob + copy_prob  # (L_a, B)

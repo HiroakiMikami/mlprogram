@@ -152,10 +152,10 @@ class BeamSearchSynthesizer:
             token_pred = \
                 torch.split(token_pred.reshape(len(hs), -1),
                             1, dim=0)  # (1, n_tokens)
-            copy_pred = results[2].data  # (1, len(hs), max_query_length)
+            copy_pred = results[2].data  # (1, len(hs), query_length)
             copy_pred = \
                 torch.split(copy_pred.reshape(len(hs), -1),
-                            1, dim=0)  # (max_query_length)
+                            1, dim=0)  # (query_length)
             history = results[3]  # (L_a + 1, len(hs), state_size)
             state_size = history.shape[2]
             history = torch.split(history, 1,

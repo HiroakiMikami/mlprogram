@@ -189,8 +189,6 @@ class DatasetEncoder:
 class TrainDataset(Dataset):
     def __init__(self, raw_dataset: RawDataset,
                  encoder: DatasetEncoder,
-                 max_query_length: int,
-                 max_action_length: int,
                  transform=None):
         """
         Parameters
@@ -199,21 +197,15 @@ class TrainDataset(Dataset):
             The original dataset
         encoder: DatasetEncoder
             The encoder for annotation and code
-        max_query_length: int
-        max_action_length: int
         """
         self._entries = []
         for entry in raw_dataset:
             annotation = entry.annotation
             code = entry.code
             query, query_with_placeholder = tokenize_annotation(annotation)
-            query = query[:max_query_length]
-            query_with_placeholder = query_with_placeholder[:max_query_length]
             query_tensor = \
                 encoder.annotation_encoder.batch_encode(query_with_placeholder)
             action_sequence = to_action_sequence(code)
-            if len(action_sequence) > max_action_length:
-                continue
             evaluator = Evaluator()
             for action in action_sequence:
                 evaluator.eval(action)
@@ -255,8 +247,7 @@ class TrainDataset(Dataset):
 class EvalDataset(Dataset):
     def __init__(self, raw_dataset: RawDataset,
                  encoder: DatasetEncoder,
-                 max_query_length: int,
-                 max_action_length: int,
+                 max_steps: int,
                  skip_impossible_entry: bool = True,
                  transform=None):
         """
@@ -266,8 +257,7 @@ class EvalDataset(Dataset):
             The original dataset
         encoder: DatasetEncoder
             The encoder for annotation and code
-        max_query_length: int
-        max_action_length: int
+        max_steps: int
         skip_impossible_entry: bool
         """
         self._entries = []
@@ -275,7 +265,6 @@ class EvalDataset(Dataset):
             annotation = entry.annotation
             code = entry.code
             query, query_with_placeholder = tokenize_annotation(annotation)
-            query = query[:max_query_length]
             action_sequence = to_action_sequence(code)
             evaluator = Evaluator()
             for action in action_sequence:
@@ -283,7 +272,7 @@ class EvalDataset(Dataset):
             action_sequence_tensor = \
                 encoder.action_sequence_encoder.encode(evaluator, query)
             if skip_impossible_entry:
-                if len(action_sequence) > max_action_length:
+                if len(action_sequence) > max_steps:
                     continue
                 if action_sequence_tensor is None:
                     continue

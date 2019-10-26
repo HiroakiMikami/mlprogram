@@ -11,7 +11,7 @@ class TestTrainingModel(unittest.TestCase):
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
         encoder = DatasetEncoder(samples, 0, 0)
-        model = TrainingModel(encoder, 1, 2, 6, 5, 10, 0.0)
+        model = TrainingModel(encoder, 1, 2, 6, 5, 0.0)
         self.assertEqual(34, len(list(model.named_parameters())))
 
     def test_shape(self):
@@ -19,7 +19,7 @@ class TestTrainingModel(unittest.TestCase):
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
         encoder = DatasetEncoder(samples, 0, 0)
-        model = TrainingModel(encoder, 1, 2, 6, 5, 10, 0.0)
+        model = TrainingModel(encoder, 1, 2, 6, 5, 0.0)
         q0 = torch.LongTensor([1, 1])
         q1 = torch.LongTensor([1, 1, 1])
         action0 = torch.LongTensor([[-1, -1, -1]])
@@ -39,7 +39,7 @@ class TestTrainingModel(unittest.TestCase):
 
         self.assertEqual((2, 2, 3), rule_prob.data.shape)
         self.assertEqual((2, 2, 3), token_prob.data.shape)
-        self.assertEqual((2, 2, 10), copy_prob.data.shape)
+        self.assertEqual((2, 2, 3), copy_prob.data.shape)
         self.assertEqual((2, 2, 6), history.shape)
         self.assertEqual((2, 6), h_n.shape)
         self.assertEqual((2, 6), c_n.shape)

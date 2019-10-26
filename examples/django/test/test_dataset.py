@@ -73,31 +73,11 @@ class TestTrainDataset(unittest.TestCase):
         d = dataset.samples
         d.words = ["foo", "bar"]
         encoder = DatasetEncoder(d, 0, 0)
-        tdataset = TrainDataset(dataset, encoder, 100, 100)
+        tdataset = TrainDataset(dataset, encoder)
         query_tensor, action_tensor, prev_action_tensor = tdataset[0]
         self.assertTrue(np.array_equal([1, 2], query_tensor.numpy()))
         self.assertEqual((18, 3), action_tensor.shape)
         self.assertEqual((19, 3), prev_action_tensor.shape)
-
-    def test_long_query(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = RawDataset(entries)
-        d = dataset.samples
-        d.words = ["foo", "bar"]
-        encoder = DatasetEncoder(d, 0, 0)
-        tdataset = TrainDataset(dataset, encoder, 1, 100)
-        query_tensor, _, _ = tdataset[0]
-        self.assertTrue(np.array_equal([1], query_tensor.numpy()))
-
-    def test_long_action(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = RawDataset(entries)
-        d = dataset.samples
-        d.words = ["foo", "bar"]
-        d.tokens = ["y", "1"]
-        encoder = DatasetEncoder(d, 0, 0)
-        tdataset = TrainDataset(dataset, encoder, 100, 1)
-        self.assertEqual(0, len(tdataset))
 
     def test_impossible_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
@@ -106,7 +86,7 @@ class TestTrainDataset(unittest.TestCase):
         d.words = ["foo", "bar"]
         d.tokens = ["y", "1"]
         encoder = DatasetEncoder(d, 0, 0)
-        tdataset = TrainDataset(dataset, encoder, 1, 100)
+        tdataset = TrainDataset(dataset, encoder)
         self.assertEqual(0, len(tdataset))
 
     def test_placeholders(self):
@@ -114,7 +94,7 @@ class TestTrainDataset(unittest.TestCase):
         dataset = RawDataset(entries)
         d = dataset.samples
         encoder = DatasetEncoder(d, 0, 0)
-        tdataset = TrainDataset(dataset, encoder, 1, 100)
+        tdataset = TrainDataset(dataset, encoder)
         self.assertEqual(set(["####0####"]), set(d.words))
         self.assertEqual(set(["x", "foo", " ", "bar"]), set(d.tokens))
         self.assertEqual(1, len(tdataset))
@@ -140,10 +120,10 @@ class TestEvalDataset(unittest.TestCase):
         d.words = ["foo", "bar"]
         d.tokens = ["y", "1"]
         encoder = DatasetEncoder(d, 0, 0)
-        vdataset = EvalDataset(dataset, encoder, 1, 100)
+        vdataset = EvalDataset(dataset, encoder, 1)
         self.assertEqual(0, len(vdataset))
 
-        vdataset = EvalDataset(dataset, encoder, 1, 100, False)
+        vdataset = EvalDataset(dataset, encoder, 100, False)
         self.assertEqual(1, len(vdataset))
 
     def test_placeholders(self):
@@ -151,7 +131,7 @@ class TestEvalDataset(unittest.TestCase):
         dataset = RawDataset(entries)
         d = dataset.samples
         encoder = DatasetEncoder(d, 0, 0)
-        dataset = EvalDataset(dataset, encoder, 1, 100)
+        dataset = EvalDataset(dataset, encoder, 100)
         self.assertEqual(set(["####0####"]), set(d.words))
         self.assertEqual(set(["x", "foo", " ", "bar"]), set(d.tokens))
         self.assertEqual(1, len(dataset))

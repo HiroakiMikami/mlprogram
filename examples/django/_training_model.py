@@ -10,7 +10,7 @@ class TrainingModel(nn.Module):
     def __init__(self, encoder: DatasetEncoder,
                  embedding_dim: int, node_type_embedding_dim: int,
                  lstm_state_size: int, hidden_state_size: int,
-                 max_query_length: int, dropout: float):
+                 dropout: float):
         super(TrainingModel, self).__init__()
         self.lstm_state_size = lstm_state_size
         self.encoder = Encoder(encoder.annotation_encoder.vocab_size,
@@ -20,7 +20,7 @@ class TrainingModel(nn.Module):
             encoder.action_sequence_encoder._rule_encoder.vocab_size,
             encoder.action_sequence_encoder._token_encoder.vocab_size,
             encoder.action_sequence_encoder._node_type_encoder.vocab_size,
-            max_query_length, node_type_embedding_dim, embedding_dim,
+            node_type_embedding_dim, embedding_dim,
             lstm_state_size, lstm_state_size, hidden_state_size, dropout
         )
 

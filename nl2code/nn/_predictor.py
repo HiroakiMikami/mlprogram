@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from typing import Tuple
 
 from nl2code.nn import Decoder
@@ -11,7 +10,7 @@ from nl2code.nn.utils.rnn import PaddedSequenceWithMask
 
 class Predictor(nn.Module):
     def __init__(self, num_rules: int, num_tokens: int, num_node_types: int,
-                 max_query_length: int, node_type_embedding_size: int,
+                 node_type_embedding_size: int,
                  embedding_size: int, query_size: int, hidden_size: int,
                  att_hidden_size: int, dropout: float):
         """
@@ -25,8 +24,6 @@ class Predictor(nn.Module):
             The number of tokens
         num_node_types: int
             The number of node types
-        max_query_length: int
-            The maximum length of the query
         node_type_embedding_size: int
             Size of each node-type embedding vector
         embedding_size: int
@@ -45,7 +42,6 @@ class Predictor(nn.Module):
         self._num_rules = num_rules
         self._num_tokens = num_tokens
         self._num_node_types = num_node_types
-        self._max_query_length = max_query_length
         self._rule_embed = EmbeddingWithMask(
             num_rules, embedding_size, num_rules)
         self._rule_embed_inv = \
@@ -179,18 +175,14 @@ class Predictor(nn.Module):
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
         copy_pred = self._pointer_net(query, PaddedSequenceWithMask(
-            dc, output.mask))  # (L_a, B, max_query_length)
-        copy_pred = F.pad(input=copy_pred.data,
-                          pad=(0, self._max_query_length -
-                               copy_pred.data.shape[2], 0, 0, 0, 0),
-                          mode="constant", value=0.0)
+            dc, output.mask))  # (L_a, B, query_length)
 
         generate_pred = torch.softmax(
             self._l_generate(output.data), dim=2)  # (L_a, B, 2)
         token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
 
         token_pred = token * token_pred  # (L_a, B, num_tokens)
-        copy_pred = copy * copy_pred  # (L_a, B, max_query_length)
+        copy_pred = copy * copy_pred.data  # (L_a, B, query_length)
 
         return (PaddedSequenceWithMask(rule_pred, output.mask),
                 PaddedSequenceWithMask(token_pred, output.mask),

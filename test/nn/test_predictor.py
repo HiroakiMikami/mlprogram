@@ -8,7 +8,7 @@ from nl2code.nn.utils import rnn
 
 class TestPredictor(unittest.TestCase):
     def test_parameters(self):
-        predictor = Predictor(2, 3, 5, 7, 2, 3, 2, 3, 5, 0.0)
+        predictor = Predictor(2, 3, 5, 2, 3, 2, 3, 5, 0.0)
         self.assertEqual(25, len(dict(predictor.named_parameters())))
 
     def test_shape(self):
@@ -16,10 +16,9 @@ class TestPredictor(unittest.TestCase):
         num_rules = 2
         num_tokens = 3
         num_node_types = 5
-        max_query_length = 7
         query_size = 2
         """
-        predictor = Predictor(2, 3, 5, 7, 2, 3, 2, 3, 5, 0.0)
+        predictor = Predictor(2, 3, 5, 2, 3, 2, 3, 5, 0.0)
         query0 = torch.rand(3, 2)
         query1 = torch.rand(1, 2)
         query = rnn.pad_sequence([query0, query1])  # (3, 2, 2)
@@ -44,11 +43,9 @@ class TestPredictor(unittest.TestCase):
         self.assertEqual((2, 2, 3), token_pred.data.shape)
         self.assertTrue(np.array_equal(
             [[1, 1], [0, 1]], token_pred.mask.numpy()))
-        self.assertEqual((2, 2, 7), copy_pred.data.shape)
+        self.assertEqual((2, 2, 3), copy_pred.data.shape)
         self.assertTrue(np.array_equal(
             [[1, 1], [0, 1]], copy_pred.mask.numpy()))
-        self.assertTrue(np.allclose(
-            0, copy_pred.data.detach().numpy()[:, :, 3:]))
         self.assertTrue(np.allclose([[1, 1], [1, 1]],
                                     np.sum(token_pred.data.detach().numpy(),
                                            axis=2) +
