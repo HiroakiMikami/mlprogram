@@ -59,7 +59,7 @@ class Predictor(nn.Module):
         self._l_token = nn.Linear(hidden_size + query_size, embedding_size)
         self._l_generate = nn.Linear(hidden_size, 2)
         self._pointer_net = PointerNet(
-            query_size, hidden_size + query_size, hidden_size)
+            query_size, hidden_size + query_size, att_hidden_size)
         nn.init.normal_(self._rule_embed.weight, std=0.01)
         nn.init.normal_(self._token_embed.weight, std=0.01)
         nn.init.xavier_uniform_(self._l_rule.weight)
