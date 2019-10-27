@@ -12,7 +12,7 @@ class TestTrainingModel(unittest.TestCase):
                           ["token"])
         encoder = DatasetEncoder(samples, 0, 0)
         model = TrainingModel(encoder, 1, 2, 6, 5, 0.0)
-        self.assertEqual(34, len(list(model.named_parameters())))
+        self.assertEqual(36, len(list(model.named_parameters())))
 
     def test_shape(self):
         samples = Samples(["foo"], ["mock-rule"],

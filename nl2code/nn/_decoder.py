@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import torch.nn._VF as _VF
 
 from typing import Tuple
 
@@ -62,18 +64,33 @@ class DecoderCell(nn.Module):
             The probability of dropout
         """
         super(DecoderCell, self).__init__()
-        self._lstm_cell = nn.LSTMCell(
-            input_size+query_size+hidden_size, hidden_size)
-        self._dropout_in = nn.Dropout(dropout)
-        self._dropout_h = nn.Dropout(dropout)
+        if dropout > 0.0:
+            self.dropout = nn.Dropout(dropout)
+        else:
+            self.dropout = lambda x: x
+
+        self.hidden_size = hidden_size
+        self.weight_ih = nn.Parameter(
+            torch.Tensor(4 * hidden_size, input_size))
+        self.weight_ch = nn.Parameter(
+            torch.Tensor(4 * hidden_size, query_size))
+        self.weight_ph = nn.Parameter(
+            torch.Tensor(4 * hidden_size, hidden_size))
+        self.weight_hh = nn.Parameter(
+            torch.Tensor(4 * hidden_size, hidden_size))
+        self.bias_ih = nn.Parameter(torch.Tensor(4 * hidden_size))
+        self.bias_hh = nn.Parameter(torch.Tensor(4 * hidden_size))
         self._attention_layer1 = nn.Linear(
             query_size + hidden_size, att_hidden_size)
         self._attention_layer2 = nn.Linear(att_hidden_size, 1)
 
-        nn.init.xavier_uniform_(self._lstm_cell.weight_hh)
-        nn.init.xavier_uniform_(self._lstm_cell.weight_ih)
-        nn.init.zeros_(self._lstm_cell.bias_hh)
-        nn.init.zeros_(self._lstm_cell.bias_ih)
+        nn.init.orthogonal_(self.weight_hh)
+        nn.init.orthogonal_(self.weight_ch)
+        nn.init.orthogonal_(self.weight_ph)
+        nn.init.xavier_uniform_(self.weight_ih)
+        nn.init.zeros_(self.bias_hh)
+        nn.init.zeros_(self.bias_ih)
+        self.bias_ih.data[hidden_size:(2 * hidden_size)] = 1
         nn.init.xavier_uniform_(self._attention_layer1.weight)
         nn.init.zeros_(self._attention_layer1.bias)
         nn.init.xavier_uniform_(self._attention_layer2.weight)
@@ -138,13 +155,75 @@ class DecoderCell(nn.Module):
         history = torch.cat([h_root, history], dim=0)
         h_parent = query_history(history, parent_index + 1)
 
-        # dropout
-        x = self._dropout_in(input)  # (B, input_size)
-        h_0 = self._dropout_h(h_0)  # (B, hidden_size)
+        if self.training:
+            weight_ih = self.weight_ih.view(4, hidden_size, -1)
+            W_ii, W_if, W_ig, W_io = torch.split(weight_ih, 1, dim=0)
+            weight_ch = self.weight_ch.view(4, hidden_size, -1)
+            W_ci, W_cf, W_cg, W_co = torch.split(weight_ch, 1, dim=0)
+            weight_ph = self.weight_ph.view(4, hidden_size, -1)
+            W_pi, W_pf, W_pg, W_po = torch.split(weight_ph, 1, dim=0)
+            weight_hh = self.weight_hh.view(4, hidden_size, -1)
+            W_hi, W_hf, W_hg, W_ho = torch.split(weight_hh, 1, dim=0)
+            bias_ih = self.bias_ih.view(4, -1)
+            b_ii, b_if, b_ig, b_io = torch.split(bias_ih, 1, dim=0)
+            bias_hh = self.bias_hh.view(4, -1)
+            b_hi, b_hf, b_hg, b_ho = torch.split(bias_hh, 1, dim=0)
+            dropout = self.dropout
 
-        # (B, input_size+query_size+input_size)
-        x = torch.cat([x, ctx_vec, h_parent], dim=1)
-        return ctx_vec, self._lstm_cell(x, (h_0, c_0))
+            # (B, input_size+query_size+hidden_size+hidden_size)
+            x_i = torch.cat([dropout(input), ctx_vec, h_parent, dropout(h_0)],
+                            dim=1)
+            W_i = torch.cat([W_ii, W_ci, W_pi, W_hi], dim=2) \
+                .view(hidden_size, -1)
+            b_i = b_ii + b_hi
+            x_i = F.linear(x_i, W_i, b_i)
+            i = torch.sigmoid(x_i)
+
+            x_f = torch.cat([dropout(input), ctx_vec, h_parent, dropout(h_0)],
+                            dim=1)
+            W_f = torch.cat([W_if, W_cf, W_pf, W_hf], dim=2) \
+                .view(hidden_size, -1)
+            b_f = b_if + b_hf
+            x_f = F.linear(x_f, W_f, b_f)
+            f = torch.sigmoid(x_f)
+
+            x_g = torch.cat([dropout(input), ctx_vec, h_parent, dropout(h_0)],
+                            dim=1)
+            W_g = torch.cat([W_ig, W_cg, W_pg, W_hg], dim=2) \
+                .view(hidden_size, -1)
+            b_g = b_ig + b_hg
+            x_g = F.linear(x_g, W_g, b_g)
+            g = torch.tanh(x_g)
+
+            x_o = torch.cat([dropout(input), ctx_vec, h_parent, dropout(h_0)],
+                            dim=1)
+            W_o = torch.cat([W_io, W_co, W_po, W_ho], dim=2) \
+                .view(hidden_size, -1)
+            b_o = b_io + b_ho
+            x_o = F.linear(x_o, W_o, b_o)
+            o = torch.sigmoid(x_o)
+
+            c_1 = f * c_0 + i * g
+            h_1 = o * torch.tanh(c_1)
+        else:
+            # (B, input_size+query_size+hidden_size)
+            x = torch.cat([input, ctx_vec, h_parent], dim=1)
+            weight_ih = self.weight_ih.view(4, hidden_size, -1)
+            W_ii, W_if, W_ig, W_io = torch.split(weight_ih, 1, dim=0)
+            weight_ch = self.weight_ch.view(4, hidden_size, -1)
+            W_ci, W_cf, W_cg, W_co = torch.split(weight_ch, 1, dim=0)
+            weight_ph = self.weight_ph.view(4, hidden_size, -1)
+            W_pi, W_pf, W_pg, W_po = torch.split(weight_ph, 1, dim=0)
+            W_i = torch.cat([W_ii, W_ci, W_pi], dim=2).view(hidden_size, -1)
+            W_f = torch.cat([W_if, W_cf, W_pf], dim=2).view(hidden_size, -1)
+            W_g = torch.cat([W_ig, W_cg, W_pg], dim=2).view(hidden_size, -1)
+            W_o = torch.cat([W_io, W_co, W_po], dim=2).view(hidden_size, -1)
+            W = torch.cat([W_i, W_f, W_g, W_o], dim=0)
+            h_1, c_1 = _VF.lstm_cell(x, (h_0, c_0), W,
+                                     self.weight_hh, self.bias_ih,
+                                     self.bias_hh)
+
+        return ctx_vec, (h_1, c_1)
 
 
 class Decoder(nn.Module):
