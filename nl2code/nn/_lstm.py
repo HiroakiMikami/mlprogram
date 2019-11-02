@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Tuple
+from math import sqrt
+from nl2code.nn import _init as init
 
 
 class LSTMCell(nn.LSTMCell):
@@ -12,8 +14,9 @@ class LSTMCell(nn.LSTMCell):
             self.dropout = nn.Dropout(dropout)
         else:
             self.dropout = lambda x: x
-        nn.init.orthogonal_(self.weight_hh)
-        nn.init.xavier_uniform_(self.weight_ih)
+        init.orthogonal_(self.weight_hh, gain=1.1)
+        gain = sqrt(5 * hidden_size) / sqrt(2 * hidden_size)
+        nn.init.xavier_uniform_(self.weight_ih, gain=gain)
         if bias:
             nn.init.zeros_(self.bias_hh)
             nn.init.zeros_(self.bias_ih)

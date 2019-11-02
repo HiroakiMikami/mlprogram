@@ -6,6 +6,7 @@ from nl2code.nn import Decoder
 from nl2code.nn._pointer_net import PointerNet
 from nl2code.nn._embedding import EmbeddingWithMask, EmbeddingInverse
 from nl2code.nn.utils.rnn import PaddedSequenceWithMask
+from math import sqrt
 
 
 class Predictor(nn.Module):
@@ -62,11 +63,17 @@ class Predictor(nn.Module):
             query_size, hidden_size + query_size, att_hidden_size)
         nn.init.normal_(self._rule_embed.weight, std=0.01)
         nn.init.normal_(self._token_embed.weight, std=0.01)
-        nn.init.xavier_uniform_(self._l_rule.weight)
+        nn.init.normal_(self._node_type_embed.weight, std=0.01)
+        rule_gain = sqrt(hidden_size + embedding_size) / \
+            sqrt(100 * hidden_size + embedding_size)
+        nn.init.xavier_uniform_(self._l_rule.weight, gain=rule_gain)
         nn.init.zeros_(self._l_rule.bias)
-        nn.init.xavier_uniform_(self._l_token.weight)
+        token_gain = sqrt(hidden_size + query_size + embedding_size) / \
+            sqrt(100 * (hidden_size + query_size) + embedding_size)
+        nn.init.xavier_uniform_(self._l_token.weight, gain=token_gain)
         nn.init.zeros_(self._l_token.bias)
-        nn.init.xavier_uniform_(self._l_generate.weight)
+        generate_gain = sqrt(hidden_size + 2) / sqrt(100 * hidden_size + 2)
+        nn.init.xavier_uniform_(self._l_generate.weight, gain=generate_gain)
         nn.init.zeros_(self._l_generate.bias)
 
     def forward(self,
