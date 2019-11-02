@@ -152,14 +152,15 @@ class Encoder:
                 token = a.token
                 encoded_token = int(self._token_encoder.encode(token).numpy())
 
-                if encoded_token == 0:
-                    # Unknown token
-                    if token in query:
-                        prev_action[i + 1, 2] = query.index(token)
-                    else:
-                        return None
-                else:
+                if encoded_token != 0:
                     prev_action[i + 1, 1] = encoded_token
+
+                # Unknown token
+                if token in query:
+                    prev_action[i + 1, 2] = query.index(token)
+
+                if encoded_token == 0 and token not in query:
+                    return None
 
         head = evaluator.head
         length = len(evaluator.action_sequence)

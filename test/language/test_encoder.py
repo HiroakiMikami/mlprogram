@@ -28,18 +28,20 @@ class TestEncoder(unittest.TestCase):
                           [NodeType("def", NodeConstraint.Node),
                            NodeType("value", NodeConstraint.Token),
                            NodeType("expr", NodeConstraint.Node)],
-                          ["f"],
+                          ["f", "2"],
                           0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
+        evaluator.eval(GenerateToken("2"))
         evaluator.eval(GenerateToken(CloseNode()))
-        encoded_tensor = encoder.encode(evaluator, ["1"])
+        encoded_tensor = encoder.encode(evaluator, ["1", "2"])
 
         self.assertTrue(np.array_equal(
             [
                 [-1, -1, -1],
+                [2, 2, 0],
                 [2, 2, 0],
                 [2, 2, 0],
                 [2, 2, 0],
@@ -53,6 +55,7 @@ class TestEncoder(unittest.TestCase):
                 [2, -1, -1],
                 [-1, 2, -1],
                 [-1, -1, 0],
+                [-1, 3, 1],
                 [-1, 1, -1]
             ],
             encoded_tensor.previous_action.numpy()
