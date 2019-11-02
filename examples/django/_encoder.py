@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from nl2code.nn import LSTMCell
+from nl2code.nn import LSTMCell, EmbeddingWithMask
 import nl2code.nn.utils.rnn as rnn
 
 
@@ -21,8 +21,10 @@ class Encoder(nn.Module):
         """
         super(Encoder, self).__init__()
         assert(hidden_size % 2 == 0)
+        self.num_words = num_words
         self.hidden_size = hidden_size
-        self._embedding = nn.Embedding(num_words, embedding_dim)
+        self._embedding = EmbeddingWithMask(num_words, embedding_dim,
+                                            num_words)
         self._forward_lstm = LSTMCell(embedding_dim, hidden_size // 2,
                                       dropout=dropout)
         self._backward_lstm = LSTMCell(embedding_dim, hidden_size // 2,
@@ -35,7 +37,7 @@ class Encoder(nn.Module):
         ----------
         query: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
-            The shape of each sequence is (sequence_length).
+            The padding value should be -1.
 
         Returns
         -------
@@ -43,7 +45,8 @@ class Encoder(nn.Module):
             The output sequences of the LSTM
         """
         # Embed query
-        embeddings = self._embedding(query.data)  # (embedding_dim,)
+        q = query.data + (query.data == -1).long() * (self.num_words + 1)
+        embeddings = self._embedding(q)  # (embedding_dim,)
         embeddings = rnn.PaddedSequenceWithMask(embeddings, query.mask)
 
         L, B, _ = embeddings.data.shape
