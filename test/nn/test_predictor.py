@@ -9,7 +9,7 @@ from nl2code.nn.utils import rnn
 class TestPredictor(unittest.TestCase):
     def test_parameters(self):
         predictor = Predictor(2, 3, 5, 2, 3, 2, 3, 5, 0.0)
-        self.assertEqual(27, len(dict(predictor.named_parameters())))
+        self.assertEqual(25, len(dict(predictor.named_parameters())))
 
     def test_shape(self):
         """

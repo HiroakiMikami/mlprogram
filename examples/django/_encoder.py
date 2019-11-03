@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from nl2code.nn import LSTMCell, EmbeddingWithMask
+from nl2code.nn import EmbeddingWithMask
 import nl2code.nn.utils.rnn as rnn
 
 
@@ -25,10 +25,10 @@ class Encoder(nn.Module):
         self.hidden_size = hidden_size
         self._embedding = EmbeddingWithMask(num_words, embedding_dim,
                                             num_words)
-        self._forward_lstm = LSTMCell(embedding_dim, hidden_size // 2,
-                                      dropout=dropout)
-        self._backward_lstm = LSTMCell(embedding_dim, hidden_size // 2,
-                                       dropout=dropout)
+        self._forward_lstm = nn.LSTMCell(embedding_dim, hidden_size // 2)
+        self._backward_lstm = nn.LSTMCell(embedding_dim, hidden_size // 2)
+        self._dropout_in = nn.Dropout(dropout)
+        self._dropout_h = nn.Dropout(dropout)
 
     def forward(self, query: rnn.PaddedSequenceWithMask) \
             -> rnn.PaddedSequenceWithMask:
@@ -58,6 +58,8 @@ class Encoder(nn.Module):
         c = torch.zeros(B, self.hidden_size // 2, device=device)
         for i in range(L):
             x = embeddings.data[i, :, :].view(B, -1)
+            x = self._dropout_in(x)
+            h = self._dropout_h(h)
             h, c = self._forward_lstm(x, (h, c))
             h = h * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
             c = c * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
@@ -68,6 +70,8 @@ class Encoder(nn.Module):
         c = torch.zeros(B, self.hidden_size // 2, device=device)
         for i in range(L - 1, -1, -1):
             x = embeddings.data[i, :, :].view(B, -1)
+            x = self._dropout_in(x)
+            h = self._dropout_h(h)
             h, c = self._backward_lstm(x, (h, c))
             h = h * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
             c = c * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)

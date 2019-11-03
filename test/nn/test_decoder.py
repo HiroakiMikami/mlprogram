@@ -20,7 +20,7 @@ class TestQueryHistory(unittest.TestCase):
 class TestDecoderCell(unittest.TestCase):
     def test_parameters(self):
         cell = DecoderCell(2, 3, 5, 7, 0.0)
-        self.assertEqual(10, len(dict(cell.named_parameters())))
+        self.assertEqual(8, len(dict(cell.named_parameters())))
 
     def test_shape(self):
         cell = DecoderCell(2, 3, 5, 7, 0.0)
@@ -38,33 +38,11 @@ class TestDecoderCell(unittest.TestCase):
         self.assertEqual((2, 5), h_1.shape)
         self.assertEqual((2, 5), c_1.shape)
 
-    def test_eval(self):
-        cell = DecoderCell(2, 3, 5, 7, 0.0)
-        ctx0 = torch.rand(3, 2)
-        ctx1 = torch.rand(3, 1)
-        ctx = rnn.pad_sequence([ctx0, ctx1])
-        input = torch.rand(2, 3)
-        parent_index = torch.randint(10, size=(2,))
-        history = torch.rand(10, 2, 5)
-        h_0 = torch.rand(2, 5)
-        c_0 = torch.rand(2, 5)
-
-        cell.train()
-        ref = cell(ctx, input, parent_index, history, (h_0, c_0))
-        cell.eval()
-        actual = cell(ctx, input, parent_index, history, (h_0, c_0))
-        self.assertTrue(np.allclose(
-            ref[0].detach().numpy(), actual[0].detach().numpy()))
-        self.assertTrue(np.allclose(
-            ref[1][0].detach().numpy(), actual[1][0].detach().numpy()))
-        self.assertTrue(np.allclose(
-            ref[1][1].detach().numpy(), actual[1][1].detach().numpy()))
-
 
 class TestDecoder(unittest.TestCase):
     def test_parameters(self):
         decoder = Decoder(2, 3, 5, 7, 0.0)
-        self.assertEqual(10, len(dict(decoder.named_parameters())))
+        self.assertEqual(8, len(dict(decoder.named_parameters())))
 
     def test_shape(self):
         decoder = Decoder(2, 3, 5, 7, 0.0)
