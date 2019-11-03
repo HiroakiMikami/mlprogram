@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from math import sqrt
 from nl2code.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -24,16 +23,11 @@ class PointerNet(nn.Module):
         self._l1_h = nn.Linear(decoder_output_size, hidden_size)
         self._l2 = nn.Linear(hidden_size, 1)
 
-        l1_q_gain = sqrt(query_size + hidden_size) \
-            / sqrt(query_size * 100 + hidden_size)
-        nn.init.xavier_uniform_(self._l1_q.weight, gain=l1_q_gain)
+        nn.init.xavier_uniform_(self._l1_q.weight)
         nn.init.zeros_(self._l1_q.bias)
-        l1_h_gain = sqrt(decoder_output_size + hidden_size) \
-            / sqrt(100 * decoder_output_size + hidden_size)
-        nn.init.xavier_uniform_(self._l1_h.weight, gain=l1_h_gain)
+        nn.init.xavier_uniform_(self._l1_h.weight)
         nn.init.zeros_(self._l1_h.bias)
-        l2_gain = sqrt(hidden_size + 1) / sqrt(hidden_size * 100 * 70 + 1)
-        nn.init.xavier_uniform_(self._l2.weight, gain=l2_gain)
+        nn.init.xavier_uniform_(self._l2.weight)
         nn.init.zeros_(self._l2.bias)
 
     def forward(self, query: PaddedSequenceWithMask,

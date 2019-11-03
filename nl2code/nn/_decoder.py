@@ -2,11 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn._VF as _VF
-from math import sqrt
 from typing import Tuple
 
 from nl2code.nn.utils import rnn
-from nl2code.nn import _init as init
 
 
 def query_history(history: torch.FloatTensor, index: torch.LongTensor):
@@ -85,18 +83,16 @@ class DecoderCell(nn.Module):
             query_size + hidden_size, att_hidden_size)
         self._attention_layer2 = nn.Linear(att_hidden_size, 1)
 
-        init.orthogonal_(self.weight_hh, gain=1.1)
-        init.orthogonal_(self.weight_ch, gain=1.1)
-        init.orthogonal_(self.weight_ph, gain=1.1)
-        gain = sqrt(5 * hidden_size) / sqrt(2 * hidden_size)
-        nn.init.xavier_uniform_(self.weight_ih, gain=gain)
+        nn.init.orthogonal_(self.weight_hh)
+        nn.init.orthogonal_(self.weight_ch)
+        nn.init.orthogonal_(self.weight_ph)
+        nn.init.xavier_uniform_(self.weight_ih)
         nn.init.zeros_(self.bias_hh)
         nn.init.zeros_(self.bias_ih)
         self.bias_ih.data[hidden_size:(2 * hidden_size)] = 1
         nn.init.xavier_uniform_(self._attention_layer1.weight)
         nn.init.zeros_(self._attention_layer1.bias)
-        gain = sqrt(att_hidden_size + 1) / sqrt(input_size + hidden_size)
-        nn.init.xavier_uniform_(self._attention_layer2.weight, gain=gain)
+        nn.init.xavier_uniform_(self._attention_layer2.weight)
         nn.init.zeros_(self._attention_layer2.bias)
 
     def forward(self,
