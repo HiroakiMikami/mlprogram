@@ -48,12 +48,6 @@ def to_ast(target: PythonAST) -> ast.AST:
         else:
             return ast.Leaf(type(target).__name__, str(target))
 
-    def wrap_cast_node(field, base_type):
-        if field.type_name == base_type:
-            return field
-        return ast.Node(base_type,
-                        [ast.Field("__cast", field.type_name, field)])
-
     for chname, chval in python_ast.iter_fields(target):
         if chname == "ctx":
             # ctx is omitted
@@ -73,13 +67,12 @@ def to_ast(target: PythonAST) -> ast.AST:
             elements: List[ast.Field] = []
             for i, elem in enumerate(chval):
                 elements.append(ast.Field("val__{}".format(i), base_type,
-                                          wrap_cast_node(to_ast(elem),
-                                                         base_type)))
+                                          to_ast(elem)))
             fields.append(ast.Field(chname, "{}__list".format(base_type),
                                     ast.Node("{}__list".format(base_type),
                                              elements)))
         else:
             base_type = base_ast_type(chval).__name__
             fields.append(ast.Field(chname, base_type,
-                                    wrap_cast_node(to_ast(chval), base_type)))
+                                    to_ast(chval)))
     return ast.Node(type_name, fields)

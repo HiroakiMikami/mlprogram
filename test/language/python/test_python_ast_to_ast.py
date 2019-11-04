@@ -23,11 +23,8 @@ class TestToAST(unittest.TestCase):
         node = python_ast.Expr()
         setattr(node, "value", python_ast.Name())
         self.assertEqual(
-            ast.Node("Expr", [ast.Field(
-                "value", "expr", ast.Node(
-                    "expr",
-                    [ast.Field("__cast", "Name", ast.Node("Name", []))])
-            )]),
+            ast.Node("Expr", [ast.Field("value", "expr",
+                                        ast.Node("Name", []))]),
             to_ast(node))
 
     def test_node_with_ctx_field(self):
@@ -45,17 +42,12 @@ class TestToAST(unittest.TestCase):
         self.assertEqual(
             ast.Node("List", [
                 ast.Field("elts", "expr__list",
-                          ast.Node("expr__list", [
-                              ast.Field(
-                                  "val__0", "expr",
-                                  ast.Node("expr", [ast.Field(
-                                      "__cast", "Num", ast.Node("Num", []))])
-                              ),
-                              ast.Field(
-                                  "val__1", "expr",
-                                  ast.Node("expr", [ast.Field(
-                                      "__cast", "Str", ast.Node("Str", []))])
-                              )]))]),
+                          ast.Node("expr__list", [ast.Field("val__0", "expr",
+                                                            ast.Node("Num", [])
+                                                            ),
+                                                  ast.Field("val__1", "expr",
+                                                            ast.Node("Str", [])
+                                                            )]))]),
             to_ast(node)
         )
 

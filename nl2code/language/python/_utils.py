@@ -38,5 +38,4 @@ def is_subtype(subtype: NodeType, basetype: NodeType) -> bool:
         base = eval("python_ast.{}()".format(basetype))
     except:  # noqa
         base = eval("{}()".format(basetype))
-    return type(sub) == type(base)
-    # return isinstance(sub, type(base))
+    return isinstance(sub, type(base))
