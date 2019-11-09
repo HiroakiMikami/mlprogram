@@ -7,7 +7,7 @@ import re
 from nl2code import BeamSearchSynthesizer, Progress
 from nl2code.language.ast import AST
 from nl2code.language.python import to_python_ast
-from examples.django import unparse, EvalDataset
+from examples.django import unparse
 
 
 def bleu4(reference, candidate):
@@ -39,9 +39,10 @@ class Result:
     bleu4: float
 
 
-def validate(dataset: EvalDataset,
+def validate(query: List[str], query_with_placeholders: List[str],
+             ground_truth: str,
              encoder: Callable[[List[str]], torch.FloatTensor],
-             synthesizer: BeamSearchSynthesizer):
+             synthesizer: BeamSearchSynthesizer) -> Result:
     """
     Validate the model by using the synthesizer
 
@@ -54,30 +55,29 @@ def validate(dataset: EvalDataset,
         The function to convert query (with placeholders) to query embeddings.
     synthesizer: BeamSearchSynthesizer
 
-    Yields
+    Returns
     ------
     Result
         The validation result
     """
-    for query, query_with_placeholders, ground_truth in dataset:
-        progress, candidates = synthesizer.synthesize(
-            query, encoder(query_with_placeholders))
-        candidate = None
-        for c in candidates:
-            if candidate is None:
-                candidate = c
-            else:
-                if candidate.score < c.score:
-                    candidate = c
+    progress, candidates = synthesizer.synthesize(
+        query, encoder(query_with_placeholders))
+    candidate = None
+    for c in candidates:
         if candidate is None:
-            code = ""
-            yield Result(query, ground_truth, progress, None,
-                         ground_truth == code, bleu4(ground_truth, code))
+            candidate = c
         else:
-            try:
-                code = unparse(to_python_ast(candidate.ast))
-            except:  # noqa
-                code = ""
+            if candidate.score < c.score:
+                candidate = c
+    if candidate is None:
+        code = ""
+        return Result(query, ground_truth, progress, None,
+                      ground_truth == code, bleu4(ground_truth, code))
+    else:
+        try:
+            code = unparse(to_python_ast(candidate.ast))
+        except:  # noqa
+            code = ""
 
-            yield Result(query, ground_truth, progress, candidate.ast,
-                         ground_truth == code, bleu4(ground_truth, code))
+        return Result(query, ground_truth, progress, candidate.ast,
+                      ground_truth == code, bleu4(ground_truth, code))

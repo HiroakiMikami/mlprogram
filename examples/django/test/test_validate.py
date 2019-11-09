@@ -32,10 +32,12 @@ class TestValidate(unittest.TestCase):
             Candidate(0.0, to_ast(parse("x = 10"))),
             Candidate(1.0, to_ast(parse("x = 20")))]
         synthesizer = MockSynthesizer([], candidates)
-        results = list(validate([([], [], "\nx = 20\n"),
-                                 ([], [], "\nx = 10\n")],
-                                lambda x: torch.FloatTensor(len(x), 1),
-                                synthesizer))
+        result0 = validate([], [], "\nx = 20\n",
+                           lambda x: torch.FloatTensor(len(x), 1), synthesizer)
+        result1 = validate([], [], "\nx = 10\n",
+                           lambda x: torch.FloatTensor(len(x), 1), synthesizer)
+        results = list([result0, result1])
+
         self.assertEqual(2, len(results))
         self.assertEqual([], results[0].query)
         self.assertEqual("\nx = 20\n", results[0].ground_truth)
