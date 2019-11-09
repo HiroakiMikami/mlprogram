@@ -54,7 +54,7 @@ class TestNode(unittest.TestCase):
              action.ApplyRule(action.ExpandTreeRule(
                  action.NodeType("str", action.NodeConstraint.Node),
                  [])),
-             action.CloseVariadicFieldRule()],
+             action.ApplyRule(action.CloseVariadicFieldRule())],
             a.to_action_sequence(tokenize)
         )
 

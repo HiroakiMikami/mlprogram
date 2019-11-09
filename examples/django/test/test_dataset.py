@@ -62,8 +62,8 @@ class TestRawDataset(unittest.TestCase):
         d = dataset.samples
         self.assertEqual(["foo", "bar", "test", "foo"], d.words)
         self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
-        self.assertEqual(13, len(d.rules))
-        self.assertEqual(29, len(d.node_types))
+        self.assertEqual(10, len(d.rules))
+        self.assertEqual(24, len(d.node_types))
 
 
 class TestTrainDataset(unittest.TestCase):

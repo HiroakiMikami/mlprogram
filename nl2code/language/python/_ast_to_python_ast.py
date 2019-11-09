@@ -20,7 +20,7 @@ def to_builtin_type(value: str, type_name: str) -> BuiltinType:
 def to_python_ast(target: ast.AST) -> PythonAST:
     if isinstance(target, ast.Node):
         # Node
-        type_name = target.type_name.replace("__list", "")
+        type_name = target.type_name
         node = eval("python_ast.{}()".format(type_name))
 
         # Fill all fields
@@ -29,12 +29,13 @@ def to_python_ast(target: ast.AST) -> PythonAST:
 
         for field in target.fields:
             name = field.name
-            if field.type_name.endswith("__list"):
+            if isinstance(field.value, list):
                 # List
-                child: ast.Node = field.value
                 elems = []
-                for f in child.fields:
-                    elems.append(to_python_ast(f.value))
+                for child in field.value:
+                    if field.type_name.endswith("__list"):
+                        child = child.fields[0].value
+                    elems.append(to_python_ast(child))
                 setattr(node, name, elems)
             else:
                 setattr(node, name, to_python_ast(field.value))

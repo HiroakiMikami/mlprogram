@@ -60,17 +60,24 @@ def to_ast(target: PythonAST) -> ast.AST:
         if is_list:
             if len(chval) == 0:
                 base_type = python_ast.AST.__name__
+                is_leaf = False
             else:
                 base_type = base_ast_type(chval[0]).__name__
+                is_leaf = is_builtin_type(chval[0])
 
-            # TODO use variadic fields
-            elements: List[ast.Field] = []
+            if is_leaf:
+                parent_type = "{}__list".format(base_type)
+            else:
+                parent_type = base_type
+
+            elements: List[ast.Node] = []
             for i, elem in enumerate(chval):
-                elements.append(ast.Field("val__{}".format(i), base_type,
-                                          to_ast(elem)))
-            fields.append(ast.Field(chname, "{}__list".format(base_type),
-                                    ast.Node("{}__list".format(base_type),
-                                             elements)))
+                c = to_ast(elem)
+                if isinstance(c, ast.Leaf):
+                    c = ast.Node(
+                        parent_type, [ast.Field("token", base_type, c)])
+                elements.append(c)
+            fields.append(ast.Field(chname, parent_type, elements))
         else:
             base_type = base_ast_type(chval).__name__
             fields.append(ast.Field(chname, base_type,

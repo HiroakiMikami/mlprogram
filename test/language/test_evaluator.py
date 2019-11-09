@@ -96,6 +96,20 @@ class TestEvaluator(unittest.TestCase):
         evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
         self.assertEqual(None, evaluator.head)
 
+        evaluator = Evaluator()
+        rule1 = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+                               [("elems",
+                                 NodeType("value", NodeConstraint.Variadic)),
+                                ("name",
+                                 NodeType("value", NodeConstraint.Node))])
+        rule0 = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
+                               [])
+        evaluator.eval(ApplyRule(rule1))
+        evaluator.eval(ApplyRule(rule0))
+        evaluator.eval(ApplyRule(CloseVariadicFieldRule))
+        self.assertEqual(0, evaluator.head.action)
+        self.assertEqual(1, evaluator.head.field)
+
     def test_generate_ast(self):
         evaluator = Evaluator()
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),

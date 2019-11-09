@@ -126,7 +126,7 @@ class Node(AST):
             if isinstance(field.value, list):
                 for v in field.value:
                     seq.extend(v.to_action_sequence(tokenizer))
-                seq.append(action.CloseVariadicFieldRule())
+                seq.append(action.ApplyRule(action.CloseVariadicFieldRule()))
             else:
                 seq.extend(field.value.to_action_sequence(tokenizer))
         return seq

@@ -63,6 +63,13 @@ class TestToPythonAST(unittest.TestCase):
             python_ast.dump(node),
             python_ast.dump(to_python_ast(to_ast(node))))
 
+    def test_token_list(self):
+        node = python_ast.Global()
+        setattr(node, "names", ["v1", "v2"])
+        self.assertEqual(
+            python_ast.dump(node),
+            python_ast.dump(to_python_ast(to_ast(node))))
+
 
 if __name__ == "__main__":
     unittest.main()

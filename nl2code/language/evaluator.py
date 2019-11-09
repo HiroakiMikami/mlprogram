@@ -88,7 +88,7 @@ class Evaluator:
             self._action_sequence.append(action)
             self._tree.children[index] = []
 
-        def update_head():
+        def update_head(close_variadic_field=False):
             head = self.head
             if head is None:
                 return
@@ -108,7 +108,8 @@ class Evaluator:
                 update_head()
                 return
 
-            if head_rule.children[head.field][1].constraint != \
+            if close_variadic_field or \
+               head_rule.children[head.field][1].constraint != \
                     A.NodeConstraint.Variadic:
                 self._head_children_index[head.action] += 1
 
@@ -175,8 +176,7 @@ class Evaluator:
                 self._tree.parent[index] = head
 
                 # 3. Update head
-                self._head_children_index[head.action] += 1
-                update_head()
+                update_head(close_variadic_field=True)
         else:
             # GenerateToken
             token = action.token

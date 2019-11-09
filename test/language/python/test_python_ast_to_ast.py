@@ -41,13 +41,8 @@ class TestToAST(unittest.TestCase):
         setattr(node, "elts", [python_ast.Num(), python_ast.Str()])
         self.assertEqual(
             ast.Node("List", [
-                ast.Field("elts", "expr__list",
-                          ast.Node("expr__list", [ast.Field("val__0", "expr",
-                                                            ast.Node("Num", [])
-                                                            ),
-                                                  ast.Field("val__1", "expr",
-                                                            ast.Node("Str", [])
-                                                            )]))]),
+                ast.Field("elts", "expr",
+                          [ast.Node("Num", []), ast.Node("Str", [])])]),
             to_ast(node)
         )
 
@@ -60,10 +55,21 @@ class TestToAST(unittest.TestCase):
         node = python_ast.List()
         setattr(node, "elts", [])
         self.assertEqual(
-            ast.Node("List", [
-                ast.Field("elts", "AST__list",
-                          ast.Node("AST__list", []))]),
+            ast.Node("List", [ast.Field("elts", "AST", [])]),
             to_ast(node))
+
+    def test_token_list(self):
+        node = python_ast.Global()
+        setattr(node, "names", ["v1", "v2"])
+        self.assertEqual(
+            ast.Node("Global", [ast.Field("names", "str__list", [
+                ast.Node("str__list", [ast.Field("token", "str",
+                                                 ast.Leaf("str", "v1"))]),
+                ast.Node("str__list", [ast.Field("token", "str",
+                                                 ast.Leaf("str", "v2"))])
+            ])]),
+            to_ast(node)
+        )
 
 
 if __name__ == "__main__":
