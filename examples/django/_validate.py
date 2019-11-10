@@ -60,8 +60,12 @@ def validate(query: List[str], query_with_placeholders: List[str],
     Result
         The validation result
     """
-    progress, candidates = synthesizer.synthesize(
-        query, encoder(query_with_placeholders))
+    candidates = []
+    progress = []
+    for cs, ps in synthesizer.synthesize(
+            query, encoder(query_with_placeholders)):
+        candidates.extend(cs)
+        progress.append(ps)
     candidate = None
     for c in candidates:
         if candidate is None:

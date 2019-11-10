@@ -82,13 +82,15 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
         synthesizer = BeamSearchSynthesizer(2,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["test"], torch.FloatTensor(1, 1))
+        candidates = []
+        progress = []
+        for c, p in synthesizer.synthesize(["test"], torch.FloatTensor(1, 1)):
+            candidates.extend(c)
+            progress.append(p)
         """
         [] -> [XtoY] -> [XtoY, YsubtoNone] (Complete)
            -> [YsubtoNone] (Complete)
         """
-        progress = results[0]
-        candidates = results[1]
         self.assertEqual(2, len(progress))
         self.assertSameProgress(
             Progress(1, 0, np.log(0.9), ApplyRule(XtoY), False),
@@ -151,13 +153,15 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
         synthesizer = BeamSearchSynthesizer(3,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["test"], torch.FloatTensor(1, 1))
+        candidates = []
+        progress = []
+        for c, p in synthesizer.synthesize(["test"], torch.FloatTensor(1, 1)):
+            candidates.extend(c)
+            progress.append(p)
         """
         [] -> [XtoY] -> [XtoY, YsubtoNone] -> [XtoY, YsubtoNone, Close]
            -> [YsubtoNone] (Complete)
         """
-        progress = results[0]
-        candidates = results[1]
         self.assertEqual(3, len(progress))
         self.assertSameProgress(
             Progress(1, 0, np.log(0.9), ApplyRule(XtoY), False),
@@ -235,13 +239,15 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
         synthesizer = BeamSearchSynthesizer(2,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["test"], torch.FloatTensor(1, 1))
+        candidates = []
+        progress = []
+        for c, p in synthesizer.synthesize(["test"], torch.FloatTensor(1, 1)):
+            candidates.extend(c)
+            progress.append(p)
         """
         [] -> [XtoStr] -> "foo" -> CloseNode (Complete)
                        -> CloseNode (Complete)
         """
-        progress = results[0]
-        candidates = results[1]
         self.assertEqual(3, len(progress))
         self.assertSameProgress(
             Progress(1, 0, np.log(1.0), ApplyRule(XtoStr), False),
@@ -311,13 +317,15 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
         synthesizer = BeamSearchSynthesizer(2,
                                             predictor, encoder, is_subtype)
-        results = synthesizer.synthesize(["foo"], torch.FloatTensor(1, 1))
+        candidates = []
+        progress = []
+        for c, p in synthesizer.synthesize(["foo"], torch.FloatTensor(1, 1)):
+            candidates.extend(c)
+            progress.append(p)
         """
         [] -> [XtoStr] -> "foo" -> CloseNode (Complete)
                        -> CloseNode (Complete)
         """
-        progress = results[0]
-        candidates = results[1]
         self.assertEqual(3, len(progress))
         self.assertSameProgress(
             Progress(1, 0, np.log(1.0), ApplyRule(XtoStr), False),

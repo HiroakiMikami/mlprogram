@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import List, Union, Tuple, Callable
+from typing import List, Union, Callable
 from dataclasses import dataclass
 from nl2code.nn import Predictor
 from nl2code.language.evaluator import Evaluator
@@ -72,8 +72,7 @@ class BeamSearchSynthesizer:
         self._max_steps = max_steps
 
     def synthesize(self, query: List[str],
-                   query_embedding: torch.FloatTensor) \
-            -> Tuple[List[List[Progress]], List[Candidate]]:
+                   query_embedding: torch.FloatTensor):
         """
         Synthesize the program from the query
 
@@ -84,14 +83,13 @@ class BeamSearchSynthesizer:
         query_embedding: torch.FloatTensor
             The embedding of query. The shape should be (len(query), *).
 
-        Returns
-        -------
-        progress: List[List[Progress]]
-            The progress of synthesizing.
+        Yields
+        ------
         candidates: List[Candidate]
-            The final candidates of ASTs.
+            The candidate of AST
+        progress: List[Progress]
+            The progress of synthesizing.
         """
-        progress: List[List[Progress]] = []
         candidates: List[Candidate] = []
         n_ids = 0
 
@@ -239,6 +237,7 @@ class BeamSearchSynthesizer:
 
             # Instantiate top-k hypothesis
             hs_new = []
+            cs = []
             ps = []
             for score, (i, action, arg) in topk.elements:
                 h = hs[i]
@@ -259,8 +258,9 @@ class BeamSearchSynthesizer:
 
                 if evaluator.head is None:
                     # Complete
-                    candidates.append(
-                        Candidate(score, evaluator.generate_ast()))
+                    c = Candidate(score, evaluator.generate_ast())
+                    cs.append(c)
+                    candidates.append(c)
                     ps.append(Progress(id, h.id, score,
                                        evaluator.action_sequence[-1], True))
                 else:
@@ -272,8 +272,6 @@ class BeamSearchSynthesizer:
                                        evaluator.action_sequence[-1], False))
 
             hs = hs_new
-            progress.append(ps)
+            yield cs, ps
             if len(hs) == 0:
                 break
-
-        return progress, candidates

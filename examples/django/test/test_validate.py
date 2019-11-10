@@ -26,7 +26,7 @@ class TestValidate(unittest.TestCase):
 
             def synthesize(self, query: List[str],
                            embeddings: torch.FloatTensor):
-                return self._progress, self._candidates
+                yield self._candidates, self._progress
 
         candidates = [
             Candidate(0.0, to_ast(parse("x = 10"))),
