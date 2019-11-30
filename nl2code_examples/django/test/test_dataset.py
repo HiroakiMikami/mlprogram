@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
 
-from examples.django import Entry, DatasetEncoder
-from examples.django import RawDataset, TrainDataset, EvalDataset
-from examples.django._dataset import tokenize_annotation, tokenize_token
+from nl2code_examples.django import Entry, DatasetEncoder
+from nl2code_examples.django import RawDataset, TrainDataset, EvalDataset
+from nl2code_examples.django._dataset import tokenize_annotation, \
+    tokenize_token
 
 
 class TestTokenizeAnnotation(unittest.TestCase):

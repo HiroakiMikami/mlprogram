@@ -3,7 +3,7 @@ import torch.nn as nn
 from typing import Tuple
 import nl2code.nn as nnn
 import nl2code.nn.utils.rnn as rnn
-from examples.django import Encoder, DatasetEncoder
+from nl2code_examples.hearthstone import Encoder, DatasetEncoder
 
 
 class TrainingModel(nn.Module):

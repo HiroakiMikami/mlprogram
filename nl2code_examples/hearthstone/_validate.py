@@ -7,7 +7,7 @@ import re
 from nl2code import BeamSearchSynthesizer, Progress
 from nl2code.language.ast import AST
 from nl2code.language.python import to_python_ast
-from examples.django import unparse
+from nl2code_examples.hearthstone import unparse
 
 
 def bleu4(reference, candidate):
@@ -39,7 +39,7 @@ class Result:
     bleu4: float
 
 
-def validate(query: List[str], query_with_placeholders: List[str],
+def validate(query: List[str],
              ground_truth: str,
              encoder: Callable[[List[str]], torch.FloatTensor],
              synthesizer: BeamSearchSynthesizer) -> Result:
@@ -63,7 +63,7 @@ def validate(query: List[str], query_with_placeholders: List[str],
     candidates = []
     progress = []
     for cs, ps in synthesizer.synthesize(
-            query, encoder(query_with_placeholders)):
+            query, encoder(query)):
         candidates.extend(cs)
         progress.append(ps)
     candidate = None

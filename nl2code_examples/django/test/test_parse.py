@@ -1,7 +1,7 @@
 import unittest
 import ast
 
-from examples.django import parse, unparse
+from nl2code_examples.django import parse, unparse
 
 
 class TestParse(unittest.TestCase):

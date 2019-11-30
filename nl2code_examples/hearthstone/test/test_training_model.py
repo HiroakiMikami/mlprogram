@@ -2,7 +2,7 @@ import torch
 import unittest
 import nl2code.nn.utils.rnn as rnn
 from nl2code.language.action import NodeConstraint, NodeType
-from examples.django import TrainingModel, DatasetEncoder, Samples
+from nl2code_examples.hearthstone import TrainingModel, DatasetEncoder, Samples
 
 
 class TestTrainingModel(unittest.TestCase):

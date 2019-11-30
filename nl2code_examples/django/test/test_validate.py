@@ -3,8 +3,8 @@ import unittest
 from typing import List
 from nl2code.language.python import to_ast
 from nl2code import Progress, Candidate
-from examples.django._validate import bleu4
-from examples.django import validate, parse
+from nl2code_examples.django._validate import bleu4
+from nl2code_examples.django import validate, parse
 
 
 class TestBleu4(unittest.TestCase):

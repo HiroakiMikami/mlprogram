@@ -12,7 +12,7 @@ from nl2code.language.action import ActionSequence, Rule, NodeType
 from nl2code.language.action import ApplyRule
 from nl2code.language.action import CloseNode, CloseVariadicFieldRule
 from nl2code.language.evaluator import Evaluator
-from examples.django import parse, unparse
+from nl2code_examples.django import parse, unparse
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
