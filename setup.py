@@ -3,7 +3,7 @@ from setuptools import setup
 requires = ["torch", "pytorch-nlp"]
 extras = {
     "test": ["flake8", "autopep8"],
-    "examples": ["transpyle", "nltk", "tensorboard"],
+    "examples": ["transpyle", "nltk", "bashlex", "tensorboard"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }

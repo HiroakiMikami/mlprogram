@@ -8,3 +8,4 @@ python -m unittest discover $(dirname $0)/../test/
 
 python -m unittest discover $(dirname $0)/../nl2code_examples/django/test
 python -m unittest discover $(dirname $0)/../nl2code_examples/hearthstone/test
+python -m unittest discover $(dirname $0)/../nl2code_examples/nl2bash/test
