@@ -22,9 +22,7 @@ I showed the difference between the original repository and this one later. One 
 |         |Accuracy|BLEU4|
 |---------|-------:|----:|
 |original |   71.6%|84.5%|
-|this repo|      -%|   -%|
-
-TODO: update the results of the fixed version
+|this repo|   42.8%|69.5%|
 
 ### Hearthstone Dataset
 
