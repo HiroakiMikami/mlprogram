@@ -1,6 +1,6 @@
 import unittest
 
-from nl2code.language import action, ast
+from nl2prog.language import action, ast
 
 
 def tokenize(value: str):

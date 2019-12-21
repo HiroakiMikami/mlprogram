@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Union, List, Callable
 from copy import deepcopy
 
-from nl2code.language import action
+from nl2prog.language import action
 
 Tokenizer = Callable[[str], List[str]]
 

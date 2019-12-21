@@ -1,8 +1,8 @@
 import unittest
 
-from nl2code.language.action import NodeType, NodeConstraint
-from nl2code.language.action import ExpandTreeRule, GenerateToken, ApplyRule
-from nl2code.language.action import CloseNode, CloseVariadicFieldRule
+from nl2prog.language.action import NodeType, NodeConstraint
+from nl2prog.language.action import ExpandTreeRule, GenerateToken, ApplyRule
+from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
 
 
 class TestNodeType(unittest.TestCase):

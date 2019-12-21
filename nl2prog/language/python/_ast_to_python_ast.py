@@ -1,8 +1,8 @@
 import ast as python_ast  # noqa
 # from typing import List
 
-import nl2code.language.ast as ast
-from nl2code.language.python import PythonAST
+import nl2prog.language.ast as ast
+from nl2prog.language.python import PythonAST
 from ._utils import BuiltinType
 
 

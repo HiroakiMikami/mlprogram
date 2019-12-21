@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from typing import Tuple
 
-from nl2code.nn.utils import rnn
+from nl2prog.nn.utils import rnn
 
 
 def query_history(history: torch.FloatTensor, index: torch.LongTensor):

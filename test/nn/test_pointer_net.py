@@ -2,8 +2,8 @@ import unittest
 import torch
 import numpy as np
 
-from nl2code.nn._pointer_net import PointerNet
-from nl2code.nn.utils.rnn import pad_sequence
+from nl2prog.nn._pointer_net import PointerNet
+from nl2prog.nn.utils.rnn import pad_sequence
 
 
 class TestPointerNet(unittest.TestCase):

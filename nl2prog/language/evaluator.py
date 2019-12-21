@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from typing import Dict, Union, List
 from copy import deepcopy
 
-from nl2code.language import action as A
-from nl2code.language.action import Action, ActionSequence
-from nl2code.language.ast import AST, Node, Leaf, Field
+from nl2prog.language import action as A
+from nl2prog.language.action import Action, ActionSequence
+from nl2prog.language.ast import AST, Node, Leaf, Field
 
 
 class InvalidActionException(Exception):

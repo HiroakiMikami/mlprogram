@@ -2,12 +2,12 @@ import torch
 import unittest
 import numpy as np
 
-from nl2code.language.action import ApplyRule, GenerateToken
-from nl2code.language.action import ExpandTreeRule, NodeType, NodeConstraint
-from nl2code.language.action import CloseNode
+from nl2prog.language.action import ApplyRule, GenerateToken
+from nl2prog.language.action import ExpandTreeRule, NodeType, NodeConstraint
+from nl2prog.language.action import CloseNode
 
-from nl2code.language.evaluator import Evaluator
-from nl2code.language.encoder import Encoder
+from nl2prog.language.evaluator import Evaluator
+from nl2prog.language.encoder import Encoder
 
 
 class TestEncoder(unittest.TestCase):

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from nl2code.nn import EmbeddingWithMask
-import nl2code.nn.utils.rnn as rnn
+from nl2prog.nn import EmbeddingWithMask
+import nl2prog.nn.utils.rnn as rnn
 
 
 class Encoder(nn.Module):

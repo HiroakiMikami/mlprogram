@@ -2,12 +2,12 @@ import torch
 import unittest
 import numpy as np
 
-from nl2code import BeamSearchSynthesizer, Progress, Candidate
-from nl2code.language.ast import Node, Field, Leaf
-from nl2code.language.action import NodeConstraint, NodeType
-from nl2code.language.action import ExpandTreeRule, CloseVariadicFieldRule
-from nl2code.language.action import ApplyRule, GenerateToken, CloseNode
-from nl2code.language.encoder import Encoder
+from nl2prog import BeamSearchSynthesizer, Progress, Candidate
+from nl2prog.language.ast import Node, Field, Leaf
+from nl2prog.language.action import NodeConstraint, NodeType
+from nl2prog.language.action import ExpandTreeRule, CloseVariadicFieldRule
+from nl2prog.language.action import ApplyRule, GenerateToken, CloseNode
+from nl2prog.language.encoder import Encoder
 
 
 class MockPredictor:

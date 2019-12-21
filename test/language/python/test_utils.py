@@ -1,9 +1,9 @@
 import unittest
 import ast as python_ast
 
-from nl2code.language.action import NodeType
-from nl2code.language.python._utils import is_builtin_type
-from nl2code.language.python import is_subtype
+from nl2prog.language.action import NodeType
+from nl2prog.language.python._utils import is_builtin_type
+from nl2prog.language.python import is_subtype
 
 
 class TestIsBuiltinType(unittest.TestCase):

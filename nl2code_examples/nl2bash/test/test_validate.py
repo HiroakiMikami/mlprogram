@@ -1,7 +1,7 @@
 import torch
 import unittest
 from typing import List
-from nl2code import Progress, Candidate
+from nl2prog import Progress, Candidate
 from nl2code_examples.nl2bash._validate import bleu4
 from nl2code_examples.nl2bash import validate, parse
 

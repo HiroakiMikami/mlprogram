@@ -9,7 +9,7 @@ extras = {
 }
 
 setup(
-    name="nl2code",
+    name="nl2prog",
     install_requires=requires,
     test_requires=extras["test"],
     examples_requires=extras["examples"],

@@ -1,6 +1,6 @@
 import ast as python_ast
 from typing import Union
-from nl2code.language.action import NodeType
+from nl2prog.language.action import NodeType
 
 BuiltinType = Union[int, float, bool, str, bytes, object, type(None)]
 PythonAST = Union[python_ast.AST, BuiltinType]

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from nl2code.nn._embedding import EmbeddingWithMask, EmbeddingInverse
+from nl2prog.nn._embedding import EmbeddingWithMask, EmbeddingInverse
 
 
 class TestEmbeddingWithMask(unittest.TestCase):

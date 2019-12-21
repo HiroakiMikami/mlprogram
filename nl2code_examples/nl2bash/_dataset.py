@@ -6,11 +6,11 @@ import numpy as np
 import re
 from nltk import tokenize
 from typing import List, Tuple, Union
-from nl2code.language.encoder import Encoder
-from nl2code.language.action import ActionSequence, Rule, NodeType
-from nl2code.language.action import ApplyRule
-from nl2code.language.action import CloseNode, CloseVariadicFieldRule
-from nl2code.language.evaluator import Evaluator
+from nl2prog.language.encoder import Encoder
+from nl2prog.language.action import ActionSequence, Rule, NodeType
+from nl2prog.language.action import ApplyRule
+from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
+from nl2prog.language.evaluator import Evaluator
 from nl2code_examples.nl2bash import parse, unparse
 
 tokenizer = tokenize.WhitespaceTokenizer()

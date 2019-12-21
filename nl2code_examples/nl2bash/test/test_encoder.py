@@ -1,7 +1,7 @@
 import torch
 import unittest
 import numpy as np
-import nl2code.nn.utils.rnn as rnn
+import nl2prog.nn.utils.rnn as rnn
 from nl2code_examples.nl2bash import Encoder
 
 

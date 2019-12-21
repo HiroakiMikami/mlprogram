@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from nl2code.nn.utils.rnn import PaddedSequenceWithMask
+from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class Accuracy(nn.Module):

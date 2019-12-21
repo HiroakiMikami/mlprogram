@@ -3,12 +3,12 @@ from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Union
 from dataclasses import dataclass
 
-from nl2code.language.action import NodeType, NodeConstraint
-from nl2code.language.action import ActionSequence
-from nl2code.language.action import ApplyRule, GenerateToken
-from nl2code.language.action import Rule, ExpandTreeRule
-from nl2code.language.action import CloseNode, CloseVariadicFieldRule
-from nl2code.language.evaluator import Evaluator
+from nl2prog.language.action import NodeType, NodeConstraint
+from nl2prog.language.action import ActionSequence
+from nl2prog.language.action import ApplyRule, GenerateToken
+from nl2prog.language.action import Rule, ExpandTreeRule
+from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
+from nl2prog.language.evaluator import Evaluator
 
 
 def convert_node_type_to_key(node_type: NodeType):

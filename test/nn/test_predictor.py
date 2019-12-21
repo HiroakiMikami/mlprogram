@@ -2,8 +2,8 @@ import unittest
 import torch
 import numpy as np
 
-from nl2code.nn import Predictor
-from nl2code.nn.utils import rnn
+from nl2prog.nn import Predictor
+from nl2prog.nn.utils import rnn
 
 
 class TestPredictor(unittest.TestCase):

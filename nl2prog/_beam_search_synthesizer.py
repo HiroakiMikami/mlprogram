@@ -2,15 +2,15 @@ import torch
 import numpy as np
 from typing import List, Union, Callable
 from dataclasses import dataclass
-from nl2code.nn import Predictor
-from nl2code.language.evaluator import Evaluator
-from nl2code.language.ast import AST
-from nl2code.language.action import NodeConstraint, NodeType
-from nl2code.language.action import ExpandTreeRule
-from nl2code.language.action import Action, ApplyRule, GenerateToken
-from nl2code.language.encoder import Encoder
-from nl2code._utils import TopKElement
-from nl2code.nn.utils.rnn import pad_sequence
+from nl2prog.nn import Predictor
+from nl2prog.language.evaluator import Evaluator
+from nl2prog.language.ast import AST
+from nl2prog.language.action import NodeConstraint, NodeType
+from nl2prog.language.action import ExpandTreeRule
+from nl2prog.language.action import Action, ApplyRule, GenerateToken
+from nl2prog.language.encoder import Encoder
+from nl2prog._utils import TopKElement
+from nl2prog.nn.utils.rnn import pad_sequence
 
 """
 True if the argument 0 is subtype of the argument 1
