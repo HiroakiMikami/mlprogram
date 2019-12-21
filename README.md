@@ -8,7 +8,7 @@ The official implementation is available in the [GitHub repository](https://gith
 Notice (Dec/7/2019)
 ---
 
-I rewrote the implementation from scratch. The previous one is in the v0.0.0 tag.
+I rewrote the implementation from scratch. The previous one is in the [v0.0.0 tag](https://github.com/HiroakiMikami/NL2Code-reimplementation/tree/v0.0.0).
 
 
 Performance
