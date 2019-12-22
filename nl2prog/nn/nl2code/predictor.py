@@ -59,7 +59,7 @@ class Predictor(nn.Module):
         self._l_token = nn.Linear(hidden_size + query_size, embedding_size)
         self._l_generate = nn.Linear(hidden_size, 2)
         self._pointer_net = PointerNet(
-            query_size, hidden_size + query_size, att_hidden_size)
+            hidden_size + query_size, query_size, att_hidden_size)
         nn.init.normal_(self._rule_embed.weight, std=0.01)
         nn.init.normal_(self._token_embed.weight, std=0.01)
         nn.init.normal_(self._node_type_embed.weight, std=0.01)
@@ -116,6 +116,7 @@ class Predictor(nn.Module):
             (B, hidden_size)
         """
         L_a, B, _ = action.data.shape
+        L_q, _, _ = query.data.shape
         _, _, h = history.shape
 
         node_types, parent_rule, parent_index = torch.split(
@@ -175,15 +176,16 @@ class Predictor(nn.Module):
         token_pred = torch.softmax(
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
-        copy_pred = self._pointer_net(query, PaddedSequenceWithMask(
-            dc, output.mask))  # (L_a, B, query_length)
+        copy_pred = self._pointer_net(dc, query)  # (L_a, B, query_length)
+        copy_pred = torch.exp(copy_pred)
+        copy_pred *= query.mask.permute(1, 0).view(1, B, L_q).float()
 
         generate_pred = torch.softmax(
             self._l_generate(output.data), dim=2)  # (L_a, B, 2)
         token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
 
         token_pred = token * token_pred  # (L_a, B, num_tokens)
-        copy_pred = copy * copy_pred.data  # (L_a, B, query_length)
+        copy_pred = copy * copy_pred  # (L_a, B, query_length)
 
         return (PaddedSequenceWithMask(rule_pred, output.mask),
                 PaddedSequenceWithMask(token_pred, output.mask),
