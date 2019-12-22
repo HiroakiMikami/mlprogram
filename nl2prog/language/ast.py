@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, List
+from typing import Union, List, Any
 from copy import deepcopy
 
 
@@ -54,6 +54,20 @@ class Field:
         else:
             return Field(self.name, self.type_name, self.value.clone())
 
+    def __hash__(self):
+        if isinstance(self.value, list):
+            return hash(self.name) ^ hash(self.type_name) ^ \
+                hash(tuple(self.value))
+        else:
+            return hash(self.name) ^ hash(self.type_name) ^ hash(self.value)
+
+    def __eq__(self, rhs: Any):
+        if isinstance(rhs, Field):
+            return self.name == rhs.name and \
+                self.type_name == rhs.type_name and self.value == rhs.value
+        else:
+            return False
+
 
 @dataclass
 class Node(AST):
@@ -82,6 +96,16 @@ class Node(AST):
         return Node(self.type_name,
                     [f.clone() for f in self.fields])
 
+    def __hash__(self):
+        return hash(self.type_name) ^ hash(tuple(self.fields))
+
+    def __eq__(self, rhs: Any):
+        if isinstance(rhs, Node):
+            return self.type_name == rhs.type_name and \
+                self.fields == rhs.fields
+        else:
+            return False
+
 
 @dataclass
 class Leaf(AST):
@@ -108,3 +132,13 @@ class Leaf(AST):
             The cloned AST
         """
         return Leaf(self.type_name, deepcopy(self.value))
+
+    def __hash__(self):
+        return hash(self.type_name) ^ hash(self.value)
+
+    def __eq__(self, rhs: Any):
+        if isinstance(rhs, Leaf):
+            return self.type_name == rhs.type_name and \
+                self.value == rhs.value
+        else:
+            return False

@@ -3,7 +3,7 @@ from typing import List
 
 import nl2prog.language.ast as ast
 from nl2prog.language.python import PythonAST
-from ._utils import is_builtin_type
+from .utils import is_builtin_type
 
 
 def base_ast_type(node: PythonAST):

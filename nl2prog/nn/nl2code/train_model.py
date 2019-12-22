@@ -1,22 +1,22 @@
 import torch
 import torch.nn as nn
 from typing import Tuple
-import nl2prog.nn as nnn
-import nl2prog.nn.utils.rnn as rnn
-from nl2prog.nn.nl2code import Encoder
-from nl2code_examples.django import DatasetEncoder
+from nl2prog import nn as nnn
+from nl2prog.nn.utils import rnn
+from nl2prog.nn.nl2code import Encoder as EncoderModule
+from nl2prog.utils.data.nl2code import Encoder
 
 
-class TrainingModel(nn.Module):
-    def __init__(self, encoder: DatasetEncoder,
+class TrainModel(nn.Module):
+    def __init__(self, encoder: Encoder,
                  embedding_dim: int, node_type_embedding_dim: int,
                  lstm_state_size: int, hidden_state_size: int,
                  dropout: float):
-        super(TrainingModel, self).__init__()
+        super(TrainModel, self).__init__()
         self.lstm_state_size = lstm_state_size
-        self.encoder = Encoder(encoder.annotation_encoder.vocab_size,
-                               embedding_dim, lstm_state_size,
-                               dropout=dropout)
+        self.encoder = EncoderModule(encoder.annotation_encoder.vocab_size,
+                                     embedding_dim, lstm_state_size,
+                                     dropout=dropout)
         self.predictor = nnn.NL2CodePredictor(
             encoder.action_sequence_encoder._rule_encoder.vocab_size,
             encoder.action_sequence_encoder._token_encoder.vocab_size,

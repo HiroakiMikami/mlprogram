@@ -178,7 +178,8 @@ class Predictor(nn.Module):
 
         copy_pred = self._pointer_net(dc, query)  # (L_a, B, query_length)
         copy_pred = torch.exp(copy_pred)
-        copy_pred *= query.mask.permute(1, 0).view(1, B, L_q).float()
+        copy_pred = \
+            copy_pred * query.mask.permute(1, 0).view(1, B, L_q).float()
 
         generate_pred = torch.softmax(
             self._l_generate(output.data), dim=2)  # (L_a, B, 2)

@@ -3,7 +3,7 @@ import ast as python_ast  # noqa
 
 import nl2prog.language.ast as ast
 from nl2prog.language.python import PythonAST
-from ._utils import BuiltinType
+from .utils import BuiltinType
 
 
 def to_builtin_type(value: str, type_name: str) -> BuiltinType:
@@ -14,7 +14,10 @@ def to_builtin_type(value: str, type_name: str) -> BuiltinType:
     elif type_name == "str":
         return value
     else:
-        return eval("{}({})".format(type_name, value))
+        try:
+            return eval("{}({})".format(type_name, value))
+        except Exception:
+            return value
 
 
 def to_python_ast(target: ast.AST) -> PythonAST:

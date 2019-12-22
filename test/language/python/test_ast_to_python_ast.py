@@ -3,7 +3,7 @@ import ast as python_ast
 
 import nl2prog.language.ast as ast
 
-from nl2prog.language.python._ast_to_python_ast import to_builtin_type
+from nl2prog.language.python.ast_to_python_ast import to_builtin_type
 from nl2prog.language.python import to_ast, to_python_ast
 
 

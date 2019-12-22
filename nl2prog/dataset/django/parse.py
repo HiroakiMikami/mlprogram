@@ -50,7 +50,9 @@ SOFTWARE.
 
 import ast
 import re
-import transpyle
+from typing import Union
+from nl2prog.language.ast import AST
+from nl2prog.language.python import to_ast
 
 p_elif = re.compile(r'^elif\s?')
 p_else = re.compile(r'^else\s?')
@@ -60,7 +62,7 @@ p_finally = re.compile(r'^finally\s?')
 p_decorator = re.compile(r'^@.*')
 
 
-def parse(code: str) -> ast.AST:
+def parse(code: str) -> Union[AST, None]:
     """
     Return the AST of the code
 
@@ -71,47 +73,31 @@ def parse(code: str) -> ast.AST:
 
     Returns
     -------
-    ast.AST
+    AST
         The AST of the code
     """
-    code = code.strip()
-    if not code:
-        return ""
+    try:
+        code = code.strip()
+        if not code:
+            return ""
 
-    if p_elif.match(code):
-        code = 'if True: pass\n' + code
-    if p_else.match(code):
-        code = 'if True: pass\n' + code
+        if p_elif.match(code):
+            code = 'if True: pass\n' + code
+        if p_else.match(code):
+            code = 'if True: pass\n' + code
 
-    if p_try.match(code):
-        code = code + 'pass\nexcept: pass'
-    elif p_except.match(code):
-        code = 'try: pass\n' + code
-    elif p_finally.match(code):
-        code = 'try: pass\n' + code
+        if p_try.match(code):
+            code = code + 'pass\nexcept: pass'
+        elif p_except.match(code):
+            code = 'try: pass\n' + code
+        elif p_finally.match(code):
+            code = 'try: pass\n' + code
 
-    if p_decorator.match(code):
-        code = code + '\ndef dummy(): pass'
-    if code[-1] == ':':
-        code = code + 'pass'
+        if p_decorator.match(code):
+            code = code + '\ndef dummy(): pass'
+        if code[-1] == ':':
+            code = code + 'pass'
 
-    return ast.parse(code).body[0]
-
-
-def unparse(ast: ast.AST) -> str:
-    """
-    Return the string of the AST
-
-    Parameters
-    ----------
-    ast: ast.AST
-        The AST to be unparsed
-
-    Returns
-    -------
-    str
-        The resulted string
-    """
-    unparser = transpyle.python.unparser.NativePythonUnparser()
-
-    return unparser.unparse(ast)
+        return to_ast(ast.parse(code).body[0])
+    except:  # noqa
+        return None

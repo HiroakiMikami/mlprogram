@@ -2,24 +2,25 @@ import torch
 import unittest
 import nl2prog.nn.utils.rnn as rnn
 from nl2prog.language.nl2code.action import NodeConstraint, NodeType
-from nl2code_examples.django import TrainingModel, DatasetEncoder, Samples
+from nl2prog.utils.data.nl2code import Samples, Encoder
+from nl2prog.nn.nl2code import TrainModel
 
 
-class TestTrainingModel(unittest.TestCase):
+class TestTrain(unittest.TestCase):
     def test_parameters(self):
         samples = Samples(["foo"], ["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
-        encoder = DatasetEncoder(samples, 0, 0)
-        model = TrainingModel(encoder, 1, 2, 6, 5, 0.0)
+        encoder = Encoder(samples, 0, 0)
+        model = TrainModel(encoder, 1, 2, 6, 5, 0.0)
         self.assertEqual(34, len(list(model.named_parameters())))
 
     def test_shape(self):
         samples = Samples(["foo"], ["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
-        encoder = DatasetEncoder(samples, 0, 0)
-        model = TrainingModel(encoder, 1, 2, 6, 5, 0.0)
+        encoder = Encoder(samples, 0, 0)
+        model = TrainModel(encoder, 1, 2, 6, 5, 0.0)
         q0 = torch.LongTensor([1, 1])
         q1 = torch.LongTensor([1, 1, 1])
         action0 = torch.LongTensor([[-1, -1, -1]])
