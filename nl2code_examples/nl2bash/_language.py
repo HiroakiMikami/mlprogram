@@ -1,7 +1,7 @@
 import bashlex
 from typing import Union, Any
 import nl2prog.language.ast as A
-from nl2prog.language.action import NodeType
+from nl2prog.language.nl2code.action import NodeType
 
 
 def bashlex_ast_to_ast(script: str,

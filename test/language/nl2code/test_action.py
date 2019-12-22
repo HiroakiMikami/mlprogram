@@ -1,8 +1,10 @@
 import unittest
 
-from nl2prog.language.action import NodeType, NodeConstraint
-from nl2prog.language.action import ExpandTreeRule, GenerateToken, ApplyRule
-from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
+from nl2prog.language.nl2code.action \
+    import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
+    NodeConstraint, CloseNode, CloseVariadicFieldRule, \
+    ast_to_action_sequence
+from nl2prog.language import ast
 
 
 class TestNodeType(unittest.TestCase):
@@ -70,6 +72,52 @@ class TestAction(unittest.TestCase):
         self.assertEqual("Generate foo", str(GenerateToken("foo")))
         self.assertEqual("Generate <CLOSE_NODE>", str(
             GenerateToken(CloseNode())))
+
+
+def tokenize(value: str):
+    return value.split(" ")
+
+
+class TestAstToActionSequence(unittest.TestCase):
+    def test_leaf(self):
+        self.assertEqual(
+            [GenerateToken("t0"), GenerateToken(
+                "t1"), GenerateToken(CloseNode())],
+            ast_to_action_sequence(ast.Leaf("str", "t0 t1"), tokenize)
+        )
+
+    def test_node(self):
+        a = ast.Node(
+            "def",
+            [ast.Field("name", "literal", ast.Leaf("str", "foo"))])
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType("def", NodeConstraint.Node),
+                [("name",
+                  NodeType("literal", NodeConstraint.Token))])),
+             GenerateToken("foo"),
+             GenerateToken(CloseNode())],
+            ast_to_action_sequence(a, tokenize)
+        )
+
+    def test_node_with_variadic_fields(self):
+        a = ast.Node("list", [ast.Field("elems", "literal", [
+                     ast.Node("str", []), ast.Node("str", [])])])
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType("list", NodeConstraint.Node),
+                [("elems",
+                  NodeType("literal",
+                           NodeConstraint.Variadic))])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("str", NodeConstraint.Node),
+                 [])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("str", NodeConstraint.Node),
+                 [])),
+             ApplyRule(CloseVariadicFieldRule())],
+            ast_to_action_sequence(a, tokenize)
+        )
 
 
 if __name__ == "__main__":

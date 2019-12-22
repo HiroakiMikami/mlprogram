@@ -1,7 +1,7 @@
 import torch
 import unittest
 import nl2prog.nn.utils.rnn as rnn
-from nl2prog.language.action import NodeConstraint, NodeType
+from nl2prog.language.nl2code.action import NodeConstraint, NodeType
 from nl2code_examples.hearthstone import TrainingModel, DatasetEncoder, Samples
 
 

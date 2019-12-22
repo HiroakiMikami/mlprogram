@@ -3,12 +3,12 @@ import numpy as np
 from typing import List, Union, Callable
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import Predictor
-from nl2prog.language.evaluator import Evaluator
+from nl2prog.language.nl2code.evaluator import Evaluator
 from nl2prog.language.ast import AST
-from nl2prog.language.action import NodeConstraint, NodeType
-from nl2prog.language.action import ExpandTreeRule
-from nl2prog.language.action import Action, ApplyRule, GenerateToken
-from nl2prog.language.encoder import Encoder
+from nl2prog.language.nl2code.action \
+    import NodeConstraint, NodeType, ExpandTreeRule, Action, \
+    ApplyRule, GenerateToken
+from nl2prog.language.nl2code.encoder import Encoder
 from nl2prog.utils import TopKElement
 from nl2prog.nn.utils.rnn import pad_sequence
 

@@ -6,11 +6,11 @@ import numpy as np
 import re
 from nltk import tokenize
 from typing import List, Tuple, Union
-from nl2prog.language.encoder import Encoder
-from nl2prog.language.action import ActionSequence, Rule, NodeType
-from nl2prog.language.action import ApplyRule
-from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
-from nl2prog.language.evaluator import Evaluator
+from nl2prog.language.nl2code.encoder import Encoder
+from nl2prog.language.nl2code.action \
+    import ActionSequence, Rule, NodeType, ApplyRule, \
+    CloseNode, CloseVariadicFieldRule, ast_to_action_sequence
+from nl2prog.language.nl2code.evaluator import Evaluator
 from nl2code_examples.nl2bash import parse, unparse
 
 tokenizer = tokenize.WhitespaceTokenizer()
@@ -59,7 +59,7 @@ def tokenize_token(value: str) -> List[str]:
 def to_action_sequence(code: str) -> ActionSequence:
     try:
         ast = parse(code)
-        return ast.to_action_sequence(tokenize_token)
+        return ast_to_action_sequence(ast, tokenize_token)
     except:  # noqa
         return None
 

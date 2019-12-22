@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Tuple, Union, List, Any
+from nl2prog.language.ast import AST, Node, Leaf, Field
+from typing import Tuple, Union, List, Any, Callable
 from enum import Enum
 
 
@@ -150,3 +151,52 @@ class GenerateToken:
 
 Action = Union[ApplyRule, GenerateToken]
 ActionSequence = List[Action]
+
+Tokenizer = Callable[[str], List[str]]
+
+
+def ast_to_action_sequence(node: AST, tokenizer: Tokenizer) \
+        -> ActionSequence:
+    """
+    Return the action sequence corresponding to this AST
+
+    Parameters
+    ----------
+    node: AST
+    tokenizer: Tokenizer
+        function to tokenize a string
+
+    Returns
+    -------
+    action.ActionSequence
+        The corresponding action sequence
+    """
+    if isinstance(node, Node):
+        def to_node_type(field: Field):
+            if isinstance(field.value, list):
+                return NodeType(field.type_name,
+                                NodeConstraint.Variadic)
+            else:
+                if isinstance(field.value, Leaf):
+                    return NodeType(field.type_name,
+                                    NodeConstraint.Token)
+                else:
+                    return NodeType(field.type_name,
+                                    NodeConstraint.Node)
+        children = list(map(lambda f: (f.name, to_node_type(f)), node.fields))
+
+        seq = [ApplyRule(ExpandTreeRule(
+            NodeType(node.type_name, NodeConstraint.Node),
+            children))]
+        for field in node.fields:
+            if isinstance(field.value, list):
+                for v in field.value:
+                    seq.extend(ast_to_action_sequence(v, tokenizer))
+                seq.append(ApplyRule(CloseVariadicFieldRule()))
+            else:
+                seq.extend(ast_to_action_sequence(field.value, tokenizer))
+        return seq
+    elif isinstance(node, Leaf):
+        tokens: List[Union[str, CloseNode]] = tokenizer(str(node.value))
+        tokens.append(CloseNode())
+        return list(map(lambda x: GenerateToken(x), tokens))

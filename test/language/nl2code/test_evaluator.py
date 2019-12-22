@@ -1,10 +1,10 @@
 import unittest
 
-from nl2prog.language.evaluator import Evaluator, Parent
-from nl2prog.language.evaluator import InvalidActionException
-from nl2prog.language.action import ExpandTreeRule, NodeType, NodeConstraint
-from nl2prog.language.action import ApplyRule, GenerateToken
-from nl2prog.language.action import CloseVariadicFieldRule, CloseNode
+from nl2prog.language.nl2code.evaluator \
+    import Evaluator, Parent, InvalidActionException
+from nl2prog.language.nl2code.action \
+    import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
+    GenerateToken, CloseVariadicFieldRule, CloseNode
 from nl2prog.language.ast import Node, Leaf, Field
 
 

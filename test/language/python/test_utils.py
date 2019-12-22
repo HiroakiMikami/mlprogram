@@ -1,7 +1,7 @@
 import unittest
 import ast as python_ast
 
-from nl2prog.language.action import NodeType
+from nl2prog.language.nl2code.action import NodeType
 from nl2prog.language.python._utils import is_builtin_type
 from nl2prog.language.python import is_subtype
 

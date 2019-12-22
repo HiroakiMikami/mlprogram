@@ -4,10 +4,10 @@ import numpy as np
 
 from nl2prog.utils.nl2code import BeamSearchSynthesizer, Progress, Candidate
 from nl2prog.language.ast import Node, Field, Leaf
-from nl2prog.language.action import NodeConstraint, NodeType
-from nl2prog.language.action import ExpandTreeRule, CloseVariadicFieldRule
-from nl2prog.language.action import ApplyRule, GenerateToken, CloseNode
-from nl2prog.language.encoder import Encoder
+from nl2prog.language.nl2code.action \
+    import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
+    ApplyRule, GenerateToken, CloseNode
+from nl2prog.language.nl2code.encoder import Encoder
 
 
 class MockPredictor:

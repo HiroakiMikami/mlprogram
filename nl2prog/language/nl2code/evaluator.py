@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Dict, Union, List
 from copy import deepcopy
 
-from nl2prog.language import action as A
-from nl2prog.language.action import Action, ActionSequence
+from nl2prog.language.nl2code import action as A
+from nl2prog.language.nl2code.action import Action, ActionSequence
 from nl2prog.language.ast import AST, Node, Leaf, Field
 
 
