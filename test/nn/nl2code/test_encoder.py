@@ -2,7 +2,7 @@ import torch
 import unittest
 import numpy as np
 import nl2prog.nn.utils.rnn as rnn
-from nl2code_examples.django import Encoder
+from nl2prog.nn.nl2code import Encoder
 
 
 class TestEncoder(unittest.TestCase):
