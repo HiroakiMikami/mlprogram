@@ -39,10 +39,12 @@ class TestToPythonAST(unittest.TestCase):
 
     def test_variadic_args(self):
         node = python_ast.List()
-        n = python_ast.Num()
-        s = python_ast.Str()
+        n = python_ast.Constant()
+        s = python_ast.Constant()
         setattr(n, "n", 10)
+        setattr(n, "kind", None)
         setattr(s, "s", "foo")
+        setattr(s, "kind", None)
         setattr(node, "elts", [n, s])
         setattr(node, "ctx", None)
         self.assertEqual(

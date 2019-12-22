@@ -42,7 +42,8 @@ class TestToAST(unittest.TestCase):
         self.assertEqual(
             ast.Node("List", [
                 ast.Field("elts", "expr",
-                          [ast.Node("Num", []), ast.Node("Str", [])])]),
+                          [ast.Node("Constant", []),
+                           ast.Node("Constant", [])])]),
             to_ast(node)
         )
 
