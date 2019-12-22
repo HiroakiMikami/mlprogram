@@ -4,7 +4,7 @@ from typing import List, Union, Callable
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import re
 
-from nl2prog import BeamSearchSynthesizer, Progress
+from nl2prog.utils.nl2code import BeamSearchSynthesizer, Progress
 from nl2prog.language.ast import AST
 from nl2prog.language.python import to_python_ast
 from nl2code_examples.django import unparse

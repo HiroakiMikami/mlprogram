@@ -2,7 +2,7 @@ import torch
 import unittest
 import numpy as np
 
-from nl2prog import BeamSearchSynthesizer, Progress, Candidate
+from nl2prog.utils.nl2code import BeamSearchSynthesizer, Progress, Candidate
 from nl2prog.language.ast import Node, Field, Leaf
 from nl2prog.language.action import NodeConstraint, NodeType
 from nl2prog.language.action import ExpandTreeRule, CloseVariadicFieldRule

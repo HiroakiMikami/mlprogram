@@ -9,7 +9,7 @@ from nl2prog.language.action import NodeConstraint, NodeType
 from nl2prog.language.action import ExpandTreeRule
 from nl2prog.language.action import Action, ApplyRule, GenerateToken
 from nl2prog.language.encoder import Encoder
-from nl2prog._utils import TopKElement
+from nl2prog.utils import TopKElement
 from nl2prog.nn.utils.rnn import pad_sequence
 
 """

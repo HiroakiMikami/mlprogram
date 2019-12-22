@@ -2,7 +2,7 @@ import torch
 import unittest
 from typing import List
 from nl2prog.language.python import to_ast
-from nl2prog import Progress, Candidate
+from nl2prog.utils.nl2code import Progress, Candidate
 from nl2code_examples.hearthstone._validate import bleu4
 from nl2code_examples.hearthstone import validate, parse
 

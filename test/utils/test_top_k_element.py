@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog._utils import TopKElement
+from nl2prog.utils import TopKElement
 
 
 class TestTopKElement(unittest.TestCase):

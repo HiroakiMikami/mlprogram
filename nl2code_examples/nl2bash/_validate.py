@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Union, Callable
 from nltk.translate.bleu_score import sentence_bleu
 
-from nl2prog import BeamSearchSynthesizer, Progress
+from nl2prog.utils.nl2code import BeamSearchSynthesizer, Progress
 from nl2prog.language.ast import AST
 from nl2code_examples.nl2bash import unparse
 
