@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from typing import Tuple
 
-from nl2prog.nn import Decoder
-from nl2prog.nn._pointer_net import PointerNet
-from nl2prog.nn._embedding import EmbeddingWithMask, EmbeddingInverse
+from nl2prog.nn.nl2code import Decoder
+from nl2prog.nn.pointer_net import PointerNet
+from nl2prog.nn.embedding import EmbeddingWithMask, EmbeddingInverse
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 

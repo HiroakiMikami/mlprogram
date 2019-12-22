@@ -1,11 +1,10 @@
 #! /bin/bash
 
-python -m unittest discover $(dirname $0)/../test/language
-python -m unittest discover $(dirname $0)/../test/language/python
-python -m unittest discover $(dirname $0)/../test/nn
-python -m unittest discover $(dirname $0)/../test/nn/utils
-python -m unittest discover $(dirname $0)/../test/
-
-python -m unittest discover $(dirname $0)/../nl2code_examples/django/test
-python -m unittest discover $(dirname $0)/../nl2code_examples/hearthstone/test
-python -m unittest discover $(dirname $0)/../nl2code_examples/nl2bash/test
+for testdir in $(find $(dirname $0)/../ -name test -and -type d)
+do
+    for d in $(find $testdir -type d -and -not -name __pycache__)
+    do
+        echo Test $d
+        python -m unittest discover $d
+    done
+done

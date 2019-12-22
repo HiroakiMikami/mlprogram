@@ -2,8 +2,8 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn._decoder import query_history
-from nl2prog.nn import DecoderCell, Decoder
+from nl2prog.nn.nl2code.decoder import query_history
+from nl2prog.nn.nl2code import DecoderCell, Decoder
 from nl2prog.nn.utils import rnn
 
 

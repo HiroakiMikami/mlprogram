@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn import Predictor
+from nl2prog.nn.nl2code import Predictor
 from nl2prog.nn.utils import rnn
 
 

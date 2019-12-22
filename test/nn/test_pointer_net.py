@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn._pointer_net import PointerNet
+from nl2prog.nn.pointer_net import PointerNet
 from nl2prog.nn.utils.rnn import pad_sequence
 
 

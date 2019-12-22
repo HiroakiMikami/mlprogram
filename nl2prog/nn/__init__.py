@@ -1,8 +1,10 @@
-from ._decoder import DecoderCell, Decoder
-from ._predictor import Predictor
-from ._loss import Loss
-from ._accuracy import Accuracy
-from ._embedding import EmbeddingWithMask
+from .nl2code.decoder import DecoderCell as NL2CodeDecoderCell, \
+    Decoder as NL2CodeDecoder
+from .nl2code.predictor import Predictor as NL2CodePredictor
+from .nl2code.loss import Loss as NL2CodeLoss
+from .nl2code.accuracy import Accuracy as NL2CodeAccuracy
+from .embedding import EmbeddingWithMask
 
-__all__ = ["DecoderCell", "Decoder", "Predictor", "Loss",
-           "EmbeddingWithMask", "Accuracy"]
+__all__ = ["NL2CodeDecoderCell", "NL2CodeDecoder", "NL2CodePredictor",
+           "NL2CodeLoss", "NL2CodeAccuracy",
+           "EmbeddingWithMask"]

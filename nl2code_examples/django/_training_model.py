@@ -16,7 +16,7 @@ class TrainingModel(nn.Module):
         self.encoder = Encoder(encoder.annotation_encoder.vocab_size,
                                embedding_dim, lstm_state_size,
                                dropout=dropout)
-        self.predictor = nnn.Predictor(
+        self.predictor = nnn.NL2CodePredictor(
             encoder.action_sequence_encoder._rule_encoder.vocab_size,
             encoder.action_sequence_encoder._token_encoder.vocab_size,
             encoder.action_sequence_encoder._node_type_encoder.vocab_size,

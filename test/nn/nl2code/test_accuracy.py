@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from nl2prog.nn import Accuracy
+from nl2prog.nn.nl2code import Accuracy
 from nl2prog.nn.utils import rnn
 
 

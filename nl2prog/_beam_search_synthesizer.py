@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from typing import List, Union, Callable
 from dataclasses import dataclass
-from nl2prog.nn import Predictor
+from nl2prog.nn.nl2code import Predictor
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.language.ast import AST
 from nl2prog.language.action import NodeConstraint, NodeType
