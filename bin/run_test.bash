@@ -5,6 +5,6 @@ do
     for d in $(find $testdir -type d -and -not -name __pycache__)
     do
         echo Test $d
-        python -m unittest discover $d
+        python -m unittest discover $d || exit 1
     done
 done
