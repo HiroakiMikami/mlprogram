@@ -4,7 +4,7 @@ from typing import Tuple
 import nl2prog.nn as nnn
 import nl2prog.nn.utils.rnn as rnn
 from nl2prog.nn.nl2code import Encoder
-from nl2code_examples.hearthstone import DatasetEncoder
+from nl2code_examples.nl2bash import DatasetEncoder
 
 
 class TrainingModel(nn.Module):

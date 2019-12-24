@@ -29,7 +29,7 @@ I showed the difference between the original repository and this one later. One 
 |         |Accuracy|BLEU4|
 |---------|-------:|----:|
 |original |   16.2%|75.8%|
-|this repo|    3.0%|66.4%|
+|this repo|    1.5%|79.7%|
 
 ### nl2bash Dataset
 
