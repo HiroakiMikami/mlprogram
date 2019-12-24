@@ -1,9 +1,8 @@
 from setuptools import setup
 
-requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk"]
+requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex"]
 extras = {
     "test": ["flake8", "autopep8"],
-    "examples": ["bashlex", "tensorboard"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }
