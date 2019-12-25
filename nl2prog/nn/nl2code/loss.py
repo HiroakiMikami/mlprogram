@@ -66,9 +66,10 @@ class Loss(nn.Module):
         copy_prob = torch.sum(copy_prob, dim=2)  # (L_a, B)
 
         prob = rule_prob + token_prob + copy_prob  # (L_a, B)
-        prob = prob + (prob < 1e-7).float() * \
+        prob = prob + (prob < 1e-7).to(rule_prob.dtype) * \
             1e-7  # avoid zero division
 
         likelihood = torch.log(prob)  # (L_a, B)
-        loss = -likelihood * ground_truth_action.mask.float()  # (L_a, B)
+        loss = -likelihood * \
+            ground_truth_action.mask.to(rule_prob.dtype)  # (L_a, B)
         return torch.mean(torch.sum(loss, dim=0))

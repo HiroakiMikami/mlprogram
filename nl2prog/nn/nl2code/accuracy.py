@@ -50,5 +50,5 @@ class Accuracy(nn.Module):
         token_acc = ((token_pred == gt_token) * (gt_token != -1).long()).sum()
         copy_acc = ((copy_pred == gt_copy) * (gt_copy != -1).long()).sum()
 
-        return (rule_acc + token_acc + copy_acc).float() \
+        return (rule_acc + token_acc + copy_acc).to(rule_prob.data.dtype) \
             / (n_rule + n_token + n_copy)

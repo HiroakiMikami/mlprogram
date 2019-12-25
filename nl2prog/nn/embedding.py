@@ -34,7 +34,7 @@ class EmbeddingWithMask(nn.Embedding):
 
     def forward(self, input: torch.LongTensor) -> torch.FloatTensor:
         embedding = super(EmbeddingWithMask, self).forward(input)
-        mask = 1 - (input == self._value_to_mask).float()
+        mask = 1 - (input == self._value_to_mask).to(embedding.dtype)
 
         return embedding * mask.reshape([*mask.shape, 1])
 

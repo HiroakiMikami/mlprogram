@@ -126,7 +126,7 @@ class DecoderCell(nn.Module):
         ctx_att = torch.exp(att_raw -
                             torch.max(att_raw, dim=0, keepdim=True).values
                             )  # (L_q, B)
-        ctx_att = ctx_att * query.mask.float()  # (L_q, B)
+        ctx_att = ctx_att * query.mask.to(input.dtype)  # (L_q, B)
         ctx_att = ctx_att / torch.sum(ctx_att, dim=0, keepdim=True)  # (L_q, B)
         ctx_att = ctx_att.reshape([L_q, B, 1])  # (L_q, B, 1)
         ctx_vec = torch.sum(query.data * ctx_att, dim=0)  # (B, query_size)
