@@ -38,7 +38,9 @@ class Gating(nn.Module):
         alpha = torch.cat([torch.bmm(q.view(L * N, 1, -1),
                                      k0.view(L * N, -1, 1)),
                            torch.bmm(q.view(L * N, 1, -1),
-                                     k1.view(L * N, -1, 1))]).view(L, N, -1)
+                                     k1.view(L * N, -1, 1))],
+                          dim=1)
+        alpha = alpha.view(L, N, -1)
         alpha = torch.softmax(alpha, dim=2)  # (L, N, 2)
         v0 = self.w_f0(input0.view(L * N, -1)).view(L, N, -1)
         v1 = self.w_f1(input1.view(L * N, -1)).view(L, N, -1)
