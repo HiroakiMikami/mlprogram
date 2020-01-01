@@ -30,7 +30,7 @@ def position_embeddings(position_tensor: torch.LongTensor, b: int, E: int,
     divisor = torch.arange(0, E) // 2
     divisor = torch.pow(10000, 2 * divisor.to(dtype=dtype) / E)
     embeddings = position_tensor.view(L, N, 1).expand(L, N, E).to(dtype=dtype)
-    embeddings += b
+    embeddings = embeddings + b
     embeddings = embeddings
     embeddings /= divisor
     return torch.sin(embeddings)
