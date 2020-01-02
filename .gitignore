@@ -6,11 +6,7 @@
 !/setup.py
 !/nl2prog/**/*.py
 !/bin/*.bash
-!/nl2code_examples/*.py
-!/nl2code_examples/*.ipynb
-!/nl2code_examples/**/*.py
-!/nl2code_examples/**/test/*.py
-!/nl2code_examples/**/*.ipynb
+!/examples/**/*.ipynb
 !/test/**/*.py
 !/result/**/*.log
 !/images/*.png
