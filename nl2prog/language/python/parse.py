@@ -1,14 +1,25 @@
 import ast as python_ast
 import transpyle
+from enum import Enum
 from typing import Union
 from nl2prog.language.ast import AST
 from .python_ast_to_ast import to_ast
 from .ast_to_python_ast import to_python_ast
 
 
-def parse(code: str) -> Union[AST, None]:
+class ParseMode(Enum):
+    Single = 1
+    Eval = 2
+    Exec = 3
+
+
+def parse(code: str, mode: ParseMode = ParseMode.Single) -> Union[AST, None]:
     try:
-        return to_ast(python_ast.parse(code).body[0])
+        past = python_ast.parse(code)
+        if mode == ParseMode.Exec:
+            return to_ast(past)
+        else:
+            return to_ast(past.body[0])
     except:  # noqa
         return None
 
