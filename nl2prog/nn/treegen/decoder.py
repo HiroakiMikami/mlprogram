@@ -31,7 +31,7 @@ class DecoderBlock(nn.Module):
         Parameters
         ----------
         query: PaddedSequenceWithMask
-            (L_q, N, query_size) where L_q is the sequence length,
+            (L_ast, N, query_size) where L_ast is the sequence length,
             N is the batch size.
         nl_feature: PaddedSequenceWithMask
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
@@ -43,22 +43,24 @@ class DecoderBlock(nn.Module):
         Returns
         -------
         output: PaddedSequenceWithMask
-            (L_q, N, out_size) where L_q is the sequence length,
+            (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
         nl_attn_weights: torch.Tensor
-            (N, L_nl, L_q) where N is the batch size,
+            (N, L_nl, L_ast) where N is the batch size,
             L_nl is the sequence length of NL query,
-            L_q is the query sequence length.
+            L_ast is the ast sequence length.
         ast_attn_weights: torch.Tensor
-            (N, L_ast, L_q) where N is the batch size,
-            L_ast is the sequence length of ast,
-            L_q is the query sequence length.
+            (N, L_ast, L_ast) where N is the batch size,
+            L_ast is the sequence length of ast.
         """
-        L_q, N, _ = query.data.shape
+        L_ast, N, _ = query.data.shape
+        attn_mask = \
+            torch.nn.Transformer.generate_square_subsequent_mask(None, L_ast)
         h_in = query.data
         h, ast_attn = self.ast_attention(
             key=ast_feature.data, query=h_in, value=ast_feature.data,
-            key_padding_mask=ast_feature.mask.permute(1, 0) == 0)
+            key_padding_mask=ast_feature.mask.permute(1, 0) == 0,
+            attn_mask=attn_mask)
         h = h + h_in
         h = self.norm1(h)
 
@@ -70,14 +72,14 @@ class DecoderBlock(nn.Module):
         h = self.norm2(h)
 
         h_in = h
-        h = h * query.mask.to(h.dtype).reshape(L_q, N, 1)
-        h = self.fc1(h.view(L_q * N, -1))
+        h = h * query.mask.to(h.dtype).reshape(L_ast, N, 1)
+        h = self.fc1(h.view(L_ast * N, -1))
         h = self.dropout(h)
         h = gelu(h)
         h = self.fc2(h)
         h = self.dropout(h)
-        h = h.view(L_q, N, -1)
-        h = h * query.mask.to(h.dtype).reshape(L_q, N, 1)
+        h = h.view(L_ast, N, -1)
+        h = h * query.mask.to(h.dtype).reshape(L_ast, N, 1)
         h = h + h_in
         h = self.norm3(h)
 
@@ -108,7 +110,7 @@ class Decoder(nn.Module):
         Parameters
         ----------
         query: PaddedSequenceWithMask
-            (L_q, N, query_size) where L_q is the sequence length,
+            (L_ast, N, query_size) where L_ast is the sequence length,
             N is the batch size.
         nl_feature: torch.Tensor
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
@@ -120,7 +122,7 @@ class Decoder(nn.Module):
         Returns
         -------
         output: PaddedSequenceWithMask
-            (L_q, N, out_size) where L_q is the sequence length,
+            (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
         """
         input = query
