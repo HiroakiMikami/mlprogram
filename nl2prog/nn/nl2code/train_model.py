@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 from typing import Tuple
-from nl2prog import nn as nnn
 from nl2prog.nn.utils import rnn
-from nl2prog.nn.nl2code import Encoder as EncoderModule
+from nl2prog.nn.nl2code import Encoder as EncoderModule, Predictor
 from nl2prog.utils.data.nl2code import Encoder
 
 
@@ -17,7 +16,7 @@ class TrainModel(nn.Module):
         self.encoder = EncoderModule(encoder.annotation_encoder.vocab_size,
                                      embedding_dim, lstm_state_size,
                                      dropout=dropout)
-        self.predictor = nnn.NL2CodePredictor(
+        self.predictor = Predictor(
             encoder.action_sequence_encoder._rule_encoder.vocab_size,
             encoder.action_sequence_encoder._token_encoder.vocab_size,
             encoder.action_sequence_encoder._node_type_encoder.vocab_size,
