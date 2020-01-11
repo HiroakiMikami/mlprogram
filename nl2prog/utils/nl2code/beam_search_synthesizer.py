@@ -3,19 +3,19 @@ import numpy as np
 from typing import List, Union, Callable
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import Predictor
-from nl2prog.language.nl2code.evaluator import Evaluator
+from nl2prog.language.evaluator import Evaluator
 from nl2prog.language.ast import AST
-from nl2prog.language.nl2code.action \
+from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, Action, \
-    ApplyRule, GenerateToken
-from nl2prog.language.nl2code.encoder import Encoder
+    ApplyRule, GenerateToken, ActionOptions
+from nl2prog.language.encoder import Encoder
 from nl2prog.utils import TopKElement
 from nl2prog.nn.utils.rnn import pad_sequence
 
 """
 True if the argument 0 is subtype of the argument 1
 """
-IsSubtype = Callable[[NodeType, NodeType], bool]
+IsSubtype = Callable[[str, str], bool]
 
 
 @dataclass
@@ -47,7 +47,8 @@ class Candidate:
 class BeamSearchSynthesizer:
     def __init__(self, beam_size: int,
                  predictor: Predictor, action_sequence_encoder: Encoder,
-                 is_subtype: IsSubtype, eps: float = 1e-8,
+                 is_subtype: IsSubtype, options=ActionOptions(True, True),
+                 eps: float = 1e-8,
                  max_steps: Union[int, None] = None):
         """
         Parameters
@@ -60,6 +61,7 @@ class BeamSearchSynthesizer:
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
+        options: ActionOptions
         eps: float
         max_steps: Union[int, None]
         """
@@ -68,6 +70,7 @@ class BeamSearchSynthesizer:
         self._hidden_size = predictor.hidden_size  # TODO
         self._action_sequence_encoder = action_sequence_encoder
         self._is_subtype = is_subtype
+        self._options = options
         self._eps = eps
         self._max_steps = max_steps
 
@@ -101,7 +104,8 @@ class BeamSearchSynthesizer:
         hist_0 = torch.zeros(0, self._hidden_size,
                              device=device)  # (0, hidden_size)
         hs: List[Hypothesis] = \
-            [Hypothesis(0, None, 0.0, Evaluator(), hist_0, h_0, c_0)]
+            [Hypothesis(0, None, 0.0, Evaluator(self._options),
+                        hist_0, h_0, c_0)]
         n_ids += 1
 
         steps = 0
@@ -120,15 +124,22 @@ class BeamSearchSynthesizer:
             c_n = []
             for elem in hs:
                 query_seq.append(query_embedding)
-                # (L_a + 1, 6)
-                action_tensor = self._action_sequence_encoder.encode(
-                    elem.evaluator,
-                    query)
-                action.append(action_tensor.action[-1]
-                              .to(device).view(1, -1))  # (1, 3)
-                prev_action.append(
-                    action_tensor.previous_action[-1]
-                    .to(device).view(1, -1))  # (1, 3)
+                # (L_a + 1, 4)
+                a = self._action_sequence_encoder.encode_action(
+                    elem.evaluator, query)
+                # (L_a + 1, 3)
+                p = self._action_sequence_encoder.encode_parent(elem.evaluator)
+                # (1, 3)
+                action.append(
+                    torch.cat([a[-1, 0].view(1, -1),
+                               p[-1, 1:3].view(1, -1)], dim=1).to(device)
+                )
+                if a.shape[0] == 1:
+                    prev_action.append(
+                        a[-1, 1:].to(device).view(1, -1))  # (1, 3)
+                else:
+                    prev_action.append(
+                        a[-2, 1:].to(device).view(1, -1))  # (1, 3)
                 hist.append(elem.history.to(device))
                 h_n.append(elem.h_n.to(device))
                 c_n.append(elem.c_n.to(device))
@@ -222,14 +233,36 @@ class BeamSearchSynthesizer:
                         else:
                             p = np.log(x)
                         if isinstance(idx_to_rule[j], ExpandTreeRule):
-                            if head_field is None or \
-                                    self._is_subtype(idx_to_rule[j].parent,
-                                                     head_field):
-                                topk.add(h.score + p,
-                                         (i, "rule", idx_to_rule[j]))
+                            if self._options.retain_vairadic_fields:
+                                if head_field is None or \
+                                        self._is_subtype(
+                                            idx_to_rule[j].parent.type_name,
+                                            head_field.type_name):
+                                    topk.add(h.score + p,
+                                             (i, "rule", idx_to_rule[j]))
+                            else:
+                                if head_field is None:
+                                    if idx_to_rule[j].parent.constraint != \
+                                            NodeConstraint.Variadic:
+                                        topk.add(h.score + p,
+                                                 (i, "rule", idx_to_rule[j]))
+                                elif (head_field.constraint ==
+                                      NodeConstraint.Variadic) or \
+                                    (idx_to_rule[j].parent.constraint ==
+                                        NodeConstraint.Variadic):
+                                    if idx_to_rule[j].parent == \
+                                            head_field:
+                                        topk.add(h.score + p,
+                                                 (i, "rule", idx_to_rule[j]))
+                                elif self._is_subtype(
+                                        idx_to_rule[j].parent.type_name,
+                                        head_field.type_name):
+                                    topk.add(h.score + p,
+                                             (i, "rule", idx_to_rule[j]))
                         else:
                             # CloseVariadicFieldRule
-                            if head_field is not None and \
+                            if self._options.retain_vairadic_fields and \
+                                head_field is not None and \
                                 head_field.constraint == \
                                     NodeConstraint.Variadic:
                                 topk.add(h.score + p,

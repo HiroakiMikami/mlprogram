@@ -2,15 +2,28 @@ import torch
 import unittest
 import numpy as np
 
-from nl2prog.language.nl2code.action \
+from nl2prog.language.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
-    ApplyRule, GenerateToken
-from nl2prog.language.nl2code.evaluator import Evaluator
-from nl2prog.language.nl2code.encoder import Encoder
+    ApplyRule, GenerateToken, ActionOptions
+from nl2prog.language.evaluator import Evaluator
+from nl2prog.language.encoder import Encoder
 
 
 class TestEncoder(unittest.TestCase):
-    def test_encode(self):
+    def test_reserved_labels(self):
+        encoder = Encoder([], [], [], 0)
+        self.assertEqual(2, len(encoder._rule_encoder.vocab))
+        self.assertEqual(2, len(encoder._token_encoder.vocab))
+
+        encoder = Encoder([], [], [], 0, ActionOptions(False, True))
+        self.assertEqual(1, len(encoder._rule_encoder.vocab))
+        self.assertEqual(2, len(encoder._token_encoder.vocab))
+
+        encoder = Encoder([], [], [], 0, ActionOptions(True, False))
+        self.assertEqual(2, len(encoder._rule_encoder.vocab))
+        self.assertEqual(1, len(encoder._token_encoder.vocab))
+
+    def test_encode_action(self):
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
                                  [("name",
                                    NodeType("value", NodeConstraint.Token)),
@@ -35,29 +48,57 @@ class TestEncoder(unittest.TestCase):
         evaluator.eval(GenerateToken("1"))
         evaluator.eval(GenerateToken("2"))
         evaluator.eval(GenerateToken(CloseNode()))
-        encoded_tensor = encoder.encode(evaluator, ["1", "2"])
+        action = encoder.encode_action(evaluator, ["1", "2"])
 
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1],
-                [2, 2, 0],
-                [2, 2, 0],
-                [2, 2, 0],
-                [2, 2, 0],
-                [3, 2, 0]
+                [-1, 2, -1, -1],
+                [2, -1, 2, -1],
+                [2, -1, -1, 0],
+                [2, -1, 3, 1],
+                [2, -1, 1, -1],
+                [3, -1, -1, -1]
             ],
-            encoded_tensor.action.numpy()
+            action.numpy()
         ))
+
+    def test_encode_parent(self):
+        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
+                                 [("name",
+                                   NodeType("value", NodeConstraint.Token)),
+                                  ("body",
+                                   NodeType("expr", NodeConstraint.Variadic))])
+        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+                              [("op", NodeType("value", NodeConstraint.Token)),
+                               ("arg0",
+                                NodeType("value", NodeConstraint.Token)),
+                               ("arg1",
+                                NodeType("value", NodeConstraint.Token))])
+
+        encoder = Encoder([funcdef, expr],
+                          [NodeType("def", NodeConstraint.Node),
+                           NodeType("value", NodeConstraint.Token),
+                           NodeType("expr", NodeConstraint.Node)],
+                          ["f", "2"],
+                          0)
+        evaluator = Evaluator()
+        evaluator.eval(ApplyRule(funcdef))
+        evaluator.eval(GenerateToken("f"))
+        evaluator.eval(GenerateToken("1"))
+        evaluator.eval(GenerateToken("2"))
+        evaluator.eval(GenerateToken(CloseNode()))
+        parent = encoder.encode_parent(evaluator)
+
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1],
-                [2, -1, -1],
-                [-1, 2, -1],
-                [-1, -1, 0],
-                [-1, 3, 1],
-                [-1, 1, -1]
+                [-1, -1, -1, -1],
+                [1, 2, 0, 0],
+                [1, 2, 0, 0],
+                [1, 2, 0, 0],
+                [1, 2, 0, 0],
+                [1, 2, 0, 1]
             ],
-            encoded_tensor.previous_action.numpy()
+            parent.numpy()
         ))
 
     def test_encode_empty_sequence(self):
@@ -80,19 +121,20 @@ class TestEncoder(unittest.TestCase):
                           ["f"],
                           0)
         evaluator = Evaluator()
-        encoded_tensor = encoder.encode(evaluator, ["1"])
+        action = encoder.encode_action(evaluator, ["1"])
+        parent = encoder.encode_parent(evaluator)
 
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1]
+                [-1, -1, -1, -1]
             ],
-            encoded_tensor.action.numpy()
+            action.numpy()
         ))
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1]
+                [-1, -1, -1, -1]
             ],
-            encoded_tensor.previous_action.numpy()
+            parent.numpy()
         ))
 
     def test_encode_invalid_sequence(self):
@@ -120,7 +162,7 @@ class TestEncoder(unittest.TestCase):
         evaluator.eval(GenerateToken("1"))
         evaluator.eval(GenerateToken(CloseNode()))
 
-        self.assertEqual(None, encoder.encode(evaluator, ["2"]))
+        self.assertEqual(None, encoder.encode_action(evaluator, ["2"]))
 
     def test_encode_completed_sequence(self):
         none = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
@@ -131,21 +173,22 @@ class TestEncoder(unittest.TestCase):
                           0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(none))
-        encoded_tensor = encoder.encode(evaluator, ["1"])
+        action = encoder.encode_action(evaluator, ["1"])
+        parent = encoder.encode_parent(evaluator)
 
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1],
-                [-1, -1, -1]
+                [-1, 2, -1, -1],
+                [-1, -1, -1, -1]
             ],
-            encoded_tensor.action.numpy()
+            action.numpy()
         ))
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1],
-                [2, -1, -1],
+                [-1, -1, -1, -1],
+                [-1, -1, -1, -1]
             ],
-            encoded_tensor.previous_action.numpy()
+            parent.numpy()
         ))
 
     def test_decode(self):
@@ -173,8 +216,8 @@ class TestEncoder(unittest.TestCase):
         evaluator.eval(GenerateToken("1"))
         evaluator.eval(GenerateToken(CloseNode()))
 
-        result = encoder.decode(encoder.encode(
-            evaluator, ["1"]).previous_action[1:, :], ["1"])
+        result = encoder.decode(encoder.encode_action(
+            evaluator, ["1"])[:-1, 1:], ["1"])
         self.assertEqual(evaluator.action_sequence, result)
 
     def test_decode_invalid_tensor(self):

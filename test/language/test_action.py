@@ -1,9 +1,9 @@
 import unittest
 
-from nl2prog.language.nl2code.action \
+from nl2prog.language.action \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseNode, CloseVariadicFieldRule, \
-    ast_to_action_sequence
+    ActionOptions, ast_to_action_sequence
 from nl2prog.language import ast
 
 
@@ -83,7 +83,13 @@ class TestAstToActionSequence(unittest.TestCase):
         self.assertEqual(
             [GenerateToken("t0"), GenerateToken(
                 "t1"), GenerateToken(CloseNode())],
-            ast_to_action_sequence(ast.Leaf("str", "t0 t1"), tokenize)
+            ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
+                                   tokenizer=tokenize)
+        )
+        self.assertEqual(
+            [GenerateToken("t0 t1")],
+            ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
+                                   ActionOptions(True, False))
         )
 
     def test_node(self):
@@ -97,7 +103,7 @@ class TestAstToActionSequence(unittest.TestCase):
                   NodeType("literal", NodeConstraint.Token))])),
              GenerateToken("foo"),
              GenerateToken(CloseNode())],
-            ast_to_action_sequence(a, tokenize)
+            ast_to_action_sequence(a, tokenizer=tokenize)
         )
 
     def test_node_with_variadic_fields(self):
@@ -116,7 +122,25 @@ class TestAstToActionSequence(unittest.TestCase):
                  NodeType("str", NodeConstraint.Node),
                  [])),
              ApplyRule(CloseVariadicFieldRule())],
-            ast_to_action_sequence(a, tokenize)
+            ast_to_action_sequence(a, tokenizer=tokenize)
+        )
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType("list", NodeConstraint.Node),
+                [("elems",
+                  NodeType("literal",
+                           NodeConstraint.Variadic))])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("literal", NodeConstraint.Variadic),
+                 [("0", NodeType("literal", NodeConstraint.Node)),
+                  ("1", NodeType("literal", NodeConstraint.Node))])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("str", NodeConstraint.Node),
+                 [])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("str", NodeConstraint.Node),
+                 []))],
+            ast_to_action_sequence(a, options=ActionOptions(False, True))
         )
 
 

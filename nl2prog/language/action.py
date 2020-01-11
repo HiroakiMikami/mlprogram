@@ -11,6 +11,12 @@ class NodeConstraint(Enum):
 
 
 @dataclass
+class ActionOptions:
+    retain_vairadic_fields: bool
+    split_non_terminal: bool
+
+
+@dataclass
 class NodeType:
     """
     The type of the AST node
@@ -155,7 +161,9 @@ ActionSequence = List[Action]
 Tokenizer = Callable[[str], List[str]]
 
 
-def ast_to_action_sequence(node: AST, tokenizer: Tokenizer) \
+def ast_to_action_sequence(node: AST,
+                           options: ActionOptions = ActionOptions(True, True),
+                           tokenizer: Union[Tokenizer, None] = None) \
         -> ActionSequence:
     """
     Return the action sequence corresponding to this AST
@@ -163,8 +171,10 @@ def ast_to_action_sequence(node: AST, tokenizer: Tokenizer) \
     Parameters
     ----------
     node: AST
-    tokenizer: Tokenizer
-        function to tokenize a string
+    options: ActionOptions
+    tokenizer: Union[Tokenizer, None]
+        function to tokenize a string.
+        This is required if the options.split_non_terminal is True.
 
     Returns
     -------
@@ -190,13 +200,26 @@ def ast_to_action_sequence(node: AST, tokenizer: Tokenizer) \
             children))]
         for field in node.fields:
             if isinstance(field.value, list):
+                if not options.retain_vairadic_fields:
+                    elem_type_name = to_node_type(field).type_name
+                    elem = NodeType(elem_type_name, NodeConstraint.Node)
+                    seq.append(ApplyRule(ExpandTreeRule(
+                        NodeType(elem_type_name, NodeConstraint.Variadic),
+                        [(str(i), elem) for i in range(len(field.value))]
+                    )))
                 for v in field.value:
-                    seq.extend(ast_to_action_sequence(v, tokenizer))
-                seq.append(ApplyRule(CloseVariadicFieldRule()))
+                    seq.extend(ast_to_action_sequence(v, options,
+                                                      tokenizer))
+                if options.retain_vairadic_fields:
+                    seq.append(ApplyRule(CloseVariadicFieldRule()))
             else:
-                seq.extend(ast_to_action_sequence(field.value, tokenizer))
+                seq.extend(ast_to_action_sequence(
+                    field.value, options, tokenizer))
         return seq
     elif isinstance(node, Leaf):
-        tokens: List[Union[str, CloseNode]] = tokenizer(str(node.value))
-        tokens.append(CloseNode())
-        return list(map(lambda x: GenerateToken(x), tokens))
+        if options.split_non_terminal:
+            tokens: List[Union[str, CloseNode]] = tokenizer(str(node.value))
+            tokens.append(CloseNode())
+            return list(map(lambda x: GenerateToken(x), tokens))
+        else:
+            return [GenerateToken(node.value)]

@@ -1,9 +1,4 @@
-from nl2prog.language.nl2code.action import NodeType
-
-
-def is_subtype(subtype: NodeType, basetype: NodeType) -> bool:
-    subtype = subtype.type_name
-    basetype = basetype.type_name
+def is_subtype(subtype: str, basetype: str) -> bool:
     if basetype == "Node" and subtype != "str":
         return True
     if basetype == subtype:

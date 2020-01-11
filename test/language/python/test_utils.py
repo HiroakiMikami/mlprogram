@@ -1,7 +1,6 @@
 import unittest
 import ast as python_ast
 
-from nl2prog.language.nl2code.action import NodeType
 from nl2prog.language.python.utils import is_builtin_type
 from nl2prog.language.python import is_subtype
 
@@ -18,24 +17,12 @@ class TestIsBuiltinType(unittest.TestCase):
 
 class TestIsSubtype(unittest.TestCase):
     def test_ast(self):
-        self.assertTrue(is_subtype(
-            NodeType("Expr", None),
-            NodeType("AST", None)
-        ))
-        self.assertFalse(is_subtype(
-            NodeType("Expr", None),
-            NodeType("Name", None)
-        ))
+        self.assertTrue(is_subtype("Expr", "AST"))
+        self.assertFalse(is_subtype("Expr", "Name"))
 
     def test_builtin(self):
-        self.assertTrue(is_subtype(
-            NodeType("int", None),
-            NodeType("int", None)
-        ))
-        self.assertFalse(is_subtype(
-            NodeType("str", None),
-            NodeType("int", None)
-        ))
+        self.assertTrue(is_subtype("int", "int"))
+        self.assertFalse(is_subtype("str", "int"))
 
 
 if __name__ == "__main__":

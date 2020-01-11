@@ -1,8 +1,8 @@
 from torchnlp.encoders import LabelEncoder
 from dataclasses import dataclass
 from typing import List, Union
-from nl2prog.language.nl2code.encoder import Encoder as ActionEncoder
-from nl2prog.language.nl2code.action \
+from nl2prog.language.encoder import Encoder as ActionEncoder
+from nl2prog.language.action \
     import Rule, NodeType, CloseNode
 
 

@@ -55,10 +55,10 @@ class TestPredictor(unittest.TestCase):
             predictor(pad_sequence([f, f]), pad_sequence([nl0, nl1]))
         rule1 = rule1.data[:11, :1, :]
         copy1 = copy1.data[:11, :1, :13]
-        self.assertTrue(np.array_equal(rule0.data.detach().numpy(),
-                                       rule1.detach().numpy()))
-        self.assertTrue(np.array_equal(copy0.data.detach().numpy(),
-                                       copy1.detach().numpy()))
+        self.assertTrue(np.allclose(rule0.data.detach().numpy(),
+                                    rule1.detach().numpy()))
+        self.assertTrue(np.allclose(copy0.data.detach().numpy(),
+                                    copy1.detach().numpy()))
 
 
 if __name__ == "__main__":

@@ -3,12 +3,12 @@ from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Union
 from dataclasses import dataclass
 
-from nl2prog.language.nl2code.action import NodeType, NodeConstraint
-from nl2prog.language.nl2code.action import ActionSequence
-from nl2prog.language.nl2code.action import ApplyRule, GenerateToken
-from nl2prog.language.nl2code.action import Rule, ExpandTreeRule
-from nl2prog.language.nl2code.action import CloseNode, CloseVariadicFieldRule
-from nl2prog.language.nl2code.evaluator import Evaluator
+from nl2prog.language.action import NodeType, NodeConstraint
+from nl2prog.language.action import ActionSequence, ActionOptions
+from nl2prog.language.action import ApplyRule, GenerateToken
+from nl2prog.language.action import Rule, ExpandTreeRule
+from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
+from nl2prog.language.evaluator import Evaluator
 
 
 def convert_node_type_to_key(node_type: NodeType):
@@ -45,18 +45,22 @@ class Unknown:
 class Encoder:
     def __init__(self,
                  rules: List[Rule], node_types: List[NodeType],
-                 tokens: List[str], token_threshold: int):
+                 tokens: List[str], token_threshold: int,
+                 options=ActionOptions(True, True)):
+        reserved_labels = [Unknown()]
+        if options.retain_vairadic_fields:
+            reserved_labels.append(CloseVariadicFieldRule())
         self._rule_encoder = LabelEncoder(rules,
-                                          reserved_labels=[
-                                              Unknown(),
-                                              CloseVariadicFieldRule()],
+                                          reserved_labels=reserved_labels,
                                           unknown_index=0)
         self._node_type_encoder = LabelEncoder(list(
             map(convert_node_type_to_key, node_types)))
+        reserved_labels = [Unknown()]
+        if options.split_non_terminal:
+            reserved_labels.append(CloseNode())
         self._token_encoder = LabelEncoder(tokens,
                                            min_occurrences=token_threshold,
-                                           reserved_labels=[
-                                               Unknown(), CloseNode()],
+                                           reserved_labels=reserved_labels,
                                            unknown_index=0)
 
     def decode(self, tensor: torch.LongTensor, query: List[str]) \
@@ -103,8 +107,8 @@ class Encoder:
 
         return retval
 
-    def encode(self, evaluator: Evaluator, query: List[str]) \
-            -> Union[ActionTensor, None]:
+    def encode_action(self, evaluator: Evaluator, query: List[str]) \
+            -> Union[torch.Tensor, None]:
         """
         Return the tensor encoded the action sequence
 
@@ -116,21 +120,15 @@ class Encoder:
 
         Returns
         -------
-        Union[ActionTensor, None]
-            The encoded tensor. The shape of `action` tensor is
-            (len(action_sequence) + 1, 3). Each action will be encoded by
-            the tuple of (ID of the node types, ID of the parent-action's rule,
-            the index of the parent action).
-            The shape of `previous_action` tensor is
-            (len(action_sequence) + 1, 3). Each action will be encoded by
-            the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
-            The padding value should be -1.
+        Union[torch.Tensor, None]
+            The encoded tensor. The shape of tensor is
+            (len(action_sequence) + 1, 4). Each action will be encoded by
+            the tuple of (ID of the node types, ID of the applied rule,
+            ID of the inserted token, the index of the word copied from
+            the query. The padding value should be -1.
             None if the action sequence cannot be encoded.
         """
-        action = torch.ones(len(evaluator.action_sequence) + 1, 3).long() * -1
-        prev_action = torch.ones(
-            len(evaluator.action_sequence) + 1, 3).long() * -1
+        action = torch.ones(len(evaluator.action_sequence) + 1, 4).long() * -1
 
         for i in range(len(evaluator.action_sequence)):
             a = evaluator.action_sequence[i]
@@ -142,22 +140,20 @@ class Encoder:
                 action[i, 0] = self._node_type_encoder.encode(
                     convert_node_type_to_key(
                         parent_rule.children[parent.field][1]))
-                action[i, 1] = self._rule_encoder.encode(parent_rule)
-                action[i, 2] = parent.action
 
             if isinstance(a, ApplyRule):
                 rule = a.rule
-                prev_action[i + 1, 0] = self._rule_encoder.encode(rule)
+                action[i, 1] = self._rule_encoder.encode(rule)
             else:
                 token = a.token
                 encoded_token = int(self._token_encoder.encode(token).numpy())
 
                 if encoded_token != 0:
-                    prev_action[i + 1, 1] = encoded_token
+                    action[i, 2] = encoded_token
 
                 # Unknown token
                 if token in query:
-                    prev_action[i + 1, 2] = query.index(token)
+                    action[i, 3] = query.index(token)
 
                 if encoded_token == 0 and token not in query:
                     return None
@@ -170,10 +166,56 @@ class Encoder:
             head_rule: ExpandTreeRule = head_action.rule
             action[length, 0] = self._node_type_encoder.encode(
                 convert_node_type_to_key(head_rule.children[head.field][1]))
-            action[length, 1] = self._rule_encoder.encode(head_rule)
-            action[length, 2] = head.action
 
-        return ActionTensor(action, prev_action)
+        return action
+
+    def encode_parent(self, evaluator) -> torch.Tensor:
+        """
+        Return the tensor encoded the action sequence
+
+        Parameters
+        ----------
+        evaluator: Evaluator
+            The evaluator containing action sequence to be encoded
+
+        Returns
+        -------
+        torch.Tensor
+            The encoded tensor. The shape of `action` tensor is
+            (len(action_sequence) + 1, 4). Each action will be encoded by
+            the tuple of (ID of the parent node types, ID of the
+            parent-action's rule, the index of the parent action,
+            the index of the field).
+            The padding value should be -1.
+        """
+        parent_tensor = \
+            torch.ones(len(evaluator.action_sequence) + 1, 4).long() * -1
+
+        for i in range(len(evaluator.action_sequence)):
+            parent = evaluator.parent(i)
+            if parent is not None:
+                parent_action: ApplyRule = \
+                    evaluator.action_sequence[parent.action]
+                parent_rule: ExpandTreeRule = parent_action.rule
+                parent_tensor[i, 0] = self._node_type_encoder.encode(
+                    convert_node_type_to_key(parent_rule.parent))
+                parent_tensor[i, 1] = self._rule_encoder.encode(parent_rule)
+                parent_tensor[i, 2] = parent.action
+                parent_tensor[i, 3] = parent.field
+
+        head = evaluator.head
+        length = len(evaluator.action_sequence)
+        if head is not None:
+            head_action: ApplyRule = \
+                evaluator.action_sequence[head.action]
+            head_rule: ExpandTreeRule = head_action.rule
+            parent_tensor[length, 0] = self._node_type_encoder.encode(
+                convert_node_type_to_key(head_rule.parent))
+            parent_tensor[length, 1] = self._rule_encoder.encode(head_rule)
+            parent_tensor[length, 2] = head.action
+            parent_tensor[length, 3] = head.field
+
+        return parent_tensor
 
     @staticmethod
     def remove_variadic_node_types(node_types: List[NodeType]) \

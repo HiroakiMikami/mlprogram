@@ -5,7 +5,7 @@ from nl2prog.utils.data import Entry, ListDataset
 from nl2prog.utils.data.nl2code \
     import get_samples, Query, to_train_dataset, Encoder, to_eval_dataset
 from nl2prog.language.python import to_ast
-from nl2prog.language.nl2code.action import ast_to_action_sequence
+from nl2prog.language.action import ast_to_action_sequence
 
 
 def tokenize(query: str):
@@ -17,7 +17,8 @@ def tokenize_query(query: str):
 
 
 def to_action_sequence(code: str):
-    return ast_to_action_sequence(to_ast(ast.parse(code).body[0]), tokenize)
+    return ast_to_action_sequence(to_ast(ast.parse(code).body[0]),
+                                  tokenizer=tokenize)
 
 
 class TestGetSamples(unittest.TestCase):

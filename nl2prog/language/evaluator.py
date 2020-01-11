@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Dict, Union, List
 from copy import deepcopy
 
-from nl2prog.language.nl2code import action as A
-from nl2prog.language.nl2code.action import Action, ActionSequence
+import nl2prog.language.action as A
+from nl2prog.language.action import Action, ActionSequence
 from nl2prog.language.ast import AST, Node, Leaf, Field
 
 
@@ -63,13 +63,16 @@ class Evaluator:
         The index of the head AST node.
     _head_children_index: Dict[Int, Int]
         The relation between actions and their head indexes of fields.
+    _options: A.ActionOptions
+        The action sequence options.
     """
 
-    def __init__(self):
+    def __init__(self, options: A.ActionOptions = A.ActionOptions(True, True)):
         self._tree = Tree(dict(), dict())
         self._action_sequence = []
         self._head_action_index = None
         self._head_children_index = dict()
+        self._options = options
 
     @property
     def head(self) -> Union[Parent, None]:
@@ -108,7 +111,8 @@ class Evaluator:
                 update_head()
                 return
 
-            if close_variadic_field or \
+            if not self._options.retain_vairadic_fields or \
+               close_variadic_field or \
                head_rule.children[head.field][1].constraint != \
                     A.NodeConstraint.Variadic:
                 self._head_children_index[head.action] += 1
@@ -169,6 +173,10 @@ class Evaluator:
                 if head_field.constraint == A.NodeConstraint.Token:
                     raise InvalidActionException(
                         "GenerateToken", action)
+                if not self._options.retain_vairadic_fields:
+                    raise InvalidActionException(
+                        "CloseVariadicField is invalid "
+                        "(retain_variadic_fields=False)", action)
 
                 append_action()
                 # 2. Append the action to the head
@@ -186,6 +194,9 @@ class Evaluator:
             if head_field.constraint != A.NodeConstraint.Token:
                 raise InvalidActionException(
                     "ApplyRule", action)
+            if not self._options.split_non_terminal and token == A.CloseNode():
+                raise InvalidActionException(
+                    "GenerateToken", action)
 
             append_action()
             # 1. Append the action to the head
@@ -193,7 +204,7 @@ class Evaluator:
             self._tree.parent[index] = head
 
             # 2. Update head if the token is closed.
-            if token == A.CloseNode():
+            if token == A.CloseNode() or not self._options.split_non_terminal:
                 update_head()
 
     def generate_ast(self) -> AST:
@@ -222,12 +233,18 @@ class Evaluator:
                         Field(name, node_type.type_name, generate_ast(action)))
                 elif node_type.constraint == A.NodeConstraint.Variadic:
                     # Variadic
-                    ast.fields.append(Field(name, node_type.type_name, []))
-                    for action in actions:
-                        a: A.ApplyRule = self._action_sequence[action]
-                        if isinstance(a.rule, A.CloseVariadicFieldRule):
-                            break
-                        ast.fields[-1].value.append(generate_ast(action))
+                    if self._options.retain_vairadic_fields:
+                        ast.fields.append(Field(name, node_type.type_name, []))
+                        for action in actions:
+                            a: A.ApplyRule = self._action_sequence[action]
+                            if isinstance(a.rule, A.CloseVariadicFieldRule):
+                                break
+                            ast.fields[-1].value.append(generate_ast(action))
+                    else:
+                        childrens = generate_ast(actions[0])
+                        ast.fields.append(Field(
+                            name, node_type.type_name,
+                            [field.value for field in childrens.fields]))
                 else:
                     # GenerateToken
                     value = ""
@@ -251,7 +268,7 @@ class Evaluator:
         Evaluator
             The cloned evaluator
         """
-        evaluator = Evaluator()
+        evaluator = Evaluator(self._options)
         for key, value in self._tree.children.items():
             v = []
             for src in value:

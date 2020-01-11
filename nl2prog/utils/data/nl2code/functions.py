@@ -2,10 +2,10 @@ import torch
 from dataclasses import dataclass
 import numpy as np
 from typing import Callable, List, Any, Tuple, Union
-from nl2prog.language.nl2code.action \
+from nl2prog.language.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
-from nl2prog.language.nl2code.evaluator import Evaluator
+from nl2prog.language.evaluator import Evaluator
 from nl2prog.utils.data.nl2code import Encoder, Samples
 from nl2prog.utils.data import ListDataset
 
@@ -72,16 +72,22 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             evaluator = Evaluator()
             for action in action_sequence:
                 evaluator.eval(action)
-            action_sequence_tensor = \
-                encoder.action_sequence_encoder.encode(evaluator,
-                                                       query.query_for_synth)
-            if action_sequence_tensor is None:
+            a = \
+                encoder.action_sequence_encoder.encode_action(
+                    evaluator, query.query_for_synth)
+            p = \
+                encoder.action_sequence_encoder.encode_parent(
+                    evaluator)
+            if a is None:
                 continue
-            if np.any(action_sequence_tensor.action[-1, :].numpy() != -1):
+            if np.any(a[-1, :].numpy() != -1):
                 continue
-            entries.append((query_tensor,
-                            action_sequence_tensor.action[:-1],
-                            action_sequence_tensor.previous_action))
+            action_tensor = torch.cat(
+                [a[:-1, 0].view(-1, 1), p[:-1, 1:3].view(-1, 2)],
+                dim=1)
+            dummy = torch.ones([1, 3]).to(a.dtype).to(a.device)
+            prev_action = torch.cat([dummy, a[:-1, 1:]], dim=0)
+            entries.append((query_tensor, action_tensor, prev_action))
     return ListDataset(entries)
 
 
