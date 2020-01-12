@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Union
 from nl2prog.language.encoder import Encoder as ActionEncoder
 from nl2prog.language.action \
-    import Rule, NodeType, CloseNode
+    import Rule, NodeType, CloseNode, ActionOptions
 
 
 @dataclass
@@ -22,7 +22,8 @@ class Encoder:
     def __init__(self,
                  samples: Samples,
                  word_threshold: int,
-                 token_threshold: int):
+                 token_threshold: int,
+                 options: ActionOptions = ActionOptions(True, True)):
         """
         Parameters
         ----------
@@ -35,4 +36,4 @@ class Encoder:
                                                min_occurrences=word_threshold)
         self.action_sequence_encoder = ActionEncoder(
             samples.rules, samples.node_types,
-            samples.tokens, token_threshold)
+            samples.tokens, token_threshold, options=options)
