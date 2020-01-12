@@ -1,7 +1,7 @@
 import re
 from nltk import tokenize
 from typing import List
-from nl2prog.utils.data.nl2code import Query
+from nl2prog.utils import Query
 
 tokenizer = tokenize.WhitespaceTokenizer()
 

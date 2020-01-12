@@ -1,9 +1,10 @@
 import unittest
 import ast
 import numpy as np
+from nl2prog.utils import Query
 from nl2prog.utils.data import Entry, ListDataset
 from nl2prog.utils.data.nl2code \
-    import get_samples, Query, to_train_dataset, to_eval_dataset
+    import get_samples, to_train_dataset, to_eval_dataset
 from nl2prog.language.python import to_ast
 from nl2prog.language.action import ast_to_action_sequence
 from nl2prog.encoders import Encoder

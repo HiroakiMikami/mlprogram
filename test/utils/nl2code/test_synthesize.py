@@ -3,10 +3,9 @@ import unittest
 import ast
 from typing import List
 from nl2prog.language.python import to_ast
-from nl2prog.utils import Progress, Candidate
+from nl2prog.utils import Progress, Candidate, Query
 from nl2prog.utils.nl2code \
     import synthesize as _synthesize
-from nl2prog.utils.data.nl2code import Query
 
 
 class TestSynthesize(unittest.TestCase):

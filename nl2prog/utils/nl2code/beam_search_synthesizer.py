@@ -5,11 +5,10 @@ from dataclasses import dataclass
 from nl2prog.nn.nl2code import Predictor
 from nl2prog.language.action \
     import ActionOptions
-from nl2prog.utils.data.nl2code import Query
 from nl2prog.encoders import Encoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
-    IsSubtype, LazyLogProbability
+    IsSubtype, LazyLogProbability, Query
 from nl2prog.nn.utils.rnn import pad_sequence
 
 

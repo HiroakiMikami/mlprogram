@@ -1,5 +1,4 @@
 import torch
-from dataclasses import dataclass
 import numpy as np
 from typing import Callable, List, Any, Tuple, Union
 from nl2prog.language.action \
@@ -8,12 +7,7 @@ from nl2prog.language.action \
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import Encoder, Samples
 from nl2prog.utils.data import ListDataset
-
-
-@dataclass
-class Query:
-    query_for_synth: List[str]
-    query_for_dnn: List[str]
+from nl2prog.utils import Query
 
 
 def get_samples(dataset: torch.utils.data.Dataset,

@@ -1,7 +1,6 @@
 import torch
 from typing import List, Callable
-from nl2prog.utils.data.nl2code import Query
-from nl2prog.utils import Progress
+from nl2prog.utils import Progress, Query
 from nl2prog.language.ast import AST
 
 from .beam_search_synthesizer import BeamSearchSynthesizer
