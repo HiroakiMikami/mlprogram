@@ -4,7 +4,8 @@ from .evaluate import evaluate, Result, EvaluationResult
 from .beam_search_synthesizer \
     import LazyLogProbability, BeamSearchSynthesizer, \
     Progress, Candidate, IsSubtype
+from .synthesize import synthesize
 
 __all__ = ["Query", "TopKElement", "evaluate", "Result", "EvaluationResult",
            "BeamSearchSynthesizer", "Progress", "Candidate",
-           "LazyLogProbability", "IsSubtype"]
+           "LazyLogProbability", "IsSubtype", "synthesize"]

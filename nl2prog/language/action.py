@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from nl2prog.language.ast import AST, Node, Leaf, Field
-from typing import Tuple, Union, List, Any, Callable
+from typing import Tuple, Union, List, Any, Callable, Optional
 from enum import Enum
 
 
@@ -223,3 +223,14 @@ def ast_to_action_sequence(node: AST,
             return list(map(lambda x: GenerateToken(x), tokens))
         else:
             return [GenerateToken(node.value)]
+
+
+def code_to_action_sequence(
+    code: str, parse: Callable[[str], AST],
+    options: ActionOptions = ActionOptions(True, True),
+    tokenize: Optional[Callable[[str], List[str]]] = None) \
+        -> Union[ActionSequence, None]:
+    ast = parse(code)
+    if ast is None:
+        return None
+    return ast_to_action_sequence(ast, tokenizer=tokenize, options=options)
