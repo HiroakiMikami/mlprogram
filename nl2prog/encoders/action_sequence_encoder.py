@@ -42,7 +42,7 @@ class Unknown:
         return cls._instance
 
 
-class Encoder:
+class ActionSequenceEncoder:
     def __init__(self,
                  rules: List[Rule], node_types: List[NodeType],
                  tokens: List[str], token_threshold: int,

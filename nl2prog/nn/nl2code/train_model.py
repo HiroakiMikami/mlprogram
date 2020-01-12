@@ -3,7 +3,7 @@ import torch.nn as nn
 from typing import Tuple
 from nl2prog.nn.utils import rnn
 from nl2prog.nn.nl2code import Encoder as EncoderModule, Predictor
-from nl2prog.utils.data.nl2code import Encoder
+from nl2prog.encoders import Encoder
 
 
 class TrainModel(nn.Module):

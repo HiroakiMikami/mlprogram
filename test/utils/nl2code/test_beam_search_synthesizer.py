@@ -8,7 +8,8 @@ from nl2prog.language.ast import Node, Field, Leaf
 from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
     ApplyRule, GenerateToken, CloseNode, ActionOptions
-from nl2prog.utils.data.nl2code import Query, Encoder, Samples
+from nl2prog.utils.data.nl2code import Query
+from nl2prog.encoders import Encoder, Samples
 
 
 def mock_tokenizer(query):

@@ -1,9 +1,9 @@
 from torchnlp.encoders import LabelEncoder
 from dataclasses import dataclass
 from typing import List, Union
-from nl2prog.language.encoder import Encoder as ActionEncoder
 from nl2prog.language.action \
     import Rule, NodeType, CloseNode, ActionOptions
+from .action_sequence_encoder import ActionSequenceEncoder
 
 
 @dataclass
@@ -17,7 +17,7 @@ class Samples:
 @dataclass
 class Encoder:
     annotation_encoder: LabelEncoder
-    action_sequence_encoder: ActionEncoder
+    action_sequence_encoder: ActionSequenceEncoder
 
     def __init__(self,
                  samples: Samples,
@@ -34,6 +34,6 @@ class Encoder:
         """
         self.annotation_encoder = LabelEncoder(samples.words,
                                                min_occurrences=word_threshold)
-        self.action_sequence_encoder = ActionEncoder(
+        self.action_sequence_encoder = ActionSequenceEncoder(
             samples.rules, samples.node_types,
             samples.tokens, token_threshold, options=options)

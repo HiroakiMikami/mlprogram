@@ -6,7 +6,7 @@ from nl2prog.language.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
 from nl2prog.language.evaluator import Evaluator
-from nl2prog.utils.data.nl2code import Encoder, Samples
+from nl2prog.encoders import Encoder, Samples
 from nl2prog.utils.data import ListDataset
 
 

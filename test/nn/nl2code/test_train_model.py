@@ -2,7 +2,7 @@ import torch
 import unittest
 import nl2prog.nn.utils.rnn as rnn
 from nl2prog.language.action import NodeConstraint, NodeType
-from nl2prog.utils.data.nl2code import Samples, Encoder
+from nl2prog.encoders import Samples, Encoder
 from nl2prog.nn.nl2code import TrainModel
 
 

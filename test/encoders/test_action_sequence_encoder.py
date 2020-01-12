@@ -6,20 +6,22 @@ from nl2prog.language.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
     ApplyRule, GenerateToken, ActionOptions
 from nl2prog.language.evaluator import Evaluator
-from nl2prog.language.encoder import Encoder
+from nl2prog.encoders import ActionSequenceEncoder
 
 
 class TestEncoder(unittest.TestCase):
     def test_reserved_labels(self):
-        encoder = Encoder([], [], [], 0)
+        encoder = ActionSequenceEncoder([], [], [], 0)
         self.assertEqual(2, len(encoder._rule_encoder.vocab))
         self.assertEqual(2, len(encoder._token_encoder.vocab))
 
-        encoder = Encoder([], [], [], 0, ActionOptions(False, True))
+        encoder = ActionSequenceEncoder(
+            [], [], [], 0, ActionOptions(False, True))
         self.assertEqual(1, len(encoder._rule_encoder.vocab))
         self.assertEqual(2, len(encoder._token_encoder.vocab))
 
-        encoder = Encoder([], [], [], 0, ActionOptions(True, False))
+        encoder = ActionSequenceEncoder(
+            [], [], [], 0, ActionOptions(True, False))
         self.assertEqual(2, len(encoder._rule_encoder.vocab))
         self.assertEqual(1, len(encoder._token_encoder.vocab))
 
@@ -36,12 +38,14 @@ class TestEncoder(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        encoder = Encoder([funcdef, expr],
-                          [NodeType("def", NodeConstraint.Node),
-                           NodeType("value", NodeConstraint.Token),
-                           NodeType("expr", NodeConstraint.Node)],
-                          ["f", "2"],
-                          0)
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f", "2"],
+            0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
@@ -75,12 +79,14 @@ class TestEncoder(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        encoder = Encoder([funcdef, expr],
-                          [NodeType("def", NodeConstraint.Node),
-                           NodeType("value", NodeConstraint.Token),
-                           NodeType("expr", NodeConstraint.Node)],
-                          ["f", "2"],
-                          0)
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f", "2"],
+            0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
@@ -114,12 +120,14 @@ class TestEncoder(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        encoder = Encoder([funcdef, expr],
-                          [NodeType("def", NodeConstraint.Node),
-                           NodeType("value", NodeConstraint.Token),
-                           NodeType("expr", NodeConstraint.Node)],
-                          ["f"],
-                          0)
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f"],
+            0)
         evaluator = Evaluator()
         action = encoder.encode_action(evaluator, ["1"])
         parent = encoder.encode_parent(evaluator)
@@ -150,12 +158,14 @@ class TestEncoder(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        encoder = Encoder([funcdef, expr],
-                          [NodeType("def", NodeConstraint.Node),
-                           NodeType("value", NodeConstraint.Token),
-                           NodeType("expr", NodeConstraint.Node)],
-                          ["f"],
-                          0)
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f"],
+            0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
@@ -167,10 +177,11 @@ class TestEncoder(unittest.TestCase):
     def test_encode_completed_sequence(self):
         none = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
                               [])
-        encoder = Encoder([none],
-                          [NodeType("value", NodeConstraint.Node)],
-                          ["f"],
-                          0)
+        encoder = ActionSequenceEncoder([none],
+                                        [NodeType(
+                                            "value", NodeConstraint.Node)],
+                                        ["f"],
+                                        0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(none))
         action = encoder.encode_action(evaluator, ["1"])
@@ -204,12 +215,14 @@ class TestEncoder(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        encoder = Encoder([funcdef, expr],
-                          [NodeType("def", NodeConstraint.Node),
-                           NodeType("value", NodeConstraint.Token),
-                           NodeType("expr", NodeConstraint.Node)],
-                          ["f"],
-                          0)
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f"],
+            0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
@@ -233,12 +246,14 @@ class TestEncoder(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        encoder = Encoder([funcdef, expr],
-                          [NodeType("def", NodeConstraint.Node),
-                           NodeType("value", NodeConstraint.Token),
-                           NodeType("expr", NodeConstraint.Node)],
-                          ["f"],
-                          0)
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f"],
+            0)
         self.assertEqual(None,
                          encoder.decode(torch.LongTensor([[-1, -1, -1]]), []))
         self.assertEqual(None,
@@ -248,19 +263,19 @@ class TestEncoder(unittest.TestCase):
         self.assertEqual(
             [NodeType("t1", NodeConstraint.Node),
              NodeType("t2", NodeConstraint.Token)],
-            Encoder.remove_variadic_node_types(
+            ActionSequenceEncoder.remove_variadic_node_types(
                 [NodeType("t1", NodeConstraint.Node),
                  NodeType("t2", NodeConstraint.Token)]))
         self.assertEqual(
             [NodeType("t1", NodeConstraint.Node),
              NodeType("t2", NodeConstraint.Token)],
-            Encoder.remove_variadic_node_types(
+            ActionSequenceEncoder.remove_variadic_node_types(
                 [NodeType("t1", NodeConstraint.Variadic),
                  NodeType("t2", NodeConstraint.Token)]))
         self.assertEqual(
             [NodeType("t1", NodeConstraint.Node),
              NodeType("t2", NodeConstraint.Token)],
-            Encoder.remove_variadic_node_types(
+            ActionSequenceEncoder.remove_variadic_node_types(
                 [NodeType("t1", NodeConstraint.Variadic),
                  NodeType("t2", NodeConstraint.Token),
                  NodeType("t1", NodeConstraint.Node)]))
