@@ -9,6 +9,7 @@ from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
     ApplyRule, GenerateToken, CloseNode, ActionOptions
 from nl2prog.encoders import Encoder, Samples
+from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
 def mock_tokenizer(query):
@@ -16,7 +17,7 @@ def mock_tokenizer(query):
 
 
 def mock_query_encoder(tensor):
-    return tensor.float()
+    return PaddedSequenceWithMask(tensor.data.float(), tensor.mask)
 
 
 class MockPredictor:
@@ -383,11 +384,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             is_subtype=is_subtype, options=ActionOptions(True, False))
         candidates = []
         progress = []
-        print("---")
         for c, p in synthesizer.synthesize("test"):
             candidates.extend(c)
             progress.append(p)
-        print("---")
         """
         [] -> [XtoStr] -> "test" -> (complete)
         """

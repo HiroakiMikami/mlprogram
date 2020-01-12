@@ -9,7 +9,7 @@ from nl2prog.encoders import Encoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability, Query
-from nl2prog.nn.utils.rnn import pad_sequence
+from nl2prog.nn.utils.rnn import pad_sequence, PaddedSequenceWithMask
 
 
 @dataclass
@@ -24,8 +24,8 @@ class State:
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
-                 query_encoder: Callable[[torch.LongTensor],
-                                         torch.FloatTensor],
+                 query_encoder: Callable[[PaddedSequenceWithMask],
+                                         PaddedSequenceWithMask],
                  predictor: Predictor, encoder: Encoder,
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  eps: float = 1e-8,
@@ -36,7 +36,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        query_encoder: Callble[[torch.LongTensor], torch.FloatTensor]
+        query_encoder: Callble[[PaddedSequenceWithMask],
+                               PaddedSequenceWithMask]
             The encoder module
         predictor: Predictor
             The module to predict the probabilities of actions
@@ -55,7 +56,11 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             query = tokenizer(query)
             query_tensor = \
                 encoder.annotation_encoder.batch_encode(query.query_for_dnn)
-            query_tensor = query_encoder(query_tensor)
+            query_tensor = query_tensor.to(device)
+            query_tensor = pad_sequence([query_tensor])
+            query_tensor = query_encoder(query_tensor).data
+            L = query_tensor.shape[0]
+            query_tensor = query_tensor.view(L, -1)
 
             # Create initial hypothesis
             h_0 = torch.zeros(hidden_size, device=device)  # (hidden_size)
@@ -101,20 +106,16 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             h_n = torch.stack(h_n, dim=0)  # (len(hs), state_size)
             c_n = torch.stack(c_n, dim=0)  # (len(hs), state_size)
 
-            results = predictor(query_seq, action, prev_action,
-                                hist, (h_n, c_n))
-            rule_pred = results[0].data  # (1, len(hs), n_rules)
-            rule_pred = \
-                torch.split(rule_pred.reshape(len(hs), -1),
-                            1, dim=0)  # (1, n_rules)
-            token_pred = results[1].data  # (1, len(hs), n_tokens)
-            token_pred = \
-                torch.split(token_pred.reshape(len(hs), -1),
-                            1, dim=0)  # (1, n_tokens)
-            copy_pred = results[2].data  # (1, len(hs), query_length)
+            with torch.no_grad():
+                results = predictor(query_seq, action, prev_action,
+                                    hist, (h_n, c_n))
+            # (len(hs), n_rules)
+            rule_pred = results[0].data.cpu().reshape(len(hs), -1)
+            # (len(hs), n_tokens)
+            token_pred = results[1].data.cpu().reshape(len(hs), -1)
+            # (len(hs), query_length)
             copy_pred = \
-                torch.split(copy_pred.reshape(len(hs), -1),
-                            1, dim=0)  # (query_length)
+                results[2].data.cpu().reshape(len(hs), -1)
             history = results[3]  # (L_a + 1, len(hs), state_size)
             state_size = history.shape[2]
             history = torch.split(history, 1,
@@ -128,56 +129,61 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             c_n = [x.view(-1) for x in c_n]  # (state_size)
 
             retval = []
-            for i, (h, hist, h_, c_, rule, token, copy) in enumerate(zip(
-                    hs, history, h_n, c_n, rule_pred, token_pred, copy_pred)):
+            for i, (h, hist, h_, c_) in enumerate(zip(hs, history, h_n, c_n)):
                 state = State(
                     h.state.query, h.state.query_tensor, hist, h_, c_)
 
-                rule = rule.view(-1)
-                token = token.view(-1)
-                copy = copy.view(-1)
+                class Functions:
+                    def __init__(self, i):
+                        self.i = i
 
-                def get_rule_prob():
-                    n_rules = rule.numel()
-                    # TODO
-                    idx_to_rule = \
-                        encoder.action_sequence_encoder._rule_encoder.vocab
-                    rule_np = rule.detach().cpu().numpy()
-                    retval = {}
-                    for j in range(1, n_rules):  # 0 is unknown rule
-                        p = rule_np[j]
-                        if p < eps:
-                            retval[idx_to_rule[j]] = np.log(eps)
-                        else:
-                            retval[idx_to_rule[j]] = np.log(p)
-                    return retval
+                    def get_rule_prob(self):
+                        # TODO
+                        idx_to_rule = \
+                            encoder.action_sequence_encoder._rule_encoder.vocab
+                        retval = {}
+                        # 0 is unknown rule
+                        for j in range(1, rule_pred.shape[1]):
+                            p = rule_pred[self.i, j].item()
+                            if p < eps:
+                                retval[idx_to_rule[j]] = np.log(eps)
+                            else:
+                                retval[idx_to_rule[j]] = np.log(p)
+                        return retval
 
-                def get_token_prob():
-                    probs = {}
-                    n_tokens = token.numel()
-                    n_words = len(h.state.query)
-                    token_np = token.detach().cpu().numpy()
-                    for j in range(1, n_tokens):  # 0 is UnknownToken
-                        p = token_np[j]
-                        t = \
-                            encoder.action_sequence_encoder. \
-                            _token_encoder.decode(
-                                torch.LongTensor([j]))
-                        probs[t] = (probs.get(t) or 0) + p
-                    copy_np = copy.detach().cpu().numpy()
-                    for j in range(n_words):
-                        p = copy_np[j]
-                        t = h.state.query[j]
-                        probs[t] = (probs.get(t) or 0) + p
+                    def get_token_prob(self):
+                        probs = {}
+                        n_words = len(h.state.query)
+                        for j in range(1,
+                                       token_pred.shape[1]
+                                       ):  # 0 is UnknownToken
+                            p = token_pred[self.i, j].item()
+                            t = \
+                                encoder.action_sequence_encoder. \
+                                _token_encoder.decode(
+                                    torch.LongTensor([j]))
+                            if t in probs:
+                                probs[t] = probs.get(t) + p
+                            else:
+                                probs[t] = p
+                        for j in range(n_words):
+                            p = copy_pred[self.i, j].item()
+                            t = h.state.query[j]
+                            if t in probs:
+                                probs[t] = probs.get(t) + p
+                            else:
+                                probs[t] = p
 
-                    log_prob = {}
-                    for t, p in probs.items():
-                        if p < eps:
-                            log_prob[t] = np.log(eps)
-                        else:
-                            log_prob[t] = np.log(p)
-                    return log_prob
-                prob = LazyLogProbability(get_rule_prob, get_token_prob)
+                        log_prob = {}
+                        for t, p in probs.items():
+                            if p < eps:
+                                log_prob[t] = np.log(eps)
+                            else:
+                                log_prob[t] = np.log(p)
+                        return log_prob
+                funcs = Functions(i)
+                prob = LazyLogProbability(funcs.get_rule_prob,
+                                          funcs.get_token_prob)
                 retval.append((state, prob))
             return retval
 

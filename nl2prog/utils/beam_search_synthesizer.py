@@ -187,6 +187,7 @@ class BeamSearchSynthesizer:
             ps = []
             for score, (i, action) in topk.elements:
                 h = hs[i]
+                state = results[i][0]
                 id = n_ids
                 n_ids += 1
                 evaluator = h.evaluator.clone()

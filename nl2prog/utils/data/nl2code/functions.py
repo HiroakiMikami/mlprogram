@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from typing import Callable, List, Any, Tuple, Union
-from nl2prog.language.action import ActionSequence
+from nl2prog.language.action import ActionSequence, ActionOptions
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import Encoder
 from nl2prog.utils.data import ListDataset
@@ -13,7 +13,8 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
                      tokenize_token: Callable[[str], List[str]],
                      to_action_sequence: Callable[[Any],
                                                   Union[ActionSequence, None]],
-                     encoder: Encoder) \
+                     encoder: Encoder,
+                     options: ActionOptions = ActionOptions(True, True)) \
         -> torch.utils.data.Dataset:
     entries = []
     for group in dataset:
@@ -26,7 +27,7 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             action_sequence = to_action_sequence(code)
             if action_sequence is None:
                 continue
-            evaluator = Evaluator()
+            evaluator = Evaluator(options=options)
             for action in action_sequence:
                 evaluator.eval(action)
             a = \
@@ -42,7 +43,7 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             action_tensor = torch.cat(
                 [a[:-1, 0].view(-1, 1), p[:-1, 1:3].view(-1, 2)],
                 dim=1)
-            dummy = torch.ones([1, 3]).to(a.dtype).to(a.device)
+            dummy = torch.ones([1, 3]).to(a.dtype).to(a.device) * -1
             prev_action = torch.cat([dummy, a[:-1, 1:]], dim=0)
             entries.append((query_tensor, action_tensor, prev_action))
     return ListDataset(entries)
