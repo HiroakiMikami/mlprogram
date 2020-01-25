@@ -107,6 +107,41 @@ class TestEncoder(unittest.TestCase):
             parent.numpy()
         ))
 
+    def test_encode_tree(self):
+        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
+                                 [("name",
+                                   NodeType("value", NodeConstraint.Token)),
+                                  ("body",
+                                   NodeType("expr", NodeConstraint.Variadic))])
+        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+                              [("op", NodeType("value", NodeConstraint.Token)),
+                               ("arg0",
+                                NodeType("value", NodeConstraint.Token)),
+                               ("arg1",
+                                NodeType("value", NodeConstraint.Token))])
+
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType(
+                "value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f", "2"],
+            0)
+        evaluator = Evaluator()
+        evaluator.eval(ApplyRule(funcdef))
+        evaluator.eval(GenerateToken("f"))
+        evaluator.eval(GenerateToken("1"))
+        d, m = encoder.encode_tree(evaluator)
+
+        self.assertTrue(np.array_equal(
+            [[0], [1], [1]], d.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [[0, 1, 1], [0, 0, 0], [0, 0, 0]],
+            m.numpy()
+        ))
+
     def test_encode_empty_sequence(self):
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
                                  [("name",
@@ -131,6 +166,7 @@ class TestEncoder(unittest.TestCase):
         evaluator = Evaluator()
         action = encoder.encode_action(evaluator, ["1"])
         parent = encoder.encode_parent(evaluator)
+        d, m = encoder.encode_tree(evaluator)
 
         self.assertTrue(np.array_equal(
             [
@@ -144,6 +180,8 @@ class TestEncoder(unittest.TestCase):
             ],
             parent.numpy()
         ))
+        self.assertTrue(np.array_equal(np.zeros((0, 1)), d.numpy()))
+        self.assertTrue(np.array_equal(np.zeros((0, 0)), m.numpy()))
 
     def test_encode_invalid_sequence(self):
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),

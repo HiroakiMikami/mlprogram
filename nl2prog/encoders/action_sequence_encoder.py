@@ -217,6 +217,38 @@ class ActionSequenceEncoder:
 
         return parent_tensor
 
+    def encode_tree(self, evaluator: Evaluator) \
+            -> Union[torch.Tensor, torch.Tensor]:
+        """
+        Return the tensor adjacency matrix of the action sequence
+
+        Parameters
+        ----------
+        evaluator: Evaluator
+            The evaluator containing action sequence to be encoded
+
+        Returns
+        -------
+        depth: torch.Tensor
+            The depth of each action. The shape is (len(action_sequence), 1).
+        adjacency_matrix: torch.Tensor
+            The encoded tensor. The shape of tensor is
+            (len(action_sequence), len(action_sequence)). If i th action is
+            a parent of j th action, (i, j) element will be 1. the element
+            will be 0 otherwise.
+        """
+        L = len(evaluator.action_sequence)
+        depth = torch.zeros(L, 1)
+        m = torch.zeros(L, L)
+
+        for i in range(L):
+            p = evaluator.parent(i)
+            if p is not None:
+                depth[i] = depth[p.action] + 1
+                m[p.action, i] = 1
+
+        return depth, m
+
     @staticmethod
     def remove_variadic_node_types(node_types: List[NodeType]) \
             -> List[NodeType]:
