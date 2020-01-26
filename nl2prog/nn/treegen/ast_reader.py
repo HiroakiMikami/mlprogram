@@ -11,14 +11,14 @@ from .gating import Gating
 
 class ASTReaderBlock(nn.Module):
     def __init__(self,
-                 char_embed_size: int, hidden_size: int,
+                 rule_embed_size: int, hidden_size: int,
                  tree_conv_kernel_size: int,
                  n_heads: int, dropout: float, block_idx: int):
         super(ASTReaderBlock, self).__init__()
         self.block_idx = block_idx
         self.attention = nn.MultiheadAttention(hidden_size, n_heads, dropout)
         self.norm1 = nn.LayerNorm(hidden_size)
-        self.gating = Gating(hidden_size, char_embed_size, hidden_size,
+        self.gating = Gating(hidden_size, rule_embed_size, hidden_size,
                              hidden_size)
         self.norm2 = nn.LayerNorm(hidden_size)
         self.conv1 = TreeConvolution(hidden_size, hidden_size,
@@ -43,7 +43,7 @@ class ASTReaderBlock(nn.Module):
             (L, N) where L is the sequence length,
             N is the batch size.
         rule_embed: torch.Tensor
-            (L, N, char_embed_size) where L is the sequence length,
+            (L, N, rule_embed_size) where L is the sequence length,
             N is the batch size.
         adjacency_matrix: torch.Tensor
             (N, L, L) where N is the batch size, L is the sequence length.
@@ -92,12 +92,12 @@ class ASTReaderBlock(nn.Module):
 
 class ASTReader(nn.Module):
     def __init__(self,
-                 char_embed_size: int, hidden_size: int,
+                 rule_embed_size: int, hidden_size: int,
                  tree_conv_kernel_size: int,
                  n_heads: int, dropout: float, n_blocks: int):
         super(ASTReader, self).__init__()
         self.blocks = [ASTReaderBlock(
-            char_embed_size, hidden_size, tree_conv_kernel_size,
+            rule_embed_size, hidden_size, tree_conv_kernel_size,
             n_heads, dropout, i
         ) for i in range(n_blocks)]
         for i, block in enumerate(self.blocks):
@@ -119,7 +119,7 @@ class ASTReader(nn.Module):
             (L, N) where L is the sequence length,
             N is the batch size.
         rule_embed: torch.Tensor
-            (L, N, char_embed_size) where L is the sequence length,
+            (L, N, rule_embed_size) where L is the sequence length,
             N is the batch size.
         adjacency_matrix: torch.Tensor
             (N, L, L) where N is the batch size, L is the sequence length.
