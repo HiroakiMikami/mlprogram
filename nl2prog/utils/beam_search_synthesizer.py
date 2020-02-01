@@ -55,7 +55,7 @@ class Candidate:
 class BeamSearchSynthesizer:
     def __init__(self, beam_size: int,
                  initialze: Callable[[str], Any],
-                 batch_update: Callable[[List[Any]],
+                 batch_update: Callable[[List[Hypothesis]],
                                         List[Tuple[Any, LazyLogProbability]]],
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  max_steps: Union[int, None] = None):
@@ -67,7 +67,7 @@ class BeamSearchSynthesizer:
         initialize: Callable[[Query], Any]
             The initialize function. It returns the initial state.
             The module to predict the probabilities of actions
-        batch_update: Callable[[Query, List[Any]],
+        batch_update: Callable[[List[Hypothesis]],
                                List[Tuple[Any, LazyLogProbability]]]
             The update function. It returns the next state and the probability
             of each action.
