@@ -5,7 +5,8 @@ from .beam_search_synthesizer \
     import LazyLogProbability, BeamSearchSynthesizer, \
     Progress, Candidate, IsSubtype
 from .synthesize import synthesize
+from .top_k_model import TopKModel
 
 __all__ = ["Query", "TopKElement", "evaluate", "Result", "EvaluationResult",
            "BeamSearchSynthesizer", "Progress", "Candidate",
-           "LazyLogProbability", "IsSubtype", "synthesize"]
+           "LazyLogProbability", "IsSubtype", "synthesize", "TopKModel"]
