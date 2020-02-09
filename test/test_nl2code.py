@@ -1,5 +1,5 @@
 import unittest
-from integrated_test_case import is_subtype, train_dataset, test_dataset
+from dummy_dataset import is_subtype, train_dataset, test_dataset
 from typing import List
 from tqdm import trange
 
