@@ -12,23 +12,23 @@ class TestTrain(unittest.TestCase):
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
         encoder = Encoder(samples, 0, 0)
-        model = TrainModel(encoder, 3, 3, 3, 1, 3, 3, 3, 3, 3, 0.0)
-        self.assertEqual(190, len(list(model.named_parameters())))
+        model = TrainModel(encoder, 3, 3, 1, 3, 3, 3, 3, 3, 0.0)
+        self.assertEqual(194, len(list(model.named_parameters())))
 
     def test_shape(self):
         samples = Samples(["foo"], ["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
         encoder = Encoder(samples, 0, 0, options=ActionOptions(False, False))
-        model = TrainModel(encoder, 3, 3, 3, 1, 3, 3, 3, 3, 3, 0.0)
+        model = TrainModel(encoder, 3, 3, 1, 3, 3, 3, 3, 3, 0.0)
         q0 = torch.randint(1, [2])
         qc0 = torch.randint(256, [2, 3])
         q1 = torch.randint(1, [3])
         qc1 = torch.randint(256, [3, 3])
-        a0 = torch.randint(1, [1])
-        at0 = torch.randint(1, [1, 4])
-        a1 = torch.randint(1, [2])
-        at1 = torch.randint(1, [2, 4])
+        a0 = torch.randint(1, [1, 3])
+        at0 = torch.randint(1, [1, 4, 3])
+        a1 = torch.randint(1, [2, 3])
+        at1 = torch.randint(1, [2, 4, 3])
         d0 = torch.LongTensor([[0]])
         d1 = torch.LongTensor([[0], [1]])
         m0 = torch.LongTensor([[0, 0], [0, 0]])
@@ -46,8 +46,8 @@ class TestTrain(unittest.TestCase):
         token_prob = results[1]
         copy_prob = results[2]
 
-        self.assertEqual((2, 2, 2), rule_prob.data.shape)
-        self.assertEqual((2, 2, 2), token_prob.data.shape)
+        self.assertEqual((2, 2, 1), rule_prob.data.shape)
+        self.assertEqual((2, 2, 1), token_prob.data.shape)
         self.assertEqual((2, 2, 3), copy_prob.data.shape)
 
 
