@@ -10,7 +10,7 @@ from nl2prog.encoders import Encoder
 
 class TrainModel(nn.Module):
     def __init__(self, encoder: Encoder,
-                 max_token_len: int, max_children_num: int,
+                 max_token_len: int, max_arity: int,
                  num_heads: int,
                  num_nl_reader_blocks: int, num_ast_reader_blocks: int,
                  num_decoder_blocks: int, hidden_size: int,
@@ -31,7 +31,7 @@ class TrainModel(nn.Module):
             hidden_size, hidden_size, hidden_size)
         self.rule_embedding = RuleEmbedding(
             self.rule_num, self.token_num, self.node_type_num,
-            max_children_num, hidden_size, hidden_size, hidden_size)
+            max_arity, hidden_size, hidden_size, hidden_size)
 
         self.nl_reader = NLReader(hidden_size, hidden_size, num_heads, dropout,
                                   num_nl_reader_blocks)
@@ -72,7 +72,7 @@ class TrainModel(nn.Module):
         rule_previous_action: rnn.PaddedSequenceWithMask
             The rule of previous action sequence.
             The shape of each sequence is
-            (action_length, max_children_num + 1, 3).
+            (action_length, max_arity + 1, 3).
         depth: torch.Tensor
             The depth of actions. The shape is (L, B) where L is the sequence
             length, B is the batch size.

@@ -4,7 +4,7 @@ import numpy as np
 
 from nl2prog.language.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
-    ApplyRule, GenerateToken, ActionOptions
+    ApplyRule, GenerateToken, ActionOptions, CloseVariadicFieldRule
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 
@@ -296,6 +296,50 @@ class TestEncoder(unittest.TestCase):
                          encoder.decode(torch.LongTensor([[-1, -1, -1]]), []))
         self.assertEqual(None,
                          encoder.decode(torch.LongTensor([[-1, -1, 1]]), []))
+
+    def test_encode_each_action(self):
+        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
+                                 [("name",
+                                   NodeType("value", NodeConstraint.Token)),
+                                  ("body",
+                                   NodeType("expr", NodeConstraint.Variadic))])
+        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+                              [("constant",
+                                NodeType("value", NodeConstraint.Token))])
+
+        encoder = ActionSequenceEncoder(
+            [funcdef, expr],
+            [NodeType("def", NodeConstraint.Node),
+             NodeType("value", NodeConstraint.Token),
+             NodeType("expr", NodeConstraint.Node)],
+            ["f", "2"],
+            0)
+        evaluator = Evaluator()
+        evaluator.eval(ApplyRule(funcdef))
+        evaluator.eval(GenerateToken("f"))
+        evaluator.eval(GenerateToken("1"))
+        evaluator.eval(GenerateToken("2"))
+        evaluator.eval(GenerateToken(CloseNode()))
+        evaluator.eval(ApplyRule(expr))
+        evaluator.eval(GenerateToken("f"))
+        evaluator.eval(GenerateToken(CloseNode()))
+        evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
+        action = encoder.encode_each_action(evaluator, ["1", "2"], 1)
+
+        self.assertTrue(np.array_equal(
+            np.array([
+                [[1, -1, -1], [2, -1, -1]],   # funcdef
+                [[-1, -1, -1], [-1, 2, -1]],  # f
+                [[-1, -1, -1], [-1, -1, 0]],  # 1
+                [[-1, -1, -1], [-1, 3, 1]],   # 2
+                [[-1, -1, -1], [-1, 1, -1]],  # CloseNode
+                [[3, -1, -1], [2, -1, -1]],   # expr
+                [[-1, -1, -1], [-1, 2, -1]],  # f
+                [[-1, -1, -1], [-1, 1, -1]],  # CloseNode
+                [[-1, -1, -1], [-1, -1, -1]]  # CloseVariadicField
+            ], dtype=np.long),
+            action.numpy()
+        ))
 
     def test_remove_variadic_node_types(self):
         self.assertEqual(

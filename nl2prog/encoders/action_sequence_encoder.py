@@ -249,6 +249,56 @@ class ActionSequenceEncoder:
 
         return depth, m
 
+    def encode_each_action(self, evaluator: Evaluator, query: List[str],
+                           max_arity: int) \
+            -> torch.Tensor:
+        """
+        Return the tensor encoding the each action
+
+        Parameters
+        ----------
+        evaluator: Evaluator
+            The evaluator containing action sequence to be encoded
+        query: List[str]]
+        max_arity: int
+
+        Returns
+        -------
+        torch.Tensor
+            The encoded tensor. The shape of tensor is
+            (len(action_sequence), max_arity + 1, 3).
+            [:, 0, 0] encodes the parent node type. [:, i, 0] encodes
+            the node type of (i - 1)-th child node. [:, i, 1] encodes
+            the token of (i - 1)-th child node. [:, i, 2] encodes the query
+            index of (i - 1)-th child node.
+            The padding value is -1.
+        """
+        L = len(evaluator.action_sequence)
+        retval = torch.ones(L, max_arity + 1, 3) * -1
+        for i, action in enumerate(evaluator.action_sequence):
+            if isinstance(action, ApplyRule):
+                if isinstance(action.rule, ExpandTreeRule):
+                    # Encode parent
+                    retval[i, 0, 0] = \
+                        self._node_type_encoder.encode(action.rule.parent)
+                    # Encode children
+                    for j, (_, child) in enumerate(
+                            action.rule.children[:max_arity]):
+                        retval[i, j + 1, 0] = \
+                            self._node_type_encoder.encode(child)
+            else:
+                gentoken: GenerateToken = action
+                token = gentoken.token
+                encoded_token = int(self._token_encoder.encode(token).numpy())
+
+                if encoded_token != 0:
+                    retval[i, 1, 1] = encoded_token
+
+                if token in query:
+                    retval[i, 1, 2] = query.index(token)
+
+        return retval
+
     @staticmethod
     def remove_variadic_node_types(node_types: List[NodeType]) \
             -> List[NodeType]:

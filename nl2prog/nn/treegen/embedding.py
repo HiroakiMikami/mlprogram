@@ -53,7 +53,7 @@ class QueryEmbedding(nn.Module):
 
 class RuleEmbedding(nn.Module):
     def __init__(self, rule_num: int, token_num: int, node_type_num: int,
-                 max_children_num: int,
+                 max_arity: int,
                  embedding_dim: int, elem_embedding_dim: int,
                  elem_feature_dim: int):
         super(RuleEmbedding, self).__init__()
@@ -68,7 +68,7 @@ class RuleEmbedding(nn.Module):
         self.elem_token_embed = \
             EmbeddingWithMask(token_num + 1, elem_embedding_dim, token_num + 1)
         self.elem_to_seq = nn.Conv1d(elem_embedding_dim, elem_feature_dim,
-                                     max_children_num + 1, bias=False)
+                                     max_arity + 1, bias=False)
 
     def forward(self, sequence: torch.Tensor, elem_seq: torch.Tensor) \
             -> Tuple[torch.Tensor, torch.Tensor]:
@@ -81,7 +81,7 @@ class RuleEmbedding(nn.Module):
             [:, :, 0] represent the rule IDs, [:, :, 1] represent the token
             IDs, [:, :, 2] represent the indexes of the queries.
         elem_seq: torch.Tensor
-            The shape is (L, N, max_children_num + 1, 3). where L is the
+            The shape is (L, N, max_arity + 1, 3). where L is the
             sequence length and N is the batch size.
             The padding value should be -1.
             [:, :, :, 0] represent the IDs of the node types, [:, :, :, 1]
