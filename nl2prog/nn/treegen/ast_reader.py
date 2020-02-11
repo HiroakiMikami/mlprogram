@@ -61,9 +61,12 @@ class ASTReaderBlock(nn.Module):
         h = h_in + \
             index_embeddings(h_in, self.block_idx) + \
             position_embeddings(depth, self.block_idx, hidden_size)
+        attn_mask = \
+            torch.nn.Transformer.generate_square_subsequent_mask(None, L)
         h, attn = self.attention(
             h, h, h,
-            key_padding_mask=input.mask.permute(1, 0) == 0)
+            key_padding_mask=input.mask.permute(1, 0) == 0,
+            attn_mask=attn_mask)
         h = h + h_in
         h = self.norm1(h)
 

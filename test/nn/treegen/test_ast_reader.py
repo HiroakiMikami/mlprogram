@@ -23,6 +23,23 @@ class TestASTReaderBlock(unittest.TestCase):
         self.assertEqual((5, 1), out.mask.shape)
         self.assertEqual((1, 5, 5), weight.shape)
 
+    def test_dependency(self):
+        block = ASTReaderBlock(2, 3, 1, 3, 0.0, 0)
+        in0 = torch.rand(3, 3)
+        depth = torch.randint(3, [3, 1])
+        in1 = torch.rand(3, 1, 2)
+        adj = torch.randint(1, [1, 3, 3]).bool().long()
+        out0, weight0 = block(pad_sequence([in0], 0), depth, in1, adj)
+        out1, weight1 = block(pad_sequence([in0[:2, :]], 0), depth[:2, :],
+                              in1[:2, :, :], adj[:, :2, :2])
+        out0 = out0.data[:2, :, :]
+        weight0 = weight0[:1, :2, :2]
+        out1 = out1.data
+        self.assertTrue(np.array_equal(out0.detach().numpy(),
+                                       out1.detach().numpy()))
+        self.assertTrue(np.array_equal(weight0.detach().numpy(),
+                                       weight1.detach().numpy()))
+
     def test_mask(self):
         block = ASTReaderBlock(2, 3, 1, 3, 0.0, 0)
         in00 = torch.rand(5, 3)
