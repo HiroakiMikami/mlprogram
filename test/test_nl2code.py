@@ -8,12 +8,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.nn.utils import rnn
 
-from nl2prog.encoders import Encoder
+from torchnlp.encoders import LabelEncoder
+
+from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils import Query, synthesize as _synthesize, evaluate
 from nl2prog.utils.nl2code import BeamSearchSynthesizer
 from nl2prog.language.action \
     import ast_to_action_sequence as to_seq, ActionOptions
-from nl2prog.utils.data import get_samples, to_eval_dataset
+from nl2prog.utils.data import get_samples, to_eval_dataset, get_words
 from nl2prog.utils.data.nl2code import to_train_dataset, collate_train_dataset
 from nl2prog.nn.nl2code import TrainModel, Loss, Accuracy as Acc
 from nl2prog.nn.utils import rnn as nrnn
@@ -40,7 +42,7 @@ class TestNL2Code(unittest.TestCase):
         encoder, model = model
         synthesizer = BeamSearchSynthesizer(5, tokenize_query,
                                             model.encoder, model.predictor,
-                                            encoder, is_subtype,
+                                            encoder[0], encoder[1], is_subtype,
                                             options=options, max_steps=20)
 
         def synthesize(query: str):
@@ -56,14 +58,15 @@ class TestNL2Code(unittest.TestCase):
         def to_action_sequence(ast):
             return to_seq(ast, options=options, tokenizer=tokenize_token)
 
-        samples = get_samples(dataset, tokenize_query, tokenize_token,
-                              to_action_sequence)
-        encoder = Encoder(samples, 2, 2, options=options)
+        words = get_words(dataset, tokenize_query)
+        samples = get_samples(dataset, tokenize_token, to_action_sequence)
+        qencoder = LabelEncoder(words, 2)
+        aencoder = ActionSequenceEncoder(samples, 2, options=options)
 
         train_dataset = to_train_dataset(
             dataset, tokenize_query, tokenize_token, to_action_sequence,
-            encoder, options)
-        model = TrainModel(encoder, 256, 64, 256, 64, 0.0)
+            qencoder, aencoder, options)
+        model = TrainModel(qencoder, aencoder, 256, 64, 256, 64, 0.0)
         optimizer = optim.Adam(model.parameters())
         loss_function = Loss()
         acc_function = Acc()
@@ -103,7 +106,7 @@ class TestNL2Code(unittest.TestCase):
                 avg_acc += acc.item() / len(loader)
             if avg_acc == 1.0:
                 break
-        return encoder, model
+        return (qencoder, aencoder), model
 
     def test_default_settings(self):
         torch.manual_seed(0)

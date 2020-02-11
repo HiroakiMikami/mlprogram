@@ -1,5 +1,6 @@
 import torch
 import unittest
+from torchnlp.encoders import LabelEncoder
 import numpy as np
 
 from nl2prog.utils import Progress, Candidate, Query
@@ -8,7 +9,7 @@ from nl2prog.language.ast import Node, Field, Leaf
 from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
     ApplyRule, GenerateToken, CloseNode, ActionOptions
-from nl2prog.encoders import Encoder, Samples
+from nl2prog.encoders import ActionSequenceEncoder, Samples
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -72,9 +73,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
     def test_apply_rule_generation(self):
         XtoY = ExpandTreeRule(X, [("value", Y)])
         YsubtoNone = ExpandTreeRule(Ysub, [])
-        encoder = Encoder(
-            Samples(["test"], [XtoY, YsubtoNone], [X, Y, Ysub], ["foo"]),
-            0, 0)
+        qencoder = LabelEncoder(["test"], 0)
+        aencoder = ActionSequenceEncoder(
+            Samples([XtoY, YsubtoNone], [X, Y, Ysub], ["foo"]), 0)
 
         # Prepare mock probabilities
         rule0 = torch.FloatTensor([[[0.0, 0.0, 0.9, 0.1]]])
@@ -95,7 +96,8 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
         synthesizer = BeamSearchSynthesizer(2,
                                             mock_tokenizer, mock_query_encoder,
-                                            predictor, encoder, is_subtype)
+                                            predictor, qencoder, aencoder,
+                                            is_subtype)
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -132,9 +134,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
     def test_variadic_fields_generation(self):
         XtoY = ExpandTreeRule(X, [("value", Y_list)])
         YsubtoNone = ExpandTreeRule(Ysub, [])
-        encoder = Encoder(
-            Samples(["test"], [XtoY, YsubtoNone], [X, Y, Ysub], ["foo"]),
-            0, 0)
+        qencoder = LabelEncoder(["test"], 0)
+        aencoder = ActionSequenceEncoder(
+            Samples([XtoY, YsubtoNone], [X, Y, Ysub], ["foo"]), 0)
 
         # Prepare mock probabilities
         rule0 = torch.FloatTensor([[[0.0, 0.0, 0.9, 0.1]]])
@@ -162,7 +164,8 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
         synthesizer = BeamSearchSynthesizer(3,
                                             mock_tokenizer, mock_query_encoder,
-                                            predictor, encoder, is_subtype)
+                                            predictor, qencoder, aencoder,
+                                            is_subtype)
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -214,7 +217,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
     def test_token_generation(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
-        encoder = Encoder(Samples(["test"], [XtoStr], [X, Str], ["foo"]), 0, 0)
+        qencoder = LabelEncoder(["test"], 0)
+        aencoder = ActionSequenceEncoder(
+            Samples([XtoStr], [X, Str], ["foo"]), 0)
 
         # Prepare mock probabilities
         rule0 = torch.FloatTensor([[[0.0, 0.0, 1.0]]])
@@ -241,8 +246,8 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [history0, history1, history2], [h0, h1, h2], [c0, c1, c2])
 
         synthesizer = BeamSearchSynthesizer(
-            2, mock_tokenizer, mock_query_encoder, predictor, encoder,
-            is_subtype)
+            2, mock_tokenizer, mock_query_encoder, predictor, qencoder,
+            aencoder, is_subtype)
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -286,7 +291,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
     def test_copy_action_generation(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
-        encoder = Encoder(Samples(["test"], [XtoStr], [X, Str], ["xxx"]), 0, 0)
+        qencoder = LabelEncoder(["test"], 0)
+        aencoder = ActionSequenceEncoder(
+            Samples([XtoStr], [X, Str], ["xxx"]), 0)
 
         # Prepare mock probabilities
         rule0 = torch.FloatTensor([[[0.0, 0.0, 1.0]]])
@@ -313,8 +320,8 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [history0, history1, history2], [h0, h1, h2], [c0, c1, c2])
 
         synthesizer = BeamSearchSynthesizer(
-            2, mock_tokenizer, mock_query_encoder, predictor, encoder,
-            is_subtype)
+            2, mock_tokenizer, mock_query_encoder, predictor, qencoder,
+            aencoder, is_subtype)
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("foo"):
@@ -358,8 +365,10 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
 
     def test_query_contains_tokens(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
-        encoder = Encoder(Samples(["test"], [XtoStr], [X, Str], ["test"]),
-                          0, 0, ActionOptions(True, False))
+        qencoder = LabelEncoder(["test"], 0)
+        aencoder = ActionSequenceEncoder(
+            Samples([XtoStr], [X, Str], ["test"]), 0,
+            ActionOptions(True, False))
 
         # Prepare mock probabilities
         rule0 = torch.FloatTensor([[[0.0, 0.0, 1.0]]])
@@ -380,8 +389,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             [history0, history1], [h0, h1], [c0, c1])
 
         synthesizer = BeamSearchSynthesizer(
-            2, mock_tokenizer, mock_query_encoder, predictor, encoder,
-            is_subtype=is_subtype, options=ActionOptions(True, False))
+            2, mock_tokenizer, mock_query_encoder, predictor, qencoder,
+            aencoder, is_subtype=is_subtype,
+            options=ActionOptions(True, False))
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):

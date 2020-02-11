@@ -42,23 +42,28 @@ class Unknown:
         return cls._instance
 
 
+@dataclass
+class Samples:
+    rules: List[Rule]
+    node_types: List[NodeType]
+    tokens: List[Union[str, CloseNode]]
+
+
 class ActionSequenceEncoder:
-    def __init__(self,
-                 rules: List[Rule], node_types: List[NodeType],
-                 tokens: List[str], token_threshold: int,
+    def __init__(self, samples: Samples, token_threshold: int,
                  options=ActionOptions(True, True)):
         reserved_labels = [Unknown()]
         if options.retain_vairadic_fields:
             reserved_labels.append(CloseVariadicFieldRule())
-        self._rule_encoder = LabelEncoder(rules,
+        self._rule_encoder = LabelEncoder(samples.rules,
                                           reserved_labels=reserved_labels,
                                           unknown_index=0)
         self._node_type_encoder = LabelEncoder(list(
-            map(convert_node_type_to_key, node_types)))
+            map(convert_node_type_to_key, samples.node_types)))
         reserved_labels = [Unknown()]
         if options.split_non_terminal:
             reserved_labels.append(CloseNode())
-        self._token_encoder = LabelEncoder(tokens,
+        self._token_encoder = LabelEncoder(samples.tokens,
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,
                                            unknown_index=0)

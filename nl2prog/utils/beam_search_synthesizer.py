@@ -71,7 +71,6 @@ class BeamSearchSynthesizer:
                                List[Tuple[Any, LazyLogProbability]]]
             The update function. It returns the next state and the probability
             of each action.
-        action_sequence_encoder: Encoder
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.

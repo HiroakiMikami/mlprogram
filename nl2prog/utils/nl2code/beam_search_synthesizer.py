@@ -1,11 +1,12 @@
 import torch
+from torchnlp.encoders import LabelEncoder
 import numpy as np
 from typing import List, Union, Callable
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import Predictor
 from nl2prog.language.action \
     import ActionOptions
-from nl2prog.encoders import Encoder
+from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability, Query
@@ -24,9 +25,10 @@ class State:
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
-                 query_encoder: Callable[[PaddedSequenceWithMask],
-                                         PaddedSequenceWithMask],
-                 predictor: Predictor, encoder: Encoder,
+                 encoder: Callable[[PaddedSequenceWithMask],
+                                   PaddedSequenceWithMask],
+                 predictor: Predictor, query_encoder: LabelEncoder,
+                 action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  eps: float = 1e-8,
                  max_steps: Union[int, None] = None):
@@ -36,12 +38,12 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        query_encoder: Callble[[PaddedSequenceWithMask],
-                               PaddedSequenceWithMask]
+        encoder: Callble[[PaddedSequenceWithMask], PaddedSequenceWithMask]
             The encoder module
         predictor: Predictor
             The module to predict the probabilities of actions
-        encoder: Encoder
+        query_encoder: LabelEncoder
+        action_seqneuce_encoder: ActionSequenceEncoder
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
@@ -55,10 +57,10 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         def initialize(query: str):
             query = tokenizer(query)
             query_tensor = \
-                encoder.annotation_encoder.batch_encode(query.query_for_dnn)
+                query_encoder.batch_encode(query.query_for_dnn)
             query_tensor = query_tensor.to(device)
             query_tensor = pad_sequence([query_tensor])
-            query_tensor = query_encoder(query_tensor).data
+            query_tensor = encoder(query_tensor).data
             L = query_tensor.shape[0]
             query_tensor = query_tensor.view(L, -1)
 
@@ -80,10 +82,10 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             for h in hs:
                 query_seq.append(h.state.query_tensor)
                 # (L_a + 1, 4)
-                a = encoder.action_sequence_encoder.encode_action(
+                a = action_sequence_encoder.encode_action(
                     h.evaluator, h.state.query)
                 # (L_a + 1, 3)
-                p = encoder.action_sequence_encoder.encode_parent(h.evaluator)
+                p = action_sequence_encoder.encode_parent(h.evaluator)
                 # (1, 3)
                 action.append(
                     torch.cat([a[-1, 0].view(1, -1),
@@ -140,7 +142,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                     def get_rule_prob(self):
                         # TODO
                         idx_to_rule = \
-                            encoder.action_sequence_encoder._rule_encoder.vocab
+                            action_sequence_encoder._rule_encoder.vocab
                         retval = {}
                         # 0 is unknown rule
                         for j in range(1, rule_pred.shape[1]):
@@ -159,8 +161,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                                        ):  # 0 is UnknownToken
                             p = token_pred[self.i, j].item()
                             t = \
-                                encoder.action_sequence_encoder. \
-                                _token_encoder.decode(
+                                action_sequence_encoder._token_encoder.decode(
                                     torch.LongTensor([j]))
                             if t in probs:
                                 probs[t] = probs.get(t) + p

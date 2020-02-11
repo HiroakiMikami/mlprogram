@@ -1,15 +1,18 @@
 import torch
 import torch.nn as nn
+from torchnlp.encoders import LabelEncoder
 from typing import Tuple
 from nl2prog.nn.utils import rnn
 from nl2prog.nn.treegen\
     import NLReader, ASTReader, Decoder, Predictor, \
     QueryEmbedding, RuleEmbedding
-from nl2prog.encoders import Encoder
+from nl2prog.encoders import ActionSequenceEncoder
 
 
 class TrainModel(nn.Module):
-    def __init__(self, encoder: Encoder,
+    def __init__(self, query_encoder: LabelEncoder,
+                 char_encoder: LabelEncoder,
+                 action_sequence_encoder: ActionSequenceEncoder,
                  max_token_len: int, max_arity: int,
                  num_heads: int,
                  num_nl_reader_blocks: int, num_ast_reader_blocks: int,
@@ -17,17 +20,16 @@ class TrainModel(nn.Module):
                  feature_size: int, dropout: float):
         super(TrainModel, self).__init__()
         self.rule_num = \
-            encoder.action_sequence_encoder._rule_encoder.vocab_size - 1
+            action_sequence_encoder._rule_encoder.vocab_size - 1
         self.token_num = \
-            encoder.action_sequence_encoder._token_encoder.vocab_size - 1
+            action_sequence_encoder._token_encoder.vocab_size - 1
         self.node_type_num = \
-            encoder.action_sequence_encoder._node_type_encoder.vocab_size - 1
+            action_sequence_encoder._node_type_encoder.vocab_size - 1
         self.token_num = \
-            encoder.action_sequence_encoder._token_encoder. vocab_size - 1
+            action_sequence_encoder._token_encoder. vocab_size - 1
 
-        # TODO magic number
         self.query_embedding = QueryEmbedding(
-            encoder.annotation_encoder.vocab_size, 255, max_token_len,
+            query_encoder.vocab_size, char_encoder.vocab_size, max_token_len,
             hidden_size, hidden_size, hidden_size)
         self.rule_embedding = RuleEmbedding(
             self.rule_num, self.token_num, self.node_type_num,

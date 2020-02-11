@@ -1,25 +1,27 @@
 import torch
 import torch.nn as nn
+from torchnlp.encoders import LabelEncoder
 from typing import Tuple
 from nl2prog.nn.utils import rnn
-from nl2prog.nn.nl2code import Encoder as EncoderModule, Predictor
-from nl2prog.encoders import Encoder
+from nl2prog.nn.nl2code import Encoder, Predictor
+from nl2prog.encoders import ActionSequenceEncoder
 
 
 class TrainModel(nn.Module):
-    def __init__(self, encoder: Encoder,
+    def __init__(self, query_encoder: LabelEncoder,
+                 action_sequence_encoder: ActionSequenceEncoder,
                  embedding_dim: int, node_type_embedding_dim: int,
                  lstm_state_size: int, hidden_state_size: int,
                  dropout: float):
         super(TrainModel, self).__init__()
         self.lstm_state_size = lstm_state_size
-        self.encoder = EncoderModule(encoder.annotation_encoder.vocab_size,
-                                     embedding_dim, lstm_state_size,
-                                     dropout=dropout)
+        self.encoder = Encoder(query_encoder.vocab_size,
+                               embedding_dim, lstm_state_size,
+                               dropout=dropout)
         self.predictor = Predictor(
-            encoder.action_sequence_encoder._rule_encoder.vocab_size,
-            encoder.action_sequence_encoder._token_encoder.vocab_size,
-            encoder.action_sequence_encoder._node_type_encoder.vocab_size,
+            action_sequence_encoder._rule_encoder.vocab_size,
+            action_sequence_encoder._token_encoder.vocab_size,
+            action_sequence_encoder._node_type_encoder.vocab_size,
             node_type_embedding_dim, embedding_dim,
             lstm_state_size, lstm_state_size, hidden_state_size, dropout
         )

@@ -1,9 +1,10 @@
 import torch
+from torchnlp.encoders import LabelEncoder
 import numpy as np
 from typing import Callable, List, Any, Tuple, Union
 from nl2prog.language.action import ActionSequence, ActionOptions
 from nl2prog.language.evaluator import Evaluator
-from nl2prog.encoders import Encoder
+from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils.data import ListDataset
 from nl2prog.utils import Query
 
@@ -13,7 +14,8 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
                      tokenize_token: Callable[[str], List[str]],
                      to_action_sequence: Callable[[Any],
                                                   Union[ActionSequence, None]],
-                     encoder: Encoder,
+                     query_encoder: LabelEncoder,
+                     action_sequence_encoder: ActionSequenceEncoder,
                      options: ActionOptions = ActionOptions(True, True)) \
         -> torch.utils.data.Dataset:
     entries = []
@@ -23,7 +25,7 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             code = entry.ground_truth
             query = tokenize_query(annotation)
             query_tensor = \
-                encoder.annotation_encoder.batch_encode(query.query_for_dnn)
+                query_encoder.batch_encode(query.query_for_dnn)
             action_sequence = to_action_sequence(code)
             if action_sequence is None:
                 continue
@@ -31,10 +33,10 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             for action in action_sequence:
                 evaluator.eval(action)
             a = \
-                encoder.action_sequence_encoder.encode_action(
+                action_sequence_encoder.encode_action(
                     evaluator, query.query_for_synth)
             p = \
-                encoder.action_sequence_encoder.encode_parent(
+                action_sequence_encoder.encode_parent(
                     evaluator)
             if a is None:
                 continue

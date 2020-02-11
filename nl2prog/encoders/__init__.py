@@ -1,4 +1,3 @@
-from .action_sequence_encoder import ActionSequenceEncoder
-from .encoder import Samples, Encoder
+from .action_sequence_encoder import Samples, ActionSequenceEncoder
 
-__all__ = ["ActionSequenceEncoder", "Samples", "Encoder"]
+__all__ = ["Samples", "ActionSequenceEncoder"]

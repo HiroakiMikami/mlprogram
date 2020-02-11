@@ -1,26 +1,29 @@
 import torch
 import unittest
+from torchnlp.encoders import LabelEncoder
 import nl2prog.nn.utils.rnn as rnn
 from nl2prog.language.action import NodeConstraint, NodeType
-from nl2prog.encoders import Samples, Encoder
+from nl2prog.encoders import Samples, ActionSequenceEncoder
 from nl2prog.nn.nl2code import TrainModel
 
 
 class TestTrain(unittest.TestCase):
     def test_parameters(self):
-        samples = Samples(["foo"], ["mock-rule"],
+        samples = Samples(["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
-        encoder = Encoder(samples, 0, 0)
-        model = TrainModel(encoder, 1, 2, 6, 5, 0.0)
+        qencoder = LabelEncoder(["foo"], 0)
+        aencoder = ActionSequenceEncoder(samples, 0)
+        model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         self.assertEqual(34, len(list(model.named_parameters())))
 
     def test_shape(self):
-        samples = Samples(["foo"], ["mock-rule"],
+        samples = Samples(["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
                           ["token"])
-        encoder = Encoder(samples, 0, 0)
-        model = TrainModel(encoder, 1, 2, 6, 5, 0.0)
+        qencoder = LabelEncoder(["foo"], 0)
+        aencoder = ActionSequenceEncoder(samples, 0)
+        model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         q0 = torch.LongTensor([1, 1])
         q1 = torch.LongTensor([1, 1, 1])
         action0 = torch.LongTensor([[-1, -1, -1]])

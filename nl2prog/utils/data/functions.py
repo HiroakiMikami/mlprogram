@@ -8,22 +8,31 @@ from nl2prog.utils.data import ListDataset
 from nl2prog.utils import Query
 
 
+def get_words(dataset: torch.utils.data.Dataset,
+              tokenize_query: Callable[[str], Query],
+              ) -> List[str]:
+    words = []
+
+    for group in dataset:
+        for entry in group:
+            query = tokenize_query(entry.query)
+            words.extend(query.query_for_dnn)
+
+    return words
+
+
 def get_samples(dataset: torch.utils.data.Dataset,
-                tokenize_query: Callable[[str], Query],
                 tokenize_token: Callable[[str], List[str]],
                 to_action_sequence: Callable[[Any],
                                              Union[ActionSequence, None]]
                 ) -> Samples:
-    words = []
     rules = []
     node_types = []
     tokens = []
 
     for group in dataset:
         for entry in group:
-            query = tokenize_query(entry.query)
             action_sequence = to_action_sequence(entry.ground_truth)
-            words.extend(query.query_for_dnn)
             if action_sequence is None:
                 continue
             for action in action_sequence:
@@ -40,7 +49,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
                         ts = tokenize_token(token)
                         tokens.extend(ts)
 
-    return Samples(words, rules, node_types, tokens)
+    return Samples(rules, node_types, tokens)
 
 
 def to_eval_dataset(dataset: torch.utils.data.Dataset) \
