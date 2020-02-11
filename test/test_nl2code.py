@@ -6,7 +6,6 @@ from tqdm import trange
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torch.nn.utils import rnn
 
 from torchnlp.encoders import LabelEncoder
 
@@ -75,31 +74,20 @@ class TestNL2Code(unittest.TestCase):
             loader = DataLoader(train_dataset, 1, shuffle=True,
                                 collate_fn=collate_train_dataset)
             avg_acc = 0
-            for query, action, prev_action in loader:
-                query = rnn.pack_sequence(query, enforce_sorted=False)
-                action = rnn.pack_sequence(action, enforce_sorted=False)
-                prev_action_train = [x[:-1] for x in prev_action]
-                action_ground_truth = [x[1:] for x in prev_action]
-                prev_action_train = \
-                    rnn.pack_sequence(prev_action_train, enforce_sorted=False)
-                action_ground_truth = \
-                    rnn.pack_sequence(action_ground_truth,
-                                      enforce_sorted=False)
-                query = nrnn.pad_packed_sequence(query, padding_value=-1)
-                action = nrnn.pad_packed_sequence(action, padding_value=-1)
-                prev_action_train = \
-                    nrnn.pad_packed_sequence(
-                        prev_action_train, padding_value=-1)
-                action_ground_truth = \
-                    nrnn.pad_packed_sequence(action_ground_truth,
-                                             padding_value=-1)
+            for (query, action, prev_action), ground_truth in loader:
+                query = nrnn.pad_sequence(query, padding_value=-1)
+                action = nrnn.pad_sequence(action, padding_value=-1)
+                prev_action = \
+                    nrnn.pad_sequence(prev_action, padding_value=-1)
+                ground_truth = \
+                    nrnn.pad_sequence(ground_truth, padding_value=-1)
 
                 rule_prob, token_prob, copy_prob, _, _ = model(
-                    query, action, prev_action_train)
-                loss = loss_function(rule_prob, token_prob,
-                                     copy_prob, action_ground_truth)
-                acc = acc_function(rule_prob, token_prob,
-                                   copy_prob, action_ground_truth)
+                    query, action, prev_action)
+                loss = loss_function(rule_prob, token_prob, copy_prob,
+                                     ground_truth)
+                acc = acc_function(rule_prob, token_prob, copy_prob,
+                                   ground_truth)
                 model.zero_grad()
                 loss.backward()
                 optimizer.step()
