@@ -1,7 +1,7 @@
 import ast as python_ast
 import transpyle
 from enum import Enum
-from typing import Union
+from typing import Optional
 from nl2prog.language.ast import AST
 from .python_ast_to_ast import to_ast
 from .ast_to_python_ast import to_python_ast
@@ -13,7 +13,7 @@ class ParseMode(Enum):
     Exec = 3
 
 
-def parse(code: str, mode: ParseMode = ParseMode.Single) -> Union[AST, None]:
+def parse(code: str, mode: ParseMode = ParseMode.Single) -> Optional[AST]:
     try:
         past = python_ast.parse(code)
         if mode == ParseMode.Exec:
@@ -24,7 +24,7 @@ def parse(code: str, mode: ParseMode = ParseMode.Single) -> Union[AST, None]:
         return None
 
 
-def unparse(ast: AST) -> Union[str, None]:
+def unparse(ast: AST) -> Optional[str]:
     unparser = transpyle.python.unparser.NativePythonUnparser()
 
     try:

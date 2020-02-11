@@ -1,5 +1,5 @@
 import torch
-from typing import Callable, List, Any, Union
+from typing import Callable, List, Any, Optional
 from nl2prog.language.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
@@ -24,7 +24,7 @@ def get_words(dataset: torch.utils.data.Dataset,
 def get_samples(dataset: torch.utils.data.Dataset,
                 tokenize_token: Callable[[str], List[str]],
                 to_action_sequence: Callable[[Any],
-                                             Union[ActionSequence, None]]
+                                             Optional[ActionSequence]]
                 ) -> Samples:
     rules = []
     node_types = []

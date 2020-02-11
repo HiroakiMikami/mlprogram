@@ -1,4 +1,4 @@
-from typing import List, Union, Callable, Any, Tuple, Dict
+from typing import List, Callable, Any, Tuple, Dict, Optional, Union
 from dataclasses import dataclass
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.language.ast import AST
@@ -31,7 +31,7 @@ class LazyLogProbability:
 @dataclass
 class Hypothesis:
     id: int
-    parent: Union[int, None]
+    parent: Optional[int]
     score: float
     evaluator: Evaluator
     state: Any
@@ -40,7 +40,7 @@ class Hypothesis:
 @dataclass
 class Progress:
     id: int
-    parent: Union[int, None]
+    parent: Optional[int]
     score: float
     action: Action
     is_complete: bool
@@ -58,7 +58,7 @@ class BeamSearchSynthesizer:
                  batch_update: Callable[[List[Hypothesis]],
                                         List[Tuple[Any, LazyLogProbability]]],
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
-                 max_steps: Union[int, None] = None):
+                 max_steps: Optional[int] = None):
         """
         Parameters
         ----------
@@ -75,7 +75,7 @@ class BeamSearchSynthesizer:
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
         options: ActionOptions
-        max_steps: Union[int, None]
+        max_steps: Optional[int]
         """
         self._beam_size = beam_size
         self._initialize = initialze
@@ -127,7 +127,7 @@ class BeamSearchSynthesizer:
                 if head is None and len(h.evaluator.action_sequence) != 0:
                     continue
                 is_token = False
-                head_field: Union[NodeType, None] = None
+                head_field: Optional[NodeType] = None
                 if head is not None:
                     head_field = \
                         h.evaluator.action_sequence[head.action]\

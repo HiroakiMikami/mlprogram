@@ -1,7 +1,7 @@
 import torch
 from torchnlp.encoders import LabelEncoder
 import numpy as np
-from typing import Callable, List, Any, Tuple, Union
+from typing import Callable, List, Any, Tuple, Optional
 from nl2prog.language.action import ActionSequence, ActionOptions
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
@@ -13,7 +13,7 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
                      tokenize_query: Callable[[str], Query],
                      tokenize_token: Callable[[str], List[str]],
                      to_action_sequence: Callable[[Any],
-                                                  Union[ActionSequence, None]],
+                                                  Optional[ActionSequence]],
                      query_encoder: LabelEncoder,
                      action_sequence_encoder: ActionSequenceEncoder,
                      options: ActionOptions = ActionOptions(True, True)) \

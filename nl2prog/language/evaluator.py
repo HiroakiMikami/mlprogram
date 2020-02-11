@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Union, List
+from typing import Dict, Optional, List
 from copy import deepcopy
 
 import nl2prog.language.action as A
@@ -39,13 +39,13 @@ class Tree:
     children: Dict[int, Tuple[int, EdgeLabel]]
         The adjacency dictionary. Each key represents the action generating
         the parent node. Each value is the list of the children actions.
-    parent: Dict[int, Union[int, None]]
+    parent: Dict[int, Optional[int]]
         The adjacency dictionary. Each key represents the action generating
         the child node, and each value represents the action generating
         the parent node.
     """
     children: Dict[int, List[List[int]]]
-    parent: Dict[int, Union[Parent, None]]
+    parent: Dict[int, Optional[Parent]]
 
 
 class Evaluator:
@@ -59,7 +59,7 @@ class Evaluator:
         The intermidiate AST.
     _action_sequence: ActionSequence
         The sequence of actions to be evaluated.
-    _head_action_index: Union[Int, None]
+    _head_action_index: Optional[Int]
         The index of the head AST node.
     _head_children_index: Dict[Int, Int]
         The relation between actions and their head indexes of fields.
@@ -75,7 +75,7 @@ class Evaluator:
         self._options = options
 
     @property
-    def head(self) -> Union[Parent, None]:
+    def head(self) -> Optional[Parent]:
         """
         Return the index of the head (it will be the parent of
         the next action).
@@ -281,7 +281,7 @@ class Evaluator:
 
         return evaluator
 
-    def parent(self, index: int) -> Union[Parent, None]:
+    def parent(self, index: int) -> Optional[Parent]:
         return self._tree.parent[index]
 
     @property

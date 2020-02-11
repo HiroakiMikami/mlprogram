@@ -1,7 +1,7 @@
 import torch
 from torchnlp.encoders import LabelEncoder
 import numpy as np
-from typing import List, Union, Callable
+from typing import List, Callable, Optional
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import Predictor
 from nl2prog.language.action \
@@ -31,7 +31,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  eps: float = 1e-8,
-                 max_steps: Union[int, None] = None):
+                 max_steps: Optional[int] = None):
         """
         Parameters
         ----------
@@ -49,7 +49,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             This returns true if the argument 0 is subtype of the argument 1.
         options: ActionOptions
         eps: float
-        max_steps: Union[int, None]
+        max_steps: Optional[int]
         """
         device = list(predictor.parameters())[0].device
         hidden_size = predictor.hidden_size

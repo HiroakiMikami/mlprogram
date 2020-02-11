@@ -163,7 +163,7 @@ Tokenizer = Callable[[str], List[str]]
 
 def ast_to_action_sequence(node: AST,
                            options: ActionOptions = ActionOptions(True, True),
-                           tokenizer: Union[Tokenizer, None] = None) \
+                           tokenizer: Optional[Tokenizer] = None) \
         -> ActionSequence:
     """
     Return the action sequence corresponding to this AST
@@ -172,7 +172,7 @@ def ast_to_action_sequence(node: AST,
     ----------
     node: AST
     options: ActionOptions
-    tokenizer: Union[Tokenizer, None]
+    tokenizer: Optional[Tokenizer]
         function to tokenize a string.
         This is required if the options.split_non_terminal is True.
 
@@ -229,7 +229,7 @@ def code_to_action_sequence(
     code: str, parse: Callable[[str], AST],
     options: ActionOptions = ActionOptions(True, True),
     tokenize: Optional[Callable[[str], List[str]]] = None) \
-        -> Union[ActionSequence, None]:
+        -> Optional[ActionSequence]:
     ast = parse(code)
     if ast is None:
         return None

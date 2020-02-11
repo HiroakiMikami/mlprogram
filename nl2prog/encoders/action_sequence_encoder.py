@@ -1,6 +1,6 @@
 import torch
 from torchnlp.encoders import LabelEncoder
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 from dataclasses import dataclass
 
 from nl2prog.language.action import NodeType, NodeConstraint
@@ -69,7 +69,7 @@ class ActionSequenceEncoder:
                                            unknown_index=0)
 
     def decode(self, tensor: torch.LongTensor, query: List[str]) \
-            -> Union[ActionSequence, None]:
+            -> Optional[ActionSequence]:
         """
         Return the action sequence corresponding to the tensor
 
@@ -85,7 +85,7 @@ class ActionSequenceEncoder:
 
         Returns
         -------
-        Union[ActionSequence, None]
+        Optional[ActionSequence]
             The action sequence corresponding to the tensor
             None if the action sequence cannot be generated.
         """
@@ -113,7 +113,7 @@ class ActionSequenceEncoder:
         return retval
 
     def encode_action(self, evaluator: Evaluator, query: List[str]) \
-            -> Union[torch.Tensor, None]:
+            -> Optional[torch.Tensor]:
         """
         Return the tensor encoded the action sequence
 
@@ -125,7 +125,7 @@ class ActionSequenceEncoder:
 
         Returns
         -------
-        Union[torch.Tensor, None]
+        Optional[torch.Tensor]
             The encoded tensor. The shape of tensor is
             (len(action_sequence) + 1, 4). Each action will be encoded by
             the tuple of (ID of the node types, ID of the applied rule,

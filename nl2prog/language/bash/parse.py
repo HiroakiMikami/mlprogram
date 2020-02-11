@@ -1,10 +1,10 @@
 import bashlex
-from typing import Union
+from typing import Optional
 import nl2prog.language.ast as A
 from .bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
-def parse(script: str) -> Union[A.AST, None]:
+def parse(script: str) -> Optional[A.AST]:
     try:
         script = script.replace('”', '"').replace('“', '"')
         return bashlex_ast_to_ast(script, bashlex.parse(script)[0])
@@ -12,7 +12,7 @@ def parse(script: str) -> Union[A.AST, None]:
         return None
 
 
-def unparse(ast: A.AST) -> Union[str, None]:
+def unparse(ast: A.AST) -> Optional[str]:
     try:
         if isinstance(ast, A.Node):
             # Node

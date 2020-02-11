@@ -50,7 +50,7 @@ SOFTWARE.
 
 import ast
 import re
-from typing import Union
+from typing import Optional
 from nl2prog.language.ast import AST
 from nl2prog.language.python import to_ast
 
@@ -62,7 +62,7 @@ p_finally = re.compile(r'^finally\s?')
 p_decorator = re.compile(r'^@.*')
 
 
-def parse(code: str) -> Union[AST, None]:
+def parse(code: str) -> Optional[AST]:
     """
     Return the AST of the code
 
