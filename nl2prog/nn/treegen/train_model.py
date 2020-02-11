@@ -63,7 +63,7 @@ class TrainModel(nn.Module):
         char_query: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
             The shape of each sequence is (sequence_length, max_token_len).
-            The padding value should be -1 (null charactor).
+            The padding value should be -1.
         previous_aciton: rnn.PaddedSequenceWithMask
             The previous action sequence.
             The encoded tensor with the shape of

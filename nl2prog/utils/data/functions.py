@@ -21,6 +21,20 @@ def get_words(dataset: torch.utils.data.Dataset,
     return words
 
 
+def get_characters(dataset: torch.utils.data.Dataset,
+                   tokenize_query: Callable[[str], Query],
+                   ) -> List[str]:
+    chars = []
+
+    for group in dataset:
+        for entry in group:
+            query = tokenize_query(entry.query)
+            for token in query.query_for_dnn:
+                chars.extend(token)
+
+    return chars
+
+
 def get_samples(dataset: torch.utils.data.Dataset,
                 tokenize_token: Callable[[str], List[str]],
                 to_action_sequence: Callable[[Any],

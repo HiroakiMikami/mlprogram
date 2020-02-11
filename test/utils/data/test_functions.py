@@ -4,7 +4,8 @@ from nl2prog.utils import Query
 from nl2prog.language.python import to_ast
 from nl2prog.language.action import ast_to_action_sequence
 from nl2prog.utils.data \
-    import Entry, ListDataset, to_eval_dataset, get_samples, get_words
+    import Entry, ListDataset, to_eval_dataset, get_samples, get_words, \
+    get_characters
 
 
 def tokenize(query: str):
@@ -27,6 +28,19 @@ class TestGetWords(unittest.TestCase):
         dataset = ListDataset([entries])
         words = get_words(dataset, tokenize_query)
         self.assertEqual(["foo", "bar", "test", "foo"], words)
+
+
+class TestGetCharacters(unittest.TestCase):
+    def test_get_characters(self):
+        entries = [Entry("foo bar", "y = x + 1"),
+                   Entry("test foo", "f(x)")]
+        dataset = ListDataset([entries])
+        chars = get_characters(dataset, tokenize_query)
+        self.assertEqual([
+            "f", "o", "o",
+            "b", "a", "r",
+            "t", "e", "s", "t",
+            "f", "o", "o"], chars)
 
 
 class TestGetSamples(unittest.TestCase):
