@@ -49,19 +49,19 @@ The details of the training results are shown in `result/` directory.
 
 |Paper  |Top-1 Acc|Top-1 BLEU|
 |:---   |---:     |---:      |
-|NL2Code|41.3%    |83.7%     |
+|NL2Code|42.1%    |82.6%     |
 
 ### Hearthstone
 
 |Paper  |Top-1 Acc|Top-1 BLEU|
 |:---   |---:     |---:      |
-|NL2Code|3.0%     |74.0%     |
+|NL2Code|1.5%     |78.4%     |
 
 ### NL2Bash
 
 |Paper   |Top-1 Acc|Top-1 BLEU|Top-3 Acc|Top-3 BLEU|
 |:---    |---:     |---:      |---:     |---:      |
-|NL2Code |6.1%     |55.6%     |12.3%    |63.3%     |
+|NL2Code |9.5%     |57.8%     |15.6%    |65.7%     |
 
 
 References
