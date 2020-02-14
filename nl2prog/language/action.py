@@ -16,6 +16,27 @@ class ActionOptions:
     split_non_terminal: bool
 
 
+class Root:
+    """
+    The type of the root node
+    """
+    _instance = None
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __eq__(self, rhs: Any):
+        return isinstance(rhs, Root)
+
+    def __str__(self):
+        return "<Root>"
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+
 @dataclass
 class NodeType:
     """
@@ -23,11 +44,11 @@ class NodeType:
 
     Attributes
     ----------
-    type_name: str
+    type_name: Union[str, Root]
     constraint: NodeConstraint
         It represents the constraint of this type
     """
-    type_name: str
+    type_name: Union[str, Root]
     constraint: NodeConstraint
 
     def __hash__(self):
@@ -46,7 +67,7 @@ class NodeType:
         elif self.constraint == NodeConstraint.Token:
             return "{}(token)".format(self.type_name)
         else:
-            return self.type_name
+            return str(self.type_name)
 
 
 @dataclass
@@ -181,48 +202,50 @@ def ast_to_action_sequence(node: AST,
     action.ActionSequence
         The corresponding action sequence
     """
-    if isinstance(node, Node):
-        def to_node_type(field: Field):
-            if isinstance(field.value, list):
-                return NodeType(field.type_name,
-                                NodeConstraint.Variadic)
-            else:
-                if isinstance(field.value, Leaf):
+    def to_action_sequence(node: AST):
+        if isinstance(node, Node):
+            def to_node_type(field: Field):
+                if isinstance(field.value, list):
                     return NodeType(field.type_name,
-                                    NodeConstraint.Token)
+                                    NodeConstraint.Variadic)
                 else:
-                    return NodeType(field.type_name,
-                                    NodeConstraint.Node)
-        children = list(map(lambda f: (f.name, to_node_type(f)), node.fields))
+                    if isinstance(field.value, Leaf):
+                        return NodeType(field.type_name,
+                                        NodeConstraint.Token)
+                    else:
+                        return NodeType(field.type_name,
+                                        NodeConstraint.Node)
+            children = list(
+                map(lambda f: (f.name, to_node_type(f)), node.fields))
 
-        seq = [ApplyRule(ExpandTreeRule(
-            NodeType(node.type_name, NodeConstraint.Node),
-            children))]
-        for field in node.fields:
-            if isinstance(field.value, list):
-                if not options.retain_vairadic_fields:
-                    elem_type_name = to_node_type(field).type_name
-                    elem = NodeType(elem_type_name, NodeConstraint.Node)
-                    seq.append(ApplyRule(ExpandTreeRule(
-                        NodeType(elem_type_name, NodeConstraint.Variadic),
-                        [(str(i), elem) for i in range(len(field.value))]
-                    )))
-                for v in field.value:
-                    seq.extend(ast_to_action_sequence(v, options,
-                                                      tokenizer))
-                if options.retain_vairadic_fields:
-                    seq.append(ApplyRule(CloseVariadicFieldRule()))
+            seq = [ApplyRule(ExpandTreeRule(
+                NodeType(node.type_name, NodeConstraint.Node),
+                children))]
+            for field in node.fields:
+                if isinstance(field.value, list):
+                    if not options.retain_vairadic_fields:
+                        elem_type_name = to_node_type(field).type_name
+                        elem = NodeType(elem_type_name, NodeConstraint.Node)
+                        seq.append(ApplyRule(ExpandTreeRule(
+                            NodeType(elem_type_name, NodeConstraint.Variadic),
+                            [(str(i), elem) for i in range(len(field.value))]
+                        )))
+                    for v in field.value:
+                        seq.extend(to_action_sequence(v))
+                    if options.retain_vairadic_fields:
+                        seq.append(ApplyRule(CloseVariadicFieldRule()))
+                else:
+                    seq.extend(to_action_sequence(field.value))
+            return seq
+        elif isinstance(node, Leaf):
+            if options.split_non_terminal:
+                tokens: List[Union[str, CloseNode]
+                             ] = tokenizer(str(node.value))
+                tokens.append(CloseNode())
+                return list(map(lambda x: GenerateToken(x), tokens))
             else:
-                seq.extend(ast_to_action_sequence(
-                    field.value, options, tokenizer))
-        return seq
-    elif isinstance(node, Leaf):
-        if options.split_non_terminal:
-            tokens: List[Union[str, CloseNode]] = tokenizer(str(node.value))
-            tokens.append(CloseNode())
-            return list(map(lambda x: GenerateToken(x), tokens))
-        else:
-            return [GenerateToken(node.value)]
+                return [GenerateToken(node.value)]
+    return to_action_sequence(Node(Root(), [Field("root", Root(), node)]))
 
 
 def code_to_action_sequence(

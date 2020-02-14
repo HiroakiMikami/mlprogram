@@ -4,7 +4,7 @@ from nl2prog.language.evaluator \
     import Evaluator, Parent, InvalidActionException
 from nl2prog.language.action \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
-    GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions
+    GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions, Root
 from nl2prog.language.ast import Node, Leaf, Field
 
 
@@ -309,6 +309,16 @@ class TestEvaluator(unittest.TestCase):
                   ])]),
             evaluator.generate_ast()
         )
+
+    def test_generate_ast_ignore_root_type(self):
+        evaluator = Evaluator()
+        evaluator.eval(ApplyRule(ExpandTreeRule(
+            NodeType(Root(), NodeConstraint.Node),
+            [("root", NodeType(Root(), NodeConstraint.Node))])))
+        evaluator.eval(ApplyRule(ExpandTreeRule(
+            NodeType("op", NodeConstraint.Node), []
+        )))
+        self.assertEqual(Node("op", []), evaluator.generate_ast())
 
     def test_clone(self):
         evaluator = Evaluator()

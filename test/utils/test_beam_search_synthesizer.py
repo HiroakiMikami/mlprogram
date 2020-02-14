@@ -8,7 +8,7 @@ from nl2prog.utils \
 from nl2prog.language.ast import Node, Field, Leaf
 from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
-    ApplyRule, GenerateToken, CloseNode, ActionOptions
+    ApplyRule, GenerateToken, CloseNode, ActionOptions, Root
 
 
 class MockFunctions:
@@ -363,6 +363,39 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             candidates[1]
         )
         self.assertEqual([[0], [1]], prob.arguments)
+
+    def test_not_generate_root_node(self):
+        RoottoNone = ExpandTreeRule(NodeType(Root(), NodeConstraint.Node), [])
+        XtoNone = ExpandTreeRule(X, [])
+
+        # Prepare mock probabilities
+        rule0 = [{
+            CloseVariadicFieldRule(): Zero,
+            XtoNone: log(0.1), RoottoNone: log(0.9)
+        }]
+        token0 = [{}]
+        prob = MockFunctions([rule0], [token0])
+        synthesizer = BeamSearchSynthesizer(1,
+                                            prob.initialize, prob.update,
+                                            is_subtype)
+        candidates = []
+        progress = []
+        for c, p in synthesizer.synthesize("test"):
+            candidates.extend(c)
+            progress.append(p)
+        """
+        [] -> [XtoNone] (Complete)
+        """
+        self.assertEqual(1, len(progress))
+        self.assertSameProgress(
+            Progress(1, 0, np.log(0.1), ApplyRule(XtoNone), True),
+            progress[0][0]
+        )
+        self.assertEqual(1, len(candidates))
+        self.assertSameCandidate(
+            Candidate(np.log(0.1), Node("X", [])), candidates[0]
+        )
+        self.assertEqual([[0]], prob.arguments)
 
 
 if __name__ == "__main__":

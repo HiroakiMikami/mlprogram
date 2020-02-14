@@ -4,7 +4,7 @@ from nl2prog.language.evaluator import Evaluator
 from nl2prog.language.ast import AST
 from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, Action, \
-    ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
+    ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode, Root
 from nl2prog.utils import TopKElement
 
 
@@ -54,7 +54,7 @@ class Candidate:
 
 class BeamSearchSynthesizer:
     def __init__(self, beam_size: int,
-                 initialze: Callable[[str], Any],
+                 initialize: Callable[[str], Any],
                  batch_update: Callable[[List[Hypothesis]],
                                         List[Tuple[Any, LazyLogProbability]]],
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
@@ -64,7 +64,7 @@ class BeamSearchSynthesizer:
         ----------
         beam_size: int
             The number of candidates
-        initialize: Callable[[Query], Any]
+        initialize: Callable[[str], Any]
             The initialize function. It returns the initial state.
             The module to predict the probabilities of actions
         batch_update: Callable[[List[Hypothesis]],
@@ -78,7 +78,7 @@ class BeamSearchSynthesizer:
         max_steps: Optional[int]
         """
         self._beam_size = beam_size
-        self._initialize = initialze
+        self._initialize = initialize
         self._batch_update = batch_update
         self._is_subtype = is_subtype
         self._options = options
@@ -104,9 +104,14 @@ class BeamSearchSynthesizer:
         n_ids = 0
 
         # Create initial hypothesis
+        evaluator = Evaluator(self._options)
+        # Add initial rule
+        evaluator.eval(ApplyRule(
+            ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                           [("root", NodeType(Root(), NodeConstraint.Node))])))
         state = self._initialize(query)
         hs: List[Hypothesis] = \
-            [Hypothesis(0, None, 0.0, Evaluator(self._options),
+            [Hypothesis(0, None, 0.0, evaluator,
                         state)]
         n_ids += 1
 
@@ -124,16 +129,14 @@ class BeamSearchSynthesizer:
             for i, (h, (state, lazy_prob)) in enumerate(zip(hs, results)):
                 # Create hypothesis from h
                 head = h.evaluator.head
-                if head is None and len(h.evaluator.action_sequence) != 0:
-                    continue
                 is_token = False
-                head_field: Optional[NodeType] = None
-                if head is not None:
-                    head_field = \
-                        h.evaluator.action_sequence[head.action]\
-                        .rule.children[head.field][1]
-                    if head_field.constraint == NodeConstraint.Token:
-                        is_token = True
+                if head is None:
+                    continue
+                head_field = \
+                    h.evaluator.action_sequence[head.action]\
+                    .rule.children[head.field][1]
+                if head_field.constraint == NodeConstraint.Token:
+                    is_token = True
                 if is_token:
                     # Generate token
                     log_prob_token = lazy_prob.token_prob
@@ -146,22 +149,34 @@ class BeamSearchSynthesizer:
                         action = ApplyRule(rule)
                         if isinstance(action.rule, ExpandTreeRule):
                             if self._options.retain_vairadic_fields:
-                                if head_field is None or \
-                                        self._is_subtype(
-                                            action.rule.parent.type_name,
-                                            head_field.type_name):
+                                if head_field.type_name == Root() and \
+                                    (action.rule.parent.constraint !=
+                                        NodeConstraint.Variadic) and \
+                                    (action.rule.parent.type_name !=
+                                        Root()):
+                                    topk.add(h.score + log_prob,
+                                             (i, action))
+                                elif action.rule.parent.type_name != \
+                                    Root() and \
+                                    self._is_subtype(
+                                        action.rule.parent.type_name,
+                                        head_field.type_name):
                                     topk.add(h.score + log_prob,
                                              (i, action))
                             else:
-                                if head_field is None:
-                                    if action.rule.parent.constraint != \
-                                            NodeConstraint.Variadic:
-                                        topk.add(h.score + log_prob,
-                                                 (i, action))
-                                elif (head_field.constraint ==
-                                      NodeConstraint.Variadic) or \
-                                    (action.rule.parent.constraint ==
-                                        NodeConstraint.Variadic):
+                                if head_field.type_name == Root() and \
+                                    (action.rule.parent.constraint !=
+                                        NodeConstraint.Variadic) and \
+                                    (action.rule.parent.type_name !=
+                                        Root()):
+                                    topk.add(h.score + log_prob,
+                                             (i, action))
+                                elif action.rule.parent.type_name != \
+                                    Root() and \
+                                    ((head_field.constraint ==
+                                        NodeConstraint.Variadic) or
+                                     (action.rule.parent.constraint ==
+                                        NodeConstraint.Variadic)):
                                     if action.rule.parent == \
                                             head_field:
                                         topk.add(h.score + log_prob,

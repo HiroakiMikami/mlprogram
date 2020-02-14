@@ -3,7 +3,7 @@ from torchnlp.encoders import LabelEncoder
 import numpy as np
 from typing import List, Callable, Optional
 from dataclasses import dataclass
-from nl2prog.nn.nl2code import Predictor
+from nl2prog.nn.treegen import ASTReader, Decoder, Predictor
 from nl2prog.language.action import ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
@@ -15,20 +15,20 @@ from nl2prog.nn.utils.rnn import pad_sequence, PaddedSequenceWithMask
 @dataclass
 class State:
     query: List[str]
-    query_tensor: torch.FloatTensor
-    history: torch.FloatTensor
-    h_n: torch.FloatTensor
-    c_n: torch.FloatTensor
+    nl_feature: torch.FloatTensor
 
 
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
-                 encoder: Callable[[PaddedSequenceWithMask],
-                                   PaddedSequenceWithMask],
-                 predictor: Predictor, query_encoder: LabelEncoder,
+                 nl_reader: Callable[[PaddedSequenceWithMask, torch.Tensor],
+                                     PaddedSequenceWithMask],
+                 ast_reader: ASTReader, decoder: Decoder,
+                 predictor: Predictor, word_encoder: LabelEncoder,
+                 char_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 is_subtype: IsSubtype, options=ActionOptions(True, True),
+                 max_word_num: int, max_arity: int,
+                 is_subtype: IsSubtype, options=ActionOptions(False, False),
                  eps: float = 1e-8,
                  max_steps: Optional[int] = None):
         """
@@ -37,12 +37,18 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        encoder: Callble[[PaddedSequenceWithMask], PaddedSequenceWithMask]
+        nl_reader: Callble[[PaddedSequenceWithMask, torch.Tensor],
+                           PaddedSequenceWithMask]
             The encoder module
+        ast_reader: ASTReader
+        decoder: Decoder
         predictor: Predictor
             The module to predict the probabilities of actions
-        query_encoder: LabelEncoder
+        word_encoder: LabelEncoder
+        char_encoder: LabelEncoder
         action_seqneuce_encoder: ActionSequenceEncoder
+        max_word_num: int
+        max_arity: int
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
@@ -51,25 +57,25 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         max_steps: Optional[int]
         """
         device = list(predictor.parameters())[0].device
-        hidden_size = predictor.hidden_size
 
         def initialize(query: str):
             query = tokenizer(query)
-            query_tensor = \
-                query_encoder.batch_encode(query.query_for_dnn)
-            query_tensor = query_tensor.to(device)
-            query_tensor = pad_sequence([query_tensor])
-            query_tensor = encoder(query_tensor).data
-            L = query_tensor.shape[0]
-            query_tensor = query_tensor.view(L, -1)
+            word_query = \
+                word_encoder.batch_encode(query.query_for_dnn)
+            word_query = word_query.to(device)
+            word_query = pad_sequence([word_query])
+            char_query = torch.ones(len(query.query_for_dnn),
+                                    max_word_num).to(device) * -1
+            for i, word in enumerate(query.query_for_dnn):
+                char_query[i, :] = \
+                    char_encoder.batch_encode(word)[:max_word_num]
+            # TODO embedding
+            nl_feature = nl_reader(word_query, char_query).data
+            L = nl_feature.shape[0]
+            nl_feature = nl_feature.view(L, -1)
 
             # Create initial hypothesis
-            h_0 = torch.zeros(hidden_size, device=device)  # (hidden_size)
-            c_0 = torch.zeros(hidden_size, device=device)  # (hidden_size)
-            hist_0 = torch.zeros(1, hidden_size,
-                                 device=device)  # (1, hidden_size)
-
-            return State(query.query_for_synth, query_tensor, hist_0, h_0, c_0)
+            return State(query.query_for_synth, nl_feature)
 
         def batch_update(hs):
             # Create batch of hypothesis
@@ -80,7 +86,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             h_n = []
             c_n = []
             for h in hs:
-                query_seq.append(h.state.query_tensor)
+                # TODO create tensors
+                query_seq.append(h.state.nl_feature)
                 # (L_a + 1, 4)
                 a = action_sequence_encoder.encode_action(
                     h.evaluator, h.state.query)
@@ -97,18 +104,13 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 else:
                     prev_action.append(
                         a[-2, 1:].to(device).view(1, -1))  # (1, 3)
-                hist.append(h.state.history.to(device))
-                h_n.append(h.state.h_n.to(device))
-                c_n.append(h.state.c_n.to(device))
             query_seq = \
                 pad_sequence(query_seq)  # (L_q, len(hs), query_state_size)
             action = pad_sequence(action)  # (1, len(hs), 3)
             prev_action = pad_sequence(prev_action)  # (1, len(hs), 3)
-            hist = torch.stack(hist, dim=1)  # (L_a, len(hs), state_size)
-            h_n = torch.stack(h_n, dim=0)  # (len(hs), state_size)
-            c_n = torch.stack(c_n, dim=0)  # (len(hs), state_size)
 
             with torch.no_grad():
+                # TODO use ast_reader and decoder
                 results = predictor(query_seq, action, prev_action,
                                     hist, (h_n, c_n))
             # (len(hs), n_rules)
@@ -116,25 +118,10 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             # (len(hs), n_tokens)
             token_pred = results[1].data.cpu().reshape(len(hs), -1)
             # (len(hs), query_length)
-            copy_pred = \
-                results[2].data.cpu().reshape(len(hs), -1)
-            history = results[3]  # (L_a + 1, len(hs), state_size)
-            state_size = history.shape[2]
-            history = torch.split(history, 1,
-                                  dim=1)  # (L_a + 1, 1, state_size)
-            history = [x.reshape(-1, state_size)
-                       for x in history]  # (L_a + 1, state_size)
-            h_n, c_n = results[4]  # (len(hs), state_size)
-            h_n = torch.split(h_n, 1, dim=0)  # (1, state_size)
-            h_n = [x.view(-1) for x in h_n]  # (state_size)
-            c_n = torch.split(c_n, 1, dim=0)  # (,1 state_size)
-            c_n = [x.view(-1) for x in c_n]  # (state_size)
+            copy_pred = results[2].data.cpu().reshape(len(hs), -1)
 
             retval = []
-            for i, (h, hist, h_, c_) in enumerate(zip(hs, history, h_n, c_n)):
-                state = State(
-                    h.state.query, h.state.query_tensor, hist, h_, c_)
-
+            for i, h in enumerate(hs):
                 class Functions:
                     def __init__(self, i):
                         self.i = i
@@ -185,7 +172,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 funcs = Functions(i)
                 prob = LazyLogProbability(funcs.get_rule_prob,
                                           funcs.get_token_prob)
-                retval.append((state, prob))
+                retval.append((h.state, prob))
             return retval
 
         super(BeamSearchSynthesizer, self).__init__(

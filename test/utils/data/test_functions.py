@@ -50,8 +50,8 @@ class TestGetSamples(unittest.TestCase):
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
-        self.assertEqual(10, len(d.rules))
-        self.assertEqual(24, len(d.node_types))
+        self.assertEqual(12, len(d.rules))
+        self.assertEqual(28, len(d.node_types))
 
 
 class TestToEvalDataset(unittest.TestCase):

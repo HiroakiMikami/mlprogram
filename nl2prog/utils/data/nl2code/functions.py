@@ -43,11 +43,10 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             if np.any(a[-1, :].numpy() != -1):
                 continue
             action_tensor = torch.cat(
-                [a[:-1, 0].view(-1, 1), p[:-1, 1:3].view(-1, 2)],
+                [a[1:-1, 0].view(-1, 1), p[1:-1, 1:3].view(-1, 2)],
                 dim=1)
-            dummy = torch.ones([1, 3]).to(a.dtype).to(a.device) * -1
-            prev_action = torch.cat([dummy, a[:-2, 1:]], dim=0)
-            ground_truth = a[:-1, 1:]
+            prev_action = a[:-2, 1:]
+            ground_truth = a[1:-1, 1:]
             entries.append(((query_tensor, action_tensor, prev_action),
                             ground_truth))
     return ListDataset(entries)

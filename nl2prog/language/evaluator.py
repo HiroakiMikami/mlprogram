@@ -3,7 +3,8 @@ from typing import Dict, Optional, List
 from copy import deepcopy
 
 import nl2prog.language.action as A
-from nl2prog.language.action import Action, ActionSequence
+from nl2prog.language.action \
+    import Action, ActionSequence, ApplyRule, ExpandTreeRule, Root
 from nl2prog.language.ast import AST, Node, Leaf, Field
 
 
@@ -257,6 +258,15 @@ class Evaluator:
                                             ))
 
             return ast
+        if len(self.action_sequence) == 0:
+            return generate_ast(0)
+        begin = self.action_sequence[0]
+        if isinstance(begin, ApplyRule) and \
+                isinstance(begin.rule, ExpandTreeRule):
+            if begin.rule.parent.type_name == Root():
+                # Ignore Root -> ???
+                return generate_ast(1)
+            return generate_ast(0)
         return generate_ast(0)
 
     def clone(self):

@@ -72,7 +72,7 @@ class TrainModel(nn.Module):
         B = query_embed.data.shape[1]
 
         # Decode action sequence
-        history = torch.zeros(0, B, self.lstm_state_size,
+        history = torch.zeros(1, B, self.lstm_state_size,
                               device=query_embed.data.device)
         h_0 = torch.zeros(B, self.lstm_state_size,
                           device=query_embed.data.device)

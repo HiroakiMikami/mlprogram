@@ -132,10 +132,7 @@ class DecoderCell(nn.Module):
         ctx_vec = torch.sum(query.data * ctx_att, dim=0)  # (B, query_size)
 
         # Parent_history
-        device = history.device
-        h_root = torch.zeros(1, B, hidden_size, device=device)
-        history = torch.cat([h_root, history], dim=0)
-        h_parent = query_history(history, parent_index + 1)
+        h_parent = query_history(history, parent_index)
 
         # dropout
         x = self._dropout_in(input)  # (B, input_size)

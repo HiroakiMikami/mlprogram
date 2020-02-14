@@ -47,26 +47,18 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
                 continue
             if np.any(a[-1, :].numpy() != -1):
                 continue
-            dummy = torch.ones([1, 3]).to(a.dtype).to(a.device) * -1
-            prev_action = torch.cat([dummy, a[:-2, 1:]], dim=0)
+            prev_action = a[:-2, 1:]
 
-            ground_truth = a[:-1, 1:]
+            ground_truth = a[1:-1, 1:]
 
             rule_prev_action = \
                 action_sequence_encoder.encode_each_action(
                     evaluator, query.query_for_synth, max_arity)
-            dummy = \
-                torch.ones([1, max_arity + 1, 3])\
-                .to(rule_prev_action.dtype)\
-                .to(rule_prev_action.device) * -1
-            rule_prev_action = torch.cat([dummy, rule_prev_action[:-1]], dim=0)
+            rule_prev_action = rule_prev_action[:-1]
 
             depth, matrix = action_sequence_encoder.encode_tree(evaluator)
-            dummy = torch.zeros(1, 1, dtype=depth.dtype, device=depth.device)
-            depth = torch.cat([dummy, depth[:-1] + 1], dim=0)
-
+            depth = depth[:-1]
             matrix = matrix[:-1, :-1]
-            matrix = torch.nn.functional.pad(matrix, (1, 0, 1, 0))
 
             entries.append(((word_query, char_query, prev_action,
                              rule_prev_action, depth, matrix), ground_truth))

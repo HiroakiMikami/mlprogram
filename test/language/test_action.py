@@ -3,7 +3,7 @@ import unittest
 from nl2prog.language.action \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseNode, CloseVariadicFieldRule, \
-    ActionOptions, ast_to_action_sequence
+    ActionOptions, ast_to_action_sequence, Root
 from nl2prog.language import ast
 
 
@@ -81,13 +81,21 @@ def tokenize(value: str):
 class TestAstToActionSequence(unittest.TestCase):
     def test_leaf(self):
         self.assertEqual(
-            [GenerateToken("t0"), GenerateToken(
+            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                                      [("root", NodeType(Root(),
+                                                         NodeConstraint.Token))
+                                       ])),
+                GenerateToken("t0"), GenerateToken(
                 "t1"), GenerateToken(CloseNode())],
             ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
                                    tokenizer=tokenize)
         )
         self.assertEqual(
-            [GenerateToken("t0 t1")],
+            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                                      [("root", NodeType(Root(),
+                                                         NodeConstraint.Token))
+                                       ])),
+             GenerateToken("t0 t1")],
             ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
                                    ActionOptions(True, False))
         )
@@ -97,7 +105,11 @@ class TestAstToActionSequence(unittest.TestCase):
             "def",
             [ast.Field("name", "literal", ast.Leaf("str", "foo"))])
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(
+            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                                      [("root", NodeType(Root(),
+                                                         NodeConstraint.Node))
+                                       ])),
+             ApplyRule(ExpandTreeRule(
                 NodeType("def", NodeConstraint.Node),
                 [("name",
                   NodeType("literal", NodeConstraint.Token))])),
@@ -110,7 +122,11 @@ class TestAstToActionSequence(unittest.TestCase):
         a = ast.Node("list", [ast.Field("elems", "literal", [
                      ast.Node("str", []), ast.Node("str", [])])])
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(
+            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                                      [("root", NodeType(Root(),
+                                                         NodeConstraint.Node))
+                                       ])),
+             ApplyRule(ExpandTreeRule(
                 NodeType("list", NodeConstraint.Node),
                 [("elems",
                   NodeType("literal",
@@ -125,7 +141,11 @@ class TestAstToActionSequence(unittest.TestCase):
             ast_to_action_sequence(a, tokenizer=tokenize)
         )
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(
+            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                                      [("root", NodeType(Root(),
+                                                         NodeConstraint.Node))
+                                       ])),
+             ApplyRule(ExpandTreeRule(
                 NodeType("list", NodeConstraint.Node),
                 [("elems",
                   NodeType("literal",

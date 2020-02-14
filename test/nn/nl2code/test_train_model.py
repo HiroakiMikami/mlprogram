@@ -44,7 +44,7 @@ class TestTrain(unittest.TestCase):
         self.assertEqual((2, 2, 3), rule_prob.data.shape)
         self.assertEqual((2, 2, 3), token_prob.data.shape)
         self.assertEqual((2, 2, 3), copy_prob.data.shape)
-        self.assertEqual((2, 2, 6), history.shape)
+        self.assertEqual((3, 2, 6), history.shape)
         self.assertEqual((2, 6), h_n.shape)
         self.assertEqual((2, 6), c_n.shape)
 
