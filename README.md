@@ -55,7 +55,7 @@ The details of the training results are shown in `result/` directory.
 
 |Paper  |Top-1 Acc|Top-1 BLEU|
 |:---   |---:     |---:      |
-|NL2Code|1.5%     |78.4%     |
+|NL2Code|4.5%     |78.8%     |
 
 ### NL2Bash
 
