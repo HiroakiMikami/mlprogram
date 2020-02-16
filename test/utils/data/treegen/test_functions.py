@@ -38,12 +38,12 @@ def to_action_sequence(code: str):
 
 class TestToTrainDataset(unittest.TestCase):
     def test_simple_case(self):
-        entries = [Entry("foo test", "y = x + 1")]
+        entries = [Entry("ab test", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
-        words = ["foo", "test"]
+        words = ["ab", "test"]
         qencoder = LabelEncoder(words, 0)
-        cencoder = LabelEncoder(["f", "o", "t", "e"], 0)
+        cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
         aencoder = ActionSequenceEncoder(d, 0)
         tdataset = to_train_dataset(dataset, tokenize_query, tokenize,
                                     to_action_sequence,
@@ -53,7 +53,7 @@ class TestToTrainDataset(unittest.TestCase):
         word_query, char_query, prev_query, prev_rule_query, depth, matrix = \
             train
         self.assertTrue(np.array_equal([1, 2], word_query.numpy()))
-        self.assertTrue(np.array_equal([[1, 2, 2], [3, 4, 0]],
+        self.assertTrue(np.array_equal([[1, 2, -1], [3, 4, 0]],
                                        char_query.numpy()))
         self.assertTrue(np.array_equal(
             [

@@ -70,12 +70,15 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             word_query = word_query.to(device)
             word_query = pad_sequence([word_query])
             char_query = torch.ones(len(query.query_for_dnn),
-                                    max_word_num).to(device) * -1
+                                    max_word_num).to(device).long() * -1
             for i, word in enumerate(query.query_for_dnn):
-                char_query[i, :] = \
-                    char_encoder.batch_encode(word)[:max_word_num]
+                chars = char_encoder.batch_encode(word)
+                length = min(max_word_num, len(chars))
+                char_query[i, :length] = \
+                    char_encoder.batch_encode(word)[:length]
+            char_query = pad_sequence([char_query])
             word_query.data, char_query = \
-                query_embedding(word_query.data, char_query)
+                query_embedding(word_query.data, char_query.data)
             nl_feature = nl_reader(word_query, char_query).data
             L = nl_feature.shape[0]
             nl_feature = nl_feature.view(L, -1)
@@ -94,33 +97,33 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 query_seq.append(h.state.nl_feature)
                 a = action_sequence_encoder.encode_action(
                     h.evaluator, h.state.query)
-                action_seq.append(a[:-2, 1:])
+                action_seq.append(a[:-1, 1:])
                 rule_action_seq.append(
                     action_sequence_encoder.encode_each_action(
-                        h.evaluator, h.state.query.query_for_synth, max_arity))
+                        h.evaluator, h.state.query, max_arity))
                 d, m = action_sequence_encoder.encode_tree(h.evaluator)
                 depth.append(d)
                 matrix.append(m)
-            query_seq = pad_sequence(query_seq)
-            action = pad_sequence(action_seq)
-            rule_action = pad_sequence(rule_action_seq)
-            depth = torch.stack(depth)
+            query_seq = pad_sequence(query_seq, padding_value=-1)
+            action = pad_sequence(action_seq, padding_value=-1)
+            rule_action = pad_sequence(rule_action_seq, padding_value=-1)
+            depth = torch.stack(depth).reshape(len(hs), -1).permute(1, 0)
             matrix = torch.stack(matrix)
 
             with torch.no_grad():
                 action.data, rule_action.data = \
-                    rule_embedding(action.data, rule_action_seq.data)
+                    rule_embedding(action.data, rule_action.data)
                 ast_feature = \
-                    ast_reader(action, depth, rule_action_seq.data,
-                               rule_action.data, matrix)
-                feature = decoder(action, query_seq.data, ast_feature.data)
+                    ast_reader(action, depth, rule_action.data,
+                               matrix)
+                feature = decoder(action, query_seq, ast_feature)
                 results = predictor(feature, query_seq)
             # (len(hs), n_rules)
-            rule_pred = results[0].data.cpu().reshape(len(hs), -1)
+            rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)
             # (len(hs), n_tokens)
-            token_pred = results[1].data.cpu().reshape(len(hs), -1)
+            token_pred = results[1].data[-1, :, :].cpu().reshape(len(hs), -1)
             # (len(hs), query_length)
-            copy_pred = results[2].data.cpu().reshape(len(hs), -1)
+            copy_pred = results[2].data[-1, :, :].cpu().reshape(len(hs), -1)
 
             retval = []
             for i, h in enumerate(hs):

@@ -279,7 +279,7 @@ class ActionSequenceEncoder:
             The padding value is -1.
         """
         L = len(evaluator.action_sequence)
-        retval = torch.ones(L, max_arity + 1, 3) * -1
+        retval = torch.ones(L, max_arity + 1, 3).long() * -1
         for i, action in enumerate(evaluator.action_sequence):
             if isinstance(action, ApplyRule):
                 if isinstance(action.rule, ExpandTreeRule):

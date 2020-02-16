@@ -20,13 +20,13 @@ class TrainModel(nn.Module):
                  feature_size: int, dropout: float):
         super(TrainModel, self).__init__()
         self.rule_num = \
-            action_sequence_encoder._rule_encoder.vocab_size - 1
+            action_sequence_encoder._rule_encoder.vocab_size
         self.token_num = \
-            action_sequence_encoder._token_encoder.vocab_size - 1
+            action_sequence_encoder._token_encoder.vocab_size
         self.node_type_num = \
-            action_sequence_encoder._node_type_encoder.vocab_size - 1
+            action_sequence_encoder._node_type_encoder.vocab_size
         self.token_num = \
-            action_sequence_encoder._token_encoder. vocab_size - 1
+            action_sequence_encoder._token_encoder. vocab_size
 
         self.query_embedding = QueryEmbedding(
             query_encoder.vocab_size, char_encoder.vocab_size, max_token_len,
@@ -39,7 +39,7 @@ class TrainModel(nn.Module):
                                   num_nl_reader_blocks)
         self.ast_reader = ASTReader(hidden_size, hidden_size, 3, num_heads,
                                     dropout, num_ast_reader_blocks)
-        self.decoder = Decoder(feature_size, hidden_size, hidden_size,
+        self.decoder = Decoder(hidden_size, feature_size, hidden_size,
                                num_heads, dropout, num_decoder_blocks)
         self.predictor = Predictor(hidden_size,
                                    hidden_size, self.rule_num, self.token_num,

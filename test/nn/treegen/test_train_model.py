@@ -55,8 +55,8 @@ class TestTrain(unittest.TestCase):
         token_prob = results[1]
         copy_prob = results[2]
 
-        self.assertEqual((2, 2, 1), rule_prob.data.shape)
-        self.assertEqual((2, 2, 1), token_prob.data.shape)
+        self.assertEqual((2, 2, 2), rule_prob.data.shape)
+        self.assertEqual((2, 2, 2), token_prob.data.shape)
         self.assertEqual((2, 2, 3), copy_prob.data.shape)
 
 

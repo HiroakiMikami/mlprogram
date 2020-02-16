@@ -28,10 +28,13 @@ def to_train_dataset(dataset: torch.utils.data.Dataset,
             word_query = \
                 query_encoder.batch_encode(query.query_for_dnn)
             char_query = \
-                torch.ones(len(query.query_for_dnn), max_word_length) * -1
+                torch.ones(len(query.query_for_dnn), max_word_length).long() \
+                * -1
             for i, word in enumerate(query.query_for_dnn):
-                char_query[i, :] = \
-                    char_encoder.batch_encode(word)[:max_word_length]
+                chars = char_encoder.batch_encode(word)
+                length = min(max_word_length, len(chars))
+                char_query[i, :length] = \
+                    char_encoder.batch_encode(word)[:length]
 
             action_sequence = to_action_sequence(code)
             if action_sequence is None:

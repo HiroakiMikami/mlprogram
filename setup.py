@@ -2,7 +2,7 @@ from setuptools import setup
 
 requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex"]
 extras = {
-    "test": ["flake8", "autopep8"],
+    "test": ["flake8", "autopep8", "fairseq"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }
@@ -22,4 +22,5 @@ setup(
               "nl2prog.nn.nl2code", "nl2prog.nn.treegen", "nl2prog.nn.utils",
               "nl2prog.utils", "nl2prog.utils.data",
               "nl2prog.utils.data.nl2code",
-              "nl2prog.utils.nl2code", "nl2prog.utils.python"])
+              "nl2prog.utils.nl2code", "nl2prog.utils.python",
+              "nl2prog.utils.treegen"])
