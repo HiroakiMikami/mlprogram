@@ -3,7 +3,8 @@ from torchnlp.encoders import LabelEncoder
 import numpy as np
 from typing import List, Callable, Optional
 from dataclasses import dataclass
-from nl2prog.nn.treegen import ASTReader, Decoder, Predictor
+from nl2prog.nn.treegen \
+    import ASTReader, Decoder, Predictor, QueryEmbedding, RuleEmbedding
 from nl2prog.language.action import ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
@@ -21,6 +22,8 @@ class State:
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
+                 query_embedding: QueryEmbedding,
+                 rule_embedding: RuleEmbedding,
                  nl_reader: Callable[[PaddedSequenceWithMask, torch.Tensor],
                                      PaddedSequenceWithMask],
                  ast_reader: ASTReader, decoder: Decoder,
@@ -37,6 +40,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
+        query_embedding: QueryEmbedding,
+        rule_embedding: RuleEmbedding,
         nl_reader: Callble[[PaddedSequenceWithMask, torch.Tensor],
                            PaddedSequenceWithMask]
             The encoder module
@@ -69,7 +74,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             for i, word in enumerate(query.query_for_dnn):
                 char_query[i, :] = \
                     char_encoder.batch_encode(word)[:max_word_num]
-            # TODO embedding
+            word_query.data, char_query = \
+                query_embedding(word_query.data, char_query)
             nl_feature = nl_reader(word_query, char_query).data
             L = nl_feature.shape[0]
             nl_feature = nl_feature.view(L, -1)
@@ -80,39 +86,35 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         def batch_update(hs):
             # Create batch of hypothesis
             query_seq = []
-            action = []
-            prev_action = []
-            hist = []
-            h_n = []
-            c_n = []
+            action_seq = []
+            rule_action_seq = []
+            depth = []
+            matrix = []
             for h in hs:
-                # TODO create tensors
                 query_seq.append(h.state.nl_feature)
-                # (L_a + 1, 4)
                 a = action_sequence_encoder.encode_action(
                     h.evaluator, h.state.query)
-                # (L_a + 1, 3)
-                p = action_sequence_encoder.encode_parent(h.evaluator)
-                # (1, 3)
-                action.append(
-                    torch.cat([a[-1, 0].view(1, -1),
-                               p[-1, 1:3].view(1, -1)], dim=1).to(device)
-                )
-                if a.shape[0] == 1:
-                    prev_action.append(
-                        a[-1, 1:].to(device).view(1, -1))  # (1, 3)
-                else:
-                    prev_action.append(
-                        a[-2, 1:].to(device).view(1, -1))  # (1, 3)
-            query_seq = \
-                pad_sequence(query_seq)  # (L_q, len(hs), query_state_size)
-            action = pad_sequence(action)  # (1, len(hs), 3)
-            prev_action = pad_sequence(prev_action)  # (1, len(hs), 3)
+                action_seq.append(a[:-2, 1:])
+                rule_action_seq.append(
+                    action_sequence_encoder.encode_each_action(
+                        h.evaluator, h.state.query.query_for_synth, max_arity))
+                d, m = action_sequence_encoder.encode_tree(h.evaluator)
+                depth.append(d)
+                matrix.append(m)
+            query_seq = pad_sequence(query_seq)
+            action = pad_sequence(action_seq)
+            rule_action = pad_sequence(rule_action_seq)
+            depth = torch.stack(depth)
+            matrix = torch.stack(matrix)
 
             with torch.no_grad():
-                # TODO use ast_reader and decoder
-                results = predictor(query_seq, action, prev_action,
-                                    hist, (h_n, c_n))
+                action.data, rule_action.data = \
+                    rule_embedding(action.data, rule_action_seq.data)
+                ast_feature = \
+                    ast_reader(action, depth, rule_action_seq.data,
+                               rule_action.data, matrix)
+                feature = decoder(action, query_seq.data, ast_feature.data)
+                results = predictor(feature, query_seq)
             # (len(hs), n_rules)
             rule_pred = results[0].data.cpu().reshape(len(hs), -1)
             # (len(hs), n_tokens)
