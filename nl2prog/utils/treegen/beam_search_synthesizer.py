@@ -105,10 +105,18 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 depth.append(d)
                 matrix.append(m)
             query_seq = pad_sequence(query_seq, padding_value=-1)
+            query_seq.data = query_seq.data.to(device)
+            query_seq.mask = query_seq.mask.to(device)
             action = pad_sequence(action_seq, padding_value=-1)
+            action.data = action.data.to(device)
+            action.mask = action.mask.to(device)
             rule_action = pad_sequence(rule_action_seq, padding_value=-1)
+            rule_action.data = rule_action.data.to(device)
+            rule_action.mask = rule_action.mask.to(device)
             depth = torch.stack(depth).reshape(len(hs), -1).permute(1, 0)
+            depth = depth.to(device)
             matrix = torch.stack(matrix)
+            matrix = matrix.to(device)
 
             with torch.no_grad():
                 action.data, rule_action.data = \

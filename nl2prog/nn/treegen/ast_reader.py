@@ -57,12 +57,14 @@ class ASTReaderBlock(nn.Module):
             (N, L, L) where N is the batch size and L is the sequence length.
         """
         L, N, hidden_size = input.data.shape
+        device = input.data.device
         h_in = input.data
         h = h_in + \
             index_embeddings(h_in, self.block_idx) + \
             position_embeddings(depth, self.block_idx, hidden_size)
         attn_mask = \
-            torch.nn.Transformer.generate_square_subsequent_mask(None, L)
+            torch.nn.Transformer.generate_square_subsequent_mask(None, L)\
+            .to(device=device)
         h, attn = self.attention(
             h, h, h,
             key_padding_mask=input.mask.permute(1, 0) == 0,

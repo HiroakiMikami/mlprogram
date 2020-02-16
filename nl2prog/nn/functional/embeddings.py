@@ -26,10 +26,14 @@ def position_embeddings(position_tensor: torch.LongTensor, b: int, E: int,
         embeddings[i, n, 2j + 1] =
             sin((position_tensor[i, n] + b) / (10000**(2j/E)))
     """
+    device = position_tensor.device
     L, N = position_tensor.shape
     divisor = torch.arange(0, E) // 2
-    divisor = torch.pow(10000, 2 * divisor.to(dtype=dtype) / E)
-    embeddings = position_tensor.view(L, N, 1).expand(L, N, E).to(dtype=dtype)
+    divisor = \
+        torch.pow(10000, 2 * divisor.to(dtype=dtype) / E).to(device=device)
+    embeddings = \
+        position_tensor.view(L, N, 1).expand(L, N, E)\
+        .to(dtype=dtype).to(device=device)
     embeddings = embeddings + b
     embeddings = embeddings
     embeddings /= divisor

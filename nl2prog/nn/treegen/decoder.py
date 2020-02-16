@@ -54,8 +54,10 @@ class DecoderBlock(nn.Module):
             L_ast is the sequence length of ast.
         """
         L_ast, N, _ = query.data.shape
+        device = query.data.device
         attn_mask = \
-            torch.nn.Transformer.generate_square_subsequent_mask(None, L_ast)
+            torch.nn.Transformer.generate_square_subsequent_mask(None, L_ast)\
+            .to(device=device)
         h_in = query.data
         h, ast_attn = self.ast_attention(
             key=ast_feature.data, query=h_in, value=ast_feature.data,

@@ -165,10 +165,10 @@ class BeamSearchSynthesizer:
                                              (i, action))
                             else:
                                 if head_field.type_name == Root() and \
-                                    (action.rule.parent.constraint !=
-                                        NodeConstraint.Variadic) and \
                                     (action.rule.parent.type_name !=
-                                        Root()):
+                                        Root()) and \
+                                    (action.rule.parent.constraint !=
+                                        NodeConstraint.Variadic):
                                     topk.add(h.score + log_prob,
                                              (i, action))
                                 elif action.rule.parent.type_name != \
@@ -181,7 +181,9 @@ class BeamSearchSynthesizer:
                                             head_field:
                                         topk.add(h.score + log_prob,
                                                  (i, action))
-                                elif self._is_subtype(
+                                elif action.rule.parent.type_name != \
+                                    Root() and \
+                                    self._is_subtype(
                                         action.rule.parent.type_name,
                                         head_field.type_name):
                                     topk.add(h.score + log_prob,
