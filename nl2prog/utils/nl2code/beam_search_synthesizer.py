@@ -28,7 +28,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                                    PaddedSequenceWithMask],
                  predictor: Predictor, query_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 is_subtype: IsSubtype, options=ActionOptions(True, True),
+                 is_subtype: IsSubtype,
+                 options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
                  max_steps: Optional[int] = None):
         """

@@ -51,7 +51,7 @@ class Samples:
 
 class ActionSequenceEncoder:
     def __init__(self, samples: Samples, token_threshold: int,
-                 options=ActionOptions(True, True)):
+                 options: ActionOptions = ActionOptions(True, True)):
         reserved_labels = [Unknown()]
         if options.retain_vairadic_fields:
             reserved_labels.append(CloseVariadicFieldRule())

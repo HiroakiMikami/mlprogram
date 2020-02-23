@@ -31,7 +31,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  char_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
                  max_word_num: int, max_arity: int,
-                 is_subtype: IsSubtype, options=ActionOptions(False, False),
+                 is_subtype: IsSubtype,
+                 options: ActionOptions = ActionOptions(False, False),
                  eps: float = 1e-8,
                  max_steps: Optional[int] = None):
         """
