@@ -16,7 +16,7 @@ Implemented Papers
 
 ### NL2Code
 
-`nl2code.ipynb` in `examples` directory shows the usage of [NL2Code](https://arxiv.org/abs/1704.01696).
+`nl2code_train.ipynb` and `nl2code_eval.ipynb` in `examples` directory show the usage of [NL2Code](https://arxiv.org/abs/1704.01696).
 
 I noticed that there are some differences between this implementation and the official one.
 The followings summarize the differences.
@@ -37,7 +37,12 @@ This implementation does not set the maximum length because of PyTorch Define-by
 
 ### TreeGen
 
-Under implementation
+`treegen_train.ipynb` and `treegen_eval.ipynb` in `examples` directory show the usage of [TreeGen](https://arxiv.org/abs/1911.09983).
+
+TreeGen is faster than NL2Code during training, however, there are the following 2 problems:
+
+* The loss becomes NaN in the final phase of the training
+* The result when using Hearthstone dataset is worse than the reported value.
 
 
 Performance
@@ -56,6 +61,7 @@ The details of the training results are shown in `result/` directory.
 |Paper  |Top-1 Acc|Top-1 BLEU|
 |:---   |---:     |---:      |
 |NL2Code|4.5%     |78.8%     |
+|TreeGen|1.5%     |62.1%     |
 
 ### NL2Bash
 
