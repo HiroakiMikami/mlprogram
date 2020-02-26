@@ -79,4 +79,4 @@ class TrainModel(nn.Module):
         c_0 = torch.zeros(B, self.lstm_state_size,
                           device=query_embed.data.device)
         return self.predictor(query_embed, action, previous_action,
-                              history, (h_0, c_0))
+                              history, (h_0, c_0))[:3]

@@ -83,7 +83,7 @@ class TestNL2Code(unittest.TestCase):
                 ground_truth = \
                     nrnn.pad_sequence(ground_truth, padding_value=-1)
 
-                rule_prob, token_prob, copy_prob, _, _ = model(
+                rule_prob, token_prob, copy_prob = model(
                     query, action, prev_action)
                 loss = loss_function(rule_prob, token_prob, copy_prob,
                                      ground_truth)

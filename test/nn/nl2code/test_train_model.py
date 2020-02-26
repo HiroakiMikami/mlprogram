@@ -38,15 +38,11 @@ class TestTrain(unittest.TestCase):
         rule_prob = results[0]
         token_prob = results[1]
         copy_prob = results[2]
-        history = results[3]
-        h_n, c_n = results[4]
 
+        self.assertEqual(3, len(results))
         self.assertEqual((2, 2, 3), rule_prob.data.shape)
         self.assertEqual((2, 2, 3), token_prob.data.shape)
         self.assertEqual((2, 2, 3), copy_prob.data.shape)
-        self.assertEqual((3, 2, 6), history.shape)
-        self.assertEqual((2, 6), h_n.shape)
-        self.assertEqual((2, 6), c_n.shape)
 
 
 if __name__ == "__main__":
