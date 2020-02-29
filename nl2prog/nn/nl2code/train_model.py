@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchnlp.encoders import LabelEncoder
 from typing import Tuple
 from nl2prog.nn.utils import rnn
-from nl2prog.nn.nl2code import Encoder, Predictor
+from nl2prog.nn.nl2code import NLReader, Predictor
 from nl2prog.encoders import ActionSequenceEncoder
 
 
@@ -15,9 +15,9 @@ class TrainModel(nn.Module):
                  dropout: float):
         super(TrainModel, self).__init__()
         self.lstm_state_size = lstm_state_size
-        self.encoder = Encoder(query_encoder.vocab_size,
-                               embedding_dim, lstm_state_size,
-                               dropout=dropout)
+        self.encoder = NLReader(query_encoder.vocab_size,
+                                embedding_dim, lstm_state_size,
+                                dropout=dropout)
         self.predictor = Predictor(
             action_sequence_encoder._rule_encoder.vocab_size,
             action_sequence_encoder._token_encoder.vocab_size,
@@ -68,7 +68,7 @@ class TrainModel(nn.Module):
         """
 
         # Encode query
-        query_embed = self.encoder(query)  # PackedSequence
+        query_embed, _ = self.encoder(query)  # PackedSequence
         B = query_embed.data.shape[1]
 
         # Decode action sequence

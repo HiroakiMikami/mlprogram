@@ -7,6 +7,7 @@ from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.nn.functional \
     import index_embeddings, gelu, lne_to_nel, nel_to_lne
 from .gating import Gating
+from .embedding import QueryEmbedding
 
 
 class NLReaderBlock(nn.Module):
@@ -80,34 +81,44 @@ class NLReaderBlock(nn.Module):
 
 class NLReader(nn.Module):
     def __init__(self,
+                 token_num: int, char_num: int, max_token_len: int,
                  char_embed_size: int, hidden_size: int,
                  n_heads: int, dropout: float, n_blocks: int):
         super(NLReader, self).__init__()
+        self.query_embedding = QueryEmbedding(
+            token_num, char_num, max_token_len,
+            hidden_size, hidden_size, char_embed_size
+        )
         self.blocks = [NLReaderBlock(
             char_embed_size, hidden_size, n_heads, dropout, i
         ) for i in range(n_blocks)]
         for i, block in enumerate(self.blocks):
             self.add_module("block_{}".format(i), block)
 
-    def forward(self, token_embed: PaddedSequenceWithMask,
-                char_embed: torch.Tensor) -> PaddedSequenceWithMask:
+    def forward(self, token_query: PaddedSequenceWithMask,
+                char_query: PaddedSequenceWithMask) \
+            -> Tuple[PaddedSequenceWithMask, None]:
         """
         Parameters
         ----------
-        token_embed: PaddedSequenceWithMask
-            (L, N, hidden_size) where L is the sequence length,
-            N is the batch size.
-        char_embed: torch.Tensor
-            (L, N, char_embed_size) where L is the sequence length,
-            N is the batch size.
+        token_query: rnn.PaddedSequenceWithMask
+            The minibatch of sequences.
+            The shape of each sequence is (sequence_length).
+        char_query: rnn.PaddedSequenceWithMask
+            The minibatch of sequences.
+            The shape of each sequence is (sequence_length, max_token_len).
+            The padding value should be -1.
 
         Returns
         -------
         PaddedSequenceWithMask
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
+        other_features: None
         """
-        input = token_embed
+        e_token_query, e_char_query = \
+            self.query_embedding(token_query.data, char_query.data)
+        input = PaddedSequenceWithMask(e_token_query, token_query.mask)
         for block in self.blocks:
-            input, _ = block(input, char_embed)
-        return input
+            input, _ = block(input, e_char_query)
+        return input, None

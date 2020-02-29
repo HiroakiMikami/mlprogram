@@ -5,7 +5,7 @@ from typing import Tuple
 from nl2prog.nn.utils import rnn
 from nl2prog.nn.treegen\
     import NLReader, ASTReader, Decoder, Predictor, \
-    QueryEmbedding, RuleEmbedding
+    RuleEmbedding
 from nl2prog.encoders import ActionSequenceEncoder
 
 
@@ -28,15 +28,13 @@ class TrainModel(nn.Module):
         self.token_num = \
             action_sequence_encoder._token_encoder. vocab_size
 
-        self.query_embedding = QueryEmbedding(
-            query_encoder.vocab_size, char_encoder.vocab_size, max_token_len,
-            hidden_size, hidden_size, hidden_size)
         self.rule_embedding = RuleEmbedding(
             self.rule_num, self.token_num, self.node_type_num,
             max_arity, hidden_size, hidden_size, hidden_size)
 
-        self.nl_reader = NLReader(hidden_size, hidden_size, num_heads, dropout,
-                                  num_nl_reader_blocks)
+        self.nl_reader = NLReader(
+            query_encoder.vocab_size, char_encoder.vocab_size, max_token_len,
+            hidden_size, hidden_size, num_heads, dropout, num_nl_reader_blocks)
         self.ast_reader = ASTReader(hidden_size, hidden_size, 3, num_heads,
                                     dropout, num_ast_reader_blocks)
         self.decoder = Decoder(hidden_size, feature_size, hidden_size,
@@ -93,15 +91,11 @@ class TrainModel(nn.Module):
         """
 
         # Embed inputs
-        e_token_query, e_char_query = \
-            self.query_embedding(token_query.data, char_query.data)
         e_action, e_action_type = \
             self.rule_embedding(previous_action.data,
                                 rule_previous_action.data)
 
-        query_features = self.nl_reader(
-            rnn.PaddedSequenceWithMask(e_token_query, token_query.mask),
-            e_char_query)
+        query_features, _ = self.nl_reader(token_query, char_query)
         ast_features = self.ast_reader(
             rnn.PaddedSequenceWithMask(e_action, previous_action.mask),
             depth, e_action_type, adjacency_matrix)

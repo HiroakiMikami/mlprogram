@@ -18,7 +18,7 @@ def mock_tokenizer(query):
 
 
 def mock_query_encoder(tensor):
-    return PaddedSequenceWithMask(tensor.data.float(), tensor.mask)
+    return PaddedSequenceWithMask(tensor.data.float(), tensor.mask), None
 
 
 class MockPredictor:

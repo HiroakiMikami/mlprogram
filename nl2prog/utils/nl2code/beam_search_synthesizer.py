@@ -1,7 +1,7 @@
 import torch
 from torchnlp.encoders import LabelEncoder
 import numpy as np
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Tuple
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import Predictor
 from nl2prog.language.action import ActionOptions
@@ -25,7 +25,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
                  encoder: Callable[[PaddedSequenceWithMask],
-                                   PaddedSequenceWithMask],
+                                   Tuple[PaddedSequenceWithMask,
+                                         Optional[torch.Tensor]]],
                  predictor: Predictor, query_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype,
@@ -38,7 +39,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        encoder: Callble[[PaddedSequenceWithMask], PaddedSequenceWithMask]
+        encoder:
             The encoder module
         predictor: Predictor
             The module to predict the probabilities of actions
@@ -60,7 +61,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 query_encoder.batch_encode(query.query_for_dnn)
             query_tensor = query_tensor.to(device)
             query_tensor = pad_sequence([query_tensor])
-            query_tensor = encoder(query_tensor).data
+            query_tensor, _ = encoder(query_tensor)
+            query_tensor = query_tensor.data
             L = query_tensor.shape[0]
             query_tensor = query_tensor.view(L, -1)
 

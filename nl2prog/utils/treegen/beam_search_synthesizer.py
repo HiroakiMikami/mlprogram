@@ -4,13 +4,13 @@ import numpy as np
 from typing import List, Callable, Optional
 from dataclasses import dataclass
 from nl2prog.nn.treegen \
-    import ASTReader, Decoder, Predictor, QueryEmbedding, RuleEmbedding
+    import ASTReader, Decoder, Predictor, RuleEmbedding, NLReader
 from nl2prog.language.action import ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability, Query
-from nl2prog.nn.utils.rnn import pad_sequence, PaddedSequenceWithMask
+from nl2prog.nn.utils.rnn import pad_sequence
 
 
 @dataclass
@@ -22,10 +22,8 @@ class State:
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
-                 query_embedding: QueryEmbedding,
                  rule_embedding: RuleEmbedding,
-                 nl_reader: Callable[[PaddedSequenceWithMask, torch.Tensor],
-                                     PaddedSequenceWithMask],
+                 nl_reader: NLReader,
                  ast_reader: ASTReader, decoder: Decoder,
                  predictor: Predictor, word_encoder: LabelEncoder,
                  char_encoder: LabelEncoder,
@@ -41,10 +39,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        query_embedding: QueryEmbedding,
         rule_embedding: RuleEmbedding,
-        nl_reader: Callble[[PaddedSequenceWithMask, torch.Tensor],
-                           PaddedSequenceWithMask]
+        nl_reader:
             The encoder module
         ast_reader: ASTReader
         decoder: Decoder
@@ -78,9 +74,8 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 char_query[i, :length] = \
                     char_encoder.batch_encode(word)[:length]
             char_query = pad_sequence([char_query])
-            word_query.data, char_query = \
-                query_embedding(word_query.data, char_query.data)
-            nl_feature = nl_reader(word_query, char_query).data
+            nl_feature, _ = nl_reader(word_query, char_query)
+            nl_feature = nl_feature.data
             L = nl_feature.shape[0]
             nl_feature = nl_feature.view(L, -1)
 

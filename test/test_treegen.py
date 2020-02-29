@@ -44,7 +44,7 @@ class TestTreeGen(unittest.TestCase):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
         synthesizer = BeamSearchSynthesizer(
-            5, tokenize_query, model.query_embedding, model.rule_embedding,
+            5, tokenize_query, model.rule_embedding,
             model.nl_reader, model.ast_reader, model.decoder, model.predictor,
             encoder[0], encoder[1], encoder[2], 32, 2, is_subtype,
             options=options, max_steps=20)
