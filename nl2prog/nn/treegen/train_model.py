@@ -93,4 +93,4 @@ class TrainModel(nn.Module):
 
         features, _ = self.decoder(
             previous_action, query_features, None, ast_features, None)
-        return self.predictor(features, query_features)
+        return self.predictor(query_features, features)

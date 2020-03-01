@@ -15,17 +15,18 @@ class Predictor(nn.Module):
         self.token = nn.Linear(feature_size, token_size)
         self.copy = PointerNet(feature_size, nl_feature_size, hidden_size)
 
-    def forward(self, feature: PaddedSequenceWithMask,
-                nl_feature: PaddedSequenceWithMask) \
-            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask]:
+    def forward(self, nl_feature: PaddedSequenceWithMask,
+                feature: PaddedSequenceWithMask) \
+            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask,
+                     PaddedSequenceWithMask]:
         """
         Parameters
         ----------
-        feature: PaddedSequenceWithMask
-            (L_ast, N, feature_size) where L_ast is the sequence length,
-            N is the batch size.
         nl_feature: PaddedSequenceWithMask
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
+            N is the batch size.
+        feature: PaddedSequenceWithMask
+            (L_ast, N, feature_size) where L_ast is the sequence length,
             N is the batch size.
 
         Returns

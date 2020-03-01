@@ -117,7 +117,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                     ast_reader(action, rule_action, depth, matrix)
                 feature, _ = \
                     decoder(action, query_seq, None, ast_feature, None)
-                results = predictor(feature, query_seq)
+                results = predictor(query_seq, feature)
             # (len(hs), n_rules)
             rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)
             # (len(hs), n_tokens)

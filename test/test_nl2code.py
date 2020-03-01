@@ -41,7 +41,8 @@ class TestNL2Code(unittest.TestCase):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
         synthesizer = BeamSearchSynthesizer(5, tokenize_query,
-                                            model.encoder, model.predictor,
+                                            model.nl_reader, model.ast_reader,
+                                            model.decoder, model.predictor,
                                             encoder[0], encoder[1], is_subtype,
                                             options=options, max_steps=20)
 

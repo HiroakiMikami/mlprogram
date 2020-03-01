@@ -3,7 +3,7 @@ from torchnlp.encoders import LabelEncoder
 import numpy as np
 from typing import List, Callable, Optional, Tuple
 from dataclasses import dataclass
-from nl2prog.nn.nl2code import Predictor
+from nl2prog.nn.nl2code import ActionSequenceReader, Decoder, Predictor
 from nl2prog.language.action import ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
@@ -24,9 +24,10 @@ class State:
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  tokenizer: Callable[[str], Query],
-                 encoder: Callable[[PaddedSequenceWithMask],
-                                   Tuple[PaddedSequenceWithMask,
-                                         Optional[torch.Tensor]]],
+                 nl_reader: Callable[[PaddedSequenceWithMask],
+                                     Tuple[PaddedSequenceWithMask,
+                                           Optional[torch.Tensor]]],
+                 ast_reader: ActionSequenceReader, decoder: Decoder,
                  predictor: Predictor, query_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype,
@@ -39,8 +40,10 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        encoder:
+        nl_reader:
             The encoder module
+        ast_reader:
+        decoder:
         predictor: Predictor
             The module to predict the probabilities of actions
         query_encoder: LabelEncoder
@@ -61,7 +64,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 query_encoder.batch_encode(query.query_for_dnn)
             query_tensor = query_tensor.to(device)
             query_tensor = pad_sequence([query_tensor])
-            query_tensor, _ = encoder(query_tensor)
+            query_tensor, _ = nl_reader(query_tensor)
             query_tensor = query_tensor.data
             L = query_tensor.shape[0]
             query_tensor = query_tensor.view(L, -1)
@@ -112,8 +115,10 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             c_n = torch.stack(c_n, dim=0)  # (len(hs), state_size)
 
             with torch.no_grad():
-                results = predictor(query_seq, action, prev_action,
-                                    hist, (h_n, c_n))
+                ast_feature = ast_reader(action, prev_action)
+                feature, state = decoder(None, query_seq, None, ast_feature,
+                                         (hist, h_n, c_n))
+                results = predictor(query_seq, feature)
             # (len(hs), n_rules)
             rule_pred = results[0].data.cpu().reshape(len(hs), -1)
             # (len(hs), n_tokens)
@@ -121,13 +126,12 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             # (len(hs), query_length)
             copy_pred = \
                 results[2].data.cpu().reshape(len(hs), -1)
-            history = results[3]  # (L_a + 1, len(hs), state_size)
+            history, h_n, c_n = state
             state_size = history.shape[2]
             history = torch.split(history, 1,
                                   dim=1)  # (L_a + 1, 1, state_size)
             history = [x.reshape(-1, state_size)
                        for x in history]  # (L_a + 1, state_size)
-            h_n, c_n = results[4]  # (len(hs), state_size)
             h_n = torch.split(h_n, 1, dim=0)  # (1, state_size)
             h_n = [x.view(-1) for x in h_n]  # (state_size)
             c_n = torch.split(c_n, 1, dim=0)  # (,1 state_size)

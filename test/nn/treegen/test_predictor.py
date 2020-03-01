@@ -28,7 +28,7 @@ class TestPredictor(unittest.TestCase):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
-        rule, token, copy = predictor(pad_sequence([f]), pad_sequence([nl]))
+        rule, token, copy = predictor(pad_sequence([nl]), pad_sequence([f]))
         self.assertEqual((11, 1, 5), rule.data.shape)
         self.assertEqual((11, 1), rule.mask.shape)
         self.assertEqual((11, 1, 7), token.data.shape)
@@ -40,7 +40,7 @@ class TestPredictor(unittest.TestCase):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.rand(11, 2)
         nl = torch.rand(13, 3)
-        rule, token, copy = predictor(pad_sequence([f]), pad_sequence([nl]))
+        rule, token, copy = predictor(pad_sequence([nl]), pad_sequence([f]))
         prob = torch.cat([rule.data, token.data, copy.data], dim=2)
         prob = prob.detach().numpy()
         self.assertTrue(np.all(prob >= 0.0))
@@ -55,9 +55,9 @@ class TestPredictor(unittest.TestCase):
         nl0 = torch.rand(13, 3)
         nl1 = torch.rand(15, 3)
         rule0, token0, copy0 = \
-            predictor(pad_sequence([f0]), pad_sequence([nl0]))
+            predictor(pad_sequence([nl0]), pad_sequence([f0]))
         rule1, token1, copy1 = \
-            predictor(pad_sequence([f0, f1]), pad_sequence([nl0, nl1]))
+            predictor(pad_sequence([nl0, nl1]), pad_sequence([f0, f1]))
         rule1 = rule1.data[:11, :1, :]
         token1 = token1.data[:11, :1, :]
         copy1 = copy1.data[:11, :1, :13]
