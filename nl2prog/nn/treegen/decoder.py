@@ -112,7 +112,7 @@ class Decoder(nn.Module):
                 nl_feature: PaddedSequenceWithMask,
                 other_feature: None,
                 ast_feature: PaddedSequenceWithMask,
-                states: None) -> Tuple[PaddedSequenceWithMask, None]:
+                states: None = None) -> Tuple[PaddedSequenceWithMask, None]:
         """
         Parameters
         ----------

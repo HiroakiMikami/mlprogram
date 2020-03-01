@@ -50,7 +50,7 @@ class TestTrain(unittest.TestCase):
         d = rnn.pad_sequence([d0, d1]).data.view(2, 2)
         m = torch.cat([m0.view(1, 2, 2), m1.view(1, 2, 2)], dim=0).float()
 
-        results = model(q, qc, a, at, d, m)
+        results = model((q, qc), (a, at, d, m), a)
         rule_prob = results[0]
         token_prob = results[1]
         copy_prob = results[2]

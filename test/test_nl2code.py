@@ -40,11 +40,10 @@ class TestNL2Code(unittest.TestCase):
     def evaluate(self, model, options, dataset):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
-        synthesizer = BeamSearchSynthesizer(5, tokenize_query,
-                                            model.nl_reader, model.ast_reader,
-                                            model.decoder, model.predictor,
-                                            encoder[0], encoder[1], is_subtype,
-                                            options=options, max_steps=20)
+        synthesizer = BeamSearchSynthesizer(
+            5, tokenize_query, model.input_reader,
+            model.action_sequence_reader, model.decoder, model.predictor,
+            encoder[0], encoder[1], is_subtype, options=options, max_steps=20)
 
         def synthesize(query: str):
             return _synthesize(query, synthesizer)
@@ -85,7 +84,7 @@ class TestNL2Code(unittest.TestCase):
                     nrnn.pad_sequence(ground_truth, padding_value=-1)
 
                 rule_prob, token_prob, copy_prob = model(
-                    query, action, prev_action)
+                    query, (action, prev_action), None)
                 loss = loss_function(rule_prob, token_prob, copy_prob,
                                      ground_truth)
                 acc = acc_function(rule_prob, token_prob, copy_prob,

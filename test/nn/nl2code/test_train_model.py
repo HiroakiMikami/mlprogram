@@ -34,7 +34,7 @@ class TestTrain(unittest.TestCase):
 
         action = rnn.pad_sequence([action0, action1], -1)
         prev_action = rnn.pad_sequence([prev_action0, prev_action1], -1)
-        results = model(query, action, prev_action)
+        results = model(query, (action, prev_action), None)
         rule_prob = results[0]
         token_prob = results[1]
         copy_prob = results[2]

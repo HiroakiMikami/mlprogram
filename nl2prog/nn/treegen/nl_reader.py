@@ -95,19 +95,20 @@ class NLReader(nn.Module):
         for i, block in enumerate(self.blocks):
             self.add_module("block_{}".format(i), block)
 
-    def forward(self, token_query: PaddedSequenceWithMask,
-                char_query: PaddedSequenceWithMask) \
+    def forward(self, input: Tuple[PaddedSequenceWithMask,
+                                   PaddedSequenceWithMask]) \
             -> Tuple[PaddedSequenceWithMask, None]:
         """
         Parameters
         ----------
-        token_query: rnn.PaddedSequenceWithMask
-            The minibatch of sequences.
-            The shape of each sequence is (sequence_length).
-        char_query: rnn.PaddedSequenceWithMask
-            The minibatch of sequences.
-            The shape of each sequence is (sequence_length, max_token_len).
-            The padding value should be -1.
+        input
+            token_query: rnn.PaddedSequenceWithMask
+                The minibatch of sequences.
+                The shape of each sequence is (sequence_length).
+            char_query: rnn.PaddedSequenceWithMask
+                The minibatch of sequences.
+                The shape of each sequence is (sequence_length, max_token_len).
+                The padding value should be -1.
 
         Returns
         -------
@@ -116,6 +117,7 @@ class NLReader(nn.Module):
             N is the batch size.
         other_features: None
         """
+        token_query, char_query = input
         e_token_query, e_char_query = \
             self.query_embedding(token_query.data, char_query.data)
         input = PaddedSequenceWithMask(e_token_query, token_query.mask)

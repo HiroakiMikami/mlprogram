@@ -44,9 +44,10 @@ class TestTreeGen(unittest.TestCase):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
         synthesizer = BeamSearchSynthesizer(
-            5, tokenize_query, model.nl_reader, model.ast_reader,
-            model.decoder, model.predictor, encoder[0], encoder[1], encoder[2],
-            32, 2, is_subtype, options=options, max_steps=20)
+            5, tokenize_query, model.input_reader,
+            model.action_sequence_reader, model.decoder, model.predictor,
+            encoder[0], encoder[1], encoder[2], 32, 2, is_subtype,
+            options=options, max_steps=20)
 
         def synthesize(query: str):
             return _synthesize(query, synthesizer)
@@ -103,8 +104,9 @@ class TestTreeGen(unittest.TestCase):
                 matrix = nrnn.pad_sequence(matrix).data.permute(1, 0, 2)
 
                 rule_prob, token_prob, copy_prob = model(
-                    word_query, char_query, prev_action, rule_prev_action,
-                    depth, matrix)
+                    (word_query, char_query),
+                    (prev_action, rule_prev_action, depth, matrix),
+                    prev_action)
                 loss = loss_function(rule_prob, token_prob, copy_prob,
                                      ground_truth)
                 acc = acc_function(rule_prob, token_prob, copy_prob,

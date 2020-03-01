@@ -72,7 +72,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 char_query[i, :length] = \
                     char_encoder.batch_encode(word)[:length]
             char_query = pad_sequence([char_query])
-            nl_feature, _ = nl_reader(word_query, char_query)
+            nl_feature, _ = nl_reader((word_query, char_query))
             nl_feature = nl_feature.data
             L = nl_feature.shape[0]
             nl_feature = nl_feature.view(L, -1)
@@ -114,7 +114,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
             with torch.no_grad():
                 ast_feature = \
-                    ast_reader(action, rule_action, depth, matrix)
+                    ast_reader((action, rule_action, depth, matrix))
                 feature, _ = \
                     decoder(action, query_seq, None, ast_feature, None)
                 results = predictor(query_seq, feature)

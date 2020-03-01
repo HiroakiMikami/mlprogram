@@ -32,9 +32,10 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         ), 0)
         train_model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         synthesizer = BeamSearchSynthesizer(
-            2, mock_tokenizer, train_model.nl_reader, train_model.ast_reader,
-            train_model.decoder, train_model.predictor, qencoder,
-            aencoder, 3, 2, is_subtype, max_steps=2)
+            2, mock_tokenizer, train_model.input_reader,
+            train_model.action_sequence_reader, train_model.decoder,
+            train_model.predictor, qencoder, aencoder, 3, 2, is_subtype,
+            max_steps=2)
         synthesizer.synthesize("abc")
 
 

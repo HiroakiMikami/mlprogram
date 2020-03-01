@@ -114,31 +114,31 @@ class ActionSequenceReader(nn.Module):
             max_arity, hidden_size, hidden_size, rule_embed_size)
 
     def forward(self,
-                previous_action: PaddedSequenceWithMask,
-                rule_previous_action: PaddedSequenceWithMask,
-                depth: torch.Tensor,
-                adjacency_matrix: torch.Tensor) -> \
+                action_sequence: Tuple[PaddedSequenceWithMask,
+                                       PaddedSequenceWithMask,
+                                       torch.Tensor, torch.Tensor]) -> \
             PaddedSequenceWithMask:
         """
         Parameters
         ----------
-        previous_aciton: rnn.PaddedSequenceWithMask
-            The previous action sequence.
-            The encoded tensor with the shape of
-            (len(action_sequence) + 1, 3). Each action will be encoded by
-            the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
-            The padding value should be -1.
-        rule_previous_action: rnn.PaddedSequenceWithMask
-            The rule of previous action sequence.
-            The shape of each sequence is
-            (action_length, max_arity + 1, 3).
-        depth: torch.Tensor
-            The depth of actions. The shape is (L, B) where L is the sequence
-            length, B is the batch size.
-        adjacency_matrix: torch.Tensor
-            The adjacency matrix. The shape is (B, L, L) where B is the batch
-            size, L is the sequence length.
+        action_sequence
+            previous_aciton: rnn.PaddedSequenceWithMask
+                The previous action sequence.
+                The encoded tensor with the shape of
+                (len(action_sequence) + 1, 3). Each action will be encoded by
+                the tuple of (ID of the applied rule, ID of the inserted token,
+                the index of the word copied from the query).
+                The padding value should be -1.
+            rule_previous_action: rnn.PaddedSequenceWithMask
+                The rule of previous action sequence.
+                The shape of each sequence is
+                (action_length, max_arity + 1, 3).
+            depth: torch.Tensor
+                The depth of actions. The shape is (L, B) where L is the
+                sequence length, B is the batch size.
+            adjacency_matrix: torch.Tensor
+                The adjacency matrix. The shape is (B, L, L) where B is the
+                batch size, L is the sequence length.
 
         Returns
         -------
@@ -146,6 +146,8 @@ class ActionSequenceReader(nn.Module):
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
+        previous_action, rule_previous_action, depth, adjacency_matrix = \
+            action_sequence
         e_action, e_rule_action = \
             self.rule_embedding(previous_action.data,
                                 rule_previous_action.data)

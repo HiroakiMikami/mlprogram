@@ -115,7 +115,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             c_n = torch.stack(c_n, dim=0)  # (len(hs), state_size)
 
             with torch.no_grad():
-                ast_feature = ast_reader(action, prev_action)
+                ast_feature = ast_reader((action, prev_action))
                 feature, state = decoder(None, query_seq, None, ast_feature,
                                          (hist, h_n, c_n))
                 results = predictor(query_seq, feature)

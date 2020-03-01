@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Tuple, Optional
 
 from nl2prog.nn.utils import rnn
 
@@ -163,6 +163,7 @@ class Decoder(nn.Module):
             The probability of dropout
         """
         super(Decoder, self).__init__()
+        self.hidden_size = hidden_size
         self._cell = DecoderCell(
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
@@ -173,7 +174,8 @@ class Decoder(nn.Module):
                 other_feature: None,
                 ast_feature: Tuple[rnn.PaddedSequenceWithMask,
                                    rnn.PaddedSequenceWithMask],
-                state: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+                state: Optional[Tuple[torch.Tensor, torch.Tensor,
+                                      torch.Tensor]] = None
                 ) -> Tuple[Tuple[rnn.PaddedSequenceWithMask,
                                  rnn.PaddedSequenceWithMask],
                            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
@@ -192,11 +194,12 @@ class Decoder(nn.Module):
             parent_index: rnn.PackedSequenceWithMask
                 The sequence of parent action indexes.
                 If index is 0, it means that the action is root action.
-        history: torch.FloatTensor
-            The list of LSTM states. The shape is (B, L_h, hidden_size)
-        (h_0, c_0): Tuple[torch.FloatTensor, torch.FloatTensor]
-            The tuple of the LSTM initial states. The shape of each tensor is
-            (B, hidden_size)
+        state:
+            history: torch.FloatTensor
+                The list of LSTM states. The shape is (B, L_h, hidden_size)
+            (h_0, c_0): Tuple[torch.FloatTensor, torch.FloatTensor]
+                The tuple of the LSTM initial states. The shape of each tensor
+                is (B, hidden_size)
 
         Returns
         -------
@@ -213,7 +216,16 @@ class Decoder(nn.Module):
                 (B, hidden_size)
         """
         input, parent_index = ast_feature
-        history, h_n, c_n = state
+        B = nl_feature.data.shape[1]
+        if state is None:
+            history = torch.zeros(1, B, self.hidden_size,
+                                  device=nl_feature.data.device)
+            h_n = torch.zeros(B, self.hidden_size,
+                              device=nl_feature.data.device)
+            c_n = torch.zeros(B, self.hidden_size,
+                              device=nl_feature.data.device)
+        else:
+            history, h_n, c_n = state
         state = (h_n, c_n)
         hs = []
         cs = []

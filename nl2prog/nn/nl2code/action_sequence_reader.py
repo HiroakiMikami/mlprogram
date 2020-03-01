@@ -40,22 +40,24 @@ class ActionSequenceReader(nn.Module):
         nn.init.normal_(self._node_type_embed.weight, std=0.01)
 
     def forward(self,
-                action: PaddedSequenceWithMask,
-                previous_action: PaddedSequenceWithMask) \
+                action_sequence: Tuple[PaddedSequenceWithMask,
+                                       PaddedSequenceWithMask]) \
             -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask]:
         """
         Parameters
         ----------
-        action: rnn.PackedSequenceWithMask
-            The input sequence of action. Each action is represented by
-            the tuple of (ID of the node types, ID of the parent-action's rule,
-            the index of the parent action).
-            The padding value should be -1.
-        previous_action: rnn.PackedSequenceWithMask
-            The input sequence of previous action. Each action is represented
-            by the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
-            The padding value should be -1.
+        action_sequence:
+            action: rnn.PackedSequenceWithMask
+                The input sequence of action. Each action is represented by
+                the tuple of (ID of the node types, ID of the parent-action's
+                rule, the index of the parent action).
+                The padding value should be -1.
+            previous_action: rnn.PackedSequenceWithMask
+                The input sequence of previous action. Each action is
+                represented by the tuple of (ID of the applied rule, ID of
+                the inserted token, the index of the word copied from
+                the query).
+                The padding value should be -1.
 
         Returns
         -------
@@ -64,6 +66,7 @@ class ActionSequenceReader(nn.Module):
         parent_index: PaddedSequenceWithMask
             The indexes of the parent nodes
         """
+        action, previous_action = action_sequence
         L_a, B, _ = action.data.shape
         node_types, parent_rule, parent_index = torch.split(
             action.data, 1, dim=2)  # (L_a, B, 1)
