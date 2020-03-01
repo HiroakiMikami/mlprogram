@@ -113,17 +113,12 @@ class Predictor(nn.Module):
         L_q, _, _ = query.data.shape
         _, _, h = history.shape
 
-        decoder_input, parent_index = self._reader(action, previous_action)
-        decoder_input = decoder_input.data  # (L_a, B, input_size)
-        parent_index = parent_index.data
+        ast_feature = self._reader(action, previous_action)
 
         # Decode embeddings
-        output, contexts, history, (h_n, c_n) = \
-            self._decoder(query,
-                          PaddedSequenceWithMask(decoder_input, action.mask),
-                          PaddedSequenceWithMask(parent_index, action.mask),
-                          history,
-                          state)  # (L_a, B, *)
+        (output, contexts), (history, h_n, c_n) = \
+            self._decoder(None, query, None, ast_feature,
+                          (history, state[0], state[1]))  # (L_a, B, *)
         # (L_a, B, hidden_size + query_size)
         dc = torch.cat([output.data, contexts.data], dim=2)
 

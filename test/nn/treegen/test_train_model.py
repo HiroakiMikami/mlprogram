@@ -18,7 +18,7 @@ class TestTrain(unittest.TestCase):
                                          options=ActionOptions(False, False))
         model = TrainModel(qencoder, cencoder, aencoder,
                            3, 3, 1, 3, 3, 3, 3, 3, 0.0)
-        self.assertEqual(194 + 5, len(list(model.named_parameters())))
+        self.assertEqual(196, len(list(model.named_parameters())))
 
     def test_shape(self):
         samples = Samples(["mock-rule"],

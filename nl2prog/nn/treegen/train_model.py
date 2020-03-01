@@ -4,8 +4,7 @@ from torchnlp.encoders import LabelEncoder
 from typing import Tuple
 from nl2prog.nn.utils import rnn
 from nl2prog.nn.treegen\
-    import NLReader, ActionSequenceReader, Decoder, Predictor, \
-    RuleEmbedding
+    import NLReader, ActionSequenceReader, Decoder, Predictor
 from nl2prog.encoders import ActionSequenceEncoder
 
 
@@ -28,10 +27,6 @@ class TrainModel(nn.Module):
         self.token_num = \
             action_sequence_encoder._token_encoder. vocab_size
 
-        self.rule_embedding = RuleEmbedding(
-            self.rule_num, self.token_num, self.node_type_num,
-            max_arity, hidden_size, hidden_size, hidden_size)
-
         self.nl_reader = NLReader(
             query_encoder.vocab_size, char_encoder.vocab_size, max_token_len,
             hidden_size, hidden_size, num_heads, dropout, num_nl_reader_blocks)
@@ -39,8 +34,9 @@ class TrainModel(nn.Module):
             self.rule_num, self.token_num, self.node_type_num, max_arity,
             hidden_size, hidden_size, 3, num_heads, dropout,
             num_ast_reader_blocks)
-        self.decoder = Decoder(hidden_size, feature_size, hidden_size,
-                               num_heads, dropout, num_decoder_blocks)
+        self.decoder = Decoder(self.rule_num, self.token_num, hidden_size,
+                               feature_size, hidden_size, num_heads, dropout,
+                               num_decoder_blocks)
         self.predictor = Predictor(hidden_size,
                                    hidden_size, self.rule_num, self.token_num,
                                    hidden_size)
@@ -91,17 +87,10 @@ class TrainModel(nn.Module):
         copy_pred: rnn.PaddedSequenceWithMask
             The log probabilities of copy-token
         """
-
-        # Embed inputs
-        e_action, _ = \
-            self.rule_embedding(previous_action.data,
-                                rule_previous_action.data)
-
         query_features, _ = self.nl_reader(token_query, char_query)
         ast_features = self.ast_reader(
             previous_action, rule_previous_action, depth, adjacency_matrix)
 
-        features = self.decoder(
-            rnn.PaddedSequenceWithMask(e_action, previous_action.mask),
-            query_features, ast_features)
+        features, _ = self.decoder(
+            previous_action, query_features, None, ast_features, None)
         return self.predictor(features, query_features)
