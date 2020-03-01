@@ -4,7 +4,7 @@ from torchnlp.encoders import LabelEncoder
 from typing import Tuple
 from nl2prog.nn.utils import rnn
 from nl2prog.nn.treegen\
-    import NLReader, ASTReader, Decoder, Predictor, \
+    import NLReader, ActionSequenceReader, Decoder, Predictor, \
     RuleEmbedding
 from nl2prog.encoders import ActionSequenceEncoder
 
@@ -35,8 +35,10 @@ class TrainModel(nn.Module):
         self.nl_reader = NLReader(
             query_encoder.vocab_size, char_encoder.vocab_size, max_token_len,
             hidden_size, hidden_size, num_heads, dropout, num_nl_reader_blocks)
-        self.ast_reader = ASTReader(hidden_size, hidden_size, 3, num_heads,
-                                    dropout, num_ast_reader_blocks)
+        self.ast_reader = ActionSequenceReader(
+            self.rule_num, self.token_num, self.node_type_num, max_arity,
+            hidden_size, hidden_size, 3, num_heads, dropout,
+            num_ast_reader_blocks)
         self.decoder = Decoder(hidden_size, feature_size, hidden_size,
                                num_heads, dropout, num_decoder_blocks)
         self.predictor = Predictor(hidden_size,
@@ -91,14 +93,13 @@ class TrainModel(nn.Module):
         """
 
         # Embed inputs
-        e_action, e_action_type = \
+        e_action, _ = \
             self.rule_embedding(previous_action.data,
                                 rule_previous_action.data)
 
         query_features, _ = self.nl_reader(token_query, char_query)
         ast_features = self.ast_reader(
-            rnn.PaddedSequenceWithMask(e_action, previous_action.mask),
-            depth, e_action_type, adjacency_matrix)
+            previous_action, rule_previous_action, depth, adjacency_matrix)
 
         features = self.decoder(
             rnn.PaddedSequenceWithMask(e_action, previous_action.mask),

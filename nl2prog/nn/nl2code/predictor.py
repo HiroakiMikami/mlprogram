@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from typing import Tuple
 
-from nl2prog.nn.nl2code import Decoder
+from nl2prog.nn.nl2code import Decoder, ActionSequenceReader
 from nl2prog.nn import PointerNet
-from nl2prog.nn.embedding import EmbeddingWithMask, EmbeddingInverse
+from nl2prog.nn.embedding import EmbeddingInverse
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -42,16 +42,13 @@ class Predictor(nn.Module):
         self._num_rules = num_rules
         self._num_tokens = num_tokens
         self._num_node_types = num_node_types
-        self._rule_embed = EmbeddingWithMask(
-            num_rules, embedding_size, num_rules)
+        self._reader = \
+            ActionSequenceReader(num_rules, num_tokens, num_node_types,
+                                 node_type_embedding_size, embedding_size)
         self._rule_embed_inv = \
-            EmbeddingInverse(self._rule_embed.num_embeddings)
-        self._token_embed = EmbeddingWithMask(
-            num_tokens, embedding_size, num_tokens)
+            EmbeddingInverse(self._reader._rule_embed.num_embeddings)
         self._token_embed_inv = \
-            EmbeddingInverse(self._token_embed.num_embeddings)
-        self._node_type_embed = EmbeddingWithMask(
-            num_node_types, node_type_embedding_size, num_node_types)
+            EmbeddingInverse(self._reader._token_embed.num_embeddings)
         self._decoder = Decoder(query_size,
                                 2 * embedding_size + node_type_embedding_size,
                                 hidden_size, att_hidden_size, dropout)
@@ -60,9 +57,6 @@ class Predictor(nn.Module):
         self._l_generate = nn.Linear(hidden_size, 2)
         self._pointer_net = PointerNet(
             hidden_size + query_size, query_size, att_hidden_size)
-        nn.init.normal_(self._rule_embed.weight, std=0.01)
-        nn.init.normal_(self._token_embed.weight, std=0.01)
-        nn.init.normal_(self._node_type_embed.weight, std=0.01)
         nn.init.xavier_uniform_(self._l_rule.weight)
         nn.init.zeros_(self._l_rule.bias)
         nn.init.xavier_uniform_(self._l_token.weight)
@@ -119,38 +113,11 @@ class Predictor(nn.Module):
         L_q, _, _ = query.data.shape
         _, _, h = history.shape
 
-        node_types, parent_rule, parent_index = torch.split(
-            action.data, 1, dim=2)  # (L_a, B, 1)
-        prev_rules, prev_tokens, prev_words = torch.split(
-            previous_action.data, 1, dim=2)  # (L_a, B, 1)
-
-        # Change the padding value
-        node_types = node_types + \
-            (node_types == -1).long() * (self._num_node_types + 1)
-        node_types = node_types.reshape([L_a, B])
-        parent_rule = parent_rule + \
-            (parent_rule == -1).long() * (self._num_rules + 1)
-        parent_rule = parent_rule.reshape([L_a, B])
-        prev_rules = prev_rules + \
-            (prev_rules == -1).long() * (self._num_rules + 1)
-        prev_rules = prev_rules.reshape([L_a, B])
-        prev_tokens = prev_tokens + \
-            (prev_tokens == -1).long() * (self._num_tokens + 1)
-        prev_tokens = prev_tokens.reshape([L_a, B])
-
-        # Embed previous actions
-        prev_action_embed = self._rule_embed(prev_rules) + \
-            self._token_embed(prev_tokens)  # (L_a, B, embedding_size)
-        # Embed action
-        node_type_embed = self._node_type_embed(
-            node_types)  # (L_a, B, node_type_embedding_size)
-        parent_rule_embed = self._rule_embed(
-            parent_rule)  # (L_a, B, embedding_size)
+        decoder_input, parent_index = self._reader(action, previous_action)
+        decoder_input = decoder_input.data  # (L_a, B, input_size)
+        parent_index = parent_index.data
 
         # Decode embeddings
-        decoder_input = torch.cat(
-            [prev_action_embed, node_type_embed, parent_rule_embed],
-            dim=2)  # (L_a, B, input_size)
         output, contexts, history, (h_n, c_n) = \
             self._decoder(query,
                           PaddedSequenceWithMask(decoder_input, action.mask),
@@ -165,14 +132,14 @@ class Predictor(nn.Module):
         rule_pred = torch.tanh(self._l_rule(output.data))
         rule_pred = self._rule_embed_inv(
             rule_pred,
-            self._rule_embed)  # (L_a, B, num_rules + 1)
+            self._reader._rule_embed)  # (L_a, B, num_rules + 1)
         rule_pred = torch.softmax(
             rule_pred[:, :, :-1], dim=2)  # (L_a, B, num_rules)
 
         token_pred = torch.tanh(self._l_token(dc))  # (L_a, B, embedding_size)
         token_pred = self._token_embed_inv(
             token_pred,
-            self._token_embed)  # (L_a, B, num_tokens + 1)
+            self._reader._token_embed)  # (L_a, B, num_tokens + 1)
         token_pred = torch.softmax(
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 

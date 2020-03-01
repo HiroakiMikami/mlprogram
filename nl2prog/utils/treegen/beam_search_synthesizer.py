@@ -4,13 +4,13 @@ import numpy as np
 from typing import List, Callable, Optional
 from dataclasses import dataclass
 from nl2prog.nn.treegen \
-    import ASTReader, Decoder, Predictor, RuleEmbedding, NLReader
+    import ActionSequenceReader, Decoder, Predictor, NLReader, RuleEmbedding
 from nl2prog.language.action import ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability, Query
-from nl2prog.nn.utils.rnn import pad_sequence
+from nl2prog.nn.utils.rnn import pad_sequence, PaddedSequenceWithMask
 
 
 @dataclass
@@ -24,7 +24,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  tokenizer: Callable[[str], Query],
                  rule_embedding: RuleEmbedding,
                  nl_reader: NLReader,
-                 ast_reader: ASTReader, decoder: Decoder,
+                 ast_reader: ActionSequenceReader, decoder: Decoder,
                  predictor: Predictor, word_encoder: LabelEncoder,
                  char_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
@@ -39,7 +39,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         beam_size: int
             The number of candidates
         tokenize: Callable[[str], Query]
-        rule_embedding: RuleEmbedding,
+        rule_embedding: RuleEmbedding
         nl_reader:
             The encoder module
         ast_reader: ASTReader
@@ -115,12 +115,12 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             matrix = matrix.to(device)
 
             with torch.no_grad():
-                action.data, rule_action.data = \
+                e_action, _ = \
                     rule_embedding(action.data, rule_action.data)
+                e_action = PaddedSequenceWithMask(e_action, action.mask)
                 ast_feature = \
-                    ast_reader(action, depth, rule_action.data,
-                               matrix)
-                feature = decoder(action, query_seq, ast_feature)
+                    ast_reader(action, rule_action, depth, matrix)
+                feature = decoder(e_action, query_seq, ast_feature)
                 results = predictor(feature, query_seq)
             # (len(hs), n_rules)
             rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)

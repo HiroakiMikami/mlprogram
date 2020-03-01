@@ -7,14 +7,15 @@ from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.nn.functional \
     import index_embeddings, position_embeddings, gelu, lne_to_nel, nel_to_lne
 from .gating import Gating
+from .embedding import RuleEmbedding
 
 
-class ASTReaderBlock(nn.Module):
+class ActionSequenceReaderBlock(nn.Module):
     def __init__(self,
                  rule_embed_size: int, hidden_size: int,
                  tree_conv_kernel_size: int,
                  n_heads: int, dropout: float, block_idx: int):
-        super(ASTReaderBlock, self).__init__()
+        super(ActionSequenceReaderBlock, self).__init__()
         self.block_idx = block_idx
         self.attention = nn.MultiheadAttention(hidden_size, n_heads, dropout)
         self.norm1 = nn.LayerNorm(hidden_size)
@@ -95,39 +96,49 @@ class ASTReaderBlock(nn.Module):
         return PaddedSequenceWithMask(h, input.mask), attn
 
 
-class ASTReader(nn.Module):
+class ActionSequenceReader(nn.Module):
     def __init__(self,
-                 rule_embed_size: int, hidden_size: int,
-                 tree_conv_kernel_size: int,
-                 n_heads: int, dropout: float, n_blocks: int):
-        super(ASTReader, self).__init__()
-        self.blocks = [ASTReaderBlock(
+                 rule_num: int, token_num: int, node_type_num: int,
+                 max_arity: int, rule_embed_size: int, hidden_size: int,
+                 tree_conv_kernel_size: int, n_heads: int, dropout: float,
+                 n_blocks: int):
+        super(ActionSequenceReader, self).__init__()
+        self.blocks = [ActionSequenceReaderBlock(
             rule_embed_size, hidden_size, tree_conv_kernel_size,
             n_heads, dropout, i
         ) for i in range(n_blocks)]
         for i, block in enumerate(self.blocks):
             self.add_module("block_{}".format(i), block)
+        self.rule_embedding = RuleEmbedding(
+            rule_num, token_num, node_type_num,
+            max_arity, hidden_size, hidden_size, rule_embed_size)
 
     def forward(self,
-                seq_embed: PaddedSequenceWithMask,
+                previous_action: PaddedSequenceWithMask,
+                rule_previous_action: PaddedSequenceWithMask,
                 depth: torch.Tensor,
-                rule_embed: torch.Tensor,
                 adjacency_matrix: torch.Tensor) -> \
             PaddedSequenceWithMask:
         """
         Parameters
         ----------
-        seq_embed: PaddedSequenceWithMask
-            (L, N, hidden_size) where L is the sequence length,
-            N is the batch size.
+        previous_aciton: rnn.PaddedSequenceWithMask
+            The previous action sequence.
+            The encoded tensor with the shape of
+            (len(action_sequence) + 1, 3). Each action will be encoded by
+            the tuple of (ID of the applied rule, ID of the inserted token,
+            the index of the word copied from the query).
+            The padding value should be -1.
+        rule_previous_action: rnn.PaddedSequenceWithMask
+            The rule of previous action sequence.
+            The shape of each sequence is
+            (action_length, max_arity + 1, 3).
         depth: torch.Tensor
-            (L, N) where L is the sequence length,
-            N is the batch size.
-        rule_embed: torch.Tensor
-            (L, N, rule_embed_size) where L is the sequence length,
-            N is the batch size.
+            The depth of actions. The shape is (L, B) where L is the sequence
+            length, B is the batch size.
         adjacency_matrix: torch.Tensor
-            (N, L, L) where N is the batch size, L is the sequence length.
+            The adjacency matrix. The shape is (B, L, L) where B is the batch
+            size, L is the sequence length.
 
         Returns
         -------
@@ -135,7 +146,10 @@ class ASTReader(nn.Module):
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        input = seq_embed
+        e_action, e_rule_action = \
+            self.rule_embedding(previous_action.data,
+                                rule_previous_action.data)
+        input = PaddedSequenceWithMask(e_action, previous_action.mask)
         for block in self.blocks:
-            input, _ = block(input, depth, rule_embed, adjacency_matrix)
+            input, _ = block(input, depth, e_rule_action, adjacency_matrix)
         return input
