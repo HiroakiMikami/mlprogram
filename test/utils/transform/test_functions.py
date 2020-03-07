@@ -7,7 +7,8 @@ from nl2prog.utils.data import Entry, ListDataset, get_samples
 from nl2prog.language.ast import Node, Leaf, Field
 from nl2prog.language.action import ast_to_action_sequence
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils.transform import TransformQuery, TransformGroundTruth
+from nl2prog.utils.transform \
+    import TransformQuery, TransformGroundTruth, TransformDataset
 
 
 def tokenize(query: str):
@@ -82,6 +83,19 @@ class TestTransformGroundTruth(unittest.TestCase):
         transform = TransformGroundTruth(to_action_sequence, aencoder)
         ground_truth = transform("y = x + 1", ["foo", "bar"])
         self.assertEqual(None, ground_truth)
+
+
+class TestTransformDataset(unittest.TestCase):
+    def test_happy_path(self):
+        dataset = ListDataset([[Entry("foo bar", "y = x + 1")]])
+        transform = TransformDataset(lambda x: ([x], 0), lambda x, y: x,
+                                     lambda x, y: y)
+        dataset = transform(dataset)
+        self.assertEqual(1, len(dataset))
+        input, action_seq, ground_truth = dataset[0]
+        self.assertEqual(0, input)
+        self.assertEqual("y = x + 1", action_seq)
+        self.assertEqual(["foo bar"], ground_truth)
 
 
 if __name__ == "__main__":

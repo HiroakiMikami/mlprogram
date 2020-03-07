@@ -3,6 +3,7 @@ from torchnlp.encoders import LabelEncoder
 import numpy as np
 
 from nl2prog.utils import Query
+from nl2prog.utils.data import ListDataset
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.language.action import ActionOptions, ActionSequence
 from nl2prog.language.evaluator import Evaluator
@@ -56,3 +57,30 @@ class TransformGroundTruth:
             return None
         ground_truth = a[1:-1, 1:]
         return ground_truth
+
+
+class TransformDataset:
+    def __init__(self,
+                 transform_input: Callable[[Any], Tuple[List[str], Any]],
+                 transform_code: Callable[[Any, List[str]], Optional[Any]],
+                 transform_ground_truth: Callable[[Any, List[str]],
+                                                  Optional[torch.Tensor]]):
+        self.transform_input = transform_input
+        self.transform_code = transform_code
+        self.transform_ground_truth = transform_ground_truth
+
+    def __call__(self, dataset: torch.utils.data.Dataset) \
+            -> torch.utils.data.Dataset:
+        entries = []
+        for group in dataset:
+            for entry in group:
+                query_for_synth, input_tensor = \
+                    self.transform_input(entry.query)
+                action_sequence = self.transform_code(
+                    entry.ground_truth, query_for_synth)
+                ground_truth = self.transform_ground_truth(
+                    entry.ground_truth, query_for_synth)
+                if action_sequence is None or ground_truth is None:
+                    continue
+                entries.append((input_tensor, action_sequence, ground_truth))
+        return ListDataset(entries)
