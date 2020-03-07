@@ -9,6 +9,13 @@ class PaddedSequenceWithMask:
     data: torch.FloatTensor
     mask: torch.LongTensor
 
+    def to(self, *args, **kwargs):
+        return PaddedSequenceWithMask(self.data.to(*args, **kwargs),
+                                      self.mask.to(*args, **kwargs))
+
+    def cuda(self):
+        return PaddedSequenceWithMask(self.data.cuda(), self.mask.cuda())
+
 
 def pad_sequence(sequences: List[torch.FloatTensor],
                  padding_value: float = 0.0) -> PaddedSequenceWithMask:

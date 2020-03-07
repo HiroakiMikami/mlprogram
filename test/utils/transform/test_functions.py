@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-from torchnlp.encoders import LabelEncoder
 
 from nl2prog.utils import Query
 from nl2prog.utils.data import Entry, ListDataset, get_samples
@@ -8,7 +7,7 @@ from nl2prog.language.ast import Node, Leaf, Field
 from nl2prog.language.action import ast_to_action_sequence
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils.transform \
-    import TransformQuery, TransformGroundTruth, TransformDataset
+    import TransformGroundTruth, TransformDataset
 
 
 def tokenize(query: str):
@@ -34,26 +33,6 @@ def to_action_sequence(code: str):
                                                        Leaf("number", "1"))]))]
                            ))])
     return ast_to_action_sequence(ast, tokenizer=tokenize)
-
-
-class TestTransformQuery(unittest.TestCase):
-    def test_happy_path(self):
-        def tokenize_query(value: str):
-            return Query([value], [value + "dnn"])
-
-        transform = TransformQuery(tokenize_query, LabelEncoder(["dnn"]))
-        query_for_synth, query_tensor = transform("")
-        self.assertEqual([""], query_for_synth)
-        self.assertEqual([1], query_tensor.numpy().tolist())
-
-    def test_tokenize_list_of_str(self):
-        def tokenize_query(value: str):
-            return Query([value], [value])
-
-        transform = TransformQuery(tokenize_query, LabelEncoder(["0", "1"]))
-        query_for_synth, query_tensor = transform(["0", "1"])
-        self.assertEqual(["0", "1"], query_for_synth)
-        self.assertEqual([1, 2], query_tensor.numpy().tolist())
 
 
 class TestTransformGroundTruth(unittest.TestCase):

@@ -1,11 +1,12 @@
 import unittest
 import numpy as np
+from torchnlp.encoders import LabelEncoder
 from nl2prog.utils import Query
 from nl2prog.utils.data import Entry, ListDataset, get_samples
 from nl2prog.language.ast import Node, Field, Leaf
 from nl2prog.language.action import ast_to_action_sequence, ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils.transform.treegen import TransformCode
+from nl2prog.utils.transform.treegen import TransformQuery, TransformCode
 
 
 def tokenize(query: str):
@@ -33,6 +34,19 @@ def to_action_sequence(code: str):
     return ast_to_action_sequence(ast,
                                   tokenizer=tokenize,
                                   options=ActionOptions(False, False))
+
+
+class TestTransformQuery(unittest.TestCase):
+    def test_simple_case(self):
+        words = ["ab", "test"]
+        qencoder = LabelEncoder(words, 0)
+        cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
+        transform = TransformQuery(tokenize_query, qencoder, cencoder, 3)
+        query_for_synth, (word_query, char_query) = transform("ab test")
+        self.assertEqual(["ab", "test"], query_for_synth)
+        self.assertTrue(np.array_equal([1, 2], word_query.numpy()))
+        self.assertTrue(np.array_equal([[1, 2, -1], [3, 4, 0]],
+                                       char_query.numpy()))
 
 
 class TestToTrainDataset(unittest.TestCase):

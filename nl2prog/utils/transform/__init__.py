@@ -1,3 +1,3 @@
-from .functions import TransformQuery, TransformGroundTruth, TransformDataset
+from .functions import TransformGroundTruth, TransformDataset
 
-__all__ = ["TransformQuery", "TransformGroundTruth", "TransformDataset"]
+__all__ = ["TransformGroundTruth", "TransformDataset"]

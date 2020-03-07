@@ -15,10 +15,12 @@ from nl2prog.utils.nl2code import BeamSearchSynthesizer
 from nl2prog.language.action \
     import ast_to_action_sequence as to_seq, ActionOptions
 from nl2prog.utils.data import get_samples, to_eval_dataset, get_words
-from nl2prog.utils.data.nl2code import to_train_dataset, collate_train_dataset
+from nl2prog.utils.data.nl2code import Collate
+from nl2prog.utils.transform \
+    import TransformDataset, TransformGroundTruth
+from nl2prog.utils.transform.nl2code import TransformQuery, TransformCode
 from nl2prog.nn import Loss, Accuracy as Acc
 from nl2prog.nn.nl2code import TrainModel
-from nl2prog.nn.utils import rnn as nrnn
 from nl2prog.metrics import Accuracy
 
 
@@ -63,9 +65,12 @@ class TestNL2Code(unittest.TestCase):
         qencoder = LabelEncoder(words, 2)
         aencoder = ActionSequenceEncoder(samples, 2, options=options)
 
-        train_dataset = to_train_dataset(
-            dataset, tokenize_query, tokenize_token, to_action_sequence,
-            qencoder, aencoder, options)
+        tquery = TransformQuery(tokenize_query, qencoder)
+        tcode = TransformCode(to_action_sequence, aencoder, options)
+        tgt = TransformGroundTruth(to_action_sequence, aencoder, options)
+        transform = TransformDataset(tquery, tcode, tgt)
+
+        train_dataset = transform(dataset)
         model = TrainModel(qencoder, aencoder, 256, 64, 256, 64, 0.0)
         optimizer = optim.Adam(model.parameters())
         loss_function = Loss()
@@ -73,18 +78,11 @@ class TestNL2Code(unittest.TestCase):
 
         for _ in trange(100):
             loader = DataLoader(train_dataset, 1, shuffle=True,
-                                collate_fn=collate_train_dataset)
+                                collate_fn=Collate(torch.device("cpu")))
             avg_acc = 0
-            for (query, action, prev_action), ground_truth in loader:
-                query = nrnn.pad_sequence(query, padding_value=-1)
-                action = nrnn.pad_sequence(action, padding_value=-1)
-                prev_action = \
-                    nrnn.pad_sequence(prev_action, padding_value=-1)
-                ground_truth = \
-                    nrnn.pad_sequence(ground_truth, padding_value=-1)
-
+            for query, action_sequence, ground_truth in loader:
                 rule_prob, token_prob, copy_prob = model(
-                    query, (action, prev_action), None)
+                    query, action_sequence, None)
                 loss = loss_function(rule_prob, token_prob, copy_prob,
                                      ground_truth)
                 acc = acc_function(rule_prob, token_prob, copy_prob,
