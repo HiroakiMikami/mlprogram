@@ -72,21 +72,20 @@ class BeamSearchSynthesizer:
         self._options = options
         self._max_steps = max_steps
 
-    def initialize(self, query: List[str]) -> Any:
+    def initialize(self, input: Any) -> Any:
         pass
 
     def batch_update(self, hs: List[Hypothesis]) \
             -> List[Tuple[Any, LazyLogProbability]]:
         pass
 
-    def synthesize(self, query: str):
+    def synthesize(self, input: Any):
         """
         Synthesize the program from the query
 
         Parameters
         ----------
-        query: str
-            The query
+        input: Any
 
         Yields
         ------
@@ -104,7 +103,7 @@ class BeamSearchSynthesizer:
         evaluator.eval(ApplyRule(
             ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                            [("root", NodeType(Root(), NodeConstraint.Node))])))
-        state = self.initialize(query)
+        state = self.initialize(input)
         hs: List[Hypothesis] = \
             [Hypothesis(0, None, 0.0, evaluator,
                         state)]

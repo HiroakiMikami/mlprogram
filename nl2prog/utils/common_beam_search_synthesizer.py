@@ -31,8 +31,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  collate_nl_feature: Callable[[List[Any]], Any],
                  collate_other_feature: Callable[[List[Any]], Any],
                  split_states: Callable[[Any], List[Any]],
-                 nl_reader: Callable[[Any], Tuple[Any, Any]],
-                 ast_reader: Callable[[Any], Any],
+                 input_reader: Callable[[Any], Tuple[Any, Any]],
+                 action_sequence_reader: Callable[[Any], Any],
                  decoder: Callable[[Any, Any, Any, Optional[Any]],
                                    Tuple[Any, Optional[Any]]],
                  predictor: Callable[[Any], Tuple[PaddedSequenceWithMask,
@@ -48,9 +48,9 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         ----------
         beam_size: int
             The number of candidates
-        nl_reader:
+        input_reader:
             The encoder module
-        ast_reader:
+        action_sequence_reader:
         decoder:
         predictor: Predictor
             The module to predict the probabilities of actions
@@ -73,17 +73,17 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.collate_nl_feature = collate_nl_feature
         self.collate_other_feature = collate_other_feature
         self.split_states = split_states
-        self.nl_reader = nl_reader
-        self.ast_reader = ast_reader
+        self.input_reader = input_reader
+        self.action_sequence_reader = action_sequence_reader
         self.decoder = decoder
         self.predictor = predictor
         self.action_sequence_encoder = action_sequence_encoder
         self.eps = eps
 
-    def initialize(self, query: str):
-        query_for_synth, query = self.transform_input(query)
-        input = self.collate_input([query])
-        nl_feature, other_feature = self.nl_reader(input)
+    def initialize(self, input: Any):
+        query_for_synth, input = self.transform_input(input)
+        input = self.collate_input([input])
+        nl_feature, other_feature = self.input_reader(input)
         nl_feature = nl_feature.data
         L = nl_feature.shape[0]
         nl_feature = nl_feature.view(L, -1)
@@ -112,7 +112,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         states = self.collate_state(states)
 
         with torch.no_grad():
-            ast_feature = self.ast_reader(action_sequences)
+            ast_feature = self.action_sequence_reader(action_sequences)
             feature, state = self.decoder(queries, nl_features, other_features,
                                           ast_feature, states)
             results = self.predictor(nl_features, feature)

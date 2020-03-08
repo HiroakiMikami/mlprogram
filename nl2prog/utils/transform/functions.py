@@ -63,7 +63,7 @@ class TransformDataset:
         for group in dataset:
             for entry in group:
                 query_for_synth, input_tensor = \
-                    self.transform_input(entry.query)
+                    self.transform_input(entry.input)
                 evaluator = self.transform_code(entry.ground_truth)
                 action_sequence, query = self.transform_evaluator(
                     evaluator, query_for_synth)

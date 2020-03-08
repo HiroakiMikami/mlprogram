@@ -18,7 +18,7 @@ def get_words(dataset: torch.utils.data.Dataset,
 
     for group in dataset:
         for entry in group:
-            query = tokenize_query(entry.query)
+            query = tokenize_query(entry.input)
             words.extend(query.query_for_dnn)
 
     return words
@@ -31,7 +31,7 @@ def get_characters(dataset: torch.utils.data.Dataset,
 
     for group in dataset:
         for entry in group:
-            query = tokenize_query(entry.query)
+            query = tokenize_query(entry.input)
             for token in query.query_for_dnn:
                 chars.extend(token)
 
@@ -77,8 +77,7 @@ def to_eval_dataset(dataset: torch.utils.data.Dataset) \
         for entry in group:
             gts.append(entry.ground_truth)
         for entry in group:
-            query = entry.query
-            entries.append((query, gts))
+            entries.append((entry.input, gts))
     return ListDataset(entries)
 
 

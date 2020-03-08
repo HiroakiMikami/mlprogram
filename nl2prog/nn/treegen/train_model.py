@@ -11,7 +11,8 @@ class TrainModel(BaseTrainModel):
                  action_sequence_encoder: ActionSequenceEncoder,
                  max_token_len: int, max_arity: int,
                  num_heads: int,
-                 num_nl_reader_blocks: int, num_ast_reader_blocks: int,
+                 num_nl_reader_blocks: int,
+                 num_action_sequence_reader_blocks: int,
                  num_decoder_blocks: int, hidden_size: int,
                  feature_size: int, dropout: float):
         rule_num = \
@@ -29,7 +30,8 @@ class TrainModel(BaseTrainModel):
                 num_nl_reader_blocks),
             ActionSequenceReader(
                 rule_num, token_num, node_type_num, max_arity, hidden_size,
-                hidden_size, 3, num_heads, dropout, num_ast_reader_blocks),
+                hidden_size, 3, num_heads, dropout,
+                num_action_sequence_reader_blocks),
             Decoder(rule_num, token_num, hidden_size, feature_size,
                     hidden_size, num_heads, dropout, num_decoder_blocks),
             Predictor(hidden_size, hidden_size, rule_num, token_num,
