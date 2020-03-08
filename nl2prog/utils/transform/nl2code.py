@@ -40,7 +40,7 @@ class TransformCode:
         self.options = options
 
     def __call__(self, code: Any, query_for_synth: List[str]) \
-            -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+            -> Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], None]]:
         action_sequence = self.to_action_sequence(code)
         if action_sequence is None:
             return None
@@ -58,4 +58,4 @@ class TransformCode:
             [a[1:-1, 0].view(-1, 1), p[1:-1, 1:3].view(-1, 2)],
             dim=1)
         prev_action = a[:-2, 1:]
-        return action_tensor, prev_action
+        return (action_tensor, prev_action), None

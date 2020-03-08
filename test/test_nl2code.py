@@ -80,9 +80,9 @@ class TestNL2Code(unittest.TestCase):
             loader = DataLoader(train_dataset, 1, shuffle=True,
                                 collate_fn=Collate(torch.device("cpu")))
             avg_acc = 0
-            for query, action_sequence, ground_truth in loader:
+            for input, action_sequence, query, ground_truth in loader:
                 rule_prob, token_prob, copy_prob = model(
-                    query, action_sequence, None)
+                    input, action_sequence, query)
                 loss = loss_function(rule_prob, token_prob, copy_prob,
                                      ground_truth)
                 acc = acc_function(rule_prob, token_prob, copy_prob,

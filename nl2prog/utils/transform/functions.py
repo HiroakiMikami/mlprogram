@@ -39,7 +39,8 @@ class TransformGroundTruth:
 class TransformDataset:
     def __init__(self,
                  transform_input: Callable[[Any], Tuple[List[str], Any]],
-                 transform_code: Callable[[Any, List[str]], Optional[Any]],
+                 transform_code: Callable[[Any, List[str]],
+                                          Optional[Tuple[Any, Any]]],
                  transform_ground_truth: Callable[[Any, List[str]],
                                                   Optional[torch.Tensor]]):
         self.transform_input = transform_input
@@ -53,11 +54,12 @@ class TransformDataset:
             for entry in group:
                 query_for_synth, input_tensor = \
                     self.transform_input(entry.query)
-                action_sequence = self.transform_code(
+                action_sequence, query = self.transform_code(
                     entry.ground_truth, query_for_synth)
                 ground_truth = self.transform_ground_truth(
                     entry.ground_truth, query_for_synth)
                 if action_sequence is None or ground_truth is None:
                     continue
-                entries.append((input_tensor, action_sequence, ground_truth))
+                entries.append((input_tensor, action_sequence, query,
+                                ground_truth))
         return ListDataset(entries)

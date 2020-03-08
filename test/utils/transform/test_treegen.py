@@ -57,15 +57,15 @@ class TestToTrainDataset(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformCode(to_action_sequence, aencoder, 2,
                                   ActionOptions(False, False))
-        prev_query, prev_rule_query, depth, matrix = transform("y = x + 1",
-                                                               ["ab", "test"])
+        (prev_action, prev_rule_action, depth, matrix), query = \
+            transform("y = x + 1", ["ab", "test"])
         self.assertTrue(np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
                 [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
                 [6, -1, -1]
             ],
-            prev_query.numpy()
+            prev_action.numpy()
         ))
         self.assertTrue(np.array_equal(
             [
@@ -88,7 +88,7 @@ class TestToTrainDataset(unittest.TestCase):
                 # Number -> number
                 [[7, -1, -1], [8, -1, -1], [-1, -1, -1]],
             ],
-            prev_rule_query.numpy()
+            prev_rule_action.numpy()
         ))
         self.assertTrue(np.array_equal(
             [[0], [1], [2], [3], [2], [3], [3], [4], [3]],
@@ -105,6 +105,14 @@ class TestToTrainDataset(unittest.TestCase):
              [0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0]],
             matrix.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [
+                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
+                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
+                [6, -1, -1]
+            ],
+            query.numpy()
         ))
 
     def test_impossible_case(self):

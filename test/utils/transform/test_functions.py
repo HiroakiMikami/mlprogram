@@ -67,13 +67,14 @@ class TestTransformGroundTruth(unittest.TestCase):
 class TestTransformDataset(unittest.TestCase):
     def test_happy_path(self):
         dataset = ListDataset([[Entry("foo bar", "y = x + 1")]])
-        transform = TransformDataset(lambda x: ([x], 0), lambda x, y: x,
+        transform = TransformDataset(lambda x: ([x], 0), lambda x, y: (x, y),
                                      lambda x, y: y)
         dataset = transform(dataset)
         self.assertEqual(1, len(dataset))
-        input, action_seq, ground_truth = dataset[0]
+        input, action_seq, query, ground_truth = dataset[0]
         self.assertEqual(0, input)
         self.assertEqual("y = x + 1", action_seq)
+        self.assertEqual(["foo bar"], query)
         self.assertEqual(["foo bar"], ground_truth)
 
 

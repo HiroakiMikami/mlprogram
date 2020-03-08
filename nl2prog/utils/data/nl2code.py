@@ -12,12 +12,13 @@ class Collate:
     def __call__(self, data: List[Tuple[PaddedSequenceWithMask,
                                         Tuple[PaddedSequenceWithMask,
                                               PaddedSequenceWithMask],
+                                        None,
                                         PaddedSequenceWithMask]]):
         inputs = []
         actions = []
         prev_actions = []
         ground_truths = []
-        for input, action_sequence, ground_truth in data:
+        for input, action_sequence, _, ground_truth in data:
             action, prev_action = action_sequence
             inputs.append(input)
             actions.append(action)
@@ -30,4 +31,5 @@ class Collate:
 
         return (inputs.to(self.device),
                 (actions.to(self.device), prev_actions.to(self.device)),
+                None,
                 ground_truths.to(self.device))

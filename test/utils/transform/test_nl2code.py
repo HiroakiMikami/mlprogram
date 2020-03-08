@@ -61,8 +61,8 @@ class TestToTrainDataset(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformCode(to_action_sequence, aencoder)
-        (action_tensor, prev_action_tensor) = transform("y = x + 1",
-                                                        ["foo", "bar"])
+        (action_tensor, prev_action_tensor), query = transform("y = x + 1",
+                                                               ["foo", "bar"])
         self.assertTrue(np.array_equal(
             [
                 [1, 2, 0], [3, 3, 1], [5, 4, 2], [5, 4, 2], [4, 3, 1],
@@ -80,6 +80,7 @@ class TestToTrainDataset(unittest.TestCase):
             ],
             prev_action_tensor.numpy()
         ))
+        self.assertEqual(None, query)
 
     def test_impossible_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
