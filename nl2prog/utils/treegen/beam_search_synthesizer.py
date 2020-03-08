@@ -32,6 +32,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                                                                torch.Tensor,
                                                                torch.Tensor],
                                                          torch.Tensor]]],
+                 collate_input, collate_action_sequence, collate_query,
                  nl_reader: NLReader, ast_reader: ActionSequenceReader,
                  decoder: Decoder, predictor: Predictor,
                  action_sequence_encoder: ActionSequenceEncoder,
@@ -63,6 +64,9 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.device = list(predictor.parameters())[0].device
         self.transform_input = transform_input
         self.transform_evaluator = transfrom_evaluator
+        self.collate_input = collate_input
+        self.collate_action_sequence = collate_action_sequence
+        self.collate_query = collate_query
         self.nl_reader = nl_reader
         self.ast_reader = ast_reader
         self.decoder = decoder
@@ -71,10 +75,9 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.eps = eps
 
     def initialize(self, query: str):
-        query_for_synth, (word_query, char_query) = self.transform_input(query)
-        word_query = pad_sequence([word_query])
-        char_query = pad_sequence([char_query])
-        nl_feature, _ = self.nl_reader((word_query, char_query))
+        query_for_synth, inputs = self.transform_input(query)
+        inputs = self.collate_input([inputs])
+        nl_feature, _ = self.nl_reader(inputs)
         nl_feature = nl_feature.data
         L = nl_feature.shape[0]
         nl_feature = nl_feature.view(L, -1)
@@ -85,39 +88,22 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def batch_update(self, hs):
         # Create batch of hypothesis
         query_seq = []
-        action_seq = []
-        rule_action_seq = []
-        depth = []
-        matrix = []
+        action_sequences = []
         queries = []
         for h in hs:
             query_seq.append(h.state.nl_feature)
-            (prev_action, rule_prev_action, d, m), query = \
+            action_sequence, query = \
                 self.transform_evaluator(h.evaluator, h.state.query)
-            action_seq.append(prev_action)
-            rule_action_seq.append(rule_prev_action)
-            depth.append(d)
-            matrix.append(m)
+            action_sequences.append(action_sequence)
             queries.append(query)
-        query_seq = pad_sequence(query_seq, padding_value=-1)
-        query_seq.data = query_seq.data.to(self.device)
-        query_seq.mask = query_seq.mask.to(self.device)
-        action = pad_sequence(action_seq, padding_value=-1)
-        action.data = action.data.to(self.device)
-        action.mask = action.mask.to(self.device)
-        rule_action = pad_sequence(rule_action_seq, padding_value=-1)
-        rule_action.data = rule_action.data.to(self.device)
-        rule_action.mask = rule_action.mask.to(self.device)
-        depth = torch.stack(depth).reshape(len(hs), -1).permute(1, 0)
-        depth = depth.to(self.device)
-        matrix = torch.stack(matrix)
-        matrix = matrix.to(self.device)
-        queries = pad_sequence(queries, padding_value=-1).to(self.device)
+        query_seq = pad_sequence(query_seq, padding_value=-1).to(self.device)
+        action_sequences = self.collate_action_sequence(action_sequences)
+        queries = self.collate_query(queries)
 
         with torch.no_grad():
-            ast_feature = self.ast_reader((action, rule_action, depth, matrix))
+            ast_feature = self.ast_reader(action_sequences)
             feature, _ = \
-                self.decoder(action, query_seq, None, ast_feature, None)
+                self.decoder(queries, query_seq, None, ast_feature, None)
             results = self.predictor(query_seq, feature)
         # (len(hs), n_rules)
         rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)

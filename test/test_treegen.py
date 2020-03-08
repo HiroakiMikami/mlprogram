@@ -16,8 +16,10 @@ from nl2prog.utils.treegen import BeamSearchSynthesizer
 from nl2prog.language.action \
     import ast_to_action_sequence as to_seq, ActionOptions
 from nl2prog.utils.data \
-    import get_samples, to_eval_dataset, get_words, get_characters
-from nl2prog.utils.data.treegen import Collate
+    import get_samples, to_eval_dataset, get_words, get_characters, \
+    Collate, CollateGroundTruth
+from nl2prog.utils.data.treegen \
+    import CollateQuery, CollateActionSequence, CollateInput
 from nl2prog.utils.transform \
     import TransformDataset, TransformGroundTruth, TransformCode
 from nl2prog.utils.transform.treegen import TransformQuery, TransformEvaluator
@@ -48,9 +50,12 @@ class TestTreeGen(unittest.TestCase):
                                          encoder[1], 32)
         transform_evaluator = TransformEvaluator(encoder[2], 2, train=False)
         synthesizer = BeamSearchSynthesizer(
-            5, transform_input, transform_evaluator, model.input_reader,
-            model.action_sequence_reader, model.decoder, model.predictor,
-            encoder[2], is_subtype,
+            5, transform_input, transform_evaluator,
+            CollateInput(torch.device("cpu")),
+            CollateActionSequence(torch.device("cpu")),
+            CollateQuery(torch.device("cpu")),
+            model.input_reader, model.action_sequence_reader, model.decoder,
+            model.predictor, encoder[2], is_subtype,
             options=options, max_steps=20)
 
         def synthesize(query: str):
@@ -88,7 +93,11 @@ class TestTreeGen(unittest.TestCase):
 
         for _ in trange(100):
             loader = DataLoader(train_dataset, 1, shuffle=True,
-                                collate_fn=Collate(torch.device("cpu")))
+                                collate_fn=Collate(
+                                    CollateInput(torch.device("cpu")),
+                                    CollateActionSequence(torch.device("cpu")),
+                                    CollateQuery(torch.device("cpu")),
+                                    CollateGroundTruth(torch.device("cpu"))))
             avg_acc = 0
             for input, action_sequence, query, ground_truth in loader:
                 rule_prob, token_prob, copy_prob = model(

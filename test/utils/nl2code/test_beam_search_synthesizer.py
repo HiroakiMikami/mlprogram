@@ -1,4 +1,5 @@
 import unittest
+import torch
 from torchnlp.encoders import LabelEncoder
 import io
 import pickle
@@ -8,6 +9,8 @@ from nl2prog.encoders import ActionSequenceEncoder, Samples
 from nl2prog.nn.nl2code import TrainModel
 from nl2prog.utils import Query
 from nl2prog.utils.nl2code import BeamSearchSynthesizer
+from nl2prog.utils.data.nl2code \
+    import CollateInput, CollateQuery, CollateActionSequence
 from nl2prog.utils.transform.nl2code import TransformQuery, TransformEvaluator
 
 
@@ -38,6 +41,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         train_model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         synthesizer = BeamSearchSynthesizer(
             2, transform_input, transform_evaluator,
+            CollateInput(torch.device("cpu")),
+            CollateActionSequence(torch.device("cpu")),
+            CollateQuery(torch.device("cpu")),
             train_model.input_reader,
             train_model.action_sequence_reader, train_model.decoder,
             train_model.predictor, aencoder, 3, 2, is_subtype,
@@ -57,6 +63,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         train_model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         synthesizer = BeamSearchSynthesizer(
             2, transform_input, transform_evaluator,
+            CollateInput(torch.device("cpu")),
+            CollateActionSequence(torch.device("cpu")),
+            CollateQuery(torch.device("cpu")),
             train_model.input_reader,
             train_model.action_sequence_reader, train_model.decoder,
             train_model.predictor, aencoder, 3, 2, is_subtype,

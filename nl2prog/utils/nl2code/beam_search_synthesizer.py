@@ -27,6 +27,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  transform_evaluator: Callable[[Evaluator, List[str]],
                                                Optional[Tuple[torch.Tensor,
                                                               torch.Tensor]]],
+                 collate_input, collate_action_sequence, collate_query,
                  nl_reader: Callable[[PaddedSequenceWithMask],
                                      Tuple[PaddedSequenceWithMask,
                                            Optional[torch.Tensor]]],
@@ -61,6 +62,9 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.device = list(predictor.parameters())[0].device
         self.transform_input = transform_input
         self.transform_evaluator = transform_evaluator
+        self.collate_input = collate_input
+        self.collate_action_sequence = collate_action_sequence
+        self.collate_query = collate_query
         self.nl_reader = nl_reader
         self.ast_reader = ast_reader
         self.decoder = decoder
@@ -71,7 +75,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
     def initialize(self, query: str):
         query_for_synth, query_tensor = self.transform_input(query)
-        query_tensor = pad_sequence([query_tensor])
+        query_tensor = self.collate_input([query_tensor])
         query_tensor, _ = self.nl_reader(query_tensor)
         query_tensor = query_tensor.data
         L = query_tensor.shape[0]
@@ -90,30 +94,32 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def batch_update(self, hs):
         # Create batch of hypothesis
         query_seq = []
-        action = []
-        prev_action = []
+        action_sequences = []
+        queries = []
         hist = []
         h_n = []
         c_n = []
         for h in hs:
             query_seq.append(h.state.query_tensor)
-            (a, p), _ = self.transform_evaluator(h.evaluator, h.state.query)
-            action.append(a.to(self.device))
-            prev_action.append(p.to(self.device))
+            action_sequence, query = \
+                self.transform_evaluator(h.evaluator, h.state.query)
+            action_sequences.append(action_sequence)
+            queries.append(query)
             hist.append(h.state.history.to(self.device))
             h_n.append(h.state.h_n.to(self.device))
             c_n.append(h.state.c_n.to(self.device))
         query_seq = \
             pad_sequence(query_seq)  # (L_q, len(hs), query_state_size)
-        action = pad_sequence(action)  # (1, len(hs), 3)
-        prev_action = pad_sequence(prev_action)  # (1, len(hs), 3)
+        action_sequences = self.collate_action_sequence(action_sequences)
+        queries = self.collate_query(queries)
         hist = torch.stack(hist, dim=1)  # (L_a, len(hs), state_size)
         h_n = torch.stack(h_n, dim=0)  # (len(hs), state_size)
         c_n = torch.stack(c_n, dim=0)  # (len(hs), state_size)
 
         with torch.no_grad():
-            ast_feature = self.ast_reader((action, prev_action))
-            feature, state = self.decoder(None, query_seq, None, ast_feature,
+            ast_feature = self.ast_reader(action_sequences)
+            feature, state = self.decoder(queries, query_seq, None,
+                                          ast_feature,
                                           (hist, h_n, c_n))
             results = self.predictor(query_seq, feature)
         # (len(hs), n_rules)

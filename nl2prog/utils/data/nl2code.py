@@ -5,31 +5,37 @@ from nl2prog.nn.utils import rnn
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
-class Collate:
+class CollateInput:
     def __init__(self, device: torch.device):
         self.device = device
 
-    def __call__(self, data: List[Tuple[PaddedSequenceWithMask,
-                                        Tuple[PaddedSequenceWithMask,
-                                              PaddedSequenceWithMask],
-                                        None,
-                                        PaddedSequenceWithMask]]):
-        inputs = []
+    def __call__(self, inputs: List[torch.Tensor]) -> PaddedSequenceWithMask:
+        inputs = rnn.pad_sequence(inputs, padding_value=-1)
+
+        return inputs.to(self.device)
+
+
+class CollateActionSequence:
+    def __init__(self, device: torch.device):
+        self.device = device
+
+    def __call__(self, action_sequence: List[Tuple[torch.Tensor,
+                                                   torch.Tensor]]) \
+            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask]:
         actions = []
         prev_actions = []
-        ground_truths = []
-        for input, action_sequence, _, ground_truth in data:
-            action, prev_action = action_sequence
-            inputs.append(input)
+        for action, prev_action in action_sequence:
             actions.append(action)
             prev_actions.append(prev_action)
-            ground_truths.append(ground_truth)
-        inputs = rnn.pad_sequence(inputs, padding_value=-1)
         actions = rnn.pad_sequence(actions, padding_value=-1)
         prev_actions = rnn.pad_sequence(prev_actions, padding_value=-1)
-        ground_truths = rnn.pad_sequence(ground_truths, padding_value=-1)
 
-        return (inputs.to(self.device),
-                (actions.to(self.device), prev_actions.to(self.device)),
-                None,
-                ground_truths.to(self.device))
+        return (actions.to(self.device), prev_actions.to(self.device))
+
+
+class CollateQuery:
+    def __init__(self, device: torch.device):
+        self.device = device
+
+    def __call__(self, queries: List[None]) -> None:
+        return None
