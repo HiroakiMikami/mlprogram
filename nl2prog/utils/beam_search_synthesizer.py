@@ -54,9 +54,6 @@ class Candidate:
 
 class BeamSearchSynthesizer:
     def __init__(self, beam_size: int,
-                 initialize: Callable[[str], Any],
-                 batch_update: Callable[[List[Hypothesis]],
-                                        List[Tuple[Any, LazyLogProbability]]],
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  max_steps: Optional[int] = None):
         """
@@ -64,13 +61,6 @@ class BeamSearchSynthesizer:
         ----------
         beam_size: int
             The number of candidates
-        initialize: Callable[[str], Any]
-            The initialize function. It returns the initial state.
-            The module to predict the probabilities of actions
-        batch_update: Callable[[List[Hypothesis]],
-                               List[Tuple[Any, LazyLogProbability]]]
-            The update function. It returns the next state and the probability
-            of each action.
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
@@ -78,11 +68,16 @@ class BeamSearchSynthesizer:
         max_steps: Optional[int]
         """
         self._beam_size = beam_size
-        self._initialize = initialize
-        self._batch_update = batch_update
         self._is_subtype = is_subtype
         self._options = options
         self._max_steps = max_steps
+
+    def initialize(self, query: List[str]) -> Any:
+        pass
+
+    def batch_update(self, hs: List[Hypothesis]) \
+            -> List[Tuple[Any, LazyLogProbability]]:
+        pass
 
     def synthesize(self, query: str):
         """
@@ -109,7 +104,7 @@ class BeamSearchSynthesizer:
         evaluator.eval(ApplyRule(
             ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                            [("root", NodeType(Root(), NodeConstraint.Node))])))
-        state = self._initialize(query)
+        state = self.initialize(query)
         hs: List[Hypothesis] = \
             [Hypothesis(0, None, 0.0, evaluator,
                         state)]
@@ -123,7 +118,7 @@ class BeamSearchSynthesizer:
                 steps += 1
 
             # Create batch of hypothesis
-            results = self._batch_update(hs)
+            results = self.batch_update(hs)
             elem_size = self._beam_size - len(candidates)
             topk = TopKElement(elem_size)
             for i, (h, (state, lazy_prob)) in enumerate(zip(hs, results)):
