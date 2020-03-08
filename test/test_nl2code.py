@@ -42,10 +42,11 @@ class TestNL2Code(unittest.TestCase):
     def evaluate(self, model, options, dataset):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
+        transform_input = TransformQuery(tokenize_query, encoder[0])
         synthesizer = BeamSearchSynthesizer(
-            5, tokenize_query, model.input_reader,
+            5, transform_input, model.input_reader,
             model.action_sequence_reader, model.decoder, model.predictor,
-            encoder[0], encoder[1], is_subtype, options=options, max_steps=20)
+            encoder[1], is_subtype, options=options, max_steps=20)
 
         def synthesize(query: str):
             return _synthesize(query, synthesizer)

@@ -1,14 +1,13 @@
 import torch
-from torchnlp.encoders import LabelEncoder
 import numpy as np
-from typing import List, Callable, Optional, Tuple
+from typing import List, Callable, Optional, Tuple, Any
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import ActionSequenceReader, Decoder, Predictor
 from nl2prog.language.action import ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
-    IsSubtype, LazyLogProbability, Query
+    IsSubtype, LazyLogProbability
 from nl2prog.nn.utils.rnn import pad_sequence, PaddedSequenceWithMask
 
 
@@ -23,12 +22,12 @@ class State:
 
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
-                 tokenizer: Callable[[str], Query],
+                 transform_input: Callable[[Any], Tuple[List[str], Any]],
                  nl_reader: Callable[[PaddedSequenceWithMask],
                                      Tuple[PaddedSequenceWithMask,
                                            Optional[torch.Tensor]]],
                  ast_reader: ActionSequenceReader, decoder: Decoder,
-                 predictor: Predictor, query_encoder: LabelEncoder,
+                 predictor: Predictor,
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype,
                  options: ActionOptions = ActionOptions(True, True),
@@ -39,14 +38,12 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         ----------
         beam_size: int
             The number of candidates
-        tokenizer: Callable[[str], Query]
         nl_reader:
             The encoder module
         ast_reader:
         decoder:
         predictor: Predictor
             The module to predict the probabilities of actions
-        query_encoder: LabelEncoder
         action_seqeunce_encoder: ActionSequenceEncoder
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
@@ -58,21 +55,17 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         super(BeamSearchSynthesizer, self).__init__(
             beam_size, is_subtype, options, max_steps)
         self.device = list(predictor.parameters())[0].device
-        self.tokenizer = tokenizer
+        self.transform_input = transform_input
         self.nl_reader = nl_reader
         self.ast_reader = ast_reader
         self.decoder = decoder
         self.predictor = predictor
-        self.query_encoder = query_encoder
         self.action_sequence_encoder = action_sequence_encoder
         self.eps = eps
         self.hidden_size = predictor.hidden_size
 
     def initialize(self, query: str):
-        query = self.tokenizer(query)
-        query_tensor = \
-            self.query_encoder.batch_encode(query.query_for_dnn)
-        query_tensor = query_tensor.to(self.device)
+        query_for_synth, query_tensor = self.transform_input(query)
         query_tensor = pad_sequence([query_tensor])
         query_tensor, _ = self.nl_reader(query_tensor)
         query_tensor = query_tensor.data
@@ -87,7 +80,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         hist_0 = torch.zeros(1, self.hidden_size,
                              device=self.device)  # (1, hidden_size)
 
-        return State(query.query_for_synth, query_tensor, hist_0, h_0, c_0)
+        return State(query_for_synth, query_tensor, hist_0, h_0, c_0)
 
     def batch_update(self, hs):
         # Create batch of hypothesis
