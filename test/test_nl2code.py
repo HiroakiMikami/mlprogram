@@ -10,15 +10,17 @@ from torch.utils.data import DataLoader
 from torchnlp.encoders import LabelEncoder
 
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils import Query, synthesize as _synthesize, evaluate
-from nl2prog.utils.nl2code import BeamSearchSynthesizer
+from nl2prog.utils \
+    import Query, synthesize as _synthesize, evaluate, \
+    CommonBeamSearchSynthesizer
 from nl2prog.language.action \
     import ast_to_action_sequence as to_seq, ActionOptions
 from nl2prog.utils.data \
     import get_samples, to_eval_dataset, get_words, \
-    Collate, CollateGroundTruth
+    Collate, CollateGroundTruth, collate_none, CollateNlFeature
 from nl2prog.utils.data.nl2code \
-    import CollateInput, CollateActionSequence, CollateQuery
+    import CollateInput, CollateActionSequence, \
+    CollateState, split_states
 from nl2prog.utils.transform \
     import TransformDataset, TransformCode, TransformGroundTruth
 from nl2prog.utils.transform.nl2code import TransformQuery, TransformEvaluator
@@ -47,11 +49,13 @@ class TestNL2Code(unittest.TestCase):
         encoder, model = model
         transform_input = TransformQuery(tokenize_query, encoder[0])
         transform_evaluator = TransformEvaluator(encoder[1], train=False)
-        synthesizer = BeamSearchSynthesizer(
+        synthesizer = CommonBeamSearchSynthesizer(
             5, transform_input, transform_evaluator,
             CollateInput(torch.device("cpu")),
             CollateActionSequence(torch.device("cpu")),
-            CollateQuery(torch.device("cpu")),
+            collate_none, CollateState(torch.device("cpu")),
+            CollateNlFeature(torch.device("cpu")),
+            collate_none, split_states,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, encoder[1], is_subtype,
             options=options, max_steps=20)
@@ -91,7 +95,7 @@ class TestNL2Code(unittest.TestCase):
                                 collate_fn=Collate(
                                     CollateInput(torch.device("cpu")),
                                     CollateActionSequence(torch.device("cpu")),
-                                    CollateQuery(torch.device("cpu")),
+                                    collate_none,
                                     CollateGroundTruth(torch.device("cpu"))))
             avg_acc = 0
             for input, action_sequence, query, ground_truth in loader:

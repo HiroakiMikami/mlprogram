@@ -1,4 +1,5 @@
 import torch
+import itertools
 from typing import Callable, List, Any, Optional, Tuple
 from nl2prog.language.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
@@ -108,3 +109,27 @@ class Collate:
         ground_truths = self.collate_ground_truth([elem[3] for elem in data])
 
         return inputs, action_sequences, queries, ground_truths
+
+
+class CollateNlFeature:
+    def __init__(self, device: torch.device):
+        self.device = device
+
+    def __call__(self, data: List[PaddedSequenceWithMask]) \
+            -> PaddedSequenceWithMask:
+        nl_features = []
+        for nl_feature in data:
+            nl_feature = nl_feature.data
+            L = nl_feature.shape[0]
+            nl_feature = nl_feature.view(L, -1)
+            nl_features.append(nl_feature)
+
+        return rnn.pad_sequence(nl_features).to(self.device)
+
+
+def collate_none(data: List[Any]) -> None:
+    return None
+
+
+def split_none(state: Tuple[Any]):
+    return itertools.repeat(None)

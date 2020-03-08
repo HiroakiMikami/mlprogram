@@ -2,42 +2,45 @@ import torch
 import numpy as np
 from typing import List, Callable, Optional, Tuple, Any
 from dataclasses import dataclass
-from nl2prog.nn.treegen \
-    import ActionSequenceReader, Decoder, Predictor, NLReader
 from nl2prog.language.action import ActionOptions
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
-from nl2prog.nn.utils.rnn import pad_sequence
+from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
 @dataclass
 class State:
     query: List[str]
-    nl_feature: torch.FloatTensor
+    nl_feature: Any
+    other_feature: Any
+    state: Optional[Any]
 
 
-class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
+class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
-                 transform_input: Callable[[Any],
-                                           Tuple[List[str], Tuple[torch.Tensor,
-                                                                  torch.Tensor]
-                                                 ]],
-                 transfrom_evaluator: Callable[[Evaluator, List[str]],
-                                               Optional[
-                                                   Tuple[Tuple[torch.Tensor,
-                                                               torch.Tensor,
-                                                               torch.Tensor,
-                                                               torch.Tensor],
-                                                         torch.Tensor]]],
-                 collate_input, collate_action_sequence, collate_query,
-                 nl_reader: NLReader, ast_reader: ActionSequenceReader,
-                 decoder: Decoder, predictor: Predictor,
+                 transform_input: Callable[[Any], Tuple[List[str], Any]],
+                 transform_evaluator: Callable[[Evaluator, List[str]],
+                                               Optional[Any]],
+                 collate_input: Callable[[List[Any]], Any],
+                 collate_action_sequence: Callable[[List[Any]], Any],
+                 collate_query: Callable[[List[Any]], Any],
+                 collate_state: Callable[[List[Any]], Any],
+                 collate_nl_feature: Callable[[List[Any]], Any],
+                 collate_other_feature: Callable[[List[Any]], Any],
+                 split_states: Callable[[Any], List[Any]],
+                 nl_reader: Callable[[Any], Tuple[Any, Any]],
+                 ast_reader: Callable[[Any], Any],
+                 decoder: Callable[[Any, Any, Any, Optional[Any]],
+                                   Tuple[Any, Optional[Any]]],
+                 predictor: Callable[[Any], Tuple[PaddedSequenceWithMask,
+                                                  PaddedSequenceWithMask,
+                                                  PaddedSequenceWithMask]],
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype,
-                 options: ActionOptions = ActionOptions(False, False),
+                 options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
                  max_steps: Optional[int] = None):
         """
@@ -47,11 +50,11 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             The number of candidates
         nl_reader:
             The encoder module
-        ast_reader: ASTReader
-        decoder: Decoder
+        ast_reader:
+        decoder:
         predictor: Predictor
             The module to predict the probabilities of actions
-        action_sequence_encoder: ActionSequenceEncoder
+        action_seqeunce_encoder: ActionSequenceEncoder
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
@@ -59,14 +62,17 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         eps: float
         max_steps: Optional[int]
         """
-        super(BeamSearchSynthesizer, self).__init__(
+        super(CommonBeamSearchSynthesizer, self).__init__(
             beam_size, is_subtype, options, max_steps)
-        self.device = list(predictor.parameters())[0].device
         self.transform_input = transform_input
-        self.transform_evaluator = transfrom_evaluator
+        self.transform_evaluator = transform_evaluator
         self.collate_input = collate_input
         self.collate_action_sequence = collate_action_sequence
         self.collate_query = collate_query
+        self.collate_state = collate_state
+        self.collate_nl_feature = collate_nl_feature
+        self.collate_other_feature = collate_other_feature
+        self.split_states = split_states
         self.nl_reader = nl_reader
         self.ast_reader = ast_reader
         self.decoder = decoder
@@ -75,45 +81,54 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.eps = eps
 
     def initialize(self, query: str):
-        query_for_synth, inputs = self.transform_input(query)
-        inputs = self.collate_input([inputs])
-        nl_feature, _ = self.nl_reader(inputs)
+        query_for_synth, query = self.transform_input(query)
+        input = self.collate_input([query])
+        nl_feature, other_feature = self.nl_reader(input)
         nl_feature = nl_feature.data
         L = nl_feature.shape[0]
         nl_feature = nl_feature.view(L, -1)
 
-        # Create initial hypothesis
-        return State(query_for_synth, nl_feature)
+        return State(query_for_synth, nl_feature, other_feature, None)
 
     def batch_update(self, hs):
         # Create batch of hypothesis
-        query_seq = []
+        nl_features = []
+        other_features = []
         action_sequences = []
         queries = []
+        states = []
         for h in hs:
-            query_seq.append(h.state.nl_feature)
+            nl_features.append(h.state.nl_feature)
+            other_features.append(h.state.other_feature)
             action_sequence, query = \
                 self.transform_evaluator(h.evaluator, h.state.query)
             action_sequences.append(action_sequence)
             queries.append(query)
-        query_seq = pad_sequence(query_seq, padding_value=-1).to(self.device)
+            states.append(h.state.state)
+        nl_features = self.collate_nl_feature(nl_features)
+        other_features = self.collate_other_feature(other_features)
         action_sequences = self.collate_action_sequence(action_sequences)
         queries = self.collate_query(queries)
+        states = self.collate_state(states)
 
         with torch.no_grad():
             ast_feature = self.ast_reader(action_sequences)
-            feature, _ = \
-                self.decoder(queries, query_seq, None, ast_feature, None)
-            results = self.predictor(query_seq, feature)
+            feature, state = self.decoder(queries, nl_features, other_features,
+                                          ast_feature, states)
+            results = self.predictor(nl_features, feature)
         # (len(hs), n_rules)
         rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)
         # (len(hs), n_tokens)
         token_pred = results[1].data[-1, :, :].cpu().reshape(len(hs), -1)
         # (len(hs), query_length)
         copy_pred = results[2].data[-1, :, :].cpu().reshape(len(hs), -1)
+        states = self.split_states(state)
 
         retval = []
-        for i, h in enumerate(hs):
+        for i, (h, s) in enumerate(zip(hs, states)):
+            state = State(h.state.query, h.state.nl_feature,
+                          h.state.other_feature, s)
+
             class Functions:
                 def __init__(self, i, action_sequence_encoder, eps):
                     self.i = i
@@ -165,5 +180,5 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             funcs = Functions(i, self.action_sequence_encoder, self.eps)
             prob = LazyLogProbability(funcs.get_rule_prob,
                                       funcs.get_token_prob)
-            retval.append((h.state, prob))
+            retval.append((state, prob))
         return retval

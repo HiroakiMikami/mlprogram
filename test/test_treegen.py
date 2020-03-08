@@ -11,13 +11,14 @@ from torchnlp.encoders import LabelEncoder
 import fairseq.optim as optim
 
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils import Query, synthesize as _synthesize, evaluate
-from nl2prog.utils.treegen import BeamSearchSynthesizer
+from nl2prog.utils \
+    import Query, synthesize as _synthesize, evaluate, \
+    CommonBeamSearchSynthesizer
 from nl2prog.language.action \
     import ast_to_action_sequence as to_seq, ActionOptions
 from nl2prog.utils.data \
     import get_samples, to_eval_dataset, get_words, get_characters, \
-    Collate, CollateGroundTruth
+    Collate, CollateGroundTruth, collate_none, split_none, CollateNlFeature
 from nl2prog.utils.data.treegen \
     import CollateQuery, CollateActionSequence, CollateInput
 from nl2prog.utils.transform \
@@ -49,11 +50,13 @@ class TestTreeGen(unittest.TestCase):
         transform_input = TransformQuery(tokenize_query, encoder[0],
                                          encoder[1], 32)
         transform_evaluator = TransformEvaluator(encoder[2], 2, train=False)
-        synthesizer = BeamSearchSynthesizer(
+        synthesizer = CommonBeamSearchSynthesizer(
             5, transform_input, transform_evaluator,
             CollateInput(torch.device("cpu")),
             CollateActionSequence(torch.device("cpu")),
-            CollateQuery(torch.device("cpu")),
+            CollateQuery(torch.device("cpu")), collate_none,
+            CollateNlFeature(torch.device("cpu")),
+            collate_none, split_none,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, encoder[2], is_subtype,
             options=options, max_steps=20)
