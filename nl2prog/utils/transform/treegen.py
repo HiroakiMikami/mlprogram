@@ -43,28 +43,33 @@ class TransformQuery:
 class TransformEvaluator:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 max_arity: int):
+                 max_arity: int, train: bool = True):
         self.action_sequence_encoder = action_sequence_encoder
         self.max_arity = max_arity
+        self.train = train
 
     def __call__(self, evaluator: Evaluator, query_for_synth: List[str]) \
             -> Optional[Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor,
                                     torch.Tensor], torch.Tensor]]:
         a = self.action_sequence_encoder.encode_action(evaluator,
                                                        query_for_synth)
-        if a is None:
-            return None
-        if np.any(a[-1, :].numpy() != -1):
-            return None
-        prev_action = a[:-2, 1:]
-
         rule_prev_action = \
             self.action_sequence_encoder.encode_each_action(
                 evaluator, query_for_synth, self.max_arity)
-        rule_prev_action = rule_prev_action[:-1]
-
         depth, matrix = self.action_sequence_encoder.encode_tree(evaluator)
-        depth = depth[:-1]
-        matrix = matrix[:-1, :-1]
+        if a is None:
+            return None
+        if self.train:
+            if np.any(a[-1, :].numpy() != -1):
+                return None
+            prev_action = a[:-2, 1:]
+            rule_prev_action = rule_prev_action[:-1]
+            depth = depth[:-1]
+            matrix = matrix[:-1, :-1]
+        else:
+            prev_action = a[:-1, 1:]
+            rule_prev_action = \
+                self.action_sequence_encoder.encode_each_action(
+                    evaluator, query_for_synth, self.max_arity)
 
         return (prev_action, rule_prev_action, depth, matrix), prev_action

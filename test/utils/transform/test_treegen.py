@@ -118,6 +118,75 @@ class TestTransformEvaluator(unittest.TestCase):
             query.numpy()
         ))
 
+    def test_eval(self):
+        entries = [Entry("ab test", "y = x + 1")]
+        dataset = ListDataset([entries])
+        d = get_samples(dataset, tokenize, to_action_sequence)
+        aencoder = ActionSequenceEncoder(d, 0)
+        evaluator = \
+            TransformCode(to_action_sequence,
+                          ActionOptions(False, False))("y = x + 1")
+        transform = TransformEvaluator(aencoder, 2, train=False)
+        (prev_action, prev_rule_action, depth, matrix), query = \
+            transform(evaluator, ["ab", "test"])
+        self.assertTrue(np.array_equal(
+            [
+                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
+                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
+                [6, -1, -1], [-1, 5, -1]
+            ],
+            prev_action.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [
+                # Root -> Root
+                [[1, -1, -1], [1, -1, -1], [-1, -1, -1]],
+                # Assign -> Name, expr
+                [[2, -1, -1], [3, -1, -1], [4, -1, -1]],
+                # Name -> str
+                [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
+                # str -> "x"
+                [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
+                # Op -> str, expr, expr
+                [[6, -1, -1], [5, -1, -1], [4, -1, -1]],
+                # str -> "+"
+                [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
+                # Name -> str
+                [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
+                # str -> "y"
+                [[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]],
+                # Number -> number
+                [[7, -1, -1], [8, -1, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 5, -1], [-1, -1, -1]],
+            ],
+            prev_rule_action.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [[0], [1], [2], [3], [2], [3], [3], [4], [3], [4]],
+            depth.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+             [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 1, 1, 0, 1, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+            matrix.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [
+                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
+                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
+                [6, -1, -1], [-1, 5, -1]
+            ],
+            query.numpy()
+        ))
+
     def test_impossible_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
         dataset = ListDataset([entries])

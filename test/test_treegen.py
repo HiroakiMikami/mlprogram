@@ -44,10 +44,13 @@ class TestTreeGen(unittest.TestCase):
     def evaluate(self, model, options, dataset):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
+        transform_input = TransformQuery(tokenize_query, encoder[0],
+                                         encoder[1], 32)
+        transform_evaluator = TransformEvaluator(encoder[2], 2, train=False)
         synthesizer = BeamSearchSynthesizer(
-            5, tokenize_query, model.input_reader,
+            5, transform_input, transform_evaluator, model.input_reader,
             model.action_sequence_reader, model.decoder, model.predictor,
-            encoder[0], encoder[1], encoder[2], 32, 2, is_subtype,
+            encoder[2], is_subtype,
             options=options, max_steps=20)
 
         def synthesize(query: str):

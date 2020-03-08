@@ -1,15 +1,15 @@
 import torch
-from torchnlp.encoders import LabelEncoder
 import numpy as np
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Tuple, Any
 from dataclasses import dataclass
 from nl2prog.nn.treegen \
     import ActionSequenceReader, Decoder, Predictor, NLReader
 from nl2prog.language.action import ActionOptions
+from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
-    IsSubtype, LazyLogProbability, Query
+    IsSubtype, LazyLogProbability
 from nl2prog.nn.utils.rnn import pad_sequence
 
 
@@ -21,13 +21,20 @@ class State:
 
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
-                 tokenizer: Callable[[str], Query],
+                 transform_input: Callable[[Any],
+                                           Tuple[List[str], Tuple[torch.Tensor,
+                                                                  torch.Tensor]
+                                                 ]],
+                 transfrom_evaluator: Callable[[Evaluator, List[str]],
+                                               Optional[
+                                                   Tuple[Tuple[torch.Tensor,
+                                                               torch.Tensor,
+                                                               torch.Tensor,
+                                                               torch.Tensor],
+                                                         torch.Tensor]]],
                  nl_reader: NLReader, ast_reader: ActionSequenceReader,
-                 decoder: Decoder,
-                 predictor: Predictor, word_encoder: LabelEncoder,
-                 char_encoder: LabelEncoder,
+                 decoder: Decoder, predictor: Predictor,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 max_word_num: int, max_arity: int,
                  is_subtype: IsSubtype,
                  options: ActionOptions = ActionOptions(False, False),
                  eps: float = 1e-8,
@@ -37,18 +44,13 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         ----------
         beam_size: int
             The number of candidates
-        tokenizer: Callable[[str], Query]
         nl_reader:
             The encoder module
         ast_reader: ASTReader
         decoder: Decoder
         predictor: Predictor
             The module to predict the probabilities of actions
-        word_encoder: LabelEncoder
-        char_encoder: LabelEncoder
         action_sequence_encoder: ActionSequenceEncoder
-        max_word_num: int
-        max_arity: int
         is_subtype: IsSubType
             The function to check the type relations between 2 node types.
             This returns true if the argument 0 is subtype of the argument 1.
@@ -59,31 +61,18 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         super(BeamSearchSynthesizer, self).__init__(
             beam_size, is_subtype, options, max_steps)
         self.device = list(predictor.parameters())[0].device
-        self.tokenizer = tokenizer
+        self.transform_input = transform_input
+        self.transform_evaluator = transfrom_evaluator
         self.nl_reader = nl_reader
         self.ast_reader = ast_reader
         self.decoder = decoder
         self.predictor = predictor
-        self.word_encoder = word_encoder
-        self.char_encoder = char_encoder
         self.action_sequence_encoder = action_sequence_encoder
-        self.max_word_num = max_word_num
-        self.max_arity = max_arity
         self.eps = eps
 
     def initialize(self, query: str):
-        query = self.tokenizer(query)
-        word_query = \
-            self.word_encoder.batch_encode(query.query_for_dnn)
-        word_query = word_query.to(self.device)
+        query_for_synth, (word_query, char_query) = self.transform_input(query)
         word_query = pad_sequence([word_query])
-        char_query = torch.ones(len(query.query_for_dnn),
-                                self.max_word_num).to(self.device).long() * -1
-        for i, word in enumerate(query.query_for_dnn):
-            chars = self.char_encoder.batch_encode(word)
-            length = min(self.max_word_num, len(chars))
-            char_query[i, :length] = \
-                self.char_encoder.batch_encode(word)[:length]
         char_query = pad_sequence([char_query])
         nl_feature, _ = self.nl_reader((word_query, char_query))
         nl_feature = nl_feature.data
@@ -91,7 +80,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         nl_feature = nl_feature.view(L, -1)
 
         # Create initial hypothesis
-        return State(query.query_for_synth, nl_feature)
+        return State(query_for_synth, nl_feature)
 
     def batch_update(self, hs):
         # Create batch of hypothesis
@@ -100,17 +89,16 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         rule_action_seq = []
         depth = []
         matrix = []
+        queries = []
         for h in hs:
             query_seq.append(h.state.nl_feature)
-            a = self.action_sequence_encoder.encode_action(
-                h.evaluator, h.state.query)
-            action_seq.append(a[:-1, 1:])
-            rule_action_seq.append(
-                self.action_sequence_encoder.encode_each_action(
-                    h.evaluator, h.state.query, self.max_arity))
-            d, m = self.action_sequence_encoder.encode_tree(h.evaluator)
+            (prev_action, rule_prev_action, d, m), query = \
+                self.transform_evaluator(h.evaluator, h.state.query)
+            action_seq.append(prev_action)
+            rule_action_seq.append(rule_prev_action)
             depth.append(d)
             matrix.append(m)
+            queries.append(query)
         query_seq = pad_sequence(query_seq, padding_value=-1)
         query_seq.data = query_seq.data.to(self.device)
         query_seq.mask = query_seq.mask.to(self.device)
@@ -124,6 +112,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         depth = depth.to(self.device)
         matrix = torch.stack(matrix)
         matrix = matrix.to(self.device)
+        queries = pad_sequence(queries, padding_value=-1).to(self.device)
 
         with torch.no_grad():
             ast_feature = self.ast_reader((action, rule_action, depth, matrix))
