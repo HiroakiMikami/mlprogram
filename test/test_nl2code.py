@@ -17,8 +17,8 @@ from nl2prog.language.action \
 from nl2prog.utils.data import get_samples, to_eval_dataset, get_words
 from nl2prog.utils.data.nl2code import Collate
 from nl2prog.utils.transform \
-    import TransformDataset, TransformGroundTruth
-from nl2prog.utils.transform.nl2code import TransformQuery, TransformCode
+    import TransformDataset, TransformCode, TransformGroundTruth
+from nl2prog.utils.transform.nl2code import TransformQuery, TransformEvaluator
 from nl2prog.nn import Loss, Accuracy as Acc
 from nl2prog.nn.nl2code import TrainModel
 from nl2prog.metrics import Accuracy
@@ -43,8 +43,9 @@ class TestNL2Code(unittest.TestCase):
         test_dataset = to_eval_dataset(dataset)
         encoder, model = model
         transform_input = TransformQuery(tokenize_query, encoder[0])
+        transform_evaluator = TransformEvaluator(encoder[1], train=False)
         synthesizer = BeamSearchSynthesizer(
-            5, transform_input, model.input_reader,
+            5, transform_input, transform_evaluator, model.input_reader,
             model.action_sequence_reader, model.decoder, model.predictor,
             encoder[1], is_subtype, options=options, max_steps=20)
 
@@ -67,9 +68,10 @@ class TestNL2Code(unittest.TestCase):
         aencoder = ActionSequenceEncoder(samples, 2, options=options)
 
         tquery = TransformQuery(tokenize_query, qencoder)
-        tcode = TransformCode(to_action_sequence, aencoder, options)
-        tgt = TransformGroundTruth(to_action_sequence, aencoder, options)
-        transform = TransformDataset(tquery, tcode, tgt)
+        tcode = TransformCode(to_action_sequence, options)
+        teval = TransformEvaluator(aencoder)
+        tgt = TransformGroundTruth(aencoder)
+        transform = TransformDataset(tquery, tcode, teval, tgt)
 
         train_dataset = transform(dataset)
         model = TrainModel(qencoder, aencoder, 256, 64, 256, 64, 0.0)

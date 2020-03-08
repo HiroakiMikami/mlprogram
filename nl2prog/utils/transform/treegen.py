@@ -3,7 +3,6 @@ import numpy as np
 from typing import Callable, List, Any, Optional, Tuple, Union
 from torchnlp.encoders import LabelEncoder
 
-from nl2prog.language.action import ActionSequence, ActionOptions
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils import Query
@@ -41,27 +40,16 @@ class TransformQuery:
         return query.query_for_synth, (word_query, char_query)
 
 
-class TransformCode:
+class TransformEvaluator:
     def __init__(self,
-                 to_action_sequence: Callable[[Any],
-                                              Optional[ActionSequence]],
                  action_sequence_encoder: ActionSequenceEncoder,
-                 max_arity: int,
-                 options: ActionOptions = ActionOptions(True, True)):
-        self.to_action_sequence = to_action_sequence
+                 max_arity: int):
         self.action_sequence_encoder = action_sequence_encoder
         self.max_arity = max_arity
-        self.options = options
 
-    def __call__(self, code: Any, query_for_synth: List[str]) \
+    def __call__(self, evaluator: Evaluator, query_for_synth: List[str]) \
             -> Optional[Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor,
                                     torch.Tensor], torch.Tensor]]:
-        action_sequence = self.to_action_sequence(code)
-        if action_sequence is None:
-            return None
-        evaluator = Evaluator(options=self.options)
-        for action in action_sequence:
-            evaluator.eval(action)
         a = self.action_sequence_encoder.encode_action(evaluator,
                                                        query_for_synth)
         if a is None:

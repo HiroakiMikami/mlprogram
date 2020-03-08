@@ -4,6 +4,7 @@ from typing import List, Callable, Optional, Tuple, Any
 from dataclasses import dataclass
 from nl2prog.nn.nl2code import ActionSequenceReader, Decoder, Predictor
 from nl2prog.language.action import ActionOptions
+from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
@@ -23,6 +24,9 @@ class State:
 class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  transform_input: Callable[[Any], Tuple[List[str], Any]],
+                 transform_evaluator: Callable[[Evaluator, List[str]],
+                                               Optional[Tuple[torch.Tensor,
+                                                              torch.Tensor]]],
                  nl_reader: Callable[[PaddedSequenceWithMask],
                                      Tuple[PaddedSequenceWithMask,
                                            Optional[torch.Tensor]]],
@@ -56,6 +60,7 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             beam_size, is_subtype, options, max_steps)
         self.device = list(predictor.parameters())[0].device
         self.transform_input = transform_input
+        self.transform_evaluator = transform_evaluator
         self.nl_reader = nl_reader
         self.ast_reader = ast_reader
         self.decoder = decoder
@@ -92,22 +97,9 @@ class BeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         c_n = []
         for h in hs:
             query_seq.append(h.state.query_tensor)
-            # (L_a + 1, 4)
-            a = self.action_sequence_encoder.encode_action(
-                h.evaluator, h.state.query)
-            # (L_a + 1, 3)
-            p = self.action_sequence_encoder.encode_parent(h.evaluator)
-            # (1, 3)
-            action.append(
-                torch.cat([a[-1, 0].view(1, -1),
-                           p[-1, 1:3].view(1, -1)], dim=1).to(self.device)
-            )
-            if a.shape[0] == 1:
-                prev_action.append(
-                    a[-1, 1:].to(self.device).view(1, -1))  # (1, 3)
-            else:
-                prev_action.append(
-                    a[-2, 1:].to(self.device).view(1, -1))  # (1, 3)
+            (a, p), _ = self.transform_evaluator(h.evaluator, h.state.query)
+            action.append(a.to(self.device))
+            prev_action.append(p.to(self.device))
             hist.append(h.state.history.to(self.device))
             h_n.append(h.state.h_n.to(self.device))
             c_n.append(h.state.c_n.to(self.device))

@@ -8,7 +8,7 @@ from nl2prog.encoders import ActionSequenceEncoder, Samples
 from nl2prog.nn.nl2code import TrainModel
 from nl2prog.utils import Query
 from nl2prog.utils.nl2code import BeamSearchSynthesizer
-from nl2prog.utils.transform.nl2code import TransformQuery
+from nl2prog.utils.transform.nl2code import TransformQuery, TransformEvaluator
 
 
 def mock_tokenizer(query):
@@ -34,9 +34,11 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             ["xyz"]
         ), 0)
         transform_input = TransformQuery(mock_tokenizer, qencoder)
+        transform_evaluator = TransformEvaluator(aencoder)
         train_model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         synthesizer = BeamSearchSynthesizer(
-            2, transform_input, train_model.input_reader,
+            2, transform_input, transform_evaluator,
+            train_model.input_reader,
             train_model.action_sequence_reader, train_model.decoder,
             train_model.predictor, aencoder, 3, 2, is_subtype,
             max_steps=2)
@@ -51,9 +53,11 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             ["xyz"]
         ), 0)
         transform_input = TransformQuery(mock_tokenizer, qencoder)
+        transform_evaluator = TransformEvaluator(aencoder)
         train_model = TrainModel(qencoder, aencoder, 1, 2, 6, 5, 0.0)
         synthesizer = BeamSearchSynthesizer(
-            2, transform_input, train_model.input_reader,
+            2, transform_input, transform_evaluator,
+            train_model.input_reader,
             train_model.action_sequence_reader, train_model.decoder,
             train_model.predictor, aencoder, 3, 2, is_subtype,
             max_steps=2)

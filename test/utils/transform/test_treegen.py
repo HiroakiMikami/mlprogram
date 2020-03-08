@@ -6,7 +6,8 @@ from nl2prog.utils.data import Entry, ListDataset, get_samples
 from nl2prog.language.ast import Node, Field, Leaf
 from nl2prog.language.action import ast_to_action_sequence, ActionOptions
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils.transform.treegen import TransformQuery, TransformCode
+from nl2prog.utils.transform import TransformCode
+from nl2prog.utils.transform.treegen import TransformQuery, TransformEvaluator
 
 
 def tokenize(query: str):
@@ -49,16 +50,18 @@ class TestTransformQuery(unittest.TestCase):
                                        char_query.numpy()))
 
 
-class TestToTrainDataset(unittest.TestCase):
+class TestTransformEvaluator(unittest.TestCase):
     def test_simple_case(self):
         entries = [Entry("ab test", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformCode(to_action_sequence, aencoder, 2,
-                                  ActionOptions(False, False))
+        evaluator = \
+            TransformCode(to_action_sequence,
+                          ActionOptions(False, False))("y = x + 1")
+        transform = TransformEvaluator(aencoder, 2)
         (prev_action, prev_rule_action, depth, matrix), query = \
-            transform("y = x + 1", ["ab", "test"])
+            transform(evaluator, ["ab", "test"])
         self.assertTrue(np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
@@ -121,9 +124,11 @@ class TestToTrainDataset(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformCode(to_action_sequence, aencoder, 3,
-                                  ActionOptions(False, False))
-        result = transform("y = x + 1", ["ab", "test"])
+        evaluator = \
+            TransformCode(to_action_sequence,
+                          ActionOptions(False, False))("y = x + 1")
+        transform = TransformEvaluator(aencoder, 3)
+        result = transform(evaluator, ["ab", "test"])
         self.assertEqual(None, result)
 
 

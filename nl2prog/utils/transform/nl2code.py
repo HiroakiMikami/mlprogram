@@ -2,7 +2,6 @@ import torch
 import numpy as np
 from torchnlp.encoders import LabelEncoder
 from typing import Callable, List, Any, Optional, Tuple, Union
-from nl2prog.language.action import ActionSequence, ActionOptions
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils import Query
@@ -29,33 +28,30 @@ class TransformQuery:
             self.word_encoder.batch_encode(query.query_for_dnn)
 
 
-class TransformCode:
+class TransformEvaluator:
     def __init__(self,
-                 to_action_sequence: Callable[[Any],
-                                              Optional[ActionSequence]],
                  action_sequence_encoder: ActionSequenceEncoder,
-                 options: ActionOptions = ActionOptions(True, True)):
-        self.to_action_sequence = to_action_sequence
+                 train: bool = True):
         self.action_sequence_encoder = action_sequence_encoder
-        self.options = options
+        self.train = train
 
-    def __call__(self, code: Any, query_for_synth: List[str]) \
+    def __call__(self, evaluator: Evaluator, query_for_synth: List[str]) \
             -> Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], None]]:
-        action_sequence = self.to_action_sequence(code)
-        if action_sequence is None:
-            return None
-        evaluator = Evaluator(options=self.options)
-        for action in action_sequence:
-            evaluator.eval(action)
         a = self.action_sequence_encoder.encode_action(evaluator,
                                                        query_for_synth)
         p = self.action_sequence_encoder.encode_parent(evaluator)
         if a is None:
             return None
-        if np.any(a[-1, :].numpy() != -1):
-            return None
-        action_tensor = torch.cat(
-            [a[1:-1, 0].view(-1, 1), p[1:-1, 1:3].view(-1, 2)],
-            dim=1)
-        prev_action = a[:-2, 1:]
+        if self.train:
+            if np.any(a[-1, :].numpy() != -1):
+                return None
+            action_tensor = torch.cat(
+                [a[1:-1, 0].view(-1, 1), p[1:-1, 1:3].view(-1, 2)],
+                dim=1)
+            prev_action = a[:-2, 1:]
+        else:
+            action_tensor = torch.cat(
+                [a[-1, 0].view(1, -1), p[-1, 1:3].view(1, -1)], dim=1)
+            prev_action = a[-2, 1:].view(1, -1)
+
         return (action_tensor, prev_action), None

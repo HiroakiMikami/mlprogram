@@ -6,7 +6,8 @@ from nl2prog.utils.data import Entry, ListDataset, get_samples
 from nl2prog.language.ast import Node, Leaf, Field
 from nl2prog.language.action import ast_to_action_sequence
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils.transform.nl2code import TransformQuery, TransformCode
+from nl2prog.utils.transform import TransformCode
+from nl2prog.utils.transform.nl2code import TransformQuery, TransformEvaluator
 
 
 def tokenize(query: str):
@@ -54,14 +55,15 @@ class TestTransformQuery(unittest.TestCase):
         self.assertEqual([1, 2], query_tensor.numpy().tolist())
 
 
-class TestToTrainDataset(unittest.TestCase):
+class TestTransformEvaluator(unittest.TestCase):
     def test_simple_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformCode(to_action_sequence, aencoder)
-        (action_tensor, prev_action_tensor), query = transform("y = x + 1",
+        transform = TransformEvaluator(aencoder)
+        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        (action_tensor, prev_action_tensor), query = transform(evaluator,
                                                                ["foo", "bar"])
         self.assertTrue(np.array_equal(
             [
@@ -82,14 +84,35 @@ class TestToTrainDataset(unittest.TestCase):
         ))
         self.assertEqual(None, query)
 
+    def test_eval(self):
+        entries = [Entry("foo bar", "y = x + 1")]
+        dataset = ListDataset([entries])
+        d = get_samples(dataset, tokenize, to_action_sequence)
+        aencoder = ActionSequenceEncoder(d, 0)
+        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        transform = TransformEvaluator(aencoder, train=False)
+        (action_tensor, prev_action_tensor), query = transform(evaluator,
+                                                               ["foo", "bar"])
+
+        self.assertTrue(np.array_equal(
+            [[-1, -1, -1]],
+            action_tensor.numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [[-1, 1, -1]],
+            prev_action_tensor.numpy()
+        ))
+        self.assertEqual(None, query)
+
     def test_impossible_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformCode(to_action_sequence, aencoder)
-        result = transform("y = x + 1", ["foo", "bar"])
+        transform = TransformEvaluator(aencoder)
+        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        result = transform(evaluator, ["foo", "bar"])
         self.assertEqual(None, result)
 
 

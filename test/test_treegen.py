@@ -19,8 +19,8 @@ from nl2prog.utils.data \
     import get_samples, to_eval_dataset, get_words, get_characters
 from nl2prog.utils.data.treegen import Collate
 from nl2prog.utils.transform \
-    import TransformDataset, TransformGroundTruth
-from nl2prog.utils.transform.treegen import TransformQuery, TransformCode
+    import TransformDataset, TransformGroundTruth, TransformCode
+from nl2prog.utils.transform.treegen import TransformQuery, TransformEvaluator
 from nl2prog.nn import Loss, Accuracy as Acc
 from nl2prog.nn.treegen import TrainModel
 from nl2prog.metrics import Accuracy
@@ -71,9 +71,10 @@ class TestTreeGen(unittest.TestCase):
         aencoder = ActionSequenceEncoder(samples, 2, options=options)
 
         tquery = TransformQuery(tokenize_query, qencoder, cencoder, 32)
-        tcode = TransformCode(to_action_sequence, aencoder, 2, options)
-        tgt = TransformGroundTruth(to_action_sequence, aencoder, options)
-        transform = TransformDataset(tquery, tcode, tgt)
+        tcode = TransformCode(to_action_sequence, options)
+        teval = TransformEvaluator(aencoder, 2)
+        tgt = TransformGroundTruth(aencoder)
+        transform = TransformDataset(tquery, tcode, teval, tgt)
         train_dataset = transform(dataset)
 
         model = TrainModel(qencoder, cencoder, aencoder, 32, 2, 1, 6, 5, 5,

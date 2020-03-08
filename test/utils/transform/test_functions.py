@@ -7,7 +7,7 @@ from nl2prog.language.ast import Node, Leaf, Field
 from nl2prog.language.action import ast_to_action_sequence
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils.transform \
-    import TransformGroundTruth, TransformDataset
+    import TransformCode, TransformGroundTruth, TransformDataset
 
 
 def tokenize(query: str):
@@ -35,14 +35,22 @@ def to_action_sequence(code: str):
     return ast_to_action_sequence(ast, tokenizer=tokenize)
 
 
+class TestTransformCode(unittest.TestCase):
+    def test_simple_case(self):
+        transform = TransformCode(to_action_sequence)
+        evaluator = transform("y = x + 1")
+        self.assertEqual(None, evaluator.head)
+
+
 class TestTransformGroundTruth(unittest.TestCase):
     def test_simple_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformGroundTruth(to_action_sequence, aencoder)
-        ground_truth = transform("y = x + 1", ["foo", "bar"])
+        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        transform = TransformGroundTruth(aencoder)
+        ground_truth = transform(evaluator, ["foo", "bar"])
         self.assertTrue(np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 2, -1], [-1, 1, -1],
@@ -59,21 +67,23 @@ class TestTransformGroundTruth(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformGroundTruth(to_action_sequence, aencoder)
-        ground_truth = transform("y = x + 1", ["foo", "bar"])
+        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        transform = TransformGroundTruth(aencoder)
+        ground_truth = transform(evaluator, ["foo", "bar"])
         self.assertEqual(None, ground_truth)
 
 
 class TestTransformDataset(unittest.TestCase):
     def test_happy_path(self):
         dataset = ListDataset([[Entry("foo bar", "y = x + 1")]])
-        transform = TransformDataset(lambda x: ([x], 0), lambda x, y: (x, y),
+        transform = TransformDataset(lambda x: ([x], 0), lambda x: "evaluator",
+                                     lambda x, y: (x, y),
                                      lambda x, y: y)
         dataset = transform(dataset)
         self.assertEqual(1, len(dataset))
         input, action_seq, query, ground_truth = dataset[0]
         self.assertEqual(0, input)
-        self.assertEqual("y = x + 1", action_seq)
+        self.assertEqual("evaluator", action_seq)
         self.assertEqual(["foo bar"], query)
         self.assertEqual(["foo bar"], ground_truth)
 
