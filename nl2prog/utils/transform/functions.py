@@ -3,7 +3,7 @@ import numpy as np
 
 from nl2prog.utils.data import ListDataset
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.language.action import ActionOptions, ActionSequence
+from nl2prog.language.action import ActionSequence
 from nl2prog.language.evaluator import Evaluator
 from typing import List, Callable, Tuple, Any, Optional
 
@@ -11,17 +11,15 @@ from typing import List, Callable, Tuple, Any, Optional
 class TransformCode:
     def __init__(self,
                  to_action_sequence: Callable[[Any],
-                                              Optional[ActionSequence]],
-                 options: ActionOptions = ActionOptions(True, True)):
+                                              Optional[ActionSequence]]):
         self.to_action_sequence = to_action_sequence
-        self.options = options
 
     def __call__(self, code: Any) -> Optional[Evaluator]:
         action_sequence = self.to_action_sequence(code)
         if action_sequence is None:
             return None
-        evaluator = Evaluator(options=self.options)
-        for action in action_sequence:
+        evaluator = Evaluator(options=action_sequence.options)
+        for action in action_sequence.sequence:
             evaluator.eval(action)
         return evaluator
 

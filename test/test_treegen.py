@@ -79,10 +79,10 @@ class TestTreeGen(unittest.TestCase):
         samples = get_samples(dataset, tokenize_token, to_action_sequence)
         qencoder = LabelEncoder(words, 2)
         cencoder = LabelEncoder(chars, 0)
-        aencoder = ActionSequenceEncoder(samples, 2, options=options)
+        aencoder = ActionSequenceEncoder(samples, 2)
 
         tquery = TransformQuery(tokenize_query, qencoder, cencoder, 32)
-        tcode = TransformCode(to_action_sequence, options)
+        tcode = TransformCode(to_action_sequence)
         teval = TransformEvaluator(aencoder, 2)
         tgt = TransformGroundTruth(aencoder)
         transform = TransformDataset(tquery, tcode, teval, tgt)

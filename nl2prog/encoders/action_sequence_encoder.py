@@ -47,13 +47,13 @@ class Samples:
     rules: List[Rule]
     node_types: List[NodeType]
     tokens: List[Union[str, CloseNode]]
+    options: ActionOptions
 
 
 class ActionSequenceEncoder:
-    def __init__(self, samples: Samples, token_threshold: int,
-                 options: ActionOptions = ActionOptions(True, True)):
+    def __init__(self, samples: Samples, token_threshold: int):
         reserved_labels = [Unknown()]
-        if options.retain_vairadic_fields:
+        if samples.options.retain_vairadic_fields:
             reserved_labels.append(CloseVariadicFieldRule())
         self._rule_encoder = LabelEncoder(samples.rules,
                                           reserved_labels=reserved_labels,
@@ -61,12 +61,13 @@ class ActionSequenceEncoder:
         self._node_type_encoder = LabelEncoder(list(
             map(convert_node_type_to_key, samples.node_types)))
         reserved_labels = [Unknown()]
-        if options.split_non_terminal:
+        if samples.options.split_non_terminal:
             reserved_labels.append(CloseNode())
         self._token_encoder = LabelEncoder(samples.tokens,
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,
                                            unknown_index=0)
+        self._options = samples.options
 
     def decode(self, tensor: torch.LongTensor, query: List[str]) \
             -> Optional[ActionSequence]:
@@ -90,23 +91,23 @@ class ActionSequenceEncoder:
             None if the action sequence cannot be generated.
         """
 
-        retval: ActionSequence = []
+        retval: ActionSequence = ActionSequence([], self._options)
         for i in range(tensor.shape[0]):
             if tensor[i, 0] > 0:
                 # ApplyRule
                 rule = self._rule_encoder.decode(tensor[i, 0])
-                retval.append(ApplyRule(rule))
+                retval.sequence.append(ApplyRule(rule))
             elif tensor[i, 1] > 0:
                 # GenerateToken
                 token = self._token_encoder.decode(tensor[i, 1])
-                retval.append(GenerateToken(token))
+                retval.sequence.append(GenerateToken(token))
             elif tensor[i, 2] >= 0:
                 # GenerateToken (Copy)
                 index = int(tensor[i, 2].numpy())
                 if index >= len(query):
                     return None
                 token = query[index]
-                retval.append(GenerateToken(token))
+                retval.sequence.append(GenerateToken(token))
             else:
                 return None
 
@@ -133,14 +134,16 @@ class ActionSequenceEncoder:
             the query. The padding value should be -1.
             None if the action sequence cannot be encoded.
         """
-        action = torch.ones(len(evaluator.action_sequence) + 1, 4).long() * -1
+        action = \
+            torch.ones(len(evaluator.action_sequence.sequence) + 1, 4).long() \
+            * -1
 
-        for i in range(len(evaluator.action_sequence)):
-            a = evaluator.action_sequence[i]
+        for i in range(len(evaluator.action_sequence.sequence)):
+            a = evaluator.action_sequence.sequence[i]
             parent = evaluator.parent(i)
             if parent is not None:
                 parent_action: ApplyRule = \
-                    evaluator.action_sequence[parent.action]
+                    evaluator.action_sequence.sequence[parent.action]
                 parent_rule: ExpandTreeRule = parent_action.rule
                 action[i, 0] = self._node_type_encoder.encode(
                     convert_node_type_to_key(
@@ -164,10 +167,10 @@ class ActionSequenceEncoder:
                     return None
 
         head = evaluator.head
-        length = len(evaluator.action_sequence)
+        length = len(evaluator.action_sequence.sequence)
         if head is not None:
             head_action: ApplyRule = \
-                evaluator.action_sequence[head.action]
+                evaluator.action_sequence.sequence[head.action]
             head_rule: ExpandTreeRule = head_action.rule
             action[length, 0] = self._node_type_encoder.encode(
                 convert_node_type_to_key(head_rule.children[head.field][1]))
@@ -194,13 +197,14 @@ class ActionSequenceEncoder:
             The padding value should be -1.
         """
         parent_tensor = \
-            torch.ones(len(evaluator.action_sequence) + 1, 4).long() * -1
+            torch.ones(len(evaluator.action_sequence.sequence) + 1, 4).long() \
+            * -1
 
-        for i in range(len(evaluator.action_sequence)):
+        for i in range(len(evaluator.action_sequence.sequence)):
             parent = evaluator.parent(i)
             if parent is not None:
                 parent_action: ApplyRule = \
-                    evaluator.action_sequence[parent.action]
+                    evaluator.action_sequence.sequence[parent.action]
                 parent_rule: ExpandTreeRule = parent_action.rule
                 parent_tensor[i, 0] = self._node_type_encoder.encode(
                     convert_node_type_to_key(parent_rule.parent))
@@ -209,10 +213,10 @@ class ActionSequenceEncoder:
                 parent_tensor[i, 3] = parent.field
 
         head = evaluator.head
-        length = len(evaluator.action_sequence)
+        length = len(evaluator.action_sequence.sequence)
         if head is not None:
             head_action: ApplyRule = \
-                evaluator.action_sequence[head.action]
+                evaluator.action_sequence.sequence[head.action]
             head_rule: ExpandTreeRule = head_action.rule
             parent_tensor[length, 0] = self._node_type_encoder.encode(
                 convert_node_type_to_key(head_rule.parent))
@@ -242,7 +246,7 @@ class ActionSequenceEncoder:
             a parent of j th action, (i, j) element will be 1. the element
             will be 0 otherwise.
         """
-        L = len(evaluator.action_sequence)
+        L = len(evaluator.action_sequence.sequence)
         depth = torch.zeros(L, 1)
         m = torch.zeros(L, L)
 
@@ -278,9 +282,9 @@ class ActionSequenceEncoder:
             index of (i - 1)-th child node.
             The padding value is -1.
         """
-        L = len(evaluator.action_sequence)
+        L = len(evaluator.action_sequence.sequence)
         retval = torch.ones(L, max_arity + 1, 3).long() * -1
-        for i, action in enumerate(evaluator.action_sequence):
+        for i, action in enumerate(evaluator.action_sequence.sequence):
             if isinstance(action, ApplyRule):
                 if isinstance(action.rule, ExpandTreeRule):
                     # Encode parent

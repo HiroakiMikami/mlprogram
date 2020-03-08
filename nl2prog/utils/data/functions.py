@@ -46,13 +46,17 @@ def get_samples(dataset: torch.utils.data.Dataset,
     rules = []
     node_types = []
     tokens = []
+    options = None
 
     for group in dataset:
         for entry in group:
             action_sequence = to_action_sequence(entry.ground_truth)
             if action_sequence is None:
                 continue
-            for action in action_sequence:
+            if options is not None:
+                assert(options == action_sequence.options)
+            options = action_sequence.options
+            for action in action_sequence.sequence:
                 if isinstance(action, ApplyRule):
                     rule: Rule = action.rule
                     if rule != CloseVariadicFieldRule():
@@ -66,7 +70,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
                         ts = tokenize_token(token)
                         tokens.extend(ts)
 
-    return Samples(rules, node_types, tokens)
+    return Samples(rules, node_types, tokens, options)
 
 
 def to_eval_dataset(dataset: torch.utils.data.Dataset) \

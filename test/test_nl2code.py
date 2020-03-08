@@ -76,10 +76,10 @@ class TestNL2Code(unittest.TestCase):
         words = get_words(dataset, tokenize_query)
         samples = get_samples(dataset, tokenize_token, to_action_sequence)
         qencoder = LabelEncoder(words, 2)
-        aencoder = ActionSequenceEncoder(samples, 2, options=options)
+        aencoder = ActionSequenceEncoder(samples, 2)
 
         tquery = TransformQuery(tokenize_query, qencoder)
-        tcode = TransformCode(to_action_sequence, options)
+        tcode = TransformCode(to_action_sequence)
         teval = TransformEvaluator(aencoder)
         tgt = TransformGroundTruth(aencoder)
         transform = TransformDataset(tquery, tcode, teval, tgt)

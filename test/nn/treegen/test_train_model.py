@@ -11,11 +11,11 @@ class TestTrain(unittest.TestCase):
     def test_parameters(self):
         samples = Samples(["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
-                          ["token"])
+                          ["token"],
+                          ActionOptions(False, False))
         qencoder = LabelEncoder(["foo"], 0)
         cencoder = LabelEncoder([str(i) for i in range(255)], 0)
-        aencoder = ActionSequenceEncoder(samples, 0,
-                                         options=ActionOptions(False, False))
+        aencoder = ActionSequenceEncoder(samples, 0)
         model = TrainModel(qencoder, cencoder, aencoder,
                            3, 3, 1, 3, 3, 3, 3, 3, 0.0)
         self.assertEqual(196, len(list(model.named_parameters())))
@@ -23,11 +23,11 @@ class TestTrain(unittest.TestCase):
     def test_shape(self):
         samples = Samples(["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
-                          ["token"])
+                          ["token"],
+                          ActionOptions(False, False))
         qencoder = LabelEncoder(["foo"], 0)
         cencoder = LabelEncoder([str(i) for i in range(255)], 0)
-        aencoder = ActionSequenceEncoder(samples, 0,
-                                         options=ActionOptions(False, False))
+        aencoder = ActionSequenceEncoder(samples, 0)
         model = TrainModel(qencoder, cencoder, aencoder,
                            3, 3, 1, 3, 3, 3, 3, 3, 0.0)
         q0 = torch.randint(1, [2])

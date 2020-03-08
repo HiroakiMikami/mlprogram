@@ -57,16 +57,15 @@ class TestTransformEvaluator(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = \
-            TransformCode(to_action_sequence,
-                          ActionOptions(False, False))("y = x + 1")
+            TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformEvaluator(aencoder, 2)
         (prev_action, prev_rule_action, depth, matrix), query = \
             transform(evaluator, ["ab", "test"])
         self.assertTrue(np.array_equal(
             [
-                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
-                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
-                [6, -1, -1]
+                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
+                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
+                [5, -1, -1]
             ],
             prev_action.numpy()
         ))
@@ -79,15 +78,15 @@ class TestTransformEvaluator(unittest.TestCase):
                 # Name -> str
                 [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
                 # str -> "x"
-                [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 1, -1], [-1, -1, -1]],
                 # Op -> str, expr, expr
                 [[6, -1, -1], [5, -1, -1], [4, -1, -1]],
                 # str -> "+"
-                [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
                 # Name -> str
                 [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
                 # str -> "y"
-                [[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
                 # Number -> number
                 [[7, -1, -1], [8, -1, -1], [-1, -1, -1]],
             ],
@@ -111,9 +110,9 @@ class TestTransformEvaluator(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
-                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
-                [6, -1, -1]
+                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
+                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
+                [5, -1, -1]
             ],
             query.numpy()
         ))
@@ -124,16 +123,15 @@ class TestTransformEvaluator(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = \
-            TransformCode(to_action_sequence,
-                          ActionOptions(False, False))("y = x + 1")
+            TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformEvaluator(aencoder, 2, train=False)
         (prev_action, prev_rule_action, depth, matrix), query = \
             transform(evaluator, ["ab", "test"])
         self.assertTrue(np.array_equal(
             [
-                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
-                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
-                [6, -1, -1], [-1, 5, -1]
+                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
+                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
+                [5, -1, -1], [-1, 4, -1]
             ],
             prev_action.numpy()
         ))
@@ -146,18 +144,18 @@ class TestTransformEvaluator(unittest.TestCase):
                 # Name -> str
                 [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
                 # str -> "x"
-                [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 1, -1], [-1, -1, -1]],
                 # Op -> str, expr, expr
                 [[6, -1, -1], [5, -1, -1], [4, -1, -1]],
                 # str -> "+"
-                [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
                 # Name -> str
                 [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
                 # str -> "y"
-                [[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
                 # Number -> number
                 [[7, -1, -1], [8, -1, -1], [-1, -1, -1]],
-                [[-1, -1, -1], [-1, 5, -1], [-1, -1, -1]],
+                [[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]],
             ],
             prev_rule_action.numpy()
         ))
@@ -180,9 +178,9 @@ class TestTransformEvaluator(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 2, -1],
-                [5, -1, -1], [-1, 3, -1], [4, -1, -1], [-1, 4, -1],
-                [6, -1, -1], [-1, 5, -1]
+                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
+                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
+                [5, -1, -1], [-1, 4, -1]
             ],
             query.numpy()
         ))
@@ -194,8 +192,7 @@ class TestTransformEvaluator(unittest.TestCase):
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = \
-            TransformCode(to_action_sequence,
-                          ActionOptions(False, False))("y = x + 1")
+            TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformEvaluator(aencoder, 3)
         result = transform(evaluator, ["ab", "test"])
         self.assertEqual(None, result)

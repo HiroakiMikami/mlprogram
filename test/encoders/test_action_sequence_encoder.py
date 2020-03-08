@@ -11,17 +11,18 @@ from nl2prog.encoders import Samples, ActionSequenceEncoder
 
 class TestEncoder(unittest.TestCase):
     def test_reserved_labels(self):
-        encoder = ActionSequenceEncoder(Samples([], [], []), 0)
+        encoder = ActionSequenceEncoder(
+            Samples([], [], [], ActionOptions(True, True)), 0)
         self.assertEqual(2, len(encoder._rule_encoder.vocab))
         self.assertEqual(2, len(encoder._token_encoder.vocab))
 
         encoder = ActionSequenceEncoder(
-            Samples([], [], []), 0, ActionOptions(False, True))
+            Samples([], [], [], ActionOptions(False, True)), 0)
         self.assertEqual(1, len(encoder._rule_encoder.vocab))
         self.assertEqual(2, len(encoder._token_encoder.vocab))
 
         encoder = ActionSequenceEncoder(
-            Samples([], [], []), 0, ActionOptions(True, False))
+            Samples([], [], [], ActionOptions(True, False)), 0)
         self.assertEqual(2, len(encoder._rule_encoder.vocab))
         self.assertEqual(1, len(encoder._token_encoder.vocab))
 
@@ -43,7 +44,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f", "2"]),
+                    ["f", "2"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
@@ -83,7 +85,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f", "2"]),
+                    ["f", "2"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
@@ -123,7 +126,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f", "2"]),
+                    ["f", "2"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
@@ -157,7 +161,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f"]),
+                    ["f"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         action = encoder.encode_action(evaluator, ["1"])
@@ -197,7 +202,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f"]),
+                    ["f"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
@@ -213,7 +219,8 @@ class TestEncoder(unittest.TestCase):
         encoder = ActionSequenceEncoder(
             Samples([none],
                     [NodeType("value", NodeConstraint.Node)],
-                    ["f"]),
+                    ["f"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(none))
@@ -253,7 +260,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f"]),
+                    ["f"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))
@@ -283,7 +291,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f"]),
+                    ["f"],
+                    ActionOptions(True, True)),
             0)
         self.assertEqual(None,
                          encoder.decode(torch.LongTensor([[-1, -1, -1]]), []))
@@ -305,7 +314,8 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node),
                      NodeType("value", NodeConstraint.Token),
                      NodeType("expr", NodeConstraint.Node)],
-                    ["f", "2"]),
+                    ["f", "2"],
+                    ActionOptions(True, True)),
             0)
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(funcdef))

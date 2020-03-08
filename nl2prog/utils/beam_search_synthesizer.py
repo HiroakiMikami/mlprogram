@@ -127,7 +127,7 @@ class BeamSearchSynthesizer:
                 if head is None:
                     continue
                 head_field = \
-                    h.evaluator.action_sequence[head.action]\
+                    h.evaluator.action_sequence.sequence[head.action]\
                     .rule.children[head.field][1]
                 if head_field.constraint == NodeConstraint.Token:
                     is_token = True
@@ -209,13 +209,15 @@ class BeamSearchSynthesizer:
                     cs.append(c)
                     candidates.append(c)
                     ps.append(Progress(id, h.id, score,
-                                       evaluator.action_sequence[-1], True))
+                                       evaluator.action_sequence.sequence[-1],
+                                       True))
                 else:
                     hs_new.append(Hypothesis(
                         id, h.id, score, evaluator,
                         state))
                     ps.append(Progress(id, h.id, score,
-                                       evaluator.action_sequence[-1], False))
+                                       evaluator.action_sequence.sequence[-1],
+                                       False))
 
             hs = hs_new
             yield cs, ps

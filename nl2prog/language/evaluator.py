@@ -58,7 +58,7 @@ class Evaluator:
     ----------
     _tree: Tree
         The intermidiate AST.
-    _action_sequence: ActionSequence
+    _action_sequence: List[Action]
         The sequence of actions to be evaluated.
     _head_action_index: Optional[Int]
         The index of the head AST node.
@@ -258,9 +258,9 @@ class Evaluator:
                                             ))
 
             return ast
-        if len(self.action_sequence) == 0:
+        if len(self.action_sequence.sequence) == 0:
             return generate_ast(0)
-        begin = self.action_sequence[0]
+        begin = self.action_sequence.sequence[0]
         if isinstance(begin, ApplyRule) and \
                 isinstance(begin.rule, ExpandTreeRule):
             if begin.rule.parent.type_name == Root():
@@ -296,4 +296,4 @@ class Evaluator:
 
     @property
     def action_sequence(self) -> ActionSequence:
-        return self._action_sequence
+        return ActionSequence(self._action_sequence, self._options)

@@ -80,6 +80,9 @@ def tokenize(value: str):
 
 class TestAstToActionSequence(unittest.TestCase):
     def test_leaf(self):
+        seq = ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
+                                     ActionOptions(True, True),
+                                     tokenizer=tokenize)
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
@@ -87,50 +90,57 @@ class TestAstToActionSequence(unittest.TestCase):
                                        ])),
                 GenerateToken("t0"), GenerateToken(
                 "t1"), GenerateToken(CloseNode())],
-            ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
-                                   tokenizer=tokenize)
+            seq.sequence
         )
+        self.assertEqual(ActionOptions(True, True), seq.options)
+        seq = ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
+                                     ActionOptions(True, False))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Token))
                                        ])),
              GenerateToken("t0 t1")],
-            ast_to_action_sequence(ast.Leaf("str", "t0 t1"),
-                                   ActionOptions(True, False))
+            seq.sequence
         )
+        self.assertEqual(ActionOptions(True, False), seq.options)
 
     def test_node(self):
         a = ast.Node(
             "def",
             [ast.Field("name", "literal", ast.Leaf("str", "foo"))])
+        seq = ast_to_action_sequence(a, ActionOptions(True, True),
+                                     tokenizer=tokenize)
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Node))
                                        ])),
              ApplyRule(ExpandTreeRule(
-                NodeType("def", NodeConstraint.Node),
-                [("name",
-                  NodeType("literal", NodeConstraint.Token))])),
+                 NodeType("def", NodeConstraint.Node),
+                 [("name",
+                   NodeType("literal", NodeConstraint.Token))])),
              GenerateToken("foo"),
              GenerateToken(CloseNode())],
-            ast_to_action_sequence(a, tokenizer=tokenize)
+            seq.sequence
         )
+        self.assertEqual(ActionOptions(True, True), seq.options)
 
     def test_node_with_variadic_fields(self):
         a = ast.Node("list", [ast.Field("elems", "literal", [
                      ast.Node("str", []), ast.Node("str", [])])])
+        seq = ast_to_action_sequence(a, ActionOptions(True, True),
+                                     tokenizer=tokenize)
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Node))
                                        ])),
              ApplyRule(ExpandTreeRule(
-                NodeType("list", NodeConstraint.Node),
-                [("elems",
-                  NodeType("literal",
-                           NodeConstraint.Variadic))])),
+                 NodeType("list", NodeConstraint.Node),
+                 [("elems",
+                   NodeType("literal",
+                            NodeConstraint.Variadic))])),
              ApplyRule(ExpandTreeRule(
                  NodeType("str", NodeConstraint.Node),
                  [])),
@@ -138,18 +148,20 @@ class TestAstToActionSequence(unittest.TestCase):
                  NodeType("str", NodeConstraint.Node),
                  [])),
              ApplyRule(CloseVariadicFieldRule())],
-            ast_to_action_sequence(a, tokenizer=tokenize)
+            seq.sequence
         )
+        self.assertEqual(seq.options, ActionOptions(True, True))
+        seq = ast_to_action_sequence(a, options=ActionOptions(False, True))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Node))
                                        ])),
              ApplyRule(ExpandTreeRule(
-                NodeType("list", NodeConstraint.Node),
-                [("elems",
-                  NodeType("literal",
-                           NodeConstraint.Variadic))])),
+                 NodeType("list", NodeConstraint.Node),
+                 [("elems",
+                   NodeType("literal",
+                            NodeConstraint.Variadic))])),
              ApplyRule(ExpandTreeRule(
                  NodeType("literal", NodeConstraint.Variadic),
                  [("0", NodeType("literal", NodeConstraint.Node)),
@@ -160,8 +172,9 @@ class TestAstToActionSequence(unittest.TestCase):
              ApplyRule(ExpandTreeRule(
                  NodeType("str", NodeConstraint.Node),
                  []))],
-            ast_to_action_sequence(a, options=ActionOptions(False, True))
+            seq.sequence
         )
+        self.assertEqual(ActionOptions(False, True), seq.options)
 
 
 if __name__ == "__main__":
