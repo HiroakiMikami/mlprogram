@@ -11,23 +11,23 @@ class TestTrain(unittest.TestCase):
     def test_parameters(self):
         samples = Samples(["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
-                          ["token"])
+                          ["token"],
+                          ActionOptions(False, False))
         qencoder = LabelEncoder(["foo"], 0)
         cencoder = LabelEncoder([str(i) for i in range(255)], 0)
-        aencoder = ActionSequenceEncoder(samples, 0,
-                                         options=ActionOptions(False, False))
+        aencoder = ActionSequenceEncoder(samples, 0)
         model = TrainModel(qencoder, cencoder, aencoder,
                            3, 3, 1, 3, 3, 3, 3, 3, 0.0)
-        self.assertEqual(194, len(list(model.named_parameters())))
+        self.assertEqual(196, len(list(model.named_parameters())))
 
     def test_shape(self):
         samples = Samples(["mock-rule"],
                           [NodeType("mock", NodeConstraint.Node)],
-                          ["token"])
+                          ["token"],
+                          ActionOptions(False, False))
         qencoder = LabelEncoder(["foo"], 0)
         cencoder = LabelEncoder([str(i) for i in range(255)], 0)
-        aencoder = ActionSequenceEncoder(samples, 0,
-                                         options=ActionOptions(False, False))
+        aencoder = ActionSequenceEncoder(samples, 0)
         model = TrainModel(qencoder, cencoder, aencoder,
                            3, 3, 1, 3, 3, 3, 3, 3, 0.0)
         q0 = torch.randint(1, [2])
@@ -50,7 +50,7 @@ class TestTrain(unittest.TestCase):
         d = rnn.pad_sequence([d0, d1]).data.view(2, 2)
         m = torch.cat([m0.view(1, 2, 2), m1.view(1, 2, 2)], dim=0).float()
 
-        results = model(q, qc, a, at, d, m)
+        results = model((q, qc), (a, at, d, m), a)
         rule_prob = results[0]
         token_prob = results[1]
         copy_prob = results[2]

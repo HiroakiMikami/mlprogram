@@ -39,25 +39,29 @@ class TestNLReaderBlock(unittest.TestCase):
 
 class TestNLReader(unittest.TestCase):
     def test_parameters(self):
-        reader = NLReader(2, 3, 1, 0.0, 5)
-        self.assertEqual(21 * 5, len(list(reader.parameters())))
+        reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
+        self.assertEqual(3 + 21 * 5, len(list(reader.parameters())))
 
     def test_shape(self):
-        reader = NLReader(2, 3, 1, 0.0, 5)
-        in0 = torch.Tensor(5, 3)
+        reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
+        in0 = torch.zeros(5).long()
         in0 = pad_sequence([in0], 0)
-        in1 = torch.Tensor(5, 1, 2)
-        out = reader(in0, in1)
+        in1 = torch.zeros(5, 7).long()
+        in1 = pad_sequence([in1], 0)
+        out, _ = reader((in0, in1))
         self.assertEqual((5, 1, 3), out.data.shape)
         self.assertEqual((5, 1), out.mask.shape)
 
     def test_mask(self):
-        reader = NLReader(2, 3, 1, 0.0, 5)
-        in00 = torch.rand(5, 3)
-        in01 = torch.rand(7, 3)
-        in1 = torch.rand(7, 2, 2)
-        out0 = reader(pad_sequence([in00, in01], 0), in1)
-        out1 = reader(pad_sequence([in00], 0), in1[:5, :1, :])
+        reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
+        in00 = torch.zeros(5).long()
+        in01 = torch.zeros(7).long()
+        in10 = torch.zeros(5, 7).long()
+        in11 = torch.zeros(7, 7).long()
+        out0, _ = reader((pad_sequence([in00, in01], 0),
+                          pad_sequence([in10, in11])))
+        out1, _ = reader((pad_sequence([in00], 0),
+                          pad_sequence([in10])))
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
         self.assertTrue(np.array_equal(out0.detach().numpy(),

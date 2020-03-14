@@ -51,6 +51,45 @@ class QueryEmbedding(nn.Module):
         return seq_embed, char_seq_embed
 
 
+class ActionEmbedding(nn.Module):
+    def __init__(self, rule_num: int, token_num: int, embedding_dim: int):
+        super(ActionEmbedding, self).__init__()
+        self.rule_num = rule_num
+        self.token_num = token_num
+        self.rule_embed = EmbeddingWithMask(rule_num, embedding_dim, rule_num)
+        self.token_embed = EmbeddingWithMask(token_num + 1, embedding_dim,
+                                             token_num + 1)
+
+    def forward(self, sequence: torch.Tensor) -> torch.Tensor:
+        """
+        Parameters
+        ----------
+        sequence: torch.Tensor
+            The shape is (L, N, 3). where L is the sequence length and
+            N is the batch size. The padding value should be -1.
+            [:, :, 0] represent the rule IDs, [:, :, 1] represent the token
+            IDs, [:, :, 2] represent the indexes of the queries.
+
+        Returns
+        -------
+        seq_embed: torch.Tensor
+            The shape is (L, N, embedding_dim). where L is the sequence length
+            and N is the batch size.
+        """
+        L, N = sequence.shape[:2]
+
+        rule_seq = sequence[:, :, 0]
+        rule_seq = rule_seq + (rule_seq == -1) * (self.rule_num + 1)
+
+        token_seq = sequence[:, :, 1]
+        copy_seq = (token_seq == -1) * (sequence[:, :, 2] != -1)
+        # copy_seq => self.token_num
+        token_seq = token_seq + copy_seq * (self.token_num + 1)
+        token_seq = token_seq + (token_seq == -1) * (self.token_num + 2)
+
+        return self.rule_embed(rule_seq) + self.token_embed(token_seq)
+
+
 class RuleEmbedding(nn.Module):
     def __init__(self, rule_num: int, token_num: int, node_type_num: int,
                  max_arity: int,
@@ -60,9 +99,8 @@ class RuleEmbedding(nn.Module):
         self.rule_num = rule_num
         self.token_num = token_num
         self.node_type_num = node_type_num
-        self.rule_embed = EmbeddingWithMask(rule_num, embedding_dim, rule_num)
-        self.token_embed = EmbeddingWithMask(token_num + 1, embedding_dim,
-                                             token_num + 1)
+
+        self.action_embed = ActionEmbedding(rule_num, token_num, embedding_dim)
         self.elem_node_type_embed = \
             EmbeddingWithMask(node_type_num, elem_embedding_dim, node_type_num)
         self.elem_token_embed = \
@@ -99,17 +137,7 @@ class RuleEmbedding(nn.Module):
         """
         L, N = sequence.shape[:2]
         n = elem_seq.shape[2]
-
-        rule_seq = sequence[:, :, 0]
-        rule_seq = rule_seq + (rule_seq == -1) * (self.rule_num + 1)
-
-        token_seq = sequence[:, :, 1]
-        copy_seq = (token_seq == -1) * (sequence[:, :, 2] != -1)
-        # copy_seq => self.token_num
-        token_seq = token_seq + copy_seq * (self.token_num + 1)
-        token_seq = token_seq + (token_seq == -1) * (self.token_num + 2)
-
-        seq_embed = self.rule_embed(rule_seq) + self.token_embed(token_seq)
+        seq_embed = self.action_embed(sequence)
 
         elem_node_type_seq = elem_seq[:, :, :, 0]
         elem_node_type_seq = \

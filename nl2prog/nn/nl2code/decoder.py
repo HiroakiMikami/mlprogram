@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Tuple, Optional
 
 from nl2prog.nn.utils import rnn
 
@@ -163,53 +163,75 @@ class Decoder(nn.Module):
             The probability of dropout
         """
         super(Decoder, self).__init__()
+        self.hidden_size = hidden_size
         self._cell = DecoderCell(
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
 
     def forward(self,
-                query: rnn.PaddedSequenceWithMask,
-                input: torch.nn.utils.rnn.PackedSequence,
-                parent_index: torch.nn.utils.rnn.PackedSequence,
-                history: torch.FloatTensor,
-                state: Tuple[torch.FloatTensor, torch.FloatTensor]
-                ) -> Tuple[torch.FloatTensor, torch.FloatTensor,
-                           Tuple[torch.FloatTensor, torch.FloatTensor]]:
+                query: None,
+                nl_feature: rnn.PaddedSequenceWithMask,
+                other_feature: None,
+                ast_feature: Tuple[rnn.PaddedSequenceWithMask,
+                                   rnn.PaddedSequenceWithMask],
+                state: Optional[Tuple[torch.Tensor, torch.Tensor,
+                                      torch.Tensor]] = None
+                ) -> Tuple[Tuple[rnn.PaddedSequenceWithMask,
+                                 rnn.PaddedSequenceWithMask],
+                           Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         """
         Parameters
         ----------
-        query: rnn.PackedSequenceWithMask
+        query
+        nl_feature: rnn.PackedSequenceWithMask
             The query embedding vector
             The shape of the query embedding vector is (L_q, B, query_size).
-        input: rnn.PackedSequenceWithMask
-            The input sequence of feature vectors.
-            The shape of input is (L_a, B, input_size)
-        parent_index: rnn.PackedSequenceWithMask
-            The sequence of parent action indexes.
-            If index is 0, it means that the action is root action.
-        history: torch.FloatTensor
-            The list of LSTM states. The shape is (B, L_h, hidden_size)
-        (h_0, c_0): Tuple[torch.FloatTensor, torch.FloatTensor]
-            The tuple of the LSTM initial states. The shape of each tensor is
-            (B, hidden_size)
+        other_feature
+        ast_feature:
+            input: rnn.PackedSequenceWithMask
+                The input sequence of feature vectors.
+                The shape of input is (L_a, B, input_size)
+            parent_index: rnn.PackedSequenceWithMask
+                The sequence of parent action indexes.
+                If index is 0, it means that the action is root action.
+        state:
+            history: torch.FloatTensor
+                The list of LSTM states. The shape is (B, L_h, hidden_size)
+            (h_0, c_0): Tuple[torch.FloatTensor, torch.FloatTensor]
+                The tuple of the LSTM initial states. The shape of each tensor
+                is (B, hidden_size)
 
         Returns
         -------
-        output: torch.nn.utils.rnn.PackedSequence
-            Packed sequence containing the output hidden states.
-        contexts: torch.nn.utils.rnn.PackedSequence
-            Packed sequence containing the context vectors.
-        history: torch.FloatTensor
-            The list of LSTM states. The shape is (L_h, B, hidden_size)
-        (h_n, c_n) : Tuple[torch.FloatTensor, torch.FloatTensor]
-            The tuple of the next states. The shape of each tensor is
-            (B, hidden_size)
+        feature:
+            output: PaddedSequenceWithMask
+                Packed sequence containing the output hidden states.
+            contexts: PaddedSequenceWithMask
+                Packed sequence containing the context vectors.
+        state:
+            history: torch.FloatTensor
+                The list of LSTM states. The shape is (L_h, B, hidden_size)
+            (h_n, c_n) : Tuple[torch.FloatTensor, torch.FloatTensor]
+                The tuple of the next states. The shape of each tensor is
+                (B, hidden_size)
         """
+        input, parent_index = ast_feature
+        B = nl_feature.data.shape[1]
+        if state is None:
+            history = torch.zeros(1, B, self.hidden_size,
+                                  device=nl_feature.data.device)
+            h_n = torch.zeros(B, self.hidden_size,
+                              device=nl_feature.data.device)
+            c_n = torch.zeros(B, self.hidden_size,
+                              device=nl_feature.data.device)
+        else:
+            history, h_n, c_n = state
+        state = (h_n, c_n)
         hs = []
         cs = []
         for d, i in zip(torch.split(input.data, 1, dim=0),
                         torch.split(parent_index.data, 1, dim=0)):
-            ctx, state = self._cell(query, d.reshape(
+            ctx, state = self._cell(nl_feature, d.reshape(
                 d.shape[1:]), i, history, state)
             hs.append(state[0])
             cs.append(ctx)
@@ -217,8 +239,8 @@ class Decoder(nn.Module):
                                  state[0].reshape(1, *state[0].shape)], dim=0)
         hs = torch.stack(hs)
         cs = torch.stack(cs)
+        h_n, c_n = state
 
-        return (rnn.PaddedSequenceWithMask(hs, input.mask),
-                rnn.PaddedSequenceWithMask(cs, input.mask),
-                history,
-                state)
+        return ((rnn.PaddedSequenceWithMask(hs, input.mask),
+                 rnn.PaddedSequenceWithMask(cs, input.mask)),
+                (history, h_n, c_n))

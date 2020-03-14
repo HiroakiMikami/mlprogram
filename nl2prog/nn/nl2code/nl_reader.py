@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+from typing import Tuple
 from nl2prog.nn.embedding import EmbeddingWithMask
 from nl2prog.nn.utils import rnn
 
 
-class Encoder(nn.Module):
+class NLReader(nn.Module):
     def __init__(self, num_words: int, embedding_dim: int, hidden_size: int,
                  dropout: float = 0.0):
         """
@@ -19,7 +20,7 @@ class Encoder(nn.Module):
         dropout: float
             The probability of dropout
         """
-        super(Encoder, self).__init__()
+        super(NLReader, self).__init__()
         assert(hidden_size % 2 == 0)
         self.num_words = num_words
         self.hidden_size = hidden_size
@@ -31,7 +32,7 @@ class Encoder(nn.Module):
         self._dropout_h = nn.Dropout(dropout)
 
     def forward(self, query: rnn.PaddedSequenceWithMask) \
-            -> rnn.PaddedSequenceWithMask:
+            -> Tuple[rnn.PaddedSequenceWithMask, None]:
         """
         Parameters
         ----------
@@ -41,8 +42,9 @@ class Encoder(nn.Module):
 
         Returns
         -------
-        output: rnn.PaddedSeqeunceWithMask
+        word_features: rnn.PaddedSeqeunceWithMask
             The output sequences of the LSTM
+        other_features: None
         """
         # Embed query
         q = query.data + (query.data == -1).long() * (self.num_words + 1)
@@ -79,4 +81,4 @@ class Encoder(nn.Module):
                 .view(1, B, -1)  # (1, B, hidden_size)
 
         output = torch.cat(output, dim=0)  # (L, B, hidden_size)
-        return rnn.PaddedSequenceWithMask(output, query.mask)
+        return rnn.PaddedSequenceWithMask(output, query.mask), None

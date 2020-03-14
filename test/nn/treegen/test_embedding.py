@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import torch
 
-from nl2prog.nn.treegen import QueryEmbedding, RuleEmbedding
+from nl2prog.nn.treegen import QueryEmbedding, RuleEmbedding, ActionEmbedding
 
 
 class TestQueryEmbedding(unittest.TestCase):
@@ -38,13 +38,56 @@ class TestQueryEmbedding(unittest.TestCase):
         self.assertTrue(np.allclose(out0.numpy(), out1.numpy()))
 
 
+class TestActionEmbedding(unittest.TestCase):
+    def test_parameters(self):
+        e = ActionEmbedding(1, 2, 3)
+        pshape = {k: v.shape for k, v in e.named_parameters()}
+        self.assertEqual(2, len(list(e.parameters())))
+        self.assertEqual((2, 3), pshape["rule_embed.weight"])
+        self.assertEqual((4, 3), pshape["token_embed.weight"])
+
+    def test_shape(self):
+        e = ActionEmbedding(1, 2, 3)
+        out = e(torch.zeros(13, 1, 3, dtype=torch.long))
+        self.assertEqual((13, 1, 3), out.shape)
+
+    def test_rule_mask(self):
+        e = ActionEmbedding(1, 2, 3)
+        input = torch.zeros(13, 1, 3, dtype=torch.long)
+        input[:, :, 0] = -1
+        e(input)
+
+    def test_token_mask(self):
+        e = ActionEmbedding(1, 2, 3)
+        input = torch.zeros(13, 1, 3, dtype=torch.long)
+        input[:, :, 1] = -1
+        e(input)
+
+    def test_copy_mask(self):
+        e = ActionEmbedding(1, 2, 3)
+        input = torch.zeros(13, 1, 3, dtype=torch.long)
+        input[:, :, 2] = -1
+        e(input)
+
+    def test_copy_embed(self):
+        e = ActionEmbedding(1, 2, 3)
+        input = torch.zeros(13, 1, 3, dtype=torch.long)
+        input[0, :, 2] = 0
+        input[1, :, 2] = 1
+        out = e(input)
+        with torch.no_grad():
+            out = e(input)
+
+        self.assertTrue(np.allclose(out[0].numpy(), out[1].numpy()))
+
+
 class TestRuleEmbedding(unittest.TestCase):
     def test_parameters(self):
         e = RuleEmbedding(1, 2, 3, 5, 7, 11, 13)
         pshape = {k: v.shape for k, v in e.named_parameters()}
         self.assertEqual(5, len(list(e.parameters())))
-        self.assertEqual((2, 7), pshape["rule_embed.weight"])
-        self.assertEqual((4, 7), pshape["token_embed.weight"])
+        self.assertEqual((2, 7), pshape["action_embed.rule_embed.weight"])
+        self.assertEqual((4, 7), pshape["action_embed.token_embed.weight"])
         self.assertEqual((4, 11), pshape["elem_node_type_embed.weight"])
         self.assertEqual((4, 11), pshape["elem_token_embed.weight"])
         self.assertEqual((13, 11, 6), pshape["elem_to_seq.weight"])
@@ -60,8 +103,10 @@ class TestRuleEmbedding(unittest.TestCase):
     def test_mask(self):
         e0 = RuleEmbedding(1, 2, 3, 5, 7, 11, 13)
         e1 = RuleEmbedding(1, 2, 3, 6, 7, 11, 13)
-        e0.rule_embed.weight.data = e1.rule_embed.weight.data
-        e0.token_embed.weight.data = e1.token_embed.weight.data
+        e0.action_embed.rule_embed.weight.data = \
+            e1.action_embed.rule_embed.weight.data
+        e0.action_embed.token_embed.weight.data = \
+            e1.action_embed.token_embed.weight.data
         e0.elem_node_type_embed.weight.data = \
             e1.elem_node_type_embed.weight.data
         e0.elem_token_embed.weight.data = e1.elem_token_embed.weight.data

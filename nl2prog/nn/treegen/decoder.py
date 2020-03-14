@@ -4,6 +4,7 @@ from typing import Tuple
 
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.nn.functional import gelu
+from nl2prog.nn.treegen.embedding import ActionEmbedding
 
 
 class DecoderBlock(nn.Module):
@@ -90,7 +91,7 @@ class DecoderBlock(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self,
-                 feature_size: int,
+                 rule_num: int, token_num: int, feature_size: int,
                  hidden_size: int, out_size: int,
                  n_heads: int, dropout: float, n_blocks: int):
         super(Decoder, self).__init__()
@@ -104,30 +105,45 @@ class Decoder(nn.Module):
             self.blocks.append(block)
             self.add_module("block_{}".format(i), block)
 
+        self.action_embedding = \
+            ActionEmbedding(rule_num, token_num, feature_size)
+
     def forward(self, query: PaddedSequenceWithMask,
-                nl_feature: torch.Tensor,
-                ast_feature: torch.Tensor) -> \
-            PaddedSequenceWithMask:
+                nl_feature: PaddedSequenceWithMask,
+                other_feature: None,
+                ast_feature: PaddedSequenceWithMask,
+                states: None = None) -> Tuple[PaddedSequenceWithMask, None]:
         """
         Parameters
         ----------
         query: PaddedSequenceWithMask
-            (L_ast, N, query_size) where L_ast is the sequence length,
+            (L_ast, N, 3) where L_ast is the sequence length,
             N is the batch size.
+            Each action will be encoded by the tuple of
+            (ID of the applied rule, ID of the inserted token,
+            the index of the word copied from the query).
+            The padding value should be -1.
         nl_feature: torch.Tensor
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
+        other_feature
+            dummy arguments
         ast_feature: torch.Tensor
             (L_ast, N, ast_feature_size) where L_ast is the sequence length,
             N is the batch size.
+        states
+            dummy arguments
 
         Returns
         -------
         output: PaddedSequenceWithMask
             (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
+        states:
         """
-        input = query
+        embed = \
+            self.action_embedding(query.data)
+        input = PaddedSequenceWithMask(embed, query.mask)
         for block in self.blocks:
-            input, _, _ = block(query, nl_feature, ast_feature)
-        return input
+            input, _, _ = block(input, nl_feature, ast_feature)
+        return input, _

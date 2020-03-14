@@ -11,8 +11,15 @@ from nl2prog.language.action \
     ApplyRule, GenerateToken, CloseNode, ActionOptions, Root
 
 
-class MockFunctions:
-    def __init__(self, rule_preds, token_preds):
+class MockBeamSearchSynthesizer(BeamSearchSynthesizer):
+    def __init__(self, beam_size, is_subtype, rule_preds, token_preds,
+                 options=None):
+        if options is None:
+            super(MockBeamSearchSynthesizer, self).__init__(
+                beam_size, is_subtype)
+        else:
+            super(MockBeamSearchSynthesizer, self).__init__(
+                beam_size, is_subtype, options=options)
         self.rule_preds = rule_preds
         self.token_preds = token_preds
         self.arguments = []
@@ -20,7 +27,7 @@ class MockFunctions:
     def initialize(self, query: str):
         return 0
 
-    def update(self, hs):
+    def batch_update(self, hs):
         i = len(self.arguments)
         self.arguments.append(([h.state for h in hs]))
         rule_preds = self.rule_preds[i]
@@ -46,10 +53,6 @@ def is_subtype(arg0, arg1):
 
 
 Zero = log(1e-5)
-
-
-class MockPredictor:
-    pass
 
 
 class TestBeamSearchSynthesizer(unittest.TestCase):
@@ -79,10 +82,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             XtoY: Zero, YsubtoNone: log(1.0)
         }]
         token1 = [{}]
-        prob = MockFunctions([rule0, rule1], [token0, token1])
-        synthesizer = BeamSearchSynthesizer(2,
-                                            prob.initialize, prob.update,
-                                            is_subtype)
+        synthesizer = MockBeamSearchSynthesizer(2, is_subtype,
+                                                [rule0, rule1],
+                                                [token0, token1])
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -115,7 +117,7 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
                       Node("X", [Field("value", "Y", Node("Ysub", []))])),
             candidates[1]
         )
-        self.assertEqual([[0], [1]], prob.arguments)
+        self.assertEqual([[0], [1]], synthesizer.arguments)
 
     def test_variadic_fields_generation(self):
         XtoY = ExpandTreeRule(X, [("value", Y_list)])
@@ -138,10 +140,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         }]
         token2 = [{}]
 
-        prob = MockFunctions([rule0, rule1, rule2], [token0, token1, token2])
-        synthesizer = BeamSearchSynthesizer(3,
-                                            prob.initialize, prob.update,
-                                            is_subtype)
+        synthesizer = MockBeamSearchSynthesizer(3, is_subtype,
+                                                [rule0, rule1, rule2],
+                                                [token0, token1, token2])
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -190,7 +191,7 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
                       Node("X", [Field("value", "Y", [Node("Ysub", [])])])),
             candidates[2]
         )
-        self.assertEqual([[0], [1], [2]], prob.arguments)
+        self.assertEqual([[0], [1], [2]], synthesizer.arguments)
 
     def test_retain_variadic_fields_False(self):
         XtoY = ExpandTreeRule(X, [("value", Y_list)])
@@ -210,11 +211,11 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             XtoY: log(0.1), YtoYList: Zero, YsubtoNone: log(0.9)
         }]
         token2 = [{}]
-        prob = MockFunctions([rule0, rule1, rule2], [token0, token1, token2])
-        synthesizer = BeamSearchSynthesizer(3,
-                                            prob.initialize, prob.update,
-                                            is_subtype=is_subtype,
-                                            options=ActionOptions(False, True))
+        synthesizer = MockBeamSearchSynthesizer(
+            3, is_subtype,
+            [rule0, rule1, rule2],
+            [token0, token1, token2],
+            options=ActionOptions(False, True))
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -253,7 +254,7 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
                       Node("X", [Field("value", "Y", [Node("Ysub", [])])])),
             candidates[1]
         )
-        self.assertEqual([[0], [1], [2]], prob.arguments)
+        self.assertEqual([[0], [1], [2]], synthesizer.arguments)
 
     def test_token_generation(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
@@ -268,10 +269,9 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         rule2 = [{}]
         token2 = [{CloseNode(): log(1.0), "foo": Zero}]
 
-        prob = MockFunctions([rule0, rule1, rule2], [token0, token1, token2])
-        synthesizer = BeamSearchSynthesizer(2,
-                                            prob.initialize, prob.update,
-                                            is_subtype=is_subtype)
+        synthesizer = MockBeamSearchSynthesizer(2, is_subtype,
+                                                [rule0, rule1, rule2],
+                                                [token0, token1, token2])
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -312,7 +312,7 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
                       Node("X", [Field("value", "Str", Leaf("Str", "foo"))])),
             candidates[1]
         )
-        self.assertEqual([[0], [1], [2]], prob.arguments)
+        self.assertEqual([[0], [1], [2]], synthesizer.arguments)
 
     def test_split_non_terminal_False(self):
         XtoStr = ExpandTreeRule(X, [("value", Str)])
@@ -323,11 +323,10 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         rule1 = [{}]
         token1 = [{"foo": log(0.9), "test": log(0.1)}]
 
-        prob = MockFunctions([rule0, rule1], [token0, token1])
-        synthesizer = BeamSearchSynthesizer(2,
-                                            prob.initialize, prob.update,
-                                            is_subtype=is_subtype,
-                                            options=ActionOptions(True, False))
+        synthesizer = MockBeamSearchSynthesizer(
+            2, is_subtype,
+            [rule0, rule1], [token0, token1],
+            options=ActionOptions(True, False))
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -362,7 +361,7 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
                       Node("X", [Field("value", "Str", Leaf("Str", "test"))])),
             candidates[1]
         )
-        self.assertEqual([[0], [1]], prob.arguments)
+        self.assertEqual([[0], [1]], synthesizer.arguments)
 
     def test_not_generate_root_node(self):
         RoottoNone = ExpandTreeRule(NodeType(Root(), NodeConstraint.Node), [])
@@ -374,10 +373,8 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
             XtoNone: log(0.1), RoottoNone: log(0.9)
         }]
         token0 = [{}]
-        prob = MockFunctions([rule0], [token0])
-        synthesizer = BeamSearchSynthesizer(1,
-                                            prob.initialize, prob.update,
-                                            is_subtype)
+        synthesizer = MockBeamSearchSynthesizer(1, is_subtype,
+                                                [rule0], [token0])
         candidates = []
         progress = []
         for c, p in synthesizer.synthesize("test"):
@@ -395,7 +392,7 @@ class TestBeamSearchSynthesizer(unittest.TestCase):
         self.assertSameCandidate(
             Candidate(np.log(0.1), Node("X", [])), candidates[0]
         )
-        self.assertEqual([[0]], prob.arguments)
+        self.assertEqual([[0]], synthesizer.arguments)
 
 
 if __name__ == "__main__":

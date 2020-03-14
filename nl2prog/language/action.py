@@ -177,7 +177,13 @@ class GenerateToken:
 
 
 Action = Union[ApplyRule, GenerateToken]
-ActionSequence = List[Action]
+
+
+@dataclass
+class ActionSequence:
+    sequence: List[Action]
+    options: ActionOptions
+
 
 Tokenizer = Callable[[str], List[str]]
 
@@ -202,7 +208,7 @@ def ast_to_action_sequence(node: AST,
     action.ActionSequence
         The corresponding action sequence
     """
-    def to_action_sequence(node: AST):
+    def to_sequence(node: AST):
         if isinstance(node, Node):
             def to_node_type(field: Field):
                 if isinstance(field.value, list):
@@ -231,11 +237,11 @@ def ast_to_action_sequence(node: AST,
                             [(str(i), elem) for i in range(len(field.value))]
                         )))
                     for v in field.value:
-                        seq.extend(to_action_sequence(v))
+                        seq.extend(to_sequence(v))
                     if options.retain_vairadic_fields:
                         seq.append(ApplyRule(CloseVariadicFieldRule()))
                 else:
-                    seq.extend(to_action_sequence(field.value))
+                    seq.extend(to_sequence(field.value))
             return seq
         elif isinstance(node, Leaf):
             if options.split_non_terminal:
@@ -245,12 +251,14 @@ def ast_to_action_sequence(node: AST,
                 return list(map(lambda x: GenerateToken(x), tokens))
             else:
                 return [GenerateToken(node.value)]
-    return to_action_sequence(Node(Root(), [Field("root", Root(), node)]))
+    return ActionSequence(
+        to_sequence(Node(Root(), [Field("root", Root(), node)])),
+        options)
 
 
 def code_to_action_sequence(
     code: str, parse: Callable[[str], AST],
-    options: ActionOptions = ActionOptions(True, True),
+    options: ActionOptions,
     tokenize: Optional[Callable[[str], List[str]]] = None) \
         -> Optional[ActionSequence]:
     ast = parse(code)
