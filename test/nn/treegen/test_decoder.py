@@ -96,11 +96,11 @@ class TestDecoderBlock(unittest.TestCase):
 
 class TestDecoder(unittest.TestCase):
     def test_parameters(self):
-        decoder = Decoder(1, 1, 1, 3, 5, 1, 0.0, 5)
+        decoder = Decoder(1, 1, 3, 1, 3, 5, 1, 0.0, 5)
         self.assertEqual(18 * 5 + 2, len(list(decoder.parameters())))
 
     def test_shape(self):
-        decoder = Decoder(1, 1, 1, 3, 5, 1, 0.0, 5)
+        decoder = Decoder(1, 1, 3, 1, 3, 5, 1, 0.0, 5)
         query0 = torch.zeros(7, 3).long()
         nl0 = torch.Tensor(11, 1)
         ast0 = torch.Tensor(7, 1)
@@ -111,7 +111,7 @@ class TestDecoder(unittest.TestCase):
         self.assertEqual((7, 1), out.mask.shape)
 
     def test_mask_nl(self):
-        decoder = Decoder(1, 1, 1, 3, 5, 1, 0.0, 5)
+        decoder = Decoder(1, 1, 3, 1, 3, 5, 1, 0.0, 5)
         query0 = torch.zeros(7, 3).long()
         nl0 = torch.rand(11, 1)
         nl1 = torch.rand(13, 1)
@@ -128,7 +128,7 @@ class TestDecoder(unittest.TestCase):
                                     out1.detach().numpy()))
 
     def test_mask_ast_and_query(self):
-        block = Decoder(1, 1, 1, 3, 5, 1, 0.0, 5)
+        block = Decoder(1, 1, 3, 1, 3, 5, 1, 0.0, 5)
         query0 = torch.zeros(7, 3).long()
         query1 = torch.zeros(9, 3).long()
         nl0 = torch.rand(11, 1)
@@ -146,7 +146,7 @@ class TestDecoder(unittest.TestCase):
                                     out1.detach().numpy()))
 
     def test_attn_mask(self):
-        block = Decoder(1, 1, 1, 3, 5, 1, 0.0, 5)
+        block = Decoder(1, 1, 3, 1, 3, 5, 1, 0.0, 5)
         query0 = torch.zeros(7, 3).long()
         nl0 = torch.rand(11, 1)
         ast0 = torch.rand(7, 1)

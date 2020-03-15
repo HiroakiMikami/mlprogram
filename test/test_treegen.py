@@ -49,7 +49,7 @@ class TestTreeGen(unittest.TestCase):
         encoder, model = model
         transform_input = TransformQuery(tokenize_query, encoder[0],
                                          encoder[1], 32)
-        transform_evaluator = TransformEvaluator(encoder[2], 2, train=False)
+        transform_evaluator = TransformEvaluator(encoder[2], 2, 4, train=False)
         synthesizer = CommonBeamSearchSynthesizer(
             5, transform_input, transform_evaluator,
             CollateInput(torch.device("cpu")),
@@ -83,12 +83,12 @@ class TestTreeGen(unittest.TestCase):
 
         tquery = TransformQuery(tokenize_query, qencoder, cencoder, 32)
         tcode = TransformCode(to_action_sequence)
-        teval = TransformEvaluator(aencoder, 2)
+        teval = TransformEvaluator(aencoder, 2, 4)
         tgt = TransformGroundTruth(aencoder)
         transform = TransformDataset(tquery, tcode, teval, tgt)
         train_dataset = transform(dataset)
 
-        model = TrainModel(qencoder, cencoder, aencoder, 32, 2, 1, 6, 5, 5,
+        model = TrainModel(qencoder, cencoder, aencoder, 32, 2, 4, 1, 6, 5, 5,
                            256, 1024, 0.0)
         optimizer = optim.adafactor.Adafactor(model.parameters())
         loss_function = Loss()

@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from typing import Tuple
 
+from nl2prog.nn import EmbeddingWithMask
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.nn.functional import gelu
-from nl2prog.nn.treegen.embedding import ActionEmbedding
+from nl2prog.nn.treegen.embedding import ElementEmbedding
 
 
 class DecoderBlock(nn.Module):
@@ -91,10 +92,11 @@ class DecoderBlock(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self,
-                 rule_num: int, token_num: int, feature_size: int,
-                 hidden_size: int, out_size: int,
+                 rule_num: int, token_num: int, max_depth: int,
+                 feature_size: int, hidden_size: int, out_size: int,
                  n_heads: int, dropout: float, n_blocks: int):
         super(Decoder, self).__init__()
+        self.rule_num = rule_num
         self.blocks = []
         for i in range(n_blocks):
             block = DecoderBlock(
@@ -105,8 +107,10 @@ class Decoder(nn.Module):
             self.blocks.append(block)
             self.add_module(f"block_{i}", block)
 
-        self.action_embedding = \
-            ActionEmbedding(rule_num, token_num, feature_size)
+        self.query_embed = ElementEmbedding(
+            EmbeddingWithMask(rule_num, feature_size, rule_num),
+            max_depth, feature_size, feature_size
+        )
 
     def forward(self, query: PaddedSequenceWithMask,
                 nl_feature: PaddedSequenceWithMask,
@@ -117,11 +121,9 @@ class Decoder(nn.Module):
         Parameters
         ----------
         query: PaddedSequenceWithMask
-            (L_ast, N, 3) where L_ast is the sequence length,
+            (L_ast, N, max_depth) where L_ast is the sequence length,
             N is the batch size.
-            Each action will be encoded by the tuple of
-            (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
+            This tensor encodes the path from the root node to the target node.
             The padding value should be -1.
         nl_feature: torch.Tensor
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
@@ -141,8 +143,8 @@ class Decoder(nn.Module):
             N is the batch_size.
         states:
         """
-        embed = \
-            self.action_embedding(query.data)
+        q = query.data + (query.data == -1) * (self.rule_num + 1)
+        embed = self.query_embed(q)
         input = PaddedSequenceWithMask(embed, query.mask)
         for block in self.blocks:
             input, _, _ = block(input, nl_feature, ast_feature)
