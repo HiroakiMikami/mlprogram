@@ -34,7 +34,7 @@ class TopKModel:
         name: str
         model: torch.nn.Module
         """
-        path = os.path.join(self._directory, "model_{}.pickle".format(name))
+        path = os.path.join(self._directory, f"model_{name}.pickle")
         result = {"score": score, "model": model.state_dict()}
         torch.save(result, path)
         self._models.add(score, path)

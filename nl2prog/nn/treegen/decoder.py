@@ -103,7 +103,7 @@ class Decoder(nn.Module):
                 n_heads, dropout
             )
             self.blocks.append(block)
-            self.add_module("block_{}".format(i), block)
+            self.add_module(f"block_{i}", block)
 
         self.action_embedding = \
             ActionEmbedding(rule_num, token_num, feature_size)

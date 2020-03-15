@@ -28,11 +28,11 @@ def is_subtype(subtype: str, basetype: str) -> bool:
             basetype.endswith("__list"):
         return subtype == basetype
     try:
-        sub = eval("python_ast.{}()".format(subtype))
+        sub = eval(f"python_ast.{subtype}()")
     except:  # noqa
-        sub = eval("{}()".format(subtype))
+        sub = eval(f"{subtype}()")
     try:
-        base = eval("python_ast.{}()".format(basetype))
+        base = eval(f"python_ast.{basetype}()")
     except:  # noqa
-        base = eval("{}()".format(basetype))
+        base = eval(f"{basetype}()")
     return isinstance(sub, type(base))

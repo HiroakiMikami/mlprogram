@@ -20,8 +20,8 @@ def download(base_path: str = BASE_PATH,
             target = "valid"
         if name == "dev":
             target = "test"
-        query = get("{}/{}_hs.in".format(base_path, name)).split("\n")
-        code = get("{}/{}_hs.out".format(base_path, name)).split("\n")
+        query = get(f"{base_path}/{name}_hs.in").split("\n")
+        code = get(f"{base_path}/{name}_hs.out").split("\n")
         code = [c.replace("§", "\n").replace("and \\", "and ") for c in code]
         groups = []
         for q, c in zip(query, code):

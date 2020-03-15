@@ -66,7 +66,7 @@ def to_ast(target: PythonAST) -> ast.AST:
                 is_leaf = is_builtin_type(chval[0])
 
             if is_leaf:
-                parent_type = "{}__list".format(base_type)
+                parent_type = f"{base_type}__list"
             else:
                 parent_type = base_type
 

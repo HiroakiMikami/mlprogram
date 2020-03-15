@@ -40,7 +40,7 @@ def unparse(ast: A.AST) -> Optional[str]:
                 if None in set(elems):
                     return None
                 redirects = "".join(elems)
-                return "{} {}".format(body, redirects)
+                return f"{body} {redirects}"
             elif n == "If":
                 # TODO deal with newline
                 elems = [unparse(p) for p in ast.fields[0].value]
@@ -78,7 +78,7 @@ def unparse(ast: A.AST) -> Optional[str]:
                 name = unparse(ast.fields[0].value)
                 if name is None:
                     return None
-                return "function {}() ".format(name, body)
+                return "function {}() ".format(name, body)  # TODO
             elif n == "Literal":
                 return unparse(ast.fields[0].value)
             elif n == "Word":
@@ -126,9 +126,9 @@ def unparse(ast: A.AST) -> Optional[str]:
                 if output is None:
                     return None
 
-                value = "{}{}{}".format(input, t, output)
+                value = f"{input}{t}{output}"
                 if heredoc != "":
-                    value = "{}\n{}".format(value, heredoc)
+                    value = f"{value}\n{heredoc}"
                 return value
             elif n == "Heredoc":
                 return unparse(ast.fields[0].value)
@@ -137,16 +137,16 @@ def unparse(ast: A.AST) -> Optional[str]:
                 t = unparse(ast.fields[1].value)
                 if command is None or t is None:
                     return None
-                return "{}({})".format(t, command)
+                return f"{t}({command})"
             elif n == "CommandSubstitution":
                 command = unparse(ast.fields[0].value)
                 if command is None:
                     return None
                 try:
-                    bashlex.parse("$({})".format(command))
-                    return "$({})".format(command)
+                    bashlex.parse(f"$({command})")
+                    return f"$({command})"
                 except:  # noqa
-                    return "`{}`".format(command)
+                    return f"`{command}`"
             elif n == "None":
                 return ""
             else:
