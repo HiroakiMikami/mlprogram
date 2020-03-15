@@ -63,12 +63,15 @@ class TransformDataset:
                 query_for_synth, input_tensor = \
                     self.transform_input(entry.input)
                 evaluator = self.transform_code(entry.ground_truth)
-                action_sequence, query = self.transform_evaluator(
+                if evaluator is None:
+                    continue
+                tmp = self.transform_evaluator(
                     evaluator, query_for_synth)
                 ground_truth = self.transform_ground_truth(
                     evaluator, query_for_synth)
-                if action_sequence is None or ground_truth is None:
+                if ground_truth is None or tmp is None:
                     continue
+                action_sequence, query = tmp
                 entries.append((input_tensor, action_sequence, query,
                                 ground_truth))
         return ListDataset(entries)
