@@ -308,6 +308,38 @@ class ActionSequenceEncoder:
 
         return retval
 
+    def encode_path(self, evaluator: Evaluator, max_depth: int) \
+            -> torch.Tensor:
+        """
+        Return the tensor encoding the each action
+
+        Parameters
+        ----------
+        evaluator: Evaluator
+            The evaluator containing action sequence to be encoded
+        max_depth: int
+
+        Returns
+        -------
+        torch.Tensor
+            The encoded tensor. The shape of tensor is
+            (len(action_sequence), max_depth).
+            [i, :] encodes the path from the root node to i-th node.
+            Each node represented by the rule id.
+            The padding value is -1.
+        """
+        L = len(evaluator.action_sequence.sequence)
+        retval = torch.ones(L, max_depth).long() * -1
+        for i in range(L):
+            parent_opt = evaluator.parent(i)
+            if parent_opt is not None:
+                p = evaluator.action_sequence.sequence[parent_opt.action]
+                if isinstance(p, ApplyRule):
+                    retval[i, 0] = self._rule_encoder.encode(p.rule)
+                retval[i, 1:] = retval[parent_opt.action, :max_depth - 1]
+
+        return retval
+
     @staticmethod
     def remove_variadic_node_types(node_types: List[NodeType]) \
             -> List[NodeType]:
