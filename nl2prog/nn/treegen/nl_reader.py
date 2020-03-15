@@ -93,7 +93,7 @@ class NLReader(nn.Module):
             char_embed_size, hidden_size, n_heads, dropout, i
         ) for i in range(n_blocks)]
         for i, block in enumerate(self.blocks):
-            self.add_module("block_{}".format(i), block)
+            self.add_module(f"block_{i}", block)
 
     def forward(self, input: Tuple[PaddedSequenceWithMask,
                                    PaddedSequenceWithMask]) \

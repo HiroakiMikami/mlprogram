@@ -63,9 +63,9 @@ class NodeType:
 
     def __str__(self):
         if self.constraint == NodeConstraint.Variadic:
-            return "{}*".format(self.type_name)
+            return f"{self.type_name}*"
         elif self.constraint == NodeConstraint.Token:
-            return "{}(token)".format(self.type_name)
+            return f"{self.type_name}(token)"
         else:
             return str(self.type_name)
 
@@ -96,8 +96,8 @@ class ExpandTreeRule:
 
     def __str__(self):
         children = ", ".join(
-            map(lambda x: "{}: {}".format(x[0], x[1]), self.children))
-        return "{} -> [{}]".format(self.parent, children)
+            map(lambda x: f"{x[0]}: {x[1]}", self.children))
+        return f"{self.parent} -> [{children}]"
 
 
 class CloseVariadicFieldRule:
@@ -136,7 +136,7 @@ class ApplyRule:
     rule: Rule
 
     def __str__(self):
-        return "Apply ({})".format(self.rule)
+        return f"Apply ({self.rule})"
 
 
 class CloseNode:
@@ -173,7 +173,7 @@ class GenerateToken:
     token: Union[CloseNode, str]
 
     def __str__(self):
-        return "Generate {}".format(self.token)
+        return f"Generate {self.token}"
 
 
 Action = Union[ApplyRule, GenerateToken]

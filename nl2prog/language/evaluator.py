@@ -23,7 +23,7 @@ class InvalidActionException(Exception):
             The actual action
         """
         super(InvalidActionException, self).__init__(
-            "Invalid action: {} (expected: {})".format(actual, expected))
+            f"Invalid action: {actual} (expected: {expected})")
 
 
 @dataclass

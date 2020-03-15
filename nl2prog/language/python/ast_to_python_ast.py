@@ -15,7 +15,7 @@ def to_builtin_type(value: str, type_name: str) -> BuiltinType:
         return value
     else:
         try:
-            return eval("{}({})".format(type_name, value))
+            return eval(f"{type_name}({value})")
         except Exception:
             return value
 
@@ -24,7 +24,7 @@ def to_python_ast(target: ast.AST) -> PythonAST:
     if isinstance(target, ast.Node):
         # Node
         type_name = target.type_name
-        node = eval("python_ast.{}()".format(type_name))
+        node = eval(f"python_ast.{type_name}()")
 
         # Fill all fields
         for field_name in node._fields:

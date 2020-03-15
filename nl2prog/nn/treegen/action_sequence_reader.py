@@ -108,7 +108,7 @@ class ActionSequenceReader(nn.Module):
             n_heads, dropout, i
         ) for i in range(n_blocks)]
         for i, block in enumerate(self.blocks):
-            self.add_module("block_{}".format(i), block)
+            self.add_module(f"block_{i}", block)
         self.rule_embedding = RuleEmbedding(
             rule_num, token_num, node_type_num,
             max_arity, hidden_size, hidden_size, rule_embed_size)

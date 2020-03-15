@@ -19,7 +19,7 @@ def tokenize_query(query: str) -> Query:
     """
     # Preprocess annotation
     def placeholder(id):
-        return "####{}####".format(id)
+        return f"####{id}####"
 
     # Replace quoted string literals with placeholders
     mappings = {}

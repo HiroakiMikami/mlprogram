@@ -22,6 +22,6 @@ def format_annotations(annotations: List[str]) -> List[str]:
         if m is None or len(annots) == 0:
             annots.append(annotation.strip())
         else:
-            annots[-1] = "{} {}".format(annots[-1], m.group(0)).strip()
+            annots[-1] = f"{annots[-1]} {m.group(0)}".strip()
             annots.append(annotation[m.end():].strip())
     return list(filter(lambda x: len(x) > 0, annots))
