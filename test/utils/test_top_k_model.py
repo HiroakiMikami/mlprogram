@@ -13,18 +13,18 @@ class TestTopKModel(unittest.TestCase):
             topk = TopKModel(2, tmpdir)
             model = nn.Linear(1, 1)
             topk.save(1.0, "1", model)
-            self.assertEqual(["model_1.pickle"], os.listdir(tmpdir))
+            self.assertEqual(["model_1.pt"], os.listdir(tmpdir))
             topk.save(2.0, "2", model)
-            self.assertEqual(["model_1.pickle", "model_2.pickle"],
+            self.assertEqual(["model_1.pt", "model_2.pt"],
                              os.listdir(tmpdir))
             topk.save(3.0, "3", model)
-            self.assertEqual(["model_2.pickle", "model_3.pickle"],
+            self.assertEqual(["model_2.pt", "model_3.pt"],
                              os.listdir(tmpdir))
             topk.save(0.0, "0", model)
-            self.assertEqual(["model_2.pickle", "model_3.pickle"],
+            self.assertEqual(["model_2.pt", "model_3.pt"],
                              os.listdir(tmpdir))
 
-            result = torch.load(os.path.join(tmpdir, "model_3.pickle"))
+            result = torch.load(os.path.join(tmpdir, "model_3.pt"))
             self.assertEqual(3.0, result["score"])
 
     def test_resume_case(self):
@@ -36,10 +36,10 @@ class TestTopKModel(unittest.TestCase):
 
             topk = TopKModel(2, tmpdir)
             topk.save(3.0, "3", model)
-            self.assertEqual(["model_2.pickle", "model_3.pickle"],
+            self.assertEqual(["model_2.pt", "model_3.pt"],
                              os.listdir(tmpdir))
             topk.save(0.0, "0", model)
-            self.assertEqual(["model_2.pickle", "model_3.pickle"],
+            self.assertEqual(["model_2.pt", "model_3.pt"],
                              os.listdir(tmpdir))
 
 
