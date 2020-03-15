@@ -4,9 +4,11 @@ from .action_sequence_reader \
     import ActionSequenceReaderBlock, ActionSequenceReader
 from .decoder import DecoderBlock, Decoder
 from .predictor import Predictor
-from .embedding import QueryEmbedding, RuleEmbedding, ActionEmbedding
+from .embedding \
+    import ElementEmbedding, ActionEmbedding, ActionSignatureEmbedding
 from .train_model import TrainModel
 
 __all__ = ["Gating", "NLReaderBlock", "NLReader", "ActionSequenceReaderBlock",
            "ActionSequenceReader", "DecoderBlock", "Decoder", "Predictor",
-           "QueryEmbedding", "ActionEmbedding", "RuleEmbedding", "TrainModel"]
+           "ElementEmbedding", "ActionEmbedding", "ActionSignatureEmbedding",
+           "TrainModel"]

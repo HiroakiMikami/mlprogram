@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 from typing import Tuple
 
-from nl2prog.nn import SeparableConv1d
+from nl2prog.nn import SeparableConv1d, EmbeddingWithMask
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.nn.functional \
     import index_embeddings, gelu, lne_to_nel, nel_to_lne
 from .gating import Gating
-from .embedding import QueryEmbedding
+from .embedding import ElementEmbedding
 
 
 class NLReaderBlock(nn.Module):
@@ -85,10 +85,13 @@ class NLReader(nn.Module):
                  char_embed_size: int, hidden_size: int,
                  n_heads: int, dropout: float, n_blocks: int):
         super(NLReader, self).__init__()
-        self.query_embedding = QueryEmbedding(
-            token_num, char_num, max_token_len,
-            hidden_size, hidden_size, char_embed_size
-        )
+        self.char_num = char_num
+        self.query_embed = nn.Embedding(token_num, hidden_size)
+        self.query_elem_embed = ElementEmbedding(
+            EmbeddingWithMask(char_num, hidden_size,
+                              char_num),
+            max_token_len, hidden_size, char_embed_size)
+
         self.blocks = [NLReaderBlock(
             char_embed_size, hidden_size, n_heads, dropout, i
         ) for i in range(n_blocks)]
@@ -118,8 +121,9 @@ class NLReader(nn.Module):
         other_features: None
         """
         token_query, char_query = input
-        e_token_query, e_char_query = \
-            self.query_embedding(token_query.data, char_query.data)
+        e_token_query = self.query_embed(token_query.data)
+        char_query = char_query.data + (char_query == -1) * (self.char_num + 1)
+        e_char_query = self.query_elem_embed(char_query)
         input = PaddedSequenceWithMask(e_token_query, token_query.mask)
         for block in self.blocks:
             input, _ = block(input, e_char_query)
