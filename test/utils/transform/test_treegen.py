@@ -58,7 +58,7 @@ class TestTransformEvaluator(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = \
             TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, 2)
+        transform = TransformEvaluator(aencoder, 2, 3)
         (prev_action, prev_rule_action, depth, matrix), query = \
             transform(evaluator, ["ab", "test"])
         self.assertTrue(np.array_equal(
@@ -110,9 +110,9 @@ class TestTransformEvaluator(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
-                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
-                [5, -1, -1]
+                [-1, -1, -1], [1, -1, -1], [2, 1, -1], [3, 2, 1],
+                [2, 1, -1], [4, 2, 1], [4, 2, 1], [3, 4, 2],
+                [4, 2, 1]
             ],
             query.numpy()
         ))
@@ -124,7 +124,7 @@ class TestTransformEvaluator(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = \
             TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, 2, train=False)
+        transform = TransformEvaluator(aencoder, 2, 3, train=False)
         (prev_action, prev_rule_action, depth, matrix), query = \
             transform(evaluator, ["ab", "test"])
         self.assertTrue(np.array_equal(
@@ -178,9 +178,9 @@ class TestTransformEvaluator(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
-                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
-                [5, -1, -1], [-1, 4, -1]
+                [-1, -1, -1], [1, -1, -1], [2, 1, -1], [3, 2, 1],
+                [2, 1, -1], [4, 2, 1], [4, 2, 1], [3, 4, 2],
+                [4, 2, 1], [5, 4, 2]
             ],
             query.numpy()
         ))
@@ -193,7 +193,7 @@ class TestTransformEvaluator(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = \
             TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, 3)
+        transform = TransformEvaluator(aencoder, 3, 3)
         result = transform(evaluator, ["ab", "test"])
         self.assertEqual(None, result)
 
