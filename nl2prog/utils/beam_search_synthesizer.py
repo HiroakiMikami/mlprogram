@@ -73,11 +73,17 @@ class BeamSearchSynthesizer:
         self._max_steps = max_steps
 
     def initialize(self, input: Any) -> Any:
-        pass
+        raise RuntimeError("Not Implemented")
 
     def batch_update(self, hs: List[Hypothesis]) \
             -> List[Tuple[Any, LazyLogProbability]]:
-        pass
+        raise RuntimeError("Not Implemented")
+
+    def load_state_dict(self, state_dict: Dict[str, Any]):
+        raise RuntimeError("Not Implemented")
+
+    def state_dict(self) -> Dict[str, Any]:
+        raise RuntimeError("Not Implemented")
 
     def synthesize(self, input: Any):
         """

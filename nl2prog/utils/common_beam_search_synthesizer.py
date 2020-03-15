@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import List, Callable, Optional, Tuple, Any
+from typing import List, Callable, Optional, Tuple, Any, Dict
 from dataclasses import dataclass
 from nl2prog.language.action import ActionOptions
 from nl2prog.language.evaluator import Evaluator
@@ -8,6 +8,7 @@ from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
+from nl2prog.nn import TrainModel
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -79,6 +80,14 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.predictor = predictor
         self.action_sequence_encoder = action_sequence_encoder
         self.eps = eps
+
+    def state_dict(self) -> Dict[str, Any]:
+        return TrainModel(self.input_reader, self.action_sequence_reader,
+                          self.decoder, self.predictor).state_dict()
+
+    def load_state_dict(self, state_dict) -> Dict[str, Any]:
+        TrainModel(self.input_reader, self.action_sequence_reader,
+                   self.decoder, self.predictor).load_state_dict(state_dict)
 
     def initialize(self, input: Any):
         query_for_synth, input = self.transform_input(input)
