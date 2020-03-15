@@ -344,6 +344,66 @@ class TestEncoder(unittest.TestCase):
             action.numpy()
         ))
 
+    def test_encode_path(self):
+        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
+                                 [("name",
+                                   NodeType("value", NodeConstraint.Token)),
+                                  ("body",
+                                   NodeType("expr", NodeConstraint.Variadic))])
+        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+                              [("constant",
+                                NodeType("value", NodeConstraint.Token))])
+
+        encoder = ActionSequenceEncoder(
+            Samples([funcdef, expr],
+                    [NodeType("def", NodeConstraint.Node),
+                     NodeType("value", NodeConstraint.Token),
+                     NodeType("expr", NodeConstraint.Node)],
+                    ["f", "2"],
+                    ActionOptions(True, True)),
+            0)
+        evaluator = Evaluator()
+        evaluator.eval(ApplyRule(funcdef))
+        evaluator.eval(GenerateToken("f"))
+        evaluator.eval(GenerateToken("1"))
+        evaluator.eval(GenerateToken("2"))
+        evaluator.eval(GenerateToken(CloseNode()))
+        evaluator.eval(ApplyRule(expr))
+        evaluator.eval(GenerateToken("f"))
+        evaluator.eval(GenerateToken(CloseNode()))
+        evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
+        path = encoder.encode_path(evaluator, 2)
+
+        self.assertTrue(np.array_equal(
+            np.array([
+                [-1, -1],  # funcdef
+                [2, -1],  # f
+                [2, -1],  # 1
+                [2, -1],  # 2
+                [2, -1],  # CloseNode
+                [2, -1],  # expr
+                [3, 2],  # f
+                [3, 2],  # CloseNode
+                [2, -1],  # CloseVariadicField
+            ], dtype=np.long),
+            path.numpy()
+        ))
+        path = encoder.encode_path(evaluator, 1)
+        self.assertTrue(np.array_equal(
+            np.array([
+                [-1],  # funcdef
+                [2],  # f
+                [2],  # 1
+                [2],  # 2
+                [2],  # CloseNode
+                [2],  # expr
+                [3],  # f
+                [3],  # CloseNode
+                [2],  # CloseVariadicField
+            ], dtype=np.long),
+            path.numpy()
+        ))
+
     def test_remove_variadic_node_types(self):
         self.assertEqual(
             [NodeType("t1", NodeConstraint.Node),
