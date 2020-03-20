@@ -81,6 +81,32 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.action_sequence_encoder = action_sequence_encoder
         self.eps = eps
 
+    @staticmethod
+    def create(beam_size: int,
+               transform_input: Callable[[Any], Tuple[List[str], Any]],
+               transform_evaluator: Callable[[Evaluator, List[str]],
+                                             Optional[Any]],
+               collate_input: Callable[[List[Any]], Any],
+               collate_action_sequence: Callable[[List[Any]], Any],
+               collate_query: Callable[[List[Any]], Any],
+               collate_state: Callable[[List[Any]], Any],
+               collate_nl_feature: Callable[[List[Any]], Any],
+               collate_other_feature: Callable[[List[Any]], Any],
+               split_states: Callable[[Any], List[Any]],
+               model: TrainModel,
+               action_sequence_encoder: ActionSequenceEncoder,
+               is_subtype: IsSubtype,
+               options: ActionOptions = ActionOptions(True, True),
+               eps: float = 1e-8,
+               max_steps: Optional[int] = None):
+        return CommonBeamSearchSynthesizer(
+            beam_size, transform_input, transform_evaluator, collate_input,
+            collate_action_sequence, collate_query, collate_state,
+            collate_nl_feature, collate_other_feature, split_states,
+            model.input_reader, model.action_sequence_reader, model.decoder,
+            model.predictor, action_sequence_encoder, is_subtype, options, eps,
+            max_steps)
+
     def state_dict(self) -> Dict[str, Any]:
         return TrainModel(self.input_reader, self.action_sequence_reader,
                           self.decoder, self.predictor).state_dict()

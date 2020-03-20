@@ -6,6 +6,15 @@ from nl2prog.utils import CommonBeamSearchSynthesizer
 
 
 class TestCommonBeamSearchSynthesizer(unittest.TestCase):
+    def test_create(self):
+        dummy = None
+        synthesizer = CommonBeamSearchSynthesizer.create(
+            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
+            TrainModel(nn.Linear(1, 1), nn.Linear(2, 2), nn.Linear(3, 3),
+                       nn.Linear(5, 5)),
+            dummy, dummy)
+        self.assertEqual((1, 1), synthesizer.input_reader.weight.shape)
+
     def test_state_dict(self):
         dummy = None
         synthesizer = CommonBeamSearchSynthesizer(
