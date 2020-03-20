@@ -43,7 +43,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  is_subtype: IsSubtype,
                  options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
-                 max_steps: Optional[int] = None):
+                 max_steps: Optional[int] = None,
+                 device: torch.device = torch.device("cpu")):
         """
         Parameters
         ----------
@@ -74,10 +75,10 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.collate_nl_feature = collate_nl_feature
         self.collate_other_feature = collate_other_feature
         self.split_states = split_states
-        self.input_reader = input_reader
-        self.action_sequence_reader = action_sequence_reader
-        self.decoder = decoder
-        self.predictor = predictor
+        self.input_reader = input_reader.to(device)
+        self.action_sequence_reader = action_sequence_reader.to(device)
+        self.decoder = decoder.to(device)
+        self.predictor = predictor.to(device)
         self.action_sequence_encoder = action_sequence_encoder
         self.eps = eps
 
@@ -98,7 +99,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                is_subtype: IsSubtype,
                options: ActionOptions = ActionOptions(True, True),
                eps: float = 1e-8,
-               max_steps: Optional[int] = None):
+               max_steps: Optional[int] = None,
+               device: torch.device = torch.device("cpu")):
         return CommonBeamSearchSynthesizer(
             beam_size, transform_input, transform_evaluator, collate_input,
             collate_action_sequence, collate_query, collate_state,
