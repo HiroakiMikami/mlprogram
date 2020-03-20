@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import Callable, List, Any, Optional, Tuple, Union
+from typing import Callable, List, Any, Optional, Tuple
 from torchnlp.encoders import LabelEncoder
 
 from nl2prog.language.evaluator import Evaluator
@@ -9,24 +9,16 @@ from nl2prog.utils import Query
 
 
 class TransformQuery:
-    def __init__(self, tokenize_query: Callable[[str], Query],
+    def __init__(self, extract_query: Callable[[Any], Query],
                  word_encoder: LabelEncoder, char_encoder: LabelEncoder,
                  max_word_length):
-        self.tokenize_query = tokenize_query
+        self.extract_query = extract_query
         self.word_encoder = word_encoder
         self.char_encoder = char_encoder
         self.max_word_length = max_word_length
 
-    def __call__(self, query: Union[str, List[str]]) -> Tuple[List[str], Any]:
-        if isinstance(query, str):
-            query = self.tokenize_query(query)
-        else:
-            q = Query([], [])
-            for word in query:
-                q2 = self.tokenize_query(word)
-                q.query_for_dnn.extend(q2.query_for_dnn)
-                q.query_for_synth.extend(q2.query_for_synth)
-            query = q
+    def __call__(self, input: Any) -> Tuple[List[str], Any]:
+        query = self.extract_query(input)
 
         word_query = self.word_encoder.batch_encode(query.query_for_dnn)
         char_query = \
