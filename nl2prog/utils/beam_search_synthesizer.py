@@ -148,7 +148,7 @@ class BeamSearchSynthesizer:
                     for rule, log_prob in log_prob_rule.items():
                         action = ApplyRule(rule)
                         if isinstance(action.rule, ExpandTreeRule):
-                            if self._options.retain_vairadic_fields:
+                            if self._options.retain_variadic_fields:
                                 if head_field.type_name == Root() and \
                                     (action.rule.parent.constraint !=
                                         NodeConstraint.Variadic) and \
@@ -190,7 +190,7 @@ class BeamSearchSynthesizer:
                                              (i, action))
                         else:
                             # CloseVariadicFieldRule
-                            if self._options.retain_vairadic_fields and \
+                            if self._options.retain_variadic_fields and \
                                 head_field is not None and \
                                 head_field.constraint == \
                                     NodeConstraint.Variadic:
