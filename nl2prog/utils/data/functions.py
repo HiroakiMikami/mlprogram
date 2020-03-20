@@ -12,26 +12,26 @@ from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
 def get_words(dataset: torch.utils.data.Dataset,
-              tokenize_query: Callable[[str], Query],
+              extract_query: Callable[[Any], Query],
               ) -> List[str]:
     words = []
 
     for group in dataset:
         for entry in group:
-            query = tokenize_query(entry.input)
+            query = extract_query(entry.input)
             words.extend(query.query_for_dnn)
 
     return words
 
 
 def get_characters(dataset: torch.utils.data.Dataset,
-                   tokenize_query: Callable[[str], Query],
+                   extract_query: Callable[[Any], Query],
                    ) -> List[str]:
     chars = []
 
     for group in dataset:
         for entry in group:
-            query = tokenize_query(entry.input)
+            query = extract_query(entry.input)
             for token in query.query_for_dnn:
                 chars.extend(token)
 
