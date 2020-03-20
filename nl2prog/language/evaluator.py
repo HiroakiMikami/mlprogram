@@ -112,7 +112,7 @@ class Evaluator:
                 update_head()
                 return
 
-            if not self._options.retain_vairadic_fields or \
+            if not self._options.retain_variadic_fields or \
                close_variadic_field or \
                head_rule.children[head.field][1].constraint != \
                     A.NodeConstraint.Variadic:
@@ -174,7 +174,7 @@ class Evaluator:
                 if head_field.constraint == A.NodeConstraint.Token:
                     raise InvalidActionException(
                         "GenerateToken", action)
-                if not self._options.retain_vairadic_fields:
+                if not self._options.retain_variadic_fields:
                     raise InvalidActionException(
                         "CloseVariadicField is invalid "
                         "(retain_variadic_fields=False)", action)
@@ -234,7 +234,7 @@ class Evaluator:
                         Field(name, node_type.type_name, generate_ast(action)))
                 elif node_type.constraint == A.NodeConstraint.Variadic:
                     # Variadic
-                    if self._options.retain_vairadic_fields:
+                    if self._options.retain_variadic_fields:
                         ast.fields.append(Field(name, node_type.type_name, []))
                         for action in actions:
                             a: A.ApplyRule = self._action_sequence[action]

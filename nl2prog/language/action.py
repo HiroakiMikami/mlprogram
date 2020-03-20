@@ -12,7 +12,7 @@ class NodeConstraint(Enum):
 
 @dataclass
 class ActionOptions:
-    retain_vairadic_fields: bool
+    retain_variadic_fields: bool
     split_non_terminal: bool
 
 
@@ -229,7 +229,7 @@ def ast_to_action_sequence(node: AST,
                 children))]
             for field in node.fields:
                 if isinstance(field.value, list):
-                    if not options.retain_vairadic_fields:
+                    if not options.retain_variadic_fields:
                         elem_type_name = to_node_type(field).type_name
                         elem = NodeType(elem_type_name, NodeConstraint.Node)
                         seq.append(ApplyRule(ExpandTreeRule(
@@ -238,7 +238,7 @@ def ast_to_action_sequence(node: AST,
                         )))
                     for v in field.value:
                         seq.extend(to_sequence(v))
-                    if options.retain_vairadic_fields:
+                    if options.retain_variadic_fields:
                         seq.append(ApplyRule(CloseVariadicFieldRule()))
                 else:
                     seq.extend(to_sequence(field.value))
