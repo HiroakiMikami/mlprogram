@@ -107,7 +107,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             collate_nl_feature, collate_other_feature, split_states,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, action_sequence_encoder, is_subtype, options, eps,
-            max_steps)
+            max_steps, device)
 
     def state_dict(self) -> Dict[str, Any]:
         return TrainModel(self.input_reader, self.action_sequence_reader,
