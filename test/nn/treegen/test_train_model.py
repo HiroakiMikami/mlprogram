@@ -17,7 +17,7 @@ class TestTrain(unittest.TestCase):
         cencoder = LabelEncoder([str(i) for i in range(255)], 0)
         aencoder = ActionSequenceEncoder(samples, 0)
         model = TrainModel(qencoder, cencoder, aencoder,
-                           3, 3, 1, 3, 3, 3, 3, 3, 0.0)
+                           3, 3, 3, 1, 3, 3, 3, 3, 3, 0.0)
         self.assertEqual(196, len(list(model.named_parameters())))
 
     def test_shape(self):
@@ -29,7 +29,7 @@ class TestTrain(unittest.TestCase):
         cencoder = LabelEncoder([str(i) for i in range(255)], 0)
         aencoder = ActionSequenceEncoder(samples, 0)
         model = TrainModel(qencoder, cencoder, aencoder,
-                           3, 3, 1, 3, 3, 3, 3, 3, 0.0)
+                           3, 3, 3, 1, 3, 3, 3, 3, 3, 0.0)
         q0 = torch.randint(1, [2])
         qc0 = torch.randint(256, [2, 3])
         q1 = torch.randint(1, [3])

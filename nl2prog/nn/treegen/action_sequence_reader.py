@@ -7,7 +7,8 @@ from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.nn.functional \
     import index_embeddings, position_embeddings, gelu, lne_to_nel, nel_to_lne
 from .gating import Gating
-from .embedding import RuleEmbedding
+from .embedding \
+    import ActionEmbedding, ActionSignatureEmbedding, ElementEmbedding
 
 
 class ActionSequenceReaderBlock(nn.Module):
@@ -109,9 +110,11 @@ class ActionSequenceReader(nn.Module):
         ) for i in range(n_blocks)]
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
-        self.rule_embedding = RuleEmbedding(
-            rule_num, token_num, node_type_num,
-            max_arity, hidden_size, hidden_size, rule_embed_size)
+        self.action_embed = ActionEmbedding(rule_num, token_num, hidden_size)
+        self.elem_embed = ElementEmbedding(
+            ActionSignatureEmbedding(token_num, node_type_num,
+                                     hidden_size),
+            max_arity + 1, hidden_size, rule_embed_size)
 
     def forward(self,
                 action_sequence: Tuple[PaddedSequenceWithMask,
@@ -148,9 +151,8 @@ class ActionSequenceReader(nn.Module):
         """
         previous_action, rule_previous_action, depth, adjacency_matrix = \
             action_sequence
-        e_action, e_rule_action = \
-            self.rule_embedding(previous_action.data,
-                                rule_previous_action.data)
+        e_action = self.action_embed(previous_action.data)
+        e_rule_action = self.elem_embed(rule_previous_action.data)
         input = PaddedSequenceWithMask(e_action, previous_action.mask)
         for block in self.blocks:
             input, _ = block(input, depth, e_rule_action, adjacency_matrix)

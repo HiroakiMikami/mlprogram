@@ -41,7 +41,7 @@ This implementation does not set the maximum length because of PyTorch Define-by
 
 TreeGen is faster than NL2Code during training, however, there are the following 2 problems:
 
-* The loss becomes NaN in the final phase of the training
+* The loss sometimes becomes NaN in the final phase of the training
 * The result when using Hearthstone dataset is worse than the reported value.
 
 
@@ -61,7 +61,7 @@ The details of the training results are shown in `result/` directory.
 |Paper  |Top-1 Acc|Top-1 BLEU|
 |:---   |---:     |---:      |
 |NL2Code|4.5%     |78.8%     |
-|TreeGen|1.5%     |62.1%     |
+|TreeGen|1.5%     |63.3%     |
 
 ### NL2Bash
 

@@ -9,7 +9,7 @@ class TrainModel(BaseTrainModel):
     def __init__(self, query_encoder: LabelEncoder,
                  char_encoder: LabelEncoder,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 max_token_len: int, max_arity: int,
+                 max_token_len: int, max_arity: int, max_depth: int,
                  num_heads: int,
                  num_nl_reader_blocks: int,
                  num_action_sequence_reader_blocks: int,
@@ -32,7 +32,7 @@ class TrainModel(BaseTrainModel):
                 rule_num, token_num, node_type_num, max_arity, hidden_size,
                 hidden_size, 3, num_heads, dropout,
                 num_action_sequence_reader_blocks),
-            Decoder(rule_num, token_num, hidden_size, feature_size,
+            Decoder(rule_num, token_num, max_depth, hidden_size, feature_size,
                     hidden_size, num_heads, dropout, num_decoder_blocks),
             Predictor(hidden_size, hidden_size, rule_num, token_num,
                       hidden_size)
