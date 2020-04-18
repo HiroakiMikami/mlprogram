@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex"]
 extras = {
-    "test": ["flake8", "autopep8", "fairseq"],
+    "test": ["flake8", "autopep8", "fairseq", "mypy"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }
