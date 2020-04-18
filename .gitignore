@@ -5,6 +5,7 @@
 !/README.md
 !/setup.py
 !/nl2prog/**/*.py
+!/nl2prog/dataset/deepcoder/DeepCoder_Utils
 !/bin/*.bash
 !/examples/**/*.ipynb
 !/test/**/*.py
