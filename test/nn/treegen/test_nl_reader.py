@@ -31,10 +31,10 @@ class TestNLReaderBlock(unittest.TestCase):
         out0 = out0.data[:5, :1, :]
         weight0 = weight0[:1, :5, :5]
         out1 = out1.data
-        self.assertTrue(np.array_equal(out0.detach().numpy(),
-                                       out1.detach().numpy()))
-        self.assertTrue(np.array_equal(weight0.detach().numpy(),
-                                       weight1.detach().numpy()))
+        self.assertTrue(np.allclose(out0.detach().numpy(),
+                                    out1.detach().numpy()))
+        self.assertTrue(np.allclose(weight0.detach().numpy(),
+                                    weight1.detach().numpy()))
 
 
 class TestNLReader(unittest.TestCase):
@@ -64,8 +64,8 @@ class TestNLReader(unittest.TestCase):
                           pad_sequence([in10])))
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
-        self.assertTrue(np.array_equal(out0.detach().numpy(),
-                                       out1.detach().numpy()))
+        self.assertTrue(np.allclose(out0.detach().numpy(),
+                                    out1.detach().numpy()))
 
 
 if __name__ == "__main__":
