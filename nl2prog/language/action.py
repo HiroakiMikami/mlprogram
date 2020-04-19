@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from nl2prog.language.ast import AST, Node, Leaf, Field
-from typing import Tuple, Union, List, Any, Callable, Optional
+from nl2prog.language.ast import AST, Node, Leaf, Field, Root
+from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
 from enum import Enum
 
 
@@ -14,27 +14,6 @@ class NodeConstraint(Enum):
 class ActionOptions:
     retain_variadic_fields: bool
     split_non_terminal: bool
-
-
-class Root:
-    """
-    The type of the root node
-    """
-    _instance = None
-
-    def __hash__(self):
-        return hash(str(self))
-
-    def __eq__(self, rhs: Any):
-        return isinstance(rhs, Root)
-
-    def __str__(self):
-        return "<Root>"
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
 
 
 @dataclass
@@ -185,7 +164,7 @@ class ActionSequence:
     options: ActionOptions
 
 
-Tokenizer = Callable[[str], List[str]]
+Tokenizer = Callable[[str], Sequence[str]]
 
 
 def ast_to_action_sequence(node: AST,
@@ -245,8 +224,9 @@ def ast_to_action_sequence(node: AST,
             return seq
         elif isinstance(node, Leaf):
             if options.split_non_terminal:
-                tokens: List[Union[str, CloseNode]
-                             ] = tokenizer(str(node.value))
+                assert tokenizer is not None
+                tokens: List[Union[str, CloseNode]] = \
+                    list(tokenizer(str(node.value)))
                 tokens.append(CloseNode())
                 return list(map(lambda x: GenerateToken(x), tokens))
             else:

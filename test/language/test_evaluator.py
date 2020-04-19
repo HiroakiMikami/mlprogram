@@ -4,8 +4,8 @@ from nl2prog.language.evaluator \
     import Evaluator, Parent, InvalidActionException
 from nl2prog.language.action \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
-    GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions, Root
-from nl2prog.language.ast import Node, Leaf, Field
+    GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions
+from nl2prog.language.ast import Node, Leaf, Field, Root
 
 
 class TestEvaluator(unittest.TestCase):

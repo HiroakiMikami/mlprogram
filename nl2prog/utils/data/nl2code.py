@@ -1,5 +1,5 @@
 import torch
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from nl2prog.nn.utils import rnn
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
@@ -10,9 +10,9 @@ class CollateInput:
         self.device = device
 
     def __call__(self, inputs: List[torch.Tensor]) -> PaddedSequenceWithMask:
-        inputs = rnn.pad_sequence(inputs, padding_value=-1)
+        pad_inputs = rnn.pad_sequence(inputs, padding_value=-1)
 
-        return inputs.to(self.device)
+        return pad_inputs.to(self.device)
 
 
 class CollateActionSequence:
@@ -27,10 +27,10 @@ class CollateActionSequence:
         for action, prev_action in action_sequence:
             actions.append(action)
             prev_actions.append(prev_action)
-        actions = rnn.pad_sequence(actions, padding_value=-1)
-        prev_actions = rnn.pad_sequence(prev_actions, padding_value=-1)
+        pad_actions = rnn.pad_sequence(actions, padding_value=-1)
+        pad_prev_actions = rnn.pad_sequence(prev_actions, padding_value=-1)
 
-        return (actions.to(self.device), prev_actions.to(self.device))
+        return (pad_actions.to(self.device), pad_prev_actions.to(self.device))
 
 
 class CollateState:
@@ -39,7 +39,7 @@ class CollateState:
 
     def __call__(self, states: List[Tuple[torch.Tensor, torch.Tensor,
                                           torch.Tensor]]) \
-            -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+            -> Optional[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         if len(states) == 0 or states[0] is None:
             return None
         hist = \

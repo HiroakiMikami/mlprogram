@@ -1,17 +1,17 @@
-from typing import List, Callable, Any, Tuple, Dict, Optional, Union
+from typing import List, Callable, Any, Tuple, Dict, Optional, Union, cast
 from dataclasses import dataclass
 from nl2prog.language.evaluator import Evaluator
-from nl2prog.language.ast import AST
+from nl2prog.language.ast import AST, Root
 from nl2prog.language.action \
     import NodeConstraint, NodeType, ExpandTreeRule, Action, \
-    ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode, Root
+    ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
 from nl2prog.utils import TopKElement
 
 
 """
 True if the argument 0 is subtype of the argument 1
 """
-IsSubtype = Callable[[str, str], bool]
+IsSubtype = Callable[[Union[str, Root], Union[str, Root]], bool]
 
 
 @dataclass
@@ -133,8 +133,11 @@ class BeamSearchSynthesizer:
                 if head is None:
                     continue
                 head_field = \
-                    h.evaluator.action_sequence.sequence[head.action]\
-                    .rule.children[head.field][1]
+                    cast(ExpandTreeRule,
+                         cast(ApplyRule,
+                              h.evaluator.action_sequence.sequence[head.action]
+                              ).rule
+                         ).children[head.field][1]
                 if head_field.constraint == NodeConstraint.Token:
                     is_token = True
                 if is_token:

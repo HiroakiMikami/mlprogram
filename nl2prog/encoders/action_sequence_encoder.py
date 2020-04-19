@@ -1,6 +1,6 @@
 import torch
 from torchnlp.encoders import LabelEncoder
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, cast
 from dataclasses import dataclass
 
 from nl2prog.language.action import NodeType, NodeConstraint
@@ -52,7 +52,9 @@ class Samples:
 
 class ActionSequenceEncoder:
     def __init__(self, samples: Samples, token_threshold: int):
-        reserved_labels = [Unknown()]
+        reserved_labels: List[Union[Unknown,
+                                    CloseVariadicFieldRule,
+                                    CloseNode]] = [Unknown()]
         if samples.options.retain_variadic_fields:
             reserved_labels.append(CloseVariadicFieldRule())
         self._rule_encoder = LabelEncoder(samples.rules,
@@ -142,9 +144,10 @@ class ActionSequenceEncoder:
             a = evaluator.action_sequence.sequence[i]
             parent = evaluator.parent(i)
             if parent is not None:
-                parent_action: ApplyRule = \
-                    evaluator.action_sequence.sequence[parent.action]
-                parent_rule: ExpandTreeRule = parent_action.rule
+                parent_action = \
+                    cast(ApplyRule,
+                         evaluator.action_sequence.sequence[parent.action])
+                parent_rule = cast(ExpandTreeRule, parent_action.rule)
                 action[i, 0] = self._node_type_encoder.encode(
                     convert_node_type_to_key(
                         parent_rule.children[parent.field][1]))
@@ -161,7 +164,7 @@ class ActionSequenceEncoder:
 
                 # Unknown token
                 if token in query:
-                    action[i, 3] = query.index(token)
+                    action[i, 3] = query.index(cast(str, token))
 
                 if encoded_token == 0 and token not in query:
                     return None
@@ -169,9 +172,10 @@ class ActionSequenceEncoder:
         head = evaluator.head
         length = len(evaluator.action_sequence.sequence)
         if head is not None:
-            head_action: ApplyRule = \
-                evaluator.action_sequence.sequence[head.action]
-            head_rule: ExpandTreeRule = head_action.rule
+            head_action = \
+                cast(ApplyRule,
+                     evaluator.action_sequence.sequence[head.action])
+            head_rule = cast(ExpandTreeRule, head_action.rule)
             action[length, 0] = self._node_type_encoder.encode(
                 convert_node_type_to_key(head_rule.children[head.field][1]))
 
@@ -203,9 +207,10 @@ class ActionSequenceEncoder:
         for i in range(len(evaluator.action_sequence.sequence)):
             parent = evaluator.parent(i)
             if parent is not None:
-                parent_action: ApplyRule = \
-                    evaluator.action_sequence.sequence[parent.action]
-                parent_rule: ExpandTreeRule = parent_action.rule
+                parent_action = \
+                    cast(ApplyRule,
+                         evaluator.action_sequence.sequence[parent.action])
+                parent_rule = cast(ExpandTreeRule, parent_action.rule)
                 parent_tensor[i, 0] = self._node_type_encoder.encode(
                     convert_node_type_to_key(parent_rule.parent))
                 parent_tensor[i, 1] = self._rule_encoder.encode(parent_rule)
@@ -215,9 +220,10 @@ class ActionSequenceEncoder:
         head = evaluator.head
         length = len(evaluator.action_sequence.sequence)
         if head is not None:
-            head_action: ApplyRule = \
-                evaluator.action_sequence.sequence[head.action]
-            head_rule: ExpandTreeRule = head_action.rule
+            head_action = \
+                cast(ApplyRule,
+                     evaluator.action_sequence.sequence[head.action])
+            head_rule = cast(ExpandTreeRule, head_action.rule)
             parent_tensor[length, 0] = self._node_type_encoder.encode(
                 convert_node_type_to_key(head_rule.parent))
             parent_tensor[length, 1] = self._rule_encoder.encode(head_rule)
@@ -304,7 +310,7 @@ class ActionSequenceEncoder:
                     retval[i, 1, 1] = encoded_token
 
                 if token in query:
-                    retval[i, 1, 2] = query.index(token)
+                    retval[i, 1, 2] = query.index(cast(str, token))
 
         return retval
 

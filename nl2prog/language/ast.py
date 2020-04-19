@@ -1,6 +1,27 @@
 from dataclasses import dataclass
-from typing import Union, List, Any
+from typing import Union, List, Any, Protocol
 from copy import deepcopy
+
+
+class Root:
+    """
+    The type of the root node
+    """
+    _instance = None
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __eq__(self, rhs: Any):
+        return isinstance(rhs, Root)
+
+    def __str__(self):
+        return "<Root>"
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
 
 class AST:
@@ -20,6 +41,15 @@ class AST:
         pass
 
 
+class ASTProtocol(Protocol):
+    @property
+    def type_name(self) -> Union[str, Root]:
+        ...
+
+    def clone(self) -> AST:
+        ...
+
+
 @dataclass
 class Field:
     """
@@ -36,7 +66,7 @@ class Field:
         variadic.
     """
     name: str
-    type_name: str
+    type_name: Union[str, Root]
     value: Union[AST, List[AST]]
 
     def clone(self):
@@ -81,7 +111,7 @@ class Node(AST):
     fields: List[Field]
         The list of fields
     """
-    type_name: str
+    type_name: Union[str, Root]
     fields: List[Field]
 
     def clone(self):
@@ -119,7 +149,7 @@ class Leaf(AST):
     value: str
         The value represented by this leaf
     """
-    type_name: str
+    type_name: Union[str, Root]
     value: str
 
     def clone(self):

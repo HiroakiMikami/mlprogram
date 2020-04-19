@@ -3,8 +3,9 @@ import unittest
 from nl2prog.language.action \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseNode, CloseVariadicFieldRule, \
-    ActionOptions, ast_to_action_sequence, Root
+    ActionOptions, ast_to_action_sequence
 from nl2prog.language import ast
+from nl2prog.language.ast import Root
 
 
 class TestNodeType(unittest.TestCase):

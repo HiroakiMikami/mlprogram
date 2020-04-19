@@ -226,20 +226,20 @@ class Decoder(nn.Module):
                               device=nl_feature.data.device)
         else:
             history, h_n, c_n = state
-        state = (h_n, c_n)
+        s = (h_n, c_n)
         hs = []
         cs = []
         for d, i in zip(torch.split(input.data, 1, dim=0),
                         torch.split(parent_index.data, 1, dim=0)):
-            ctx, state = self._cell(nl_feature, d.reshape(
-                d.shape[1:]), i, history, state)
-            hs.append(state[0])
+            ctx, s = self._cell(nl_feature, d.reshape(
+                d.shape[1:]), i, history, s)
+            hs.append(s[0])
             cs.append(ctx)
             history = torch.cat([history,
-                                 state[0].reshape(1, *state[0].shape)], dim=0)
+                                 s[0].reshape(1, *s[0].shape)], dim=0)
         hs = torch.stack(hs)
         cs = torch.stack(cs)
-        h_n, c_n = state
+        h_n, c_n = s
 
         return ((rnn.PaddedSequenceWithMask(hs, input.mask),
                  rnn.PaddedSequenceWithMask(cs, input.mask)),

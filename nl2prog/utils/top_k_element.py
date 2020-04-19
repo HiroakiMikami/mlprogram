@@ -18,7 +18,7 @@ class TopKElement:
         handle_deleted_element: Optional[Callable[[Any], None]]
             The function called when the element is deleted
         """
-        self._elems = []
+        self._elems: List[Tuple[float, Any]] = []
         self._k = k
         self._handle_deleted_element = handle_deleted_element
 

@@ -1,7 +1,8 @@
 import ast as python_ast
 from typing import Union
+from nl2prog.language.ast import Root
 
-BuiltinType = Union[int, float, bool, str, bytes, object, type(None)]
+BuiltinType = Union[int, float, bool, str, bytes, object, None]
 PythonAST = Union[python_ast.AST, BuiltinType]
 
 
@@ -23,7 +24,9 @@ def is_builtin_type(node):
     return False
 
 
-def is_subtype(subtype: str, basetype: str) -> bool:
+def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
+    if isinstance(subtype, Root) or isinstance(basetype, Root):
+        return False
     if subtype.endswith("__list") or \
             basetype.endswith("__list"):
         return subtype == basetype

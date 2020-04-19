@@ -16,7 +16,7 @@ def format_annotations(annotations: List[str]) -> List[str]:
     List[str]
         The formatted lines of the annotations
     """
-    annots = []
+    annots: List[str] = []
     for annotation in annotations:
         m = re.search(r"^.*\.   ", annotation)
         if m is None or len(annots) == 0:

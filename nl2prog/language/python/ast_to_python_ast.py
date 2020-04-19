@@ -36,14 +36,24 @@ def to_python_ast(target: ast.AST) -> PythonAST:
                 # List
                 elems = []
                 for child in field.value:
+                    assert isinstance(child, ast.Node)
+                    assert isinstance(field.type_name, str)
                     if field.type_name.endswith("__list"):
-                        child = child.fields[0].value
-                    elems.append(to_python_ast(child))
+                        if isinstance(child.fields[0].value, list):
+                            for ch in child.fields[0].value:
+                                elems.append(to_python_ast(ch))
+                        else:
+                            elems.append(to_python_ast(child.fields[0].value))
+                    else:
+                        elems.append(to_python_ast(child))
                 setattr(node, name, elems)
             else:
                 setattr(node, name, to_python_ast(field.value))
 
         return node
-    else:
+    elif isinstance(target, ast.Leaf):
         # Leaf
+        assert isinstance(target.type_name, str)
         return to_builtin_type(target.value, target.type_name)
+    else:
+        raise Exception(f"Invalid arugment: {target} is not AST")

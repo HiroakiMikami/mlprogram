@@ -125,7 +125,7 @@ class NLReader(nn.Module):
         char_query = \
             char_query.data + (char_query.data == -1) * (self.char_num + 1)
         e_char_query = self.query_elem_embed(char_query)
-        input = PaddedSequenceWithMask(e_token_query, token_query.mask)
+        block_input = PaddedSequenceWithMask(e_token_query, token_query.mask)
         for block in self.blocks:
-            input, _ = block(input, e_char_query)
-        return input, None
+            block_input, _ = block(block_input, e_char_query)
+        return block_input, None

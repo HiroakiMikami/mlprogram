@@ -79,7 +79,7 @@ def parse(code: str) -> Optional[AST]:
     try:
         code = code.strip()
         if not code:
-            return ""
+            return None
 
         if p_elif.match(code):
             code = 'if True: pass\n' + code
