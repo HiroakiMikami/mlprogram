@@ -58,18 +58,18 @@ class Loss(nn.Module):
         # (L_a, B, query_length)
         copy = copy[:, :, :-1]
 
-        rule_prob = rule_prob.data * rule  # (L_a, B, num_rules)
-        rule_prob = torch.sum(rule_prob, dim=2)  # (L_a, B)
-        token_prob = token_prob.data * token  # (L_a, B, num_tokens)
-        token_prob = torch.sum(token_prob, dim=2)  # (L_a, B)
-        copy_prob = copy_prob.data * copy  # (L_a, B, query_length)
-        copy_prob = torch.sum(copy_prob, dim=2)  # (L_a, B)
+        rule_prob_tensor = rule_prob.data * rule  # (L_a, B, num_rules)
+        rule_prob_tensor = torch.sum(rule_prob_tensor, dim=2)  # (L_a, B)
+        token_prob_tensor = token_prob.data * token  # (L_a, B, num_tokens)
+        token_prob_tensor = torch.sum(token_prob_tensor, dim=2)  # (L_a, B)
+        copy_prob_tensor = copy_prob.data * copy  # (L_a, B, query_length)
+        copy_prob_tensor = torch.sum(copy_prob_tensor, dim=2)  # (L_a, B)
 
-        prob = rule_prob + token_prob + copy_prob  # (L_a, B)
-        prob = prob + (prob < 1e-7).to(rule_prob.dtype) * \
+        prob = rule_prob_tensor + token_prob_tensor + copy_prob_tensor
+        prob = prob + (prob < 1e-7).to(rule_prob_tensor.dtype) * \
             1e-7  # avoid zero division
 
         likelihood = torch.log(prob)  # (L_a, B)
         loss = -likelihood * \
-            ground_truth_action.mask.to(rule_prob.dtype)  # (L_a, B)
+            ground_truth_action.mask.to(rule_prob_tensor.dtype)  # (L_a, B)
         return torch.mean(torch.sum(loss, dim=0))

@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, cast
 from copy import deepcopy
+import itertools
 
 import nl2prog.language.action as A
 from nl2prog.language.action \
-    import Action, ActionSequence, ApplyRule, ExpandTreeRule, Root
-from nl2prog.language.ast import AST, Node, Leaf, Field
+    import Action, ActionSequence, ApplyRule, ExpandTreeRule
+from nl2prog.language.ast import AST, Node, Leaf, Field, Root
 
 
 class InvalidActionException(Exception):
@@ -70,9 +71,9 @@ class Evaluator:
 
     def __init__(self, options: A.ActionOptions = A.ActionOptions(True, True)):
         self._tree = Tree(dict(), dict())
-        self._action_sequence = []
-        self._head_action_index = None
-        self._head_children_index = dict()
+        self._action_sequence: List[Action] = []
+        self._head_action_index: Optional[int] = None
+        self._head_children_index: Dict[int, int] = dict()
         self._options = options
 
     @property
@@ -129,12 +130,11 @@ class Evaluator:
         index = len(self._action_sequence)
         head = self.head
         if head is not None:
-            head_action: A.ApplyRule = self._action_sequence[head.action]
-            head_rule: A.ExpandTreeRule = head_action.rule
-            head_field: A.NodeType = head_rule.children[head.field][1]
+            head_action = cast(A.ApplyRule, self._action_sequence[head.action])
+            head_rule = cast(A.ExpandTreeRule, head_action.rule)
+            head_field: Optional[A.NodeType] = \
+                head_rule.children[head.field][1]
         else:
-            head_action = None
-            head_rule = None
             head_field = None
 
         if isinstance(action, A.ApplyRule):
@@ -168,6 +168,7 @@ class Evaluator:
                 if head is None:
                     raise InvalidActionException(
                         "Applying ExpandTreeRule", action)
+                assert head_field is not None
                 if head_field.constraint == A.NodeConstraint.Node:
                     raise InvalidActionException(
                         "Applying ExpandTreeRule", action)
@@ -192,6 +193,7 @@ class Evaluator:
             if head is None:
                 raise InvalidActionException(
                     "Applying ExpandTreeRule", action)
+            assert head_field is not None
             if head_field.constraint != A.NodeConstraint.Token:
                 raise InvalidActionException(
                     "ApplyRule", action)
@@ -219,9 +221,9 @@ class Evaluator:
         """
         def generate_ast(head: int) -> AST:
             # The head action should be ApplyRule
-            action: A.ApplyRule = self._action_sequence[head]
+            action = cast(A.ApplyRule, self._action_sequence[head])
             # The head action should apply ExpandTreeRule
-            rule: A.ExpandTreeRule = action.rule
+            rule = cast(A.ExpandTreeRule, action.rule)
 
             ast = Node(rule.parent.type_name, [])
             for (name, node_type), actions in zip(
@@ -229,29 +231,37 @@ class Evaluator:
                     self._tree.children[head]):
                 if node_type.constraint == A.NodeConstraint.Node:
                     # ApplyRule
-                    action = actions[0]
                     ast.fields.append(
-                        Field(name, node_type.type_name, generate_ast(action)))
+                        Field(name, node_type.type_name,
+                              generate_ast(actions[0])))
                 elif node_type.constraint == A.NodeConstraint.Variadic:
                     # Variadic
                     if self._options.retain_variadic_fields:
                         ast.fields.append(Field(name, node_type.type_name, []))
-                        for action in actions:
-                            a: A.ApplyRule = self._action_sequence[action]
+                        for act in actions:
+                            a = cast(A.ApplyRule, self._action_sequence[act])
                             if isinstance(a.rule, A.CloseVariadicFieldRule):
                                 break
-                            ast.fields[-1].value.append(generate_ast(action))
+                            assert isinstance(ast.fields[-1].value, list)
+                            ast.fields[-1].value.append(generate_ast(act))
                     else:
-                        childrens = generate_ast(actions[0])
+                        childrens = cast(Node, generate_ast(actions[0]))
                         ast.fields.append(Field(
                             name, node_type.type_name,
-                            [field.value for field in childrens.fields]))
+                            list(itertools.chain.from_iterable(
+                                [field.value if isinstance(field.value, list)
+                                 else [field.value]
+                                 for field in childrens.fields
+                                 ]
+                            ))
+                        ))
                 else:
                     # GenerateToken
                     value = ""
-                    for action in actions:
-                        token = self._action_sequence[action].token
-                        if token != A.CloseNode():
+                    for action_idx in actions:
+                        token = cast(A.GenerateToken,
+                                     self._action_sequence[action_idx]).token
+                        if isinstance(token, str):
                             value += token
                     ast.fields.append(Field(name, node_type.type_name,
                                             Leaf(node_type.type_name, value)

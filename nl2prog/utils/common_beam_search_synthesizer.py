@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import numpy as np
 from typing import List, Callable, Optional, Tuple, Any, Dict
 from dataclasses import dataclass
@@ -9,7 +10,7 @@ from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
 from nl2prog.nn import TrainModel
-from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
+# from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 
 
 @dataclass
@@ -32,13 +33,15 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  collate_nl_feature: Callable[[List[Any]], Any],
                  collate_other_feature: Callable[[List[Any]], Any],
                  split_states: Callable[[Any], List[Any]],
-                 input_reader: Callable[[Any], Tuple[Any, Any]],
-                 action_sequence_reader: Callable[[Any], Any],
-                 decoder: Callable[[Any, Any, Any, Optional[Any]],
-                                   Tuple[Any, Optional[Any]]],
-                 predictor: Callable[[Any], Tuple[PaddedSequenceWithMask,
-                                                  PaddedSequenceWithMask,
-                                                  PaddedSequenceWithMask]],
+                 input_reader: nn.Module,  # Callable[[Any], Tuple[Any, Any]],
+                 action_sequence_reader: nn.Module,  # Callable[[Any], Any],
+                 decoder: nn.Module,  # Callable[[Any, Any, Any,
+                                      #           Optional[Any]],
+                                      #          Tuple[Any, Optional[Any]]],
+                 predictor: nn.Module,  # Callable[[Any],
+                                        #          Tuple[PaddedSequenceWithMask,
+                                        #          PaddedSequenceWithMask,
+                                        #          PaddedSequenceWithMask]],
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype,
                  options: ActionOptions = ActionOptions(True, True),
@@ -113,7 +116,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         return TrainModel(self.input_reader, self.action_sequence_reader,
                           self.decoder, self.predictor).state_dict()
 
-    def load_state_dict(self, state_dict) -> Dict[str, Any]:
+    def load_state_dict(self, state_dict) -> None:
         TrainModel(self.input_reader, self.action_sequence_reader,
                    self.decoder, self.predictor).load_state_dict(state_dict)
 

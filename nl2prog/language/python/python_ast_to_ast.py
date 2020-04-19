@@ -43,11 +43,12 @@ def to_ast(target: PythonAST) -> ast.AST:
 
     if is_builtin_type(target):
         # Builtin-type
-        if type(target) == bytes:
+        if isinstance(target, bytes):
             return ast.Leaf(type(target).__name__, target.decode())
         else:
             return ast.Leaf(type(target).__name__, str(target))
 
+    assert isinstance(target, python_ast.AST)
     for chname, chval in python_ast.iter_fields(target):
         if chname == "ctx":
             # ctx is omitted
@@ -70,7 +71,7 @@ def to_ast(target: PythonAST) -> ast.AST:
             else:
                 parent_type = base_type
 
-            elements: List[ast.Node] = []
+            elements: List[ast.AST] = []
             for i, elem in enumerate(chval):
                 c = to_ast(elem)
                 if isinstance(c, ast.Leaf):

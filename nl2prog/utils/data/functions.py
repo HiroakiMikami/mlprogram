@@ -1,6 +1,6 @@
 import torch
 import itertools
-from typing import Callable, List, Any, Optional, Tuple
+from typing import Callable, List, Any, Optional, Tuple, Union
 from nl2prog.language.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
@@ -27,7 +27,7 @@ def get_words(dataset: torch.utils.data.Dataset,
 def get_characters(dataset: torch.utils.data.Dataset,
                    extract_query: Callable[[Any], Query],
                    ) -> List[str]:
-    chars = []
+    chars: List[str] = []
 
     for group in dataset:
         for entry in group:
@@ -43,9 +43,9 @@ def get_samples(dataset: torch.utils.data.Dataset,
                 to_action_sequence: Callable[[Any],
                                              Optional[ActionSequence]]
                 ) -> Samples:
-    rules = []
+    rules: List[Rule] = []
     node_types = []
-    tokens = []
+    tokens: List[Union[str, CloseNode]] = []
     options = None
 
     for group in dataset:
@@ -58,18 +58,19 @@ def get_samples(dataset: torch.utils.data.Dataset,
             options = action_sequence.options
             for action in action_sequence.sequence:
                 if isinstance(action, ApplyRule):
-                    rule: Rule = action.rule
-                    if rule != CloseVariadicFieldRule():
+                    rule = action.rule
+                    if not isinstance(rule, CloseVariadicFieldRule):
                         rules.append(rule)
                         node_types.append(rule.parent)
                         for _, child in rule.children:
                             node_types.append(child)
                 else:
                     token = action.token
-                    if token != CloseNode():
+                    if not isinstance(token, CloseNode):
                         ts = tokenize_token(token)
                         tokens.extend(ts)
 
+    assert options is not None
     return Samples(rules, node_types, tokens, options)
 
 
@@ -91,9 +92,9 @@ class CollateGroundTruth:
 
     def __call__(self, ground_truths: List[torch.Tensor]) \
             -> PaddedSequenceWithMask:
-        ground_truths = rnn.pad_sequence(ground_truths, padding_value=-1)
+        pad_ground_truths = rnn.pad_sequence(ground_truths, padding_value=-1)
 
-        return ground_truths.to(self.device)
+        return pad_ground_truths.to(self.device)
 
 
 class Collate:
@@ -122,10 +123,10 @@ class CollateNlFeature:
             -> PaddedSequenceWithMask:
         nl_features = []
         for nl_feature in data:
-            nl_feature = nl_feature.data
-            L = nl_feature.shape[0]
-            nl_feature = nl_feature.view(L, -1)
-            nl_features.append(nl_feature)
+            nl_feature_tensor = nl_feature.data
+            L = nl_feature_tensor.shape[0]
+            nl_feature_tensor = nl_feature_tensor.view(L, -1)
+            nl_features.append(nl_feature_tensor)
 
         return rnn.pad_sequence(nl_features).to(self.device)
 

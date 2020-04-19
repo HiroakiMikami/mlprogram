@@ -1,5 +1,6 @@
 import re
 from nltk import tokenize
+from typing import Dict
 from nl2prog.utils import Query
 
 tokenizer = tokenize.WhitespaceTokenizer()
@@ -22,8 +23,8 @@ def tokenize_query(query: str) -> Query:
         return f"####{id}####"
 
     # Replace quoted string literals with placeholders
-    mappings = {}
-    word_to_placeholder = {}
+    mappings: Dict[str, str] = {}
+    word_to_placeholder: Dict[str, str] = {}
     literal = r'\'\\\'\'|\"[^\"]+\"|\'[^\']+\'|`[^`]+`|"""[^"]+"""'
     while True:
         m = re.search(literal, query)
