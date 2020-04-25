@@ -1,7 +1,8 @@
 from setuptools import setup, find_packages
 import sys
 
-requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex"]
+requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex",
+            "gin-config @ git+https://github.com/google/gin-config.git"]
 
 if sys.version_info.major == 3 and sys.version_info.minor < 7:
     requires.append("dataclasses")
