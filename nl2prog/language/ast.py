@@ -1,6 +1,17 @@
 from dataclasses import dataclass
-from typing import Union, List, Any, Protocol
+from typing import Union, List, Any
 from copy import deepcopy
+import sys
+
+
+def canUseProtocol() -> bool:
+    if sys.version_info.major == 3 and sys.version_info.minor < 8:
+        return False
+    return True
+
+
+if canUseProtocol():
+    from typing import Protocol
 
 
 class Root:
@@ -41,13 +52,14 @@ class AST:
         pass
 
 
-class ASTProtocol(Protocol):
-    @property
-    def type_name(self) -> Union[str, Root]:
-        ...
+if canUseProtocol():
+    class ASTProtocol(Protocol):
+        @property
+        def type_name(self) -> Union[str, Root]:
+            ...
 
-    def clone(self) -> AST:
-        ...
+        def clone(self) -> AST:
+            ...
 
 
 @dataclass
