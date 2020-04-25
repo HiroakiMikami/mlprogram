@@ -1,6 +1,11 @@
 from setuptools import setup, find_packages
+import sys
 
 requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex"]
+
+if sys.version_info.major == 3 and sys.version_info.minor < 7:
+    requires.append("dataclasses")
+
 extras = {
     "test": ["flake8", "autopep8", "fairseq", "mypy"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
