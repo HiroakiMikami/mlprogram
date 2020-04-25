@@ -1,10 +1,14 @@
 import bashlex
-from typing import Union, Any
+from typing import Union, TypeVar
 import nl2prog.language.ast as A
+
+# TODO specify the primitive types
+BashlexPrimitive = TypeVar('BashlexPrimitive')
 
 
 def bashlex_ast_to_ast(script: str,
-                       bashlex_ast: Union[Any, bashlex.ast.node]) \
+                       bashlex_ast: Union[BashlexPrimitive,
+                                          bashlex.ast.node]) \
         -> A.AST:
     """
     Convert the bash command into AST

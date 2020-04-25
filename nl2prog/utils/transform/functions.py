@@ -5,16 +5,22 @@ from nl2prog.utils.data import ListDataset
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.language.action import ActionSequence
 from nl2prog.language.evaluator import Evaluator
-from typing import List, Callable, Tuple, Any, Optional
+from typing import List, Callable, Tuple, TypeVar, Generic, Optional
+
+Code = TypeVar("Code")
+Input = TypeVar("Input")
+EncodedInput = TypeVar("EncodedInput")
+EncodedActionSequence = TypeVar("EncodedActionSequence")
+EncodedQuery = TypeVar("EncodedQuery")
 
 
-class TransformCode:
+class TransformCode(Generic[Code]):
     def __init__(self,
-                 to_action_sequence: Callable[[Any],
+                 to_action_sequence: Callable[[Code],
                                               Optional[ActionSequence]]):
         self.to_action_sequence = to_action_sequence
 
-    def __call__(self, code: Any) -> Optional[Evaluator]:
+    def __call__(self, code: Code) -> Optional[Evaluator]:
         action_sequence = self.to_action_sequence(code)
         if action_sequence is None:
             return None
@@ -44,10 +50,12 @@ class TransformGroundTruth:
 
 class TransformDataset:
     def __init__(self,
-                 transform_input: Callable[[Any], Tuple[List[str], Any]],
-                 transform_code: Callable[[Any], Optional[Evaluator]],
-                 transform_evaluator: Callable[[Evaluator, List[str]],
-                                               Optional[Any]],
+                 transform_input: Callable[[Input],
+                                           Tuple[List[str], EncodedInput]],
+                 transform_code: Callable[[Code], Optional[Evaluator]],
+                 transform_evaluator: Callable[
+                     [Evaluator, List[str]],
+                     Optional[Tuple[EncodedActionSequence, EncodedQuery]]],
                  transform_ground_truth: Callable[[Evaluator, List[str]],
                                                   Optional[torch.Tensor]]):
         self.transform_input = transform_input

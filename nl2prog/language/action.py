@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from nl2prog.language.ast import AST, Node, Leaf, Field, Root
-from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
+from typing import Tuple, Union, List, Callable, Optional, Sequence
 from enum import Enum
 
 
@@ -30,17 +30,17 @@ class NodeType:
     type_name: Union[str, Root]
     constraint: NodeConstraint
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.type_name) ^ hash(self.constraint)
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: object) -> bool:
         if isinstance(rhs, NodeType):
             return self.type_name == rhs.type_name and \
                 self.constraint == rhs.constraint
         else:
             return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.constraint == NodeConstraint.Variadic:
             return f"{self.type_name}*"
         elif self.constraint == NodeConstraint.Token:
@@ -64,16 +64,16 @@ class ExpandTreeRule:
     parent: NodeType
     children: List[Tuple[str, NodeType]]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.parent) ^ hash(tuple(self.children))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: object) -> bool:
         if isinstance(rhs, ExpandTreeRule):
             return self.parent == rhs.parent and self.children == rhs.children
         else:
             return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         children = ", ".join(
             map(lambda x: f"{x[0]}: {x[1]}", self.children))
         return f"{self.parent} -> [{children}]"
@@ -85,13 +85,13 @@ class CloseVariadicFieldRule:
     """
     _instance = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: object) -> bool:
         return isinstance(rhs, CloseVariadicFieldRule)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<close variadic field>"
 
     def __new__(cls):
@@ -124,13 +124,13 @@ class CloseNode:
     """
     _instance = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: object) -> bool:
         return isinstance(rhs, CloseNode)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<CLOSE_NODE>"
 
     def __new__(cls):

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
-from typing import Callable, List, Any, Optional, Tuple
+from typing \
+    import Callable, List, TypeVar, Generic, Optional, Tuple
 from torchnlp.encoders import LabelEncoder
 
 from nl2prog.language.evaluator import Evaluator
@@ -8,8 +9,11 @@ from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils import Query
 
 
-class TransformQuery:
-    def __init__(self, extract_query: Callable[[Any], Query],
+Input = TypeVar("Input")
+
+
+class TransformQuery(Generic[Input]):
+    def __init__(self, extract_query: Callable[[Input], Query],
                  word_encoder: LabelEncoder, char_encoder: LabelEncoder,
                  max_word_length):
         self.extract_query = extract_query
@@ -17,7 +21,8 @@ class TransformQuery:
         self.char_encoder = char_encoder
         self.max_word_length = max_word_length
 
-    def __call__(self, input: Any) -> Tuple[List[str], Any]:
+    def __call__(self, input: Input) \
+            -> Tuple[List[str], Tuple[torch.Tensor, torch.Tensor]]:
         query = self.extract_query(input)
 
         word_query = self.word_encoder.batch_encode(query.query_for_dnn)

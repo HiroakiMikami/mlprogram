@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import List, Callable, Optional, Tuple, Any, Dict
+import logging
+from typing import List, Callable, Optional, Tuple, TypeVar, Dict, Generic
 from dataclasses import dataclass
 from nl2prog.language.action import ActionOptions
 from nl2prog.language.evaluator import Evaluator
@@ -9,39 +10,60 @@ from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
+from nl2prog.utils.beam_search_synthesizer import Hypothesis
 from nl2prog.nn import TrainModel
-# from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
+
+
+logger = logging.getLogger(__name__)
+
+
+Input = TypeVar("Input")
+EncodedInput = TypeVar("EncodedInput")
+InputReaderInput = TypeVar("InputReaderInput")
+NlFeature = TypeVar("NlFeature")
+NlFeatureInput = TypeVar("NlFeatureInput")
+OtherFeature = TypeVar("OtherFeature")
+OtherFeatureInput = TypeVar("OtherFeatureInput")
+AdditionalState = TypeVar("AdditionalState")
+AdditionalStateInput = TypeVar("AdditionalStateInput")
+EncodedActionSequence = TypeVar("EncodedActionSequence")
+EncodedQuery = TypeVar("EncodedQuery")
+QueryInput = TypeVar("QueryInput")
+ActionSequenceReaderInput = TypeVar("ActionSequenceReaderInput")
 
 
 @dataclass
-class State:
+class State(Generic[NlFeature, OtherFeature, AdditionalState]):
     query: List[str]
-    nl_feature: Any
-    other_feature: Any
-    state: Optional[Any]
+    nl_feature: NlFeature
+    other_feature: OtherFeature
+    state: Optional[AdditionalState]
 
 
 class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
-                 transform_input: Callable[[Any], Tuple[List[str], Any]],
-                 transform_evaluator: Callable[[Evaluator, List[str]],
-                                               Optional[Any]],
-                 collate_input: Callable[[List[Any]], Any],
-                 collate_action_sequence: Callable[[List[Any]], Any],
-                 collate_query: Callable[[List[Any]], Any],
-                 collate_state: Callable[[List[Any]], Any],
-                 collate_nl_feature: Callable[[List[Any]], Any],
-                 collate_other_feature: Callable[[List[Any]], Any],
-                 split_states: Callable[[Any], List[Any]],
-                 input_reader: nn.Module,  # Callable[[Any], Tuple[Any, Any]],
-                 action_sequence_reader: nn.Module,  # Callable[[Any], Any],
-                 decoder: nn.Module,  # Callable[[Any, Any, Any,
-                                      #           Optional[Any]],
-                                      #          Tuple[Any, Optional[Any]]],
-                 predictor: nn.Module,  # Callable[[Any],
-                                        #          Tuple[PaddedSequenceWithMask,
-                                        #          PaddedSequenceWithMask,
-                                        #          PaddedSequenceWithMask]],
+                 transform_input: Callable[[Input],
+                                           Tuple[List[str], EncodedInput]],
+                 transform_evaluator: Callable[
+                     [Evaluator, List[str]],
+                     Optional[Tuple[EncodedActionSequence, EncodedQuery]]],
+                 collate_input: Callable[[List[EncodedInput]],
+                                         InputReaderInput],
+                 collate_action_sequence: Callable[
+                     [List[EncodedActionSequence]], ActionSequenceReaderInput],
+                 collate_query: Callable[[List[EncodedQuery]], QueryInput],
+                 collate_state: Callable[[List[AdditionalState]],
+                                         AdditionalStateInput],
+                 collate_nl_feature: Callable[[List[NlFeature]],
+                                              NlFeatureInput],
+                 collate_other_feature: Callable[[List[OtherFeature]],
+                                                 OtherFeatureInput],
+                 split_states: Callable[[AdditionalStateInput],
+                                        List[AdditionalState]],
+                 input_reader: nn.Module,
+                 action_sequence_reader: nn.Module,
+                 decoder: nn.Module,
+                 predictor: nn.Module,
                  action_sequence_encoder: ActionSequenceEncoder,
                  is_subtype: IsSubtype,
                  options: ActionOptions = ActionOptions(True, True),
@@ -87,16 +109,24 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
     @staticmethod
     def create(beam_size: int,
-               transform_input: Callable[[Any], Tuple[List[str], Any]],
-               transform_evaluator: Callable[[Evaluator, List[str]],
-                                             Optional[Any]],
-               collate_input: Callable[[List[Any]], Any],
-               collate_action_sequence: Callable[[List[Any]], Any],
-               collate_query: Callable[[List[Any]], Any],
-               collate_state: Callable[[List[Any]], Any],
-               collate_nl_feature: Callable[[List[Any]], Any],
-               collate_other_feature: Callable[[List[Any]], Any],
-               split_states: Callable[[Any], List[Any]],
+               transform_input: Callable[[Input],
+                                         Tuple[List[str], EncodedInput]],
+               transform_evaluator: Callable[
+                   [Evaluator, List[str]],
+                   Optional[Tuple[EncodedActionSequence, EncodedQuery]]],
+               collate_input: Callable[[List[EncodedInput]],
+                                       InputReaderInput],
+               collate_action_sequence: Callable[
+                   [List[EncodedActionSequence]], ActionSequenceReaderInput],
+               collate_query: Callable[[List[EncodedQuery]], QueryInput],
+               collate_state: Callable[[List[AdditionalState]],
+                                       AdditionalStateInput],
+               collate_nl_feature: Callable[[List[NlFeature]],
+                                            NlFeatureInput],
+               collate_other_feature: Callable[[List[OtherFeature]],
+                                               OtherFeatureInput],
+               split_states: Callable[[AdditionalStateInput],
+                                      List[AdditionalState]],
                model: TrainModel,
                action_sequence_encoder: ActionSequenceEncoder,
                is_subtype: IsSubtype,
@@ -112,7 +142,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             model.predictor, action_sequence_encoder, is_subtype, options, eps,
             max_steps, device)
 
-    def state_dict(self) -> Dict[str, Any]:
+    def state_dict(self) -> Dict[str, object]:
         return TrainModel(self.input_reader, self.action_sequence_reader,
                           self.decoder, self.predictor).state_dict()
 
@@ -120,17 +150,18 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         TrainModel(self.input_reader, self.action_sequence_reader,
                    self.decoder, self.predictor).load_state_dict(state_dict)
 
-    def initialize(self, input: Any):
-        query_for_synth, input = self.transform_input(input)
-        input = self.collate_input([input])
-        nl_feature, other_feature = self.input_reader(input)
+    def initialize(self, input: Input) -> State:
+        query_for_synth, enc_input = self.transform_input(input)
+        cinput = self.collate_input([enc_input])
+        nl_feature, other_feature = self.input_reader(cinput)
         nl_feature = nl_feature.data
         L = nl_feature.shape[0]
         nl_feature = nl_feature.view(L, -1)
 
         return State(query_for_synth, nl_feature, other_feature, None)
 
-    def batch_update(self, hs):
+    def batch_update(self, hs: List[Hypothesis]) \
+            -> List[Tuple[State, LazyLogProbability]]:
         # Create batch of hypothesis
         nl_features = []
         other_features = []
@@ -138,24 +169,28 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         queries = []
         states = []
         for h in hs:
-            nl_features.append(h.state.nl_feature)
-            other_features.append(h.state.other_feature)
-            action_sequence, query = \
-                self.transform_evaluator(h.evaluator, h.state.query)
-            action_sequences.append(action_sequence)
-            queries.append(query)
-            states.append(h.state.state)
-        nl_features = self.collate_nl_feature(nl_features)
-        other_features = self.collate_other_feature(other_features)
-        action_sequences = self.collate_action_sequence(action_sequences)
-        queries = self.collate_query(queries)
-        states = self.collate_state(states)
+            opt = self.transform_evaluator(h.evaluator, h.state.query)
+            if opt is not None:
+                action_sequence, query = opt
+                action_sequences.append(action_sequence)
+                queries.append(query)
+                nl_features.append(h.state.nl_feature)
+                other_features.append(h.state.other_feature)
+                states.append(h.state.state)
+            else:
+                logger.info("Invalid evaluater is in hypothesis")
+        cnl_features = self.collate_nl_feature(nl_features)
+        cother_features = self.collate_other_feature(other_features)
+        caction_sequences = self.collate_action_sequence(action_sequences)
+        cqueries = self.collate_query(queries)
+        cstates = self.collate_state(states)
 
         with torch.no_grad():
-            ast_feature = self.action_sequence_reader(action_sequences)
-            feature, state = self.decoder(queries, nl_features, other_features,
-                                          ast_feature, states)
-            results = self.predictor(nl_features, feature)
+            ast_feature = self.action_sequence_reader(caction_sequences)
+            feature, state = self.decoder(cqueries, cnl_features,
+                                          cother_features,
+                                          ast_feature, cstates)
+            results = self.predictor(cnl_features, feature)
         # (len(hs), n_rules)
         rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)
         # (len(hs), n_tokens)

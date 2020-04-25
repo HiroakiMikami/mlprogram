@@ -1,6 +1,6 @@
 import torch
 from torchnlp.encoders import LabelEncoder
-from typing import Any, List, Optional, Union, cast
+from typing import List, Optional, Union, cast
 from dataclasses import dataclass
 
 from nl2prog.language.action import NodeType, NodeConstraint
@@ -30,10 +30,10 @@ class Unknown:
     def __hash__(self):
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: object) -> bool:
         return isinstance(rhs, Unknown)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<unknown>"
 
     def __new__(cls):

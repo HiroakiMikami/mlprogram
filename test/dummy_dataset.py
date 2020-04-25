@@ -49,13 +49,13 @@ def FunctionCall(name: str, args: List[AST]):
 
 
 # Dataset
-train_dataset = ListDataset([
+train_dataset = ListDataset[Entry[str, AST], None]([
     [Entry("x is assigned the value of 0", Assign("x", Number(0)))],
     [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
     [Entry("dump the value of xy and x",
            FunctionCall("print", [Name("xy"), Name("x")]))]
 ])
-test_dataset = ListDataset([
+test_dataset = ListDataset[Entry[str, AST], None]([
     [Entry("x is assigned the value of 4", Assign("x", Number(4)))],
     [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
     [Entry("dump the value of xy and x",

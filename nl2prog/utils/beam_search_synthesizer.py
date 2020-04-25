@@ -1,4 +1,5 @@
-from typing import List, Callable, Any, Tuple, Dict, Optional, Union, cast
+from typing \
+    import List, Callable, TypeVar, Tuple, Dict, Optional, Union, cast, Generic
 from dataclasses import dataclass
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.language.ast import AST, Root
@@ -12,6 +13,8 @@ from nl2prog.utils import TopKElement
 True if the argument 0 is subtype of the argument 1
 """
 IsSubtype = Callable[[Union[str, Root], Union[str, Root]], bool]
+State = TypeVar("State")
+Input = TypeVar("Input")
 
 
 @dataclass
@@ -29,12 +32,12 @@ class LazyLogProbability:
 
 
 @dataclass
-class Hypothesis:
+class Hypothesis(Generic[State]):
     id: int
     parent: Optional[int]
     score: float
     evaluator: Evaluator
-    state: Any
+    state: State
 
 
 @dataclass
@@ -52,7 +55,7 @@ class Candidate:
     ast: AST
 
 
-class BeamSearchSynthesizer:
+class BeamSearchSynthesizer(Generic[State]):
     def __init__(self, beam_size: int,
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  max_steps: Optional[int] = None):
@@ -72,26 +75,26 @@ class BeamSearchSynthesizer:
         self._options = options
         self._max_steps = max_steps
 
-    def initialize(self, input: Any) -> Any:
-        raise RuntimeError("Not Implemented")
+    def initialize(self, input: Input) -> State:
+        raise NotImplementedError
 
     def batch_update(self, hs: List[Hypothesis]) \
-            -> List[Tuple[Any, LazyLogProbability]]:
-        raise RuntimeError("Not Implemented")
+            -> List[Tuple[State, LazyLogProbability]]:
+        raise NotImplementedError
 
-    def load_state_dict(self, state_dict: Dict[str, Any]):
-        raise RuntimeError("Not Implemented")
+    def load_state_dict(self, state_dict: Dict[str, object]):
+        raise NotImplementedError
 
-    def state_dict(self) -> Dict[str, Any]:
-        raise RuntimeError("Not Implemented")
+    def state_dict(self) -> Dict[str, object]:
+        raise NotImplementedError
 
-    def synthesize(self, input: Any):
+    def synthesize(self, input: Input):
         """
         Synthesize the program from the query
 
         Parameters
         ----------
-        input: Any
+        input: Input
 
         Yields
         ------

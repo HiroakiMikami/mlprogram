@@ -1,19 +1,22 @@
 import torch
 import numpy as np
 from torchnlp.encoders import LabelEncoder
-from typing import Callable, List, Any, Optional, Tuple
+from typing import Callable, List, TypeVar, Generic, Optional, Tuple
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils import Query
 
 
-class TransformQuery:
-    def __init__(self, extract_query: Callable[[Any], Query],
+Input = TypeVar("Input")
+
+
+class TransformQuery(Generic[Input]):
+    def __init__(self, extract_query: Callable[[Input], Query],
                  word_encoder: LabelEncoder):
         self.extract_query = extract_query
         self.word_encoder = word_encoder
 
-    def __call__(self, input: Any) -> Tuple[List[str], Any]:
+    def __call__(self, input: Input) -> Tuple[List[str], torch.Tensor]:
         query = self.extract_query(input)
 
         return query.query_for_synth, \
