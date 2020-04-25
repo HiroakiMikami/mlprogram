@@ -1,16 +1,20 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import List, Callable, Optional, Tuple, Any, Dict
+import logging
+from typing import List, Callable, Optional, Tuple, Any, Dict, Union
 from dataclasses import dataclass
-from nl2prog.language.action import ActionOptions
+from nl2prog.language.action import ActionOptions, Rule, CloseNode
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
+from nl2prog.utils.beam_search_synthesizer import Hypothesis
 from nl2prog.utils \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
 from nl2prog.nn import TrainModel
-# from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -120,7 +124,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         TrainModel(self.input_reader, self.action_sequence_reader,
                    self.decoder, self.predictor).load_state_dict(state_dict)
 
-    def initialize(self, input: Any):
+    def initialize(self, input: Any) -> State:
         query_for_synth, input = self.transform_input(input)
         input = self.collate_input([input])
         nl_feature, other_feature = self.input_reader(input)
@@ -130,7 +134,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
         return State(query_for_synth, nl_feature, other_feature, None)
 
-    def batch_update(self, hs):
+    def batch_update(self, hs: List[Hypothesis]) \
+            -> List[Tuple[State, LazyLogProbability]]:
         # Create batch of hypothesis
         nl_features = []
         other_features = []
@@ -138,13 +143,16 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         queries = []
         states = []
         for h in hs:
-            nl_features.append(h.state.nl_feature)
-            other_features.append(h.state.other_feature)
-            action_sequence, query = \
-                self.transform_evaluator(h.evaluator, h.state.query)
-            action_sequences.append(action_sequence)
-            queries.append(query)
-            states.append(h.state.state)
+            tmp = self.transform_evaluator(h.evaluator, h.state.query)
+            if tmp is not None:
+                nl_features.append(h.state.nl_feature)
+                other_features.append(h.state.other_feature)
+                action_sequence, query = tmp
+                action_sequences.append(action_sequence)
+                queries.append(query)
+                states.append(h.state.state)
+            else:
+                logger.warn("Invalid evaluator is in the set of hypothesis")
         nl_features = self.collate_nl_feature(nl_features)
         other_features = self.collate_other_feature(other_features)
         action_sequences = self.collate_action_sequence(action_sequences)
@@ -170,12 +178,14 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                           h.state.other_feature, s)
 
             class Functions:
-                def __init__(self, i, action_sequence_encoder, eps):
+                def __init__(self, i: int,
+                             action_sequence_encoder: ActionSequenceEncoder,
+                             eps: float):
                     self.i = i
                     self.action_sequence_encoder = action_sequence_encoder
                     self.eps = eps
 
-                def get_rule_prob(self):
+                def get_rule_prob(self) -> Dict[Rule, float]:
                     # TODO
                     idx_to_rule = \
                         self.action_sequence_encoder._rule_encoder.vocab
@@ -189,8 +199,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                             retval[idx_to_rule[j]] = np.log(p)
                     return retval
 
-                def get_token_prob(self):
-                    probs = {}
+                def get_token_prob(self) -> Dict[Union[CloseNode, str], float]:
+                    probs: Dict[Union[CloseNode, str], float] = {}
                     n_words = len(h.state.query)
                     # 0 is UnknownToken
                     for j in range(1, token_pred.shape[1]):

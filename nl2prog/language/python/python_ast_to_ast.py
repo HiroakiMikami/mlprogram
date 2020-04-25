@@ -1,12 +1,13 @@
 import ast as python_ast
-from typing import List
+from typing import List, Type, Union
 
 import nl2prog.language.ast as ast
 from nl2prog.language.python import PythonAST
-from .utils import is_builtin_type
+from .utils import is_builtin_type, BuiltinType
 
 
-def base_ast_type(node: PythonAST):
+def base_ast_type(node: PythonAST) \
+        -> Union[Type[python_ast.AST], Type[BuiltinType]]:
     """
     Return the base type of the AST
     """

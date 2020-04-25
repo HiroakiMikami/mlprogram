@@ -6,7 +6,7 @@ BuiltinType = Union[int, float, bool, str, bytes, object, None]
 PythonAST = Union[python_ast.AST, BuiltinType]
 
 
-def is_builtin_type(node):
+def is_builtin_type(node: PythonAST) -> bool:
     if isinstance(node, python_ast.AST):
         return False
     elif isinstance(node, int):

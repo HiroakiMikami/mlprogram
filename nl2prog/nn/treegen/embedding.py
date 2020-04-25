@@ -14,7 +14,7 @@ class ElementEmbedding(nn.Module):
         self.elem_to_seq = nn.Conv1d(elemwise_embedding_dim, embedding_dim,
                                      max_elem_num, bias=False)
 
-    def forward(self, input):
+    def forward(self, input) -> torch.Tensor:
         embed = self.embed(input)
         dims = embed.shape
         embed = embed.reshape(np.prod(dims[:-2]), dims[-2], dims[-1]) \

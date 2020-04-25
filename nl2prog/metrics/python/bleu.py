@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List, Iterable
 import re
 from nl2prog.language.ast import AST
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
@@ -6,10 +6,10 @@ from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from nl2prog.metrics import Metric
 
 
-def bleu(reference, candidate):
+def bleu(reference: Iterable[str], candidate: str) -> float:
     sm = SmoothingFunction()
 
-    def tokenize(code):
+    def tokenize(code: str) -> List[str]:
         code = re.sub(r'([^A-Za-z0-9_])', r' \1 ', code)
         code = re.sub(r'([a-z])([A-Z])', r'\1 \2', code)
         code = re.sub(r'\s+', ' ', code)

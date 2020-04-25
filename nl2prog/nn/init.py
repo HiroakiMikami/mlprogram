@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def orthogonal_(tensor: torch.Tensor, gain=1.1):
+def orthogonal_(tensor: torch.Tensor, gain=1.1) -> torch.Tensor:
     input_size = tensor.shape[0]
     output_size = tensor.shape[1]
     a = np.random.normal(0.0, 1.0, (input_size, output_size))

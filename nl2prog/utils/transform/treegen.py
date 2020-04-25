@@ -11,7 +11,7 @@ from nl2prog.utils import Query
 class TransformQuery:
     def __init__(self, extract_query: Callable[[Any], Query],
                  word_encoder: LabelEncoder, char_encoder: LabelEncoder,
-                 max_word_length):
+                 max_word_length: int):
         self.extract_query = extract_query
         self.word_encoder = word_encoder
         self.char_encoder = char_encoder

@@ -11,7 +11,7 @@ from nl2prog.language.action import CloseNode, CloseVariadicFieldRule
 from nl2prog.language.evaluator import Evaluator
 
 
-def convert_node_type_to_key(node_type: NodeType):
+def convert_node_type_to_key(node_type: NodeType) -> NodeType:
     if node_type.constraint == NodeConstraint.Variadic:
         return NodeType(node_type.type_name, NodeConstraint.Node)
     else:
@@ -27,13 +27,13 @@ class ActionTensor:
 class Unknown:
     _instance = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         return isinstance(rhs, Unknown)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<unknown>"
 
     def __new__(cls):
