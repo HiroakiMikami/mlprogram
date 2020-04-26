@@ -1,4 +1,5 @@
 import gin
+import nl2prog.gin.workspace
 import nl2prog.nn
 import nl2prog.metrics
 import nl2prog.metrics.python
@@ -15,6 +16,11 @@ import nl2prog.nn.nl2code
 import nl2prog.utils.data.nl2code
 import nl2prog.utils.transform.nl2code
 
+
+gin.external_configurable(nl2prog.gin.workspace.get,
+                          module="nl2prog.gin.workspace")
+gin.external_configurable(nl2prog.gin.workspace.put,
+                          module="nl2prog.gin.workspace")
 
 gin.external_configurable(nl2prog.nn.Loss, module="nl2prog.nn")
 gin.external_configurable(nl2prog.nn.Accuracy, module="nl2prog.nn")
