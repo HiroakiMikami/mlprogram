@@ -1,5 +1,6 @@
 import gin
 import nl2prog.gin.workspace
+import nl2prog.gin.optimizer
 import nl2prog.nn
 import nl2prog.metrics
 import nl2prog.metrics.python
@@ -21,6 +22,8 @@ gin.external_configurable(nl2prog.gin.workspace.get,
                           module="nl2prog.gin.workspace")
 gin.external_configurable(nl2prog.gin.workspace.put,
                           module="nl2prog.gin.workspace")
+gin.external_configurable(nl2prog.gin.optimizer.create_optimizer,
+                          module="nl2prog.gin.optimizer.create_optimizer")
 
 gin.external_configurable(nl2prog.nn.Loss, module="nl2prog.nn")
 gin.external_configurable(nl2prog.nn.Accuracy, module="nl2prog.nn")
