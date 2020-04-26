@@ -1,5 +1,5 @@
 import requests
-from typing import Callable
+from typing import Callable, Dict
 
 from nl2prog.utils.data import Entry, ListDataset
 
@@ -12,7 +12,8 @@ def default_get(path: str) -> str:
 
 
 def download(base_path: str = BASE_PATH,
-             get: Callable[[str], str] = default_get):
+             get: Callable[[str], str] = default_get) \
+        -> Dict[str, ListDataset]:
     dataset = {}
     for name in ["train", "dev", "test"]:
         target = name

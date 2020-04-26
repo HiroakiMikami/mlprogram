@@ -29,7 +29,7 @@ class TopKElement:
         """
         return list(map(lambda x: (-x[0], x[1]), self._elems))
 
-    def add(self, score: float, elem: Any):
+    def add(self, score: float, elem: Any) -> None:
         """
         Add an element to the container
 

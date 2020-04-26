@@ -1,5 +1,5 @@
 import requests
-from typing import Callable
+from typing import Callable, Tuple, List, Dict
 
 from nl2prog.utils.data import Entry, ListDataset
 from .format_annotations import format_annotations
@@ -14,12 +14,13 @@ def default_get(path: str) -> str:
 
 def download(base_path: str = BASE_PATH,
              get: Callable[[str], str] = default_get,
-             num_train: int = 16000, num_test: int = 1000):
+             num_train: int = 16000, num_test: int = 1000) \
+         -> Dict[str, ListDataset]:
     annotation = get(BASE_PATH + "all.anno").split("\n")
     annotation = format_annotations(annotation)
     code = get(BASE_PATH + "all.code").split("\n")
 
-    def to_group(elem):
+    def to_group(elem: Tuple[str, str]) -> List[Entry]:
         anno, code = elem
         return [Entry(anno, code)]
     data = list(map(to_group, zip(annotation, code)))

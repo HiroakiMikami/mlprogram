@@ -7,7 +7,7 @@ from .beam_search_synthesizer import BeamSearchSynthesizer
 
 def synthesize(query: str,
                synthesizer: BeamSearchSynthesizer
-               ) -> Tuple[List[Progress], List[AST]]:
+               ) -> Tuple[List[List[Progress]], List[AST]]:
     candidates = []
     progress = []
     for cs, ps in synthesizer.synthesize(query):

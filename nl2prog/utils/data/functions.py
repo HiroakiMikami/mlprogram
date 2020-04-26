@@ -1,6 +1,6 @@
 import torch
 import itertools
-from typing import Callable, List, Any, Optional, Tuple, Union
+from typing import Callable, List, Any, Optional, Tuple, Union, Iterable
 from nl2prog.language.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
@@ -98,14 +98,17 @@ class CollateGroundTruth:
 
 
 class Collate:
-    def __init__(self, collate_input, collate_action_sequence, collate_query,
-                 collate_ground_truth):
+    def __init__(self, collate_input: Callable[[List[Any]], Any],
+                 collate_action_sequence: Callable[[List[Any]], Any],
+                 collate_query: Callable[[List[Any]], Any],
+                 collate_ground_truth: Callable[[List[Any]], Any]):
         self.collate_input = collate_input
         self.collate_action_sequence = collate_action_sequence
         self.collate_query = collate_query
         self.collate_ground_truth = collate_ground_truth
 
-    def __call__(self, data: List[Tuple[Any, Any, Any, Any]]):
+    def __call__(self, data: List[Tuple[Any, Any, Any, Any]]) \
+            -> Tuple[Any, Any, Any, Any]:
         inputs = self.collate_input([elem[0] for elem in data])
         action_sequences = \
             self.collate_action_sequence([elem[1] for elem in data])
@@ -135,5 +138,5 @@ def collate_none(data: List[Any]) -> None:
     return None
 
 
-def split_none(state: Tuple[Any]):
+def split_none(state: Tuple[Any]) -> Iterable[None]:
     return itertools.repeat(None)

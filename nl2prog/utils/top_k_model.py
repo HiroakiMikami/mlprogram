@@ -24,7 +24,7 @@ class TopKModel:
             score = torch.load(path, map_location="cpu")["score"]
             self._models.add(score, path)
 
-    def save(self, score: float, name: str, model: torch.nn.Module):
+    def save(self, score: float, name: str, model: torch.nn.Module) -> None:
         """
         Save a model
 

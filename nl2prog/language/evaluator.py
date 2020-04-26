@@ -87,29 +87,30 @@ class Evaluator:
         return Parent(self._head_action_index,
                       self._head_children_index[self._head_action_index])
 
-    def eval(self, action: Action):
-        def append_action():
+    def eval(self, action: Action) -> None:
+        def append_action() -> None:
             index = len(self._action_sequence)
             self._action_sequence.append(action)
             self._tree.children[index] = []
 
-        def update_head(close_variadic_field=False):
+        def update_head(close_variadic_field: bool = False) -> None:
             head = self.head
             if head is None:
                 return
 
             # The action that have children should be ApplyRule
-            head_action: A.ApplyRule = self._action_sequence[head.action]
+            head_action = cast(A.ApplyRule, self._action_sequence[head.action])
             # The action that have children should apply ExpandTreeRule
-            head_rule: A.ExpandTreeRule = head_action.rule
+            head_rule = cast(A.ExpandTreeRule, head_action.rule)
 
             n_fields = len(head_rule.children)
             if n_fields <= head.field:
                 # Return to the parent becase the rule does not create children
-                self._head_action_index = \
-                    self._tree.parent[head.action].action \
-                    if self._tree.parent[head.action] is not None \
-                    else None
+                tmp = self._tree.parent[head.action]
+                if tmp is not None:
+                    self._head_action_index = tmp.action
+                else:
+                    self._head_action_index = None
                 update_head()
                 return
 
@@ -121,10 +122,11 @@ class Evaluator:
 
             if self._head_children_index[head.action] < n_fields:
                 return
-            self._head_action_index = \
-                self._tree.parent[head.action].action \
-                if self._tree.parent[head.action] is not None \
-                else None
+            tmp = self._tree.parent[head.action]
+            if tmp is not None:
+                self._head_action_index = tmp.action
+            else:
+                self._head_action_index = None
             update_head()
 
         index = len(self._action_sequence)

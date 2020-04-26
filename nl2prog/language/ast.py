@@ -20,13 +20,13 @@ class Root:
     """
     _instance = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         return isinstance(rhs, Root)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Root>"
 
     def __new__(cls):
@@ -96,14 +96,14 @@ class Field:
         else:
             return Field(self.name, self.type_name, self.value.clone())
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         if isinstance(self.value, list):
             return hash(self.name) ^ hash(self.type_name) ^ \
                 hash(tuple(self.value))
         else:
             return hash(self.name) ^ hash(self.type_name) ^ hash(self.value)
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, Field):
             return self.name == rhs.name and \
                 self.type_name == rhs.type_name and self.value == rhs.value
@@ -138,10 +138,10 @@ class Node(AST):
         return Node(self.type_name,
                     [f.clone() for f in self.fields])
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.type_name) ^ hash(tuple(self.fields))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, Node):
             return self.type_name == rhs.type_name and \
                 self.fields == rhs.fields
@@ -175,10 +175,10 @@ class Leaf(AST):
         """
         return Leaf(self.type_name, deepcopy(self.value))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.type_name) ^ hash(self.value)
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, Leaf):
             return self.type_name == rhs.type_name and \
                 self.value == rhs.value

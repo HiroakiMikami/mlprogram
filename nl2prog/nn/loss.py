@@ -12,7 +12,7 @@ class Loss(nn.Module):
                 rule_prob: PaddedSequenceWithMask,
                 token_prob: PaddedSequenceWithMask,
                 copy_prob: PaddedSequenceWithMask,
-                ground_truth_action: PaddedSequenceWithMask):
+                ground_truth_action: PaddedSequenceWithMask) -> torch.Tensor:
         """
         Parameters
         ----------

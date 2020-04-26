@@ -1,4 +1,5 @@
-from typing import List, Callable, Any, Tuple, Dict, Optional, Union, cast
+from typing \
+    import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
 from nl2prog.language.evaluator import Evaluator
 from nl2prog.language.ast import AST, Root
@@ -21,10 +22,14 @@ class LazyLogProbability:
 
     @property
     def rule_prob(self):
+        # TODO I can't add type hint because of
+        # https://github.com/python/mypy/issues/708
         return self.get_rule_prob()
 
     @property
     def token_prob(self):
+        # TODO I can't add type hint because of
+        # https://github.com/python/mypy/issues/708
         return self.get_token_prob()
 
 
@@ -73,19 +78,20 @@ class BeamSearchSynthesizer:
         self._max_steps = max_steps
 
     def initialize(self, input: Any) -> Any:
-        raise RuntimeError("Not Implemented")
+        raise NotImplementedError
 
     def batch_update(self, hs: List[Hypothesis]) \
             -> List[Tuple[Any, LazyLogProbability]]:
-        raise RuntimeError("Not Implemented")
+        raise NotImplementedError
 
-    def load_state_dict(self, state_dict: Dict[str, Any]):
-        raise RuntimeError("Not Implemented")
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        raise NotImplementedError
 
     def state_dict(self) -> Dict[str, Any]:
-        raise RuntimeError("Not Implemented")
+        raise NotImplementedError
 
-    def synthesize(self, input: Any):
+    def synthesize(self, input: Any) \
+            -> Generator[Tuple[List[Candidate], List[Progress]], None, None]:
         """
         Synthesize the program from the query
 

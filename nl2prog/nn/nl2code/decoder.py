@@ -5,7 +5,8 @@ from typing import Tuple, Optional
 from nl2prog.nn.utils import rnn
 
 
-def query_history(history: torch.FloatTensor, index: torch.LongTensor):
+def query_history(history: torch.FloatTensor, index: torch.LongTensor) \
+        -> torch.FloatTensor:
     """
     Return the hidden states of the specified indexes
 

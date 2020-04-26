@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from nl2prog.language.ast import AST, Node, Leaf, Field, Root
 from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
 from enum import Enum
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class NodeConstraint(Enum):
@@ -30,17 +34,17 @@ class NodeType:
     type_name: Union[str, Root]
     constraint: NodeConstraint
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.type_name) ^ hash(self.constraint)
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, NodeType):
             return self.type_name == rhs.type_name and \
                 self.constraint == rhs.constraint
         else:
             return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.constraint == NodeConstraint.Variadic:
             return f"{self.type_name}*"
         elif self.constraint == NodeConstraint.Token:
@@ -64,16 +68,16 @@ class ExpandTreeRule:
     parent: NodeType
     children: List[Tuple[str, NodeType]]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.parent) ^ hash(tuple(self.children))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, ExpandTreeRule):
             return self.parent == rhs.parent and self.children == rhs.children
         else:
             return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         children = ", ".join(
             map(lambda x: f"{x[0]}: {x[1]}", self.children))
         return f"{self.parent} -> [{children}]"
@@ -85,13 +89,13 @@ class CloseVariadicFieldRule:
     """
     _instance = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         return isinstance(rhs, CloseVariadicFieldRule)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<close variadic field>"
 
     def __new__(cls):
@@ -114,7 +118,7 @@ class ApplyRule:
     """
     rule: Rule
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Apply ({self.rule})"
 
 
@@ -124,13 +128,13 @@ class CloseNode:
     """
     _instance = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __eq__(self, rhs: Any):
+    def __eq__(self, rhs: Any) -> bool:
         return isinstance(rhs, CloseNode)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<CLOSE_NODE>"
 
     def __new__(cls):
@@ -151,7 +155,7 @@ class GenerateToken:
     """
     token: Union[CloseNode, str]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Generate {self.token}"
 
 
@@ -187,9 +191,9 @@ def ast_to_action_sequence(node: AST,
     action.ActionSequence
         The corresponding action sequence
     """
-    def to_sequence(node: AST):
+    def to_sequence(node: AST) -> List[Action]:
         if isinstance(node, Node):
-            def to_node_type(field: Field):
+            def to_node_type(field: Field) -> NodeType:
                 if isinstance(field.value, list):
                     return NodeType(field.type_name,
                                     NodeConstraint.Variadic)
@@ -203,7 +207,7 @@ def ast_to_action_sequence(node: AST,
             children = list(
                 map(lambda f: (f.name, to_node_type(f)), node.fields))
 
-            seq = [ApplyRule(ExpandTreeRule(
+            seq: List[Action] = [ApplyRule(ExpandTreeRule(
                 NodeType(node.type_name, NodeConstraint.Node),
                 children))]
             for field in node.fields:
@@ -231,6 +235,9 @@ def ast_to_action_sequence(node: AST,
                 return list(map(lambda x: GenerateToken(x), tokens))
             else:
                 return [GenerateToken(node.value)]
+        else:
+            logger.warn(f"Invalid type of node: {type(node)}")
+            return []
     return ActionSequence(
         to_sequence(Node(Root(), [Field("root", Root(), node)])),
         options)
