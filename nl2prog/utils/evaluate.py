@@ -1,5 +1,5 @@
 import torch
-from typing import Callable, Any, List, Dict, Tuple
+from typing import Callable, Any, List, Dict, Tuple, Mapping
 from dataclasses import dataclass
 
 
@@ -23,7 +23,7 @@ Metric = Callable[[List[Any], Any], float]
 
 def evaluate(dataset: torch.utils.data.Dataset,
              synthesize: Callable[[str], Tuple[Any, List[Any]]],
-             metrics: Dict[str, Metric],
+             metrics: Mapping[str, Metric],
              top_n: List[int] = [1, 3],
              ) -> EvaluationResult:
     results = []
