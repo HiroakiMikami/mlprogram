@@ -1,7 +1,14 @@
 import gin
+
+import nl2prog.gin
 import nl2prog.gin.workspace
 import nl2prog.gin.optimizer
 import nl2prog.gin.nl2prog
+import nl2prog.gin.nl2code
+import nl2prog.gin.treegen
+import nl2prog.dataset.django
+import nl2prog.dataset.hearthstone
+import nl2prog.dataset.nl2bash
 import nl2prog.nn
 import nl2prog.metrics
 import nl2prog.metrics.python
@@ -18,17 +25,32 @@ import nl2prog.nn.nl2code
 import nl2prog.utils.data.nl2code
 import nl2prog.utils.transform.nl2code
 
+import nl2prog.gin.torch.external_configurables  # noqa
+
+gin.external_configurable(nl2prog.gin.get_key,
+                          module="nl2prog.gin")
 
 gin.external_configurable(nl2prog.gin.workspace.get,
                           module="nl2prog.gin.workspace")
 gin.external_configurable(nl2prog.gin.workspace.put,
                           module="nl2prog.gin.workspace")
 gin.external_configurable(nl2prog.gin.optimizer.create_optimizer,
-                          module="nl2prog.gin.optimizer.create_optimizer")
+                          module="nl2prog.gin.optimizer")
 gin.external_configurable(nl2prog.gin.nl2prog.train,
-                          module="nl2prog.gin.nl2prog.train")
+                          module="nl2prog.gin.nl2prog")
 gin.external_configurable(nl2prog.gin.nl2prog.evaluate,
-                          module="nl2prog.gin.nl2prog.evaluate")
+                          module="nl2prog.gin.nl2prog")
+gin.external_configurable(nl2prog.gin.nl2code.prepare_encoder,
+                          module="nl2prog.gin.nl2code")
+gin.external_configurable(nl2prog.gin.treegen.prepare_encoder,
+                          module="nl2prog.gin.treegen")
+
+gin.external_configurable(nl2prog.dataset.django.download,
+                          module="nl2prog.dataset.django")
+gin.external_configurable(nl2prog.dataset.hearthstone.download,
+                          module="nl2prog.dataset.hearthstone")
+gin.external_configurable(nl2prog.dataset.nl2bash.download,
+                          module="nl2prog.dataset.nl2bash")
 
 gin.external_configurable(nl2prog.nn.Loss, module="nl2prog.nn")
 gin.external_configurable(nl2prog.nn.Accuracy, module="nl2prog.nn")
@@ -66,6 +88,8 @@ gin.external_configurable(nl2prog.utils.transform.TransformCode,
 gin.external_configurable(nl2prog.utils.transform.TransformGroundTruth,
                           module="nl2prog.utils.transform")
 gin.external_configurable(nl2prog.utils.python.tokenize_token,
+                          module="nl2prog.utils.python")
+gin.external_configurable(nl2prog.utils.python.tokenize_query,
                           module="nl2prog.utils.python")
 
 gin.external_configurable(nl2prog.nn.nl2code.TrainModel,
