@@ -7,7 +7,9 @@
 !/setup.py
 !/nl2prog/**/*.py
 !/bin/*.bash
-!/examples/**/*.ipynb
 !/test/**/*.py
+!/configs/**/*.gin
+!/tools/*.py
+!/tools/*.ipynb
 !/result/**/*.log
 !/images/*.png

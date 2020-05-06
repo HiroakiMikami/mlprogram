@@ -1,4 +1,5 @@
 from typing import List
+from nl2prog.gin import workspace
 from nl2prog.language.ast import AST, Node, Leaf, Field
 from nl2prog.utils.data import ListDataset, Entry
 
@@ -49,15 +50,26 @@ def FunctionCall(name: str, args: List[AST]):
 
 
 # Dataset
-train_dataset = ListDataset([
+traindata = [
     [Entry("x is assigned the value of 0", Assign("x", Number(0)))],
     [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
     [Entry("dump the value of xy and x",
            FunctionCall("print", [Name("xy"), Name("x")]))]
-])
+]
 test_dataset = ListDataset([
     [Entry("x is assigned the value of 4", Assign("x", Number(4)))],
     [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
     [Entry("dump the value of xy and x",
            FunctionCall("print", [Name("xy"), Name("x")]))]
 ])
+
+
+def prepare_dataset(dataset_path: str, num_repeat: int) -> None:
+    dataset = []
+    for _ in range(num_repeat):
+        dataset.extend(traindata)
+    workspace.put(dataset_path, {
+        "train": ListDataset(dataset),
+        "test": test_dataset,
+        "valid": test_dataset
+    })
