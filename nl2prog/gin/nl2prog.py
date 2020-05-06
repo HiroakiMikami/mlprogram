@@ -6,11 +6,12 @@ from typing \
 import os
 import logging
 import shutil
+from math import ceil
 from nl2prog.gin import workspace
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.metrics import Metric
 from nl2prog.utils import synthesize, evaluate as eval, TopKModel
-from nl2prog.utils.data import to_eval_dataset
+from nl2prog.utils.data import to_eval_dataset, ListDataset
 from nl2prog.utils.beam_search_synthesizer import BeamSearchSynthesizer
 
 
@@ -106,17 +107,24 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
         top_k_model = TopKModel(num_models, model_dir)
 
         logger.info(f"Strat training from {start_epoch} epoch")
-        for epoch in range(start_epoch, num_epochs):
+        for epoch in range(start_epoch, ceil(num_epochs)):
             # TODO num_workers > 0 causes the RuntimeError
             loader = DataLoader(dataset, batch_size=batch_size,
                                 shuffle=True, num_workers=0,
                                 collate_fn=collate_fn)
             if progress_bar is not None:
                 loader = progress_bar(loader)
+            if num_epochs - epoch < 1:
+                n_iter = max(1, int(len(loader) * (num_epochs - epoch)))
+            else:
+                n_iter = -1
+
             avg_loss = 0.0
             avg_score = 0.0
             model.train()
-            for batch in loader:
+            for i, batch in enumerate(loader):
+                if i == n_iter:
+                    break
                 input = batch[:-1]
                 ground_truth = batch[-1]
                 output = cast(Tuple[PaddedSequenceWithMask,
@@ -179,6 +187,7 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
              main_metric: Tuple[int, str],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
+             n_samples: Optional[int] = None,
              progress_bar: Optional[Callable[[Iterable], Iterable]] = None) \
         -> None:
     with workspace.use_workspace():
@@ -190,6 +199,9 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
         assert raw_dataset is not None
         raw_test_dataset = raw_dataset["test"]
         raw_valid_dataset = raw_dataset["valid"]
+        if n_samples is not None:
+            raw_test_dataset = ListDataset(raw_test_dataset[:n_samples])
+            raw_valid_dataset = ListDataset(raw_valid_dataset[:n_samples])
         test_dataset = to_eval_dataset(raw_test_dataset)
         valid_dataset = to_eval_dataset(raw_valid_dataset)
 
