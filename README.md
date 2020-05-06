@@ -16,7 +16,13 @@ Implemented Papers
 
 ### NL2Code
 
-`nl2code_train.ipynb` and `nl2code_eval.ipynb` in `examples` directory show the usage of [NL2Code](https://arxiv.org/abs/1704.01696).
+`nl2code_train.gin` and `nl2code_eval.gin` in `configs` directory show the usage of [NL2Code](https://arxiv.org/abs/1704.01696).
+
+```bash
+$ python tools/launch.py --config-file configs/hearthstone/nl2code_train.gin  # Train NL2Code with GPU
+$ python tools/launch.py --config-file configs/hearthstone/nl2code_evaluate.gin  # Train NL2Code with GPU
+```
+
 
 I noticed that there are some differences between this implementation and the official one.
 The followings summarize the differences.
@@ -37,7 +43,13 @@ This implementation does not set the maximum length because of PyTorch Define-by
 
 ### TreeGen
 
-`treegen_train.ipynb` and `treegen_eval.ipynb` in `examples` directory show the usage of [TreeGen](https://arxiv.org/abs/1911.09983).
+`treegen_train.gin` and `treegen_eval.gin` in `configs` directory show the usage of [TreeGen](https://arxiv.org/abs/1911.09983).
+
+```bash
+$ python tools/launch.py --config-file configs/hearthstone/treegen_train.gin  # Train TreeGen with GPU
+$ python tools/launch.py --config-file configs/hearthstone/treegen_evaluate.gin  # Train TreeGen with GPU
+```
+
 
 TreeGen is faster than NL2Code during training, however, there are the following 2 problems:
 
