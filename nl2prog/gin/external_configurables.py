@@ -30,6 +30,10 @@ import nl2prog.utils.data.treegen
 import nl2prog.utils.transform.treegen
 
 import nl2prog.gin.torch.external_configurables  # noqa
+try:
+    import nl2prog.gin.fairseq.external_configurables  # noqa
+except:  # noqa
+    pass
 
 gin.external_configurable(nl2prog.gin.get_key,
                           module="nl2prog.gin")
