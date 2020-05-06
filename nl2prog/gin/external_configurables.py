@@ -15,6 +15,7 @@ import nl2prog.metrics.python
 import nl2prog.metrics.accuracy
 import nl2prog.metrics.python.bleu
 import nl2prog.language.python
+import nl2prog.language.bash
 import nl2prog.language.action
 import nl2prog.utils
 import nl2prog.utils.data
@@ -63,6 +64,10 @@ gin.external_configurable(nl2prog.dataset.hearthstone.download,
                           module="nl2prog.dataset.hearthstone")
 gin.external_configurable(nl2prog.dataset.nl2bash.download,
                           module="nl2prog.dataset.nl2bash")
+gin.external_configurable(nl2prog.dataset.nl2bash.tokenize_query,
+                          module="nl2prog.dataset.nl2bash")
+gin.external_configurable(nl2prog.dataset.nl2bash.tokenize_token,
+                          module="nl2prog.dataset.nl2bash")
 
 gin.external_configurable(nl2prog.nn.Loss, module="nl2prog.nn")
 gin.external_configurable(nl2prog.nn.Accuracy, module="nl2prog.nn")
@@ -77,6 +82,12 @@ gin.external_configurable(nl2prog.language.python.unparse,
                           module="nl2prog.language.python")
 gin.external_configurable(nl2prog.language.python.is_subtype,
                           module="nl2prog.language.python")
+gin.external_configurable(nl2prog.language.bash.parse,
+                          module="nl2prog.language.bash")
+gin.external_configurable(nl2prog.language.bash.unparse,
+                          module="nl2prog.language.bash")
+gin.external_configurable(nl2prog.language.bash.is_subtype,
+                          module="nl2prog.language.bash")
 gin.external_configurable(nl2prog.language.action.ActionOptions,
                           module="nl2prog.language.action")
 gin.external_configurable(nl2prog.language.action.code_to_action_sequence,
