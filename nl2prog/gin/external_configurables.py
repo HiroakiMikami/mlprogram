@@ -25,6 +25,10 @@ import nl2prog.nn.nl2code
 import nl2prog.utils.data.nl2code
 import nl2prog.utils.transform.nl2code
 
+import nl2prog.nn.treegen
+import nl2prog.utils.data.treegen
+import nl2prog.utils.transform.treegen
+
 import nl2prog.gin.torch.external_configurables  # noqa
 
 gin.external_configurable(nl2prog.gin.get_key,
@@ -81,6 +85,8 @@ gin.external_configurable(nl2prog.utils.data.CollateNlFeature,
                           module="nl2prog.utils.data")
 gin.external_configurable(nl2prog.utils.data.collate_none,
                           module="nl2prog.utils.data")
+gin.external_configurable(nl2prog.utils.data.split_none,
+                          module="nl2prog.utils.data")
 gin.external_configurable(nl2prog.utils.transform.TransformDataset,
                           module="nl2prog.utils.transform")
 gin.external_configurable(nl2prog.utils.transform.TransformCode,
@@ -114,6 +120,27 @@ gin.external_configurable(nl2prog.utils.transform.nl2code.TransformQuery,
                           module="nl2prog.utils.transform.nl2code")
 gin.external_configurable(nl2prog.utils.transform.nl2code.TransformEvaluator,
                           module="nl2prog.utils.transform.nl2code")
+
+gin.external_configurable(nl2prog.nn.treegen.TrainModel,
+                          module="nl2prog.nn.treegen")
+gin.external_configurable(nl2prog.nn.treegen.NLReader,
+                          module="nl2prog.nn.treegen")
+gin.external_configurable(nl2prog.nn.treegen.ActionSequenceReader,
+                          module="nl2prog.nn.treegen")
+gin.external_configurable(nl2prog.nn.treegen.Decoder,
+                          module="nl2prog.nn.treegen")
+gin.external_configurable(nl2prog.nn.treegen.Predictor,
+                          module="nl2prog.nn.treegen")
+gin.external_configurable(nl2prog.utils.data.treegen.CollateInput,
+                          module="nl2prog.utils.data.treegen")
+gin.external_configurable(nl2prog.utils.data.treegen.CollateActionSequence,
+                          module="nl2prog.utils.data.treegen")
+gin.external_configurable(nl2prog.utils.data.treegen.CollateQuery,
+                          module="nl2prog.utils.data.treegen")
+gin.external_configurable(nl2prog.utils.transform.treegen.TransformQuery,
+                          module="nl2prog.utils.transform.treegen")
+gin.external_configurable(nl2prog.utils.transform.treegen.TransformEvaluator,
+                          module="nl2prog.utils.transform.treegen")
 
 # Constants
 gin.constant("nl2prog.language.python.ParseMode.Eval",
