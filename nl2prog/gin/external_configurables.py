@@ -55,6 +55,10 @@ gin.external_configurable(nl2prog.gin.treegen.prepare_encoder,
 
 gin.external_configurable(nl2prog.dataset.django.download,
                           module="nl2prog.dataset.django")
+gin.external_configurable(nl2prog.dataset.django.parse,
+                          module="nl2prog.dataset.django")
+gin.external_configurable(nl2prog.dataset.django.tokenize_query,
+                          module="nl2prog.dataset.django")
 gin.external_configurable(nl2prog.dataset.hearthstone.download,
                           module="nl2prog.dataset.hearthstone")
 gin.external_configurable(nl2prog.dataset.nl2bash.download,

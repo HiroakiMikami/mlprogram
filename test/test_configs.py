@@ -45,6 +45,11 @@ class ConfigTest(unittest.TestCase):
             # Evaluate
             tools.launch.entrypoint()
 
+    def test_django_nl2code(self):
+        self.nl2prog(
+            os.path.join("configs", "django", "nl2code_train.gin"),
+            os.path.join("configs", "django", "nl2code_evaluate.gin"))
+
     def test_hearthstone_nl2code(self):
         self.nl2prog(
             os.path.join("configs", "hearthstone", "nl2code_train.gin"),
