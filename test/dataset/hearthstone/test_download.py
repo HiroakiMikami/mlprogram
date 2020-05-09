@@ -1,7 +1,7 @@
 import unittest
 
-from nl2prog.utils.data import Entry
-from nl2prog.dataset.hearthstone import download
+from mlprogram.utils.data import Entry
+from mlprogram.dataset.hearthstone import download
 
 
 class TestDownload(unittest.TestCase):

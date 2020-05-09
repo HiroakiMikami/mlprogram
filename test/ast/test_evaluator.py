@@ -1,11 +1,11 @@
 import unittest
 
-from nl2prog.ast.evaluator \
+from mlprogram.ast.evaluator \
     import Evaluator, Parent, InvalidActionException
-from nl2prog.ast.action \
+from mlprogram.ast.action \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
     GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions
-from nl2prog.ast.ast import Node, Leaf, Field, Root
+from mlprogram.ast.ast import Node, Leaf, Field, Root
 
 
 class TestEvaluator(unittest.TestCase):

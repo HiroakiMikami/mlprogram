@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn.functional import position_embeddings, index_embeddings
+from mlprogram.nn.functional import position_embeddings, index_embeddings
 
 
 class TestPostionEmbeddings(unittest.TestCase):

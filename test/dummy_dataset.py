@@ -1,7 +1,7 @@
 from typing import List
-from nl2prog.gin import workspace
-from nl2prog.ast.ast import AST, Node, Leaf, Field
-from nl2prog.utils.data import ListDataset, Entry
+from mlprogram.gin import workspace
+from mlprogram.ast.ast import AST, Node, Leaf, Field
+from mlprogram.utils.data import ListDataset, Entry
 
 
 # Definition of dummy language

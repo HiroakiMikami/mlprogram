@@ -1,10 +1,10 @@
 import unittest
 import ast as python_ast
 
-import nl2prog.ast.ast as ast
+import mlprogram.ast.ast as ast
 
-from nl2prog.language.python.python_ast_to_ast import base_ast_type
-from nl2prog.language.python import to_ast
+from mlprogram.language.python.python_ast_to_ast import base_ast_type
+from mlprogram.language.python import to_ast
 
 
 class TestBaseAstType(unittest.TestCase):

@@ -2,8 +2,9 @@ import torch
 import numpy as np
 import unittest
 
-from nl2prog.nn.treegen import ActionSequenceReaderBlock, ActionSequenceReader
-from nl2prog.nn.utils.rnn import pad_sequence
+from mlprogram.nn.treegen \
+    import ActionSequenceReaderBlock, ActionSequenceReader
+from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class TestActionSequenceReaderBlock(unittest.TestCase):

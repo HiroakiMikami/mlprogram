@@ -2,8 +2,8 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn.treegen import Predictor
-from nl2prog.nn.utils.rnn import pad_sequence
+from mlprogram.nn.treegen import Predictor
+from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class TestPredictor(unittest.TestCase):

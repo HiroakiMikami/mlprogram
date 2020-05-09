@@ -1,11 +1,11 @@
 import unittest
 
-from nl2prog.ast.action \
+from mlprogram.ast.action \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseNode, CloseVariadicFieldRule, \
     ActionOptions, ast_to_action_sequence
-from nl2prog.ast import ast
-from nl2prog.ast.ast import Root
+from mlprogram.ast import ast
+from mlprogram.ast.ast import Root
 
 
 class TestNodeType(unittest.TestCase):

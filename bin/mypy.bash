@@ -1,6 +1,6 @@
 #! /bin/bash
 
-mypy --no-site-packages --ignore-missing-imports nl2prog/**/*.py || exit 1
+mypy --no-site-packages --ignore-missing-imports mlprogram/**/*.py || exit 1
 
 
 for testdir in $(find $(dirname $0)/../ -name test -and -type d)

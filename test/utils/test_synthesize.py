@@ -1,8 +1,9 @@
 import unittest
 import ast
 from typing import List
-from nl2prog.language.python import to_ast
-from nl2prog.synthesizer import Progress, Candidate, synthesize as _synthesize
+from mlprogram.language.python import to_ast
+from mlprogram.synthesizer \
+    import Progress, Candidate, synthesize as _synthesize
 
 
 class TestSynthesize(unittest.TestCase):

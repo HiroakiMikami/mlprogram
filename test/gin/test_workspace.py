@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog.gin import workspace
+from mlprogram.gin import workspace
 
 
 class TestWorkspace(unittest.TestCase):

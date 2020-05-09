@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn.functional import bmm
+from mlprogram.nn.functional import bmm
 
 
 class TestBmm(unittest.TestCase):

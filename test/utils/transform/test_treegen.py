@@ -1,13 +1,14 @@
 import unittest
 import numpy as np
 from torchnlp.encoders import LabelEncoder
-from nl2prog.utils import Query
-from nl2prog.utils.data import Entry, ListDataset, get_samples
-from nl2prog.ast.ast import Node, Field, Leaf
-from nl2prog.ast.action import ast_to_action_sequence, ActionOptions
-from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.utils.transform import TransformCode
-from nl2prog.utils.transform.treegen import TransformQuery, TransformEvaluator
+from mlprogram.utils import Query
+from mlprogram.utils.data import Entry, ListDataset, get_samples
+from mlprogram.ast.ast import Node, Field, Leaf
+from mlprogram.ast.action import ast_to_action_sequence, ActionOptions
+from mlprogram.encoders import ActionSequenceEncoder
+from mlprogram.utils.transform import TransformCode
+from mlprogram.utils.transform.treegen \
+    import TransformQuery, TransformEvaluator
 
 
 def tokenize(query: str):

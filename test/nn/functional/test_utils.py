@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from nl2prog.nn.functional import nel_to_lne, lne_to_nel
+from mlprogram.nn.functional import nel_to_lne, lne_to_nel
 
 
 class TestEmbeddings(unittest.TestCase):

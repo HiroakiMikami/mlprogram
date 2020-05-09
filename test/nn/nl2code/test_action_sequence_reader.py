@@ -2,8 +2,8 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn.nl2code import ActionSequenceReader
-from nl2prog.nn.utils import rnn
+from mlprogram.nn.nl2code import ActionSequenceReader
+from mlprogram.nn.utils import rnn
 
 
 class TestActionSequenceReader(unittest.TestCase):

@@ -1,8 +1,8 @@
 import torch
 import unittest
 import numpy as np
-import nl2prog.nn.utils.rnn as rnn
-from nl2prog.nn.nl2code import NLReader
+import mlprogram.nn.utils.rnn as rnn
+from mlprogram.nn.nl2code import NLReader
 
 
 class TestInputReader(unittest.TestCase):

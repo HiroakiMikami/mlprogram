@@ -2,8 +2,8 @@ import torch
 import numpy as np
 import unittest
 
-from nl2prog.nn.treegen import NLReaderBlock, NLReader
-from nl2prog.nn.utils.rnn import pad_sequence
+from mlprogram.nn.treegen import NLReaderBlock, NLReader
+from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class TestNLReaderBlock(unittest.TestCase):

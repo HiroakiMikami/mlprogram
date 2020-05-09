@@ -1,10 +1,10 @@
 import torch
 import unittest
 from torchnlp.encoders import LabelEncoder
-import nl2prog.nn.utils.rnn as rnn
-from nl2prog.ast.action import NodeConstraint, NodeType, ActionOptions
-from nl2prog.encoders import Samples, ActionSequenceEncoder
-from nl2prog.nn.treegen import TrainModel
+import mlprogram.nn.utils.rnn as rnn
+from mlprogram.ast.action import NodeConstraint, NodeType, ActionOptions
+from mlprogram.encoders import Samples, ActionSequenceEncoder
+from mlprogram.nn.treegen import TrainModel
 
 
 class TestTrain(unittest.TestCase):

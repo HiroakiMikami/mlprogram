@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog.ast import ast
+from mlprogram.ast import ast
 
 
 class TestLeaf(unittest.TestCase):

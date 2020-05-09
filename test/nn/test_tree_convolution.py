@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn import TreeConvolution
+from mlprogram.nn import TreeConvolution
 
 
 class TestTreeConvolution(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from nl2prog.nn import SeparableConv1d
+from mlprogram.nn import SeparableConv1d
 
 
 class TestSeparableConv1d(unittest.TestCase):

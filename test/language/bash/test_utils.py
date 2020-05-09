@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog.language.bash import is_subtype
+from mlprogram.language.bash import is_subtype
 
 
 class TestIsSubtype(unittest.TestCase):

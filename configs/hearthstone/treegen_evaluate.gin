@@ -3,90 +3,90 @@ torch.device.type_str = "cuda"
 torch.device.index    = 0
 
 # Dataset
-dataset/nl2prog.gin.workspace.put.value = @nl2prog.dataset.hearthstone.download()
-dataset/nl2prog.gin.workspace.get.key   = "dataset"
+dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.hearthstone.download()
+dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-nl2prog.ast.action.ActionOptions.retain_variadic_fields = False
-nl2prog.ast.action.ActionOptions.split_non_terminal     = False
+mlprogram.ast.action.ActionOptions.retain_variadic_fields = False
+mlprogram.ast.action.ActionOptions.split_non_terminal     = False
 
 # to_action_sequence
-nl2prog.ast.action.code_to_action_sequence.parse    = @nl2prog.language.python.parse
-nl2prog.ast.action.code_to_action_sequence.tokenize = @nl2prog.utils.python.tokenize_token
-nl2prog.ast.action.code_to_action_sequence.options  = @nl2prog.ast.action.ActionOptions()
+mlprogram.ast.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
+mlprogram.ast.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
+mlprogram.ast.action.code_to_action_sequence.options  = @mlprogram.ast.action.ActionOptions()
 
 # Encoder
-word_encoder/nl2prog.gin.workspace.get.key             = "query_encoder"
-char_encoder/nl2prog.gin.workspace.get.key             = "char_encoder"
-action_sequence_encoder/nl2prog.gin.workspace.get.key  = "action_sequence_encoder"
+word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
+char_encoder/mlprogram.gin.workspace.get.key             = "char_encoder"
+action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-nl2prog.utils.transform.treegen.TransformQuery.extract_query               = @nl2prog.utils.python.tokenize_query
-nl2prog.utils.transform.treegen.TransformQuery.word_encoder                = @word_encoder/nl2prog.gin.workspace.get()
-nl2prog.utils.transform.treegen.TransformQuery.char_encoder                = @char_encoder/nl2prog.gin.workspace.get()
-nl2prog.utils.transform.treegen.TransformQuery.max_word_length             = 128
-nl2prog.utils.transform.treegen.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
-nl2prog.utils.transform.treegen.TransformEvaluator.max_arity               = 128
-nl2prog.utils.transform.treegen.TransformEvaluator.max_depth               = 128
-nl2prog.utils.transform.treegen.TransformEvaluator.train                   = False
+mlprogram.utils.transform.treegen.TransformQuery.extract_query               = @mlprogram.utils.python.tokenize_query
+mlprogram.utils.transform.treegen.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.treegen.TransformQuery.char_encoder                = @char_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.treegen.TransformQuery.max_word_length             = 128
+mlprogram.utils.transform.treegen.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.treegen.TransformEvaluator.max_arity               = 128
+mlprogram.utils.transform.treegen.TransformEvaluator.max_depth               = 128
+mlprogram.utils.transform.treegen.TransformEvaluator.train                   = False
 
 # Model
-nl2prog.nn.treegen.TrainModel.query_encoder                        = @word_encoder/nl2prog.gin.workspace.get()
-nl2prog.nn.treegen.TrainModel.char_encoder                         = @char_encoder/nl2prog.gin.workspace.get()
-nl2prog.nn.treegen.TrainModel.action_sequence_encoder              = @action_sequence_encoder/nl2prog.gin.workspace.get()
-nl2prog.nn.treegen.TrainModel.max_token_len                        = 128
-nl2prog.nn.treegen.TrainModel.max_arity                            = 128
-nl2prog.nn.treegen.TrainModel.max_depth                            = 128
-nl2prog.nn.treegen.TrainModel.num_heads                            = 8
-nl2prog.nn.treegen.TrainModel.num_nl_reader_blocks                 = 6
-nl2prog.nn.treegen.TrainModel.num_action_sequence_reader_blocks    = 6
-nl2prog.nn.treegen.TrainModel.num_decoder_blocks                   = 6
-nl2prog.nn.treegen.TrainModel.hidden_size                          = 256
-nl2prog.nn.treegen.TrainModel.feature_size                         = 1024
-nl2prog.nn.treegen.TrainModel.dropout                              = 0.15
+mlprogram.nn.treegen.TrainModel.query_encoder                        = @word_encoder/mlprogram.gin.workspace.get()
+mlprogram.nn.treegen.TrainModel.char_encoder                         = @char_encoder/mlprogram.gin.workspace.get()
+mlprogram.nn.treegen.TrainModel.action_sequence_encoder              = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.nn.treegen.TrainModel.max_token_len                        = 128
+mlprogram.nn.treegen.TrainModel.max_arity                            = 128
+mlprogram.nn.treegen.TrainModel.max_depth                            = 128
+mlprogram.nn.treegen.TrainModel.num_heads                            = 8
+mlprogram.nn.treegen.TrainModel.num_nl_reader_blocks                 = 6
+mlprogram.nn.treegen.TrainModel.num_action_sequence_reader_blocks    = 6
+mlprogram.nn.treegen.TrainModel.num_decoder_blocks                   = 6
+mlprogram.nn.treegen.TrainModel.hidden_size                          = 256
+mlprogram.nn.treegen.TrainModel.feature_size                         = 1024
+mlprogram.nn.treegen.TrainModel.dropout                              = 0.15
 
 # Collate
-nl2prog.utils.data.treegen.CollateInput.device          = @torch.device()
-nl2prog.utils.data.treegen.CollateActionSequence.device = @torch.device()
-nl2prog.utils.data.treegen.CollateQuery.device          = @torch.device()
-nl2prog.utils.data.CollateNlFeature.device              = @torch.device()
+mlprogram.utils.data.treegen.CollateInput.device          = @torch.device()
+mlprogram.utils.data.treegen.CollateActionSequence.device = @torch.device()
+mlprogram.utils.data.treegen.CollateQuery.device          = @torch.device()
+mlprogram.utils.data.CollateNlFeature.device              = @torch.device()
 
 # Synthesizer
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.beam_size               = 15
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.transform_input         = @nl2prog.utils.transform.treegen.TransformQuery()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.transform_evaluator     = @nl2prog.utils.transform.treegen.TransformEvaluator()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_input           = @nl2prog.utils.data.treegen.CollateInput()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_action_sequence = @nl2prog.utils.data.treegen.CollateActionSequence()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_query           = @nl2prog.utils.data.treegen.CollateQuery()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_state           = @nl2prog.utils.data.collate_none
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @nl2prog.utils.data.CollateNlFeature()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_other_feature   = @nl2prog.utils.data.collate_none
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.split_states            = @nl2prog.utils.data.split_none
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @nl2prog.nn.treegen.TrainModel()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.is_subtype              = @nl2prog.language.python.is_subtype
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @nl2prog.ast.action.ActionOptions()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
-nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.max_steps               = 350
-synthesizer/nl2prog.gin.workspace.put.value                              = @nl2prog.synthesizer.CommonBeamSearchSynthesizer.create()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.beam_size               = 15
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.transform_input         = @mlprogram.utils.transform.treegen.TransformQuery()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.transform_evaluator     = @mlprogram.utils.transform.treegen.TransformEvaluator()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_input           = @mlprogram.utils.data.treegen.CollateInput()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_action_sequence = @mlprogram.utils.data.treegen.CollateActionSequence()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_query           = @mlprogram.utils.data.treegen.CollateQuery()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_state           = @mlprogram.utils.data.collate_none
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @mlprogram.utils.data.CollateNlFeature()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_other_feature   = @mlprogram.utils.data.collate_none
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.split_states            = @mlprogram.utils.data.split_none
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.treegen.TrainModel()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.language.python.is_subtype
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.ast.action.ActionOptions()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.max_steps               = 350
+synthesizer/mlprogram.gin.workspace.put.value                              = @mlprogram.synthesizer.CommonBeamSearchSynthesizer.create()
 
 # Metrics
-nl2prog.metrics.Accuracy.parse          = @nl2prog.language.python.parse
-nl2prog.metrics.Accuracy.unparse        = @nl2prog.language.python.unparse
-nl2prog.metrics.python.Bleu.parse       = @nl2prog.language.python.parse
-nl2prog.metrics.python.Bleu.unparse     = @nl2prog.language.python.unparse
+mlprogram.metrics.Accuracy.parse          = @mlprogram.language.python.parse
+mlprogram.metrics.Accuracy.unparse        = @mlprogram.language.python.unparse
+mlprogram.metrics.python.Bleu.parse       = @mlprogram.language.python.parse
+mlprogram.metrics.python.Bleu.unparse     = @mlprogram.language.python.unparse
 
 # Task
-entrypoint.task                                  = @nl2prog.gin.nl2prog.evaluate
-nl2prog.gin.nl2prog.evaluate.dataset_key         = "dataset"
-nl2prog.gin.nl2prog.evaluate.synthesizer_key     = "synthesizer"
-nl2prog.gin.nl2prog.evaluate.encoder_keys        = ["query_encoder", "char_encoder", "action_sequence_encoder"]
-nl2prog.gin.nl2prog.evaluate.input_dir           = "output/output"
-nl2prog.gin.nl2prog.evaluate.workspace_dir       = "output/workspace"
-nl2prog.gin.nl2prog.evaluate.output_dir          = "output/output"
-nl2prog.gin.nl2prog.evaluate.prepare_dataset     = @dataset/nl2prog.gin.workspace.put
-nl2prog.gin.nl2prog.evaluate.prepare_synthesizer = @synthesizer/nl2prog.gin.workspace.put
-nl2prog.gin.nl2prog.evaluate.metrics             = {"accuracy": @nl2prog.metrics.Accuracy(), "bleu": @nl2prog.metrics.python.Bleu()}
-nl2prog.gin.nl2prog.evaluate.main_metric         = (1, "bleu")
-nl2prog.gin.nl2prog.evaluate.top_n               = [1]
-nl2prog.gin.nl2prog.evaluate.device              = @torch.device()
+entrypoint.task                                  = @mlprogram.gin.nl2prog.evaluate
+mlprogram.gin.nl2prog.evaluate.dataset_key         = "dataset"
+mlprogram.gin.nl2prog.evaluate.synthesizer_key     = "synthesizer"
+mlprogram.gin.nl2prog.evaluate.encoder_keys        = ["query_encoder", "char_encoder", "action_sequence_encoder"]
+mlprogram.gin.nl2prog.evaluate.input_dir           = "output/output"
+mlprogram.gin.nl2prog.evaluate.workspace_dir       = "output/workspace"
+mlprogram.gin.nl2prog.evaluate.output_dir          = "output/output"
+mlprogram.gin.nl2prog.evaluate.prepare_dataset     = @dataset/mlprogram.gin.workspace.put
+mlprogram.gin.nl2prog.evaluate.prepare_synthesizer = @synthesizer/mlprogram.gin.workspace.put
+mlprogram.gin.nl2prog.evaluate.metrics             = {"accuracy": @mlprogram.metrics.Accuracy(), "bleu": @mlprogram.metrics.python.Bleu()}
+mlprogram.gin.nl2prog.evaluate.main_metric         = (1, "bleu")
+mlprogram.gin.nl2prog.evaluate.top_n               = [1]
+mlprogram.gin.nl2prog.evaluate.device              = @torch.device()

@@ -6,12 +6,12 @@ import torch
 from torch import nn
 from torch import optim
 
-from nl2prog.gin import workspace
-from nl2prog.gin.nl2prog import train, evaluate
-from nl2prog.ast.ast import Leaf
-from nl2prog.utils.data import ListDataset, Entry
-from nl2prog.synthesizer.beam_search_synthesizer import Candidate
-from nl2prog.metrics import Accuracy, Bleu
+from mlprogram.gin import workspace
+from mlprogram.gin.nl2prog import train, evaluate
+from mlprogram.ast.ast import Leaf
+from mlprogram.utils.data import ListDataset, Entry
+from mlprogram.synthesizer.beam_search_synthesizer import Candidate
+from mlprogram.metrics import Accuracy, Bleu
 
 
 class TestTrain(unittest.TestCase):

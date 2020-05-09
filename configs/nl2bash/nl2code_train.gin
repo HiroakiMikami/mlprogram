@@ -3,84 +3,84 @@ torch.device.type_str = "cuda"
 torch.device.index    = 0
 
 # Dataset
-dataset/nl2prog.gin.workspace.put.value = @nl2prog.dataset.nl2bash.download()
-dataset/nl2prog.gin.workspace.get.key   = "dataset"
+dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.nl2bash.download()
+dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-nl2prog.ast.action.ActionOptions.retain_variadic_fields = True
-nl2prog.ast.action.ActionOptions.split_non_terminal     = True
+mlprogram.ast.action.ActionOptions.retain_variadic_fields = True
+mlprogram.ast.action.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
-nl2prog.ast.action.code_to_action_sequence.parse    = @nl2prog.language.bash.parse
-nl2prog.ast.action.code_to_action_sequence.tokenize = @nl2prog.dataset.nl2bash.tokenize_token
-nl2prog.ast.action.code_to_action_sequence.options  = @nl2prog.ast.action.ActionOptions()
+mlprogram.ast.action.code_to_action_sequence.parse    = @mlprogram.language.bash.parse
+mlprogram.ast.action.code_to_action_sequence.tokenize = @mlprogram.dataset.nl2bash.tokenize_token
+mlprogram.ast.action.code_to_action_sequence.options  = @mlprogram.ast.action.ActionOptions()
 
 # Encoder
-train_dataset/nl2prog.gin.get_key.key                  = "train"
-train_dataset/nl2prog.gin.get_key.target               = @dataset/nl2prog.gin.workspace.get()
-nl2prog.gin.nl2code.prepare_encoder.dataset            = @train_dataset/nl2prog.gin.get_key()
-nl2prog.gin.nl2code.prepare_encoder.word_threshold     = 3
-nl2prog.gin.nl2code.prepare_encoder.token_threshold    = 0
-nl2prog.gin.nl2code.prepare_encoder.parse              = @nl2prog.language.bash.parse
-nl2prog.gin.nl2code.prepare_encoder.to_action_sequence = @nl2prog.ast.action.code_to_action_sequence
-nl2prog.gin.nl2code.prepare_encoder.extract_query      = @nl2prog.dataset.nl2bash.tokenize_query
-nl2prog.gin.nl2code.prepare_encoder.tokenize_token     = @nl2prog.dataset.nl2bash.tokenize_token
-word_encoder/nl2prog.gin.workspace.get.key             = "query_encoder"
-action_sequence_encoder/nl2prog.gin.workspace.get.key  = "action_sequence_encoder"
+train_dataset/mlprogram.gin.get_key.key                  = "train"
+train_dataset/mlprogram.gin.get_key.target               = @dataset/mlprogram.gin.workspace.get()
+mlprogram.gin.nl2code.prepare_encoder.dataset            = @train_dataset/mlprogram.gin.get_key()
+mlprogram.gin.nl2code.prepare_encoder.word_threshold     = 3
+mlprogram.gin.nl2code.prepare_encoder.token_threshold    = 0
+mlprogram.gin.nl2code.prepare_encoder.parse              = @mlprogram.language.bash.parse
+mlprogram.gin.nl2code.prepare_encoder.to_action_sequence = @mlprogram.ast.action.code_to_action_sequence
+mlprogram.gin.nl2code.prepare_encoder.extract_query      = @mlprogram.dataset.nl2bash.tokenize_query
+mlprogram.gin.nl2code.prepare_encoder.tokenize_token     = @mlprogram.dataset.nl2bash.tokenize_token
+word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
+action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-nl2prog.utils.transform.TransformDataset.transform_input                   = @nl2prog.utils.transform.nl2code.TransformQuery()
-nl2prog.utils.transform.nl2code.TransformQuery.extract_query               = @nl2prog.dataset.nl2bash.tokenize_query
-nl2prog.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/nl2prog.gin.workspace.get()
-nl2prog.utils.transform.TransformDataset.transform_code                    = @nl2prog.utils.transform.TransformCode()
-nl2prog.utils.transform.TransformCode.to_action_sequence                   = @nl2prog.ast.action.code_to_action_sequence
-nl2prog.utils.transform.TransformDataset.transform_evaluator               = @nl2prog.utils.transform.nl2code.TransformEvaluator()
-nl2prog.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
-nl2prog.utils.transform.nl2code.TransformEvaluator.train                   = True
-nl2prog.utils.transform.TransformDataset.transform_ground_truth            = @nl2prog.utils.transform.TransformGroundTruth()
-nl2prog.utils.transform.TransformGroundTruth.action_sequence_encoder       = @action_sequence_encoder/nl2prog.gin.workspace.get()
+mlprogram.utils.transform.TransformDataset.transform_input                   = @mlprogram.utils.transform.nl2code.TransformQuery()
+mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.dataset.nl2bash.tokenize_query
+mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
+mlprogram.utils.transform.TransformCode.to_action_sequence                   = @mlprogram.ast.action.code_to_action_sequence
+mlprogram.utils.transform.TransformDataset.transform_evaluator               = @mlprogram.utils.transform.nl2code.TransformEvaluator()
+mlprogram.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.nl2code.TransformEvaluator.train                   = True
+mlprogram.utils.transform.TransformDataset.transform_ground_truth            = @mlprogram.utils.transform.TransformGroundTruth()
+mlprogram.utils.transform.TransformGroundTruth.action_sequence_encoder       = @action_sequence_encoder/mlprogram.gin.workspace.get()
 
 # Model
-nl2prog.nn.nl2code.TrainModel.query_encoder           = @word_encoder/nl2prog.gin.workspace.get()
-nl2prog.nn.nl2code.TrainModel.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
-nl2prog.nn.nl2code.TrainModel.embedding_dim           = 128
-nl2prog.nn.nl2code.TrainModel.node_type_embedding_dim = 64
-nl2prog.nn.nl2code.TrainModel.lstm_state_size         = 256
-nl2prog.nn.nl2code.TrainModel.hidden_state_size       = 50
-nl2prog.nn.nl2code.TrainModel.dropout                 = 0.2
-model/nl2prog.gin.workspace.put.value                 = @nl2prog.nn.nl2code.TrainModel()
-model/nl2prog.gin.workspace.get.key                   = "model"
+mlprogram.nn.nl2code.TrainModel.query_encoder           = @word_encoder/mlprogram.gin.workspace.get()
+mlprogram.nn.nl2code.TrainModel.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.nn.nl2code.TrainModel.embedding_dim           = 128
+mlprogram.nn.nl2code.TrainModel.node_type_embedding_dim = 64
+mlprogram.nn.nl2code.TrainModel.lstm_state_size         = 256
+mlprogram.nn.nl2code.TrainModel.hidden_state_size       = 50
+mlprogram.nn.nl2code.TrainModel.dropout                 = 0.2
+model/mlprogram.gin.workspace.put.value                 = @mlprogram.nn.nl2code.TrainModel()
+model/mlprogram.gin.workspace.get.key                   = "model"
 
 # Collate
-nl2prog.utils.data.Collate.collate_input                = @nl2prog.utils.data.nl2code.CollateInput()
-nl2prog.utils.data.Collate.collate_action_sequence      = @nl2prog.utils.data.nl2code.CollateActionSequence()
-nl2prog.utils.data.Collate.collate_query                = @nl2prog.utils.data.collate_none
-nl2prog.utils.data.Collate.collate_ground_truth         = @nl2prog.utils.data.CollateGroundTruth()
-nl2prog.utils.data.nl2code.CollateInput.device          = @torch.device()
-nl2prog.utils.data.nl2code.CollateActionSequence.device = @torch.device()
-nl2prog.utils.data.CollateGroundTruth.device            = @torch.device()
+mlprogram.utils.data.Collate.collate_input                = @mlprogram.utils.data.nl2code.CollateInput()
+mlprogram.utils.data.Collate.collate_action_sequence      = @mlprogram.utils.data.nl2code.CollateActionSequence()
+mlprogram.utils.data.Collate.collate_query                = @mlprogram.utils.data.collate_none
+mlprogram.utils.data.Collate.collate_ground_truth         = @mlprogram.utils.data.CollateGroundTruth()
+mlprogram.utils.data.nl2code.CollateInput.device          = @torch.device()
+mlprogram.utils.data.nl2code.CollateActionSequence.device = @torch.device()
+mlprogram.utils.data.CollateGroundTruth.device            = @torch.device()
 
 # Optimizer
-nl2prog.gin.optimizer.create_optimizer.optimizer_cls = @torch.optim.Adam
-nl2prog.gin.optimizer.create_optimizer.model         = @model/nl2prog.gin.workspace.get()
-optimizer/nl2prog.gin.workspace.put.value            = @nl2prog.gin.optimizer.create_optimizer()
+mlprogram.gin.optimizer.create_optimizer.optimizer_cls = @torch.optim.Adam
+mlprogram.gin.optimizer.create_optimizer.model         = @model/mlprogram.gin.workspace.get()
+optimizer/mlprogram.gin.workspace.put.value            = @mlprogram.gin.optimizer.create_optimizer()
 
 # Task
-entrypoint.task                              = @nl2prog.gin.nl2prog.train
-nl2prog.gin.nl2prog.train.dataset_key        = "dataset"
-nl2prog.gin.nl2prog.train.model_key          = "model"
-nl2prog.gin.nl2prog.train.optimizer_key      = "optimizer"
-nl2prog.gin.nl2prog.train.encoder_keys       = ["query_encoder", "action_sequence_encoder"]
-nl2prog.gin.nl2prog.train.workspace_dir      = "output/workspace"
-nl2prog.gin.nl2prog.train.output_dir         = "output/output"
-nl2prog.gin.nl2prog.train.prepare_dataset    = @dataset/nl2prog.gin.workspace.put
-nl2prog.gin.nl2prog.train.prepare_encoder    = @nl2prog.gin.nl2code.prepare_encoder
-nl2prog.gin.nl2prog.train.prepare_model      = @model/nl2prog.gin.workspace.put
-nl2prog.gin.nl2prog.train.prepare_optimizer  = @optimizer/nl2prog.gin.workspace.put
-nl2prog.gin.nl2prog.train.transform_cls      = @nl2prog.utils.transform.TransformDataset
-nl2prog.gin.nl2prog.train.loss_fn            = @nl2prog.nn.Loss()
-nl2prog.gin.nl2prog.train.score_fn           = @nl2prog.nn.Accuracy()
-nl2prog.gin.nl2prog.train.collate_fn         = @nl2prog.utils.data.Collate()
-nl2prog.gin.nl2prog.train.batch_size         = 1
-nl2prog.gin.nl2prog.train.num_epochs         = 50
-nl2prog.gin.nl2prog.train.device             = @torch.device()
+entrypoint.task                              = @mlprogram.gin.nl2prog.train
+mlprogram.gin.nl2prog.train.dataset_key        = "dataset"
+mlprogram.gin.nl2prog.train.model_key          = "model"
+mlprogram.gin.nl2prog.train.optimizer_key      = "optimizer"
+mlprogram.gin.nl2prog.train.encoder_keys       = ["query_encoder", "action_sequence_encoder"]
+mlprogram.gin.nl2prog.train.workspace_dir      = "output/workspace"
+mlprogram.gin.nl2prog.train.output_dir         = "output/output"
+mlprogram.gin.nl2prog.train.prepare_dataset    = @dataset/mlprogram.gin.workspace.put
+mlprogram.gin.nl2prog.train.prepare_encoder    = @mlprogram.gin.nl2code.prepare_encoder
+mlprogram.gin.nl2prog.train.prepare_model      = @model/mlprogram.gin.workspace.put
+mlprogram.gin.nl2prog.train.prepare_optimizer  = @optimizer/mlprogram.gin.workspace.put
+mlprogram.gin.nl2prog.train.transform_cls      = @mlprogram.utils.transform.TransformDataset
+mlprogram.gin.nl2prog.train.loss_fn            = @mlprogram.nn.Loss()
+mlprogram.gin.nl2prog.train.score_fn           = @mlprogram.nn.Accuracy()
+mlprogram.gin.nl2prog.train.collate_fn         = @mlprogram.utils.data.Collate()
+mlprogram.gin.nl2prog.train.batch_size         = 1
+mlprogram.gin.nl2prog.train.num_epochs         = 50
+mlprogram.gin.nl2prog.train.device             = @torch.device()

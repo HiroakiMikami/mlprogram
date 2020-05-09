@@ -14,7 +14,7 @@ extras = {
 }
 
 setup(
-    name="nl2prog",
+    name="mlprogram",
     install_requires=requires,
     test_requires=extras["test"],
     colab_requires=extras["colab"],

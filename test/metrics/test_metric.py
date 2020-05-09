@@ -1,6 +1,6 @@
 import unittest
-from nl2prog.ast.ast import Leaf
-from nl2prog.metrics import Metric
+from mlprogram.ast.ast import Leaf
+from mlprogram.metrics import Metric
 
 
 class TestMetric(unittest.TestCase):
