@@ -10,9 +10,9 @@ from math import ceil
 from nl2prog.gin import workspace
 from nl2prog.nn.utils.rnn import PaddedSequenceWithMask
 from nl2prog.metrics import Metric
-from nl2prog.utils import synthesize, evaluate as eval, TopKModel
+from nl2prog.utils import evaluate as eval, TopKModel
 from nl2prog.utils.data import to_eval_dataset, ListDataset
-from nl2prog.utils.beam_search_synthesizer import BeamSearchSynthesizer
+from nl2prog.synthesizer import synthesize, BeamSearchSynthesizer
 
 
 logger = logging.getLogger(__name__)

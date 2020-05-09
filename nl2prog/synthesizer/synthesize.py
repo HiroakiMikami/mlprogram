@@ -1,12 +1,11 @@
 from typing import List, Tuple
-from nl2prog.utils import Progress
 from nl2prog.ast.ast import AST
 
-from .beam_search_synthesizer import BeamSearchSynthesizer
+from nl2prog.synthesizer import Synthesizer, Progress
 
 
 def synthesize(query: str,
-               synthesizer: BeamSearchSynthesizer
+               synthesizer: Synthesizer
                ) -> Tuple[List[List[Progress]], List[AST]]:
     candidates = []
     progress = []

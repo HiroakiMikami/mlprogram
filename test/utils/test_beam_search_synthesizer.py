@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from math import log
 
-from nl2prog.utils \
+from nl2prog.synthesizer \
     import BeamSearchSynthesizer, Progress, Candidate, \
     LazyLogProbability
 from nl2prog.ast.ast import Node, Field, Leaf, Root

@@ -2,11 +2,12 @@ from typing \
     import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
 from nl2prog.ast.evaluator import Evaluator
-from nl2prog.ast.ast import AST, Root
+from nl2prog.ast.ast import Root
 from nl2prog.ast.action \
-    import NodeConstraint, NodeType, ExpandTreeRule, Action, \
+    import NodeConstraint, NodeType, ExpandTreeRule, \
     ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
 from nl2prog.utils import TopKElement
+from nl2prog.synthesizer import Synthesizer, Candidate, Progress
 
 
 """
@@ -42,22 +43,7 @@ class Hypothesis:
     state: Any
 
 
-@dataclass
-class Progress:
-    id: int
-    parent: Optional[int]
-    score: float
-    action: Action
-    is_complete: bool
-
-
-@dataclass
-class Candidate:
-    score: float
-    ast: AST
-
-
-class BeamSearchSynthesizer:
+class BeamSearchSynthesizer(Synthesizer):
     def __init__(self, beam_size: int,
                  is_subtype: IsSubtype, options=ActionOptions(True, True),
                  max_steps: Optional[int] = None):

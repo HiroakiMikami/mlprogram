@@ -40,7 +40,8 @@ class ConfigTest(unittest.TestCase):
                 "nl2prog.gin.nl2prog.evaluate.output_dir = "
                 f"\"{tmpdir}/output\"")
             gin.parse_config(
-                "nl2prog.utils.CommonBeamSearchSynthesizer.create.max_steps = "
+                "nl2prog.synthesizer.CommonBeamSearchSynthesizer.create."
+                "max_steps = "
                 "2")
             # Evaluate
             tools.launch.entrypoint()

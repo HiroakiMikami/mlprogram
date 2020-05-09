@@ -41,23 +41,23 @@ nl2prog.utils.data.nl2code.CollateState.device          = @torch.device()
 nl2prog.utils.data.CollateNlFeature.device              = @torch.device()
 
 # Synthesizer
-nl2prog.utils.CommonBeamSearchSynthesizer.create.beam_size               = 15
-nl2prog.utils.CommonBeamSearchSynthesizer.create.transform_input         = @nl2prog.utils.transform.nl2code.TransformQuery()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.transform_evaluator     = @nl2prog.utils.transform.nl2code.TransformEvaluator()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.collate_input           = @nl2prog.utils.data.nl2code.CollateInput()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.collate_action_sequence = @nl2prog.utils.data.nl2code.CollateActionSequence()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.collate_query           = @nl2prog.utils.data.collate_none
-nl2prog.utils.CommonBeamSearchSynthesizer.create.collate_state           = @nl2prog.utils.data.nl2code.CollateState()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @nl2prog.utils.data.CollateNlFeature()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.collate_other_feature   = @nl2prog.utils.data.collate_none
-nl2prog.utils.CommonBeamSearchSynthesizer.create.split_states            = @nl2prog.utils.data.nl2code.split_states
-nl2prog.utils.CommonBeamSearchSynthesizer.create.model                   = @nl2prog.nn.nl2code.TrainModel()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.is_subtype              = @nl2prog.language.python.is_subtype
-nl2prog.utils.CommonBeamSearchSynthesizer.create.options                 = @nl2prog.ast.action.ActionOptions()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
-nl2prog.utils.CommonBeamSearchSynthesizer.create.max_steps               = 100
-synthesizer/nl2prog.gin.workspace.put.value                              = @nl2prog.utils.CommonBeamSearchSynthesizer.create()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.beam_size               = 15
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.transform_input         = @nl2prog.utils.transform.nl2code.TransformQuery()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.transform_evaluator     = @nl2prog.utils.transform.nl2code.TransformEvaluator()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_input           = @nl2prog.utils.data.nl2code.CollateInput()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_action_sequence = @nl2prog.utils.data.nl2code.CollateActionSequence()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_query           = @nl2prog.utils.data.collate_none
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_state           = @nl2prog.utils.data.nl2code.CollateState()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @nl2prog.utils.data.CollateNlFeature()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.collate_other_feature   = @nl2prog.utils.data.collate_none
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.split_states            = @nl2prog.utils.data.nl2code.split_states
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @nl2prog.nn.nl2code.TrainModel()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.is_subtype              = @nl2prog.language.python.is_subtype
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @nl2prog.ast.action.ActionOptions()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
+nl2prog.synthesizer.CommonBeamSearchSynthesizer.create.max_steps               = 100
+synthesizer/nl2prog.gin.workspace.put.value                              = @nl2prog.synthesizer.CommonBeamSearchSynthesizer.create()
 
 # Metrics
 nl2prog.metrics.Accuracy.parse          = @nl2prog.dataset.django.parse

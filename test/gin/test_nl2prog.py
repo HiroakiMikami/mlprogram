@@ -10,7 +10,7 @@ from nl2prog.gin import workspace
 from nl2prog.gin.nl2prog import train, evaluate
 from nl2prog.ast.ast import Leaf
 from nl2prog.utils.data import ListDataset, Entry
-from nl2prog.utils.beam_search_synthesizer import Candidate
+from nl2prog.synthesizer.beam_search_synthesizer import Candidate
 from nl2prog.metrics import Accuracy, Bleu
 
 

@@ -92,10 +92,11 @@ gin.external_configurable(nl2prog.ast.action.ActionOptions,
                           module="nl2prog.ast.action")
 gin.external_configurable(nl2prog.ast.action.code_to_action_sequence,
                           module="nl2prog.ast.action")
-gin.external_configurable(nl2prog.utils.CommonBeamSearchSynthesizer,
+gin.external_configurable(nl2prog.synthesizer.CommonBeamSearchSynthesizer,
                           module="nl2prog.utils")
-gin.external_configurable(nl2prog.utils.CommonBeamSearchSynthesizer.create,
-                          module="nl2prog.utils.CommonBeamSearchSynthesizer")
+gin.external_configurable(
+    nl2prog.synthesizer.CommonBeamSearchSynthesizer.create,
+    module="nl2prog.synthesizer.CommonBeamSearchSynthesizer")
 gin.external_configurable(nl2prog.utils.data.Collate,
                           module="nl2prog.utils.data")
 gin.external_configurable(nl2prog.utils.data.CollateGroundTruth,
