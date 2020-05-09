@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog.language.ast import Node, Leaf, Field
+from nl2prog.ast.ast import Node, Leaf, Field
 from nl2prog.language.bash import parse, unparse
 
 

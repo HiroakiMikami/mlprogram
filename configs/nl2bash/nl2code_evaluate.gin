@@ -7,13 +7,13 @@ dataset/nl2prog.gin.workspace.put.value = @nl2prog.dataset.nl2bash.download()
 dataset/nl2prog.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-nl2prog.language.action.ActionOptions.retain_variadic_fields = True
-nl2prog.language.action.ActionOptions.split_non_terminal     = True
+nl2prog.ast.action.ActionOptions.retain_variadic_fields = True
+nl2prog.ast.action.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
-nl2prog.language.action.code_to_action_sequence.parse    = @nl2prog.language.bash.parse
-nl2prog.language.action.code_to_action_sequence.tokenize = @nl2prog.dataset.nl2bash.tokenize_token
-nl2prog.language.action.code_to_action_sequence.options  = @nl2prog.language.action.ActionOptions()
+nl2prog.ast.action.code_to_action_sequence.parse    = @nl2prog.language.bash.parse
+nl2prog.ast.action.code_to_action_sequence.tokenize = @nl2prog.dataset.nl2bash.tokenize_token
+nl2prog.ast.action.code_to_action_sequence.options  = @nl2prog.ast.action.ActionOptions()
 
 # Encoder
 word_encoder/nl2prog.gin.workspace.get.key             = "query_encoder"
@@ -54,7 +54,7 @@ nl2prog.utils.CommonBeamSearchSynthesizer.create.split_states            = @nl2p
 nl2prog.utils.CommonBeamSearchSynthesizer.create.model                   = @nl2prog.nn.nl2code.TrainModel()
 nl2prog.utils.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
 nl2prog.utils.CommonBeamSearchSynthesizer.create.is_subtype              = @nl2prog.language.bash.is_subtype
-nl2prog.utils.CommonBeamSearchSynthesizer.create.options                 = @nl2prog.language.action.ActionOptions()
+nl2prog.utils.CommonBeamSearchSynthesizer.create.options                 = @nl2prog.ast.action.ActionOptions()
 nl2prog.utils.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
 nl2prog.utils.CommonBeamSearchSynthesizer.create.max_steps               = 350
 synthesizer/nl2prog.gin.workspace.put.value                              = @nl2prog.utils.CommonBeamSearchSynthesizer.create()

@@ -2,7 +2,7 @@ import torch
 import unittest
 from torchnlp.encoders import LabelEncoder
 import nl2prog.nn.utils.rnn as rnn
-from nl2prog.language.action import NodeConstraint, NodeType, ActionOptions
+from nl2prog.ast.action import NodeConstraint, NodeType, ActionOptions
 from nl2prog.encoders import Samples, ActionSequenceEncoder
 from nl2prog.nn.treegen import TrainModel
 

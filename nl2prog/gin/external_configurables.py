@@ -16,7 +16,7 @@ import nl2prog.metrics.accuracy
 import nl2prog.metrics.python.bleu
 import nl2prog.language.python
 import nl2prog.language.bash
-import nl2prog.language.action
+import nl2prog.ast.action
 import nl2prog.utils
 import nl2prog.utils.data
 import nl2prog.utils.transform
@@ -88,10 +88,10 @@ gin.external_configurable(nl2prog.language.bash.unparse,
                           module="nl2prog.language.bash")
 gin.external_configurable(nl2prog.language.bash.is_subtype,
                           module="nl2prog.language.bash")
-gin.external_configurable(nl2prog.language.action.ActionOptions,
-                          module="nl2prog.language.action")
-gin.external_configurable(nl2prog.language.action.code_to_action_sequence,
-                          module="nl2prog.language.action")
+gin.external_configurable(nl2prog.ast.action.ActionOptions,
+                          module="nl2prog.ast.action")
+gin.external_configurable(nl2prog.ast.action.code_to_action_sequence,
+                          module="nl2prog.ast.action")
 gin.external_configurable(nl2prog.utils.CommonBeamSearchSynthesizer,
                           module="nl2prog.utils")
 gin.external_configurable(nl2prog.utils.CommonBeamSearchSynthesizer.create,

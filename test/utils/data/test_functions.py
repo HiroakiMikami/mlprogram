@@ -2,7 +2,7 @@ import unittest
 import ast
 from nl2prog.utils import Query
 from nl2prog.language.python import to_ast
-from nl2prog.language.action import ast_to_action_sequence, ActionOptions
+from nl2prog.ast.action import ast_to_action_sequence, ActionOptions
 from nl2prog.utils.data \
     import Entry, ListDataset, to_eval_dataset, get_samples, get_words, \
     get_characters

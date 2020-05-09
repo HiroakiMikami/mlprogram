@@ -1,9 +1,9 @@
 from typing \
     import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
-from nl2prog.language.evaluator import Evaluator
-from nl2prog.language.ast import AST, Root
-from nl2prog.language.action \
+from nl2prog.ast.evaluator import Evaluator
+from nl2prog.ast.ast import AST, Root
+from nl2prog.ast.action \
     import NodeConstraint, NodeType, ExpandTreeRule, Action, \
     ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
 from nl2prog.utils import TopKElement

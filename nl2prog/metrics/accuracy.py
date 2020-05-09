@@ -1,5 +1,5 @@
 from typing import Callable
-from nl2prog.language.ast import AST
+from nl2prog.ast.ast import AST
 
 from .metric import Metric
 

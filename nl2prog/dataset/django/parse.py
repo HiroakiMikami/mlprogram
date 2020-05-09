@@ -51,7 +51,7 @@ SOFTWARE.
 import ast
 import re
 from typing import Optional
-from nl2prog.language.ast import AST
+from nl2prog.ast.ast import AST
 from nl2prog.language.python import to_ast
 
 p_elif = re.compile(r'^elif\s?')

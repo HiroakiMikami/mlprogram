@@ -1,6 +1,6 @@
 from typing import List
 from nl2prog.gin import workspace
-from nl2prog.language.ast import AST, Node, Leaf, Field
+from nl2prog.ast.ast import AST, Node, Leaf, Field
 from nl2prog.utils.data import ListDataset, Entry
 
 

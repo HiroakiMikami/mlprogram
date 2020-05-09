@@ -2,10 +2,10 @@ import torch
 import unittest
 import numpy as np
 
-from nl2prog.language.action \
+from nl2prog.ast.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
     ApplyRule, GenerateToken, ActionOptions, CloseVariadicFieldRule
-from nl2prog.language.evaluator import Evaluator
+from nl2prog.ast.evaluator import Evaluator
 from nl2prog.encoders import Samples, ActionSequenceEncoder
 
 

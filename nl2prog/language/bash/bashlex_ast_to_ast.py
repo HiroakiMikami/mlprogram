@@ -1,6 +1,6 @@
 import bashlex
 from typing import Union, Any
-import nl2prog.language.ast as A
+import nl2prog.ast.ast as A
 
 
 def bashlex_ast_to_ast(script: str,

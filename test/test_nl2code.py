@@ -10,7 +10,7 @@ import torch
 import torch.optim as optim
 from nl2prog.gin import nl2prog, nl2code, workspace, optimizer
 from nl2prog.utils import Query, CommonBeamSearchSynthesizer
-from nl2prog.language.action \
+from nl2prog.ast.action \
     import ast_to_action_sequence as to_seq, ActionOptions
 from nl2prog.utils.data \
     import Collate, CollateGroundTruth, collate_none, CollateNlFeature

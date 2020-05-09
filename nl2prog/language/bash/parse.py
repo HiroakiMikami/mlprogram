@@ -1,6 +1,6 @@
 import bashlex
 from typing import Optional, cast
-import nl2prog.language.ast as A
+import nl2prog.ast.ast as A
 from .bashlex_ast_to_ast import bashlex_ast_to_ast
 
 

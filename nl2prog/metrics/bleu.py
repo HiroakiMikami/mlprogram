@@ -1,5 +1,5 @@
 from typing import Callable
-from nl2prog.language.ast import AST
+from nl2prog.ast.ast import AST
 from nltk.translate.bleu_score import sentence_bleu
 
 from .metric import Metric

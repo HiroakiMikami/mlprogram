@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from nl2prog.language.ast import AST, Node, Leaf, Field, Root
+from nl2prog.ast.ast import AST, Node, Leaf, Field, Root
 from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
 from enum import Enum
 import logging

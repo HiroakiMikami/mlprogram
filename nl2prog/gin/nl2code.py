@@ -5,8 +5,8 @@ from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.gin import workspace
 from nl2prog.utils import Query
 from nl2prog.utils.data import get_samples, get_words
-from nl2prog.language.ast import AST
-from nl2prog.language.action import ActionSequence, ActionOptions
+from nl2prog.ast.ast import AST
+from nl2prog.ast.action import ActionSequence, ActionOptions
 
 
 def prepare_encoder(dataset: Dataset, word_threshold: int,

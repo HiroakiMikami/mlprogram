@@ -3,8 +3,8 @@ import numpy as np
 
 from nl2prog.utils.data import ListDataset
 from nl2prog.encoders import ActionSequenceEncoder
-from nl2prog.language.action import ActionSequence
-from nl2prog.language.evaluator import Evaluator
+from nl2prog.ast.action import ActionSequence
+from nl2prog.ast.evaluator import Evaluator
 from typing import List, Callable, Tuple, Any, Optional
 
 

@@ -1,7 +1,7 @@
 import torch
 import itertools
 from typing import Callable, List, Any, Optional, Tuple, Union, Iterable
-from nl2prog.language.action \
+from nl2prog.ast.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
 from nl2prog.encoders import Samples

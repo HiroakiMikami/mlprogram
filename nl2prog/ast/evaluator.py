@@ -3,10 +3,10 @@ from typing import Dict, Optional, List, cast
 from copy import deepcopy
 import itertools
 
-import nl2prog.language.action as A
-from nl2prog.language.action \
+import nl2prog.ast.action as A
+from nl2prog.ast.action \
     import Action, ActionSequence, ApplyRule, ExpandTreeRule
-from nl2prog.language.ast import AST, Node, Leaf, Field, Root
+from nl2prog.ast.ast import AST, Node, Leaf, Field, Root
 
 
 class InvalidActionException(Exception):

@@ -4,8 +4,8 @@ import numpy as np
 import logging
 from typing import List, Callable, Optional, Tuple, Any, Dict, Union
 from dataclasses import dataclass
-from nl2prog.language.action import ActionOptions, Rule, CloseNode
-from nl2prog.language.evaluator import Evaluator
+from nl2prog.ast.action import ActionOptions, Rule, CloseNode
+from nl2prog.ast.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils.beam_search_synthesizer import Hypothesis
 from nl2prog.utils \

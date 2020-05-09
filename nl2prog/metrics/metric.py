@@ -1,5 +1,5 @@
 from typing import Union, Callable, Set, List
-from nl2prog.language.ast import AST
+from nl2prog.ast.ast import AST
 import logging
 
 logger = logging.getLogger()

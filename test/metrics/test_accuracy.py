@@ -1,5 +1,5 @@
 import unittest
-from nl2prog.language.ast import Leaf
+from nl2prog.ast.ast import Leaf
 from nl2prog.metrics import Accuracy
 
 

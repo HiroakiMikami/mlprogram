@@ -1,6 +1,6 @@
 from typing import Callable, List, Iterable
 import re
-from nl2prog.language.ast import AST
+from nl2prog.ast.ast import AST
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 from nl2prog.metrics import Metric

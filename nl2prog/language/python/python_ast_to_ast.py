@@ -1,7 +1,7 @@
 import ast as python_ast
 from typing import List, Type, Union
 
-import nl2prog.language.ast as ast
+import nl2prog.ast.ast as ast
 from nl2prog.language.python import PythonAST
 from .utils import is_builtin_type, BuiltinType
 

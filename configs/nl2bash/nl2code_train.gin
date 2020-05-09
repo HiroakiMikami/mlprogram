@@ -7,13 +7,13 @@ dataset/nl2prog.gin.workspace.put.value = @nl2prog.dataset.nl2bash.download()
 dataset/nl2prog.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-nl2prog.language.action.ActionOptions.retain_variadic_fields = True
-nl2prog.language.action.ActionOptions.split_non_terminal     = True
+nl2prog.ast.action.ActionOptions.retain_variadic_fields = True
+nl2prog.ast.action.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
-nl2prog.language.action.code_to_action_sequence.parse    = @nl2prog.language.bash.parse
-nl2prog.language.action.code_to_action_sequence.tokenize = @nl2prog.dataset.nl2bash.tokenize_token
-nl2prog.language.action.code_to_action_sequence.options  = @nl2prog.language.action.ActionOptions()
+nl2prog.ast.action.code_to_action_sequence.parse    = @nl2prog.language.bash.parse
+nl2prog.ast.action.code_to_action_sequence.tokenize = @nl2prog.dataset.nl2bash.tokenize_token
+nl2prog.ast.action.code_to_action_sequence.options  = @nl2prog.ast.action.ActionOptions()
 
 # Encoder
 train_dataset/nl2prog.gin.get_key.key                  = "train"
@@ -22,7 +22,7 @@ nl2prog.gin.nl2code.prepare_encoder.dataset            = @train_dataset/nl2prog.
 nl2prog.gin.nl2code.prepare_encoder.word_threshold     = 3
 nl2prog.gin.nl2code.prepare_encoder.token_threshold    = 0
 nl2prog.gin.nl2code.prepare_encoder.parse              = @nl2prog.language.bash.parse
-nl2prog.gin.nl2code.prepare_encoder.to_action_sequence = @nl2prog.language.action.code_to_action_sequence
+nl2prog.gin.nl2code.prepare_encoder.to_action_sequence = @nl2prog.ast.action.code_to_action_sequence
 nl2prog.gin.nl2code.prepare_encoder.extract_query      = @nl2prog.dataset.nl2bash.tokenize_query
 nl2prog.gin.nl2code.prepare_encoder.tokenize_token     = @nl2prog.dataset.nl2bash.tokenize_token
 word_encoder/nl2prog.gin.workspace.get.key             = "query_encoder"
@@ -33,7 +33,7 @@ nl2prog.utils.transform.TransformDataset.transform_input                   = @nl
 nl2prog.utils.transform.nl2code.TransformQuery.extract_query               = @nl2prog.dataset.nl2bash.tokenize_query
 nl2prog.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/nl2prog.gin.workspace.get()
 nl2prog.utils.transform.TransformDataset.transform_code                    = @nl2prog.utils.transform.TransformCode()
-nl2prog.utils.transform.TransformCode.to_action_sequence                   = @nl2prog.language.action.code_to_action_sequence
+nl2prog.utils.transform.TransformCode.to_action_sequence                   = @nl2prog.ast.action.code_to_action_sequence
 nl2prog.utils.transform.TransformDataset.transform_evaluator               = @nl2prog.utils.transform.nl2code.TransformEvaluator()
 nl2prog.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/nl2prog.gin.workspace.get()
 nl2prog.utils.transform.nl2code.TransformEvaluator.train                   = True

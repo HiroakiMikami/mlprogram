@@ -5,8 +5,8 @@ from math import log
 from nl2prog.utils \
     import BeamSearchSynthesizer, Progress, Candidate, \
     LazyLogProbability
-from nl2prog.language.ast import Node, Field, Leaf, Root
-from nl2prog.language.action \
+from nl2prog.ast.ast import Node, Field, Leaf, Root
+from nl2prog.ast.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
     ApplyRule, GenerateToken, CloseNode, ActionOptions
 

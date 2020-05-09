@@ -1,6 +1,6 @@
 from typing import List, Tuple
 from nl2prog.utils import Progress
-from nl2prog.language.ast import AST
+from nl2prog.ast.ast import AST
 
 from .beam_search_synthesizer import BeamSearchSynthesizer
 

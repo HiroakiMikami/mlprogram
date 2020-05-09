@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torchnlp.encoders import LabelEncoder
 from typing import Callable, List, Any, Optional, Tuple
-from nl2prog.language.evaluator import Evaluator
+from nl2prog.ast.evaluator import Evaluator
 from nl2prog.encoders import ActionSequenceEncoder
 from nl2prog.utils import Query
 
