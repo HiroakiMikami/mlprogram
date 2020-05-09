@@ -2,11 +2,11 @@ import unittest
 import numpy as np
 from math import log
 
-from nl2prog.utils \
+from mlprogram.synthesizer \
     import BeamSearchSynthesizer, Progress, Candidate, \
     LazyLogProbability
-from nl2prog.language.ast import Node, Field, Leaf, Root
-from nl2prog.language.action \
+from mlprogram.ast.ast import Node, Field, Leaf, Root
+from mlprogram.ast.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
     ApplyRule, GenerateToken, CloseNode, ActionOptions
 

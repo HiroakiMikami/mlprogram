@@ -1,8 +1,8 @@
 import unittest
 import ast
 
-from nl2prog.language.python import to_ast
-from nl2prog.dataset.django import parse
+from mlprogram.language.python import to_ast
+from mlprogram.dataset.django import parse
 
 
 class TestParse(unittest.TestCase):

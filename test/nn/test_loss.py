@@ -1,8 +1,8 @@
 import unittest
 import torch
 
-from nl2prog.nn import Loss
-from nl2prog.nn.utils import rnn
+from mlprogram.nn import Loss
+from mlprogram.nn.utils import rnn
 
 
 class TestLoss(unittest.TestCase):

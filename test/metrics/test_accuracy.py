@@ -1,6 +1,6 @@
 import unittest
-from nl2prog.language.ast import Leaf
-from nl2prog.metrics import Accuracy
+from mlprogram.ast.ast import Leaf
+from mlprogram.metrics import Accuracy
 
 
 def parse(value):

@@ -2,11 +2,11 @@ import torch
 import unittest
 import numpy as np
 
-from nl2prog.language.action \
+from mlprogram.ast.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
     ApplyRule, GenerateToken, ActionOptions, CloseVariadicFieldRule
-from nl2prog.language.evaluator import Evaluator
-from nl2prog.encoders import Samples, ActionSequenceEncoder
+from mlprogram.ast.evaluator import Evaluator
+from mlprogram.encoders import Samples, ActionSequenceEncoder
 
 
 class TestEncoder(unittest.TestCase):

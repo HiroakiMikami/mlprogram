@@ -1,8 +1,8 @@
 import unittest
 import ast as python_ast
 
-from nl2prog.language.python.utils import is_builtin_type
-from nl2prog.language.python import is_subtype
+from mlprogram.language.python.utils import is_builtin_type
+from mlprogram.language.python import is_subtype
 
 
 class TestIsBuiltinType(unittest.TestCase):

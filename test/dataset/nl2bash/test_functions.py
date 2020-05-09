@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog.dataset.nl2bash import tokenize_query, \
+from mlprogram.dataset.nl2bash import tokenize_query, \
     tokenize_token, get_subtokens
 
 

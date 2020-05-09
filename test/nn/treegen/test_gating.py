@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from nl2prog.nn.treegen import Gating
+from mlprogram.nn.treegen import Gating
 
 
 class TestGating(unittest.TestCase):

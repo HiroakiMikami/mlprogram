@@ -1,6 +1,6 @@
 import unittest
 
-from nl2prog.utils.python import tokenize_query, tokenize_token
+from mlprogram.utils.python import tokenize_query, tokenize_token
 
 
 class TestTokenizeQuery(unittest.TestCase):

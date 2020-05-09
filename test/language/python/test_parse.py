@@ -1,8 +1,8 @@
 import unittest
 import ast
 
-from nl2prog.language.python import to_ast, parse, unparse, ParseMode
-from nl2prog.language.ast import Node
+from mlprogram.language.python import to_ast, parse, unparse, ParseMode
+from mlprogram.ast.ast import Node
 
 
 class TestParse(unittest.TestCase):

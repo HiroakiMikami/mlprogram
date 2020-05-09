@@ -1,8 +1,8 @@
 import unittest
 import torch
 
-from nl2prog.nn import Accuracy
-from nl2prog.nn.utils import rnn
+from mlprogram.nn import Accuracy
+from mlprogram.nn.utils import rnn
 
 
 class TestAccuracy(unittest.TestCase):

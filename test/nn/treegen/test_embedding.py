@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 import torch
 
-from nl2prog.nn import EmbeddingWithMask
-from nl2prog.nn.treegen \
+from mlprogram.nn import EmbeddingWithMask
+from mlprogram.nn.treegen \
     import ElementEmbedding, ActionEmbedding, ActionSignatureEmbedding
 
 

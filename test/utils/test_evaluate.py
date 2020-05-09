@@ -1,7 +1,7 @@
 import unittest
-from nl2prog.metrics import Accuracy
-from nl2prog.utils import evaluate, Result
-from nl2prog.utils.data import ListDataset
+from mlprogram.metrics import Accuracy
+from mlprogram.utils import evaluate, Result
+from mlprogram.utils.data import ListDataset
 
 
 class TestEvaluate(unittest.TestCase):

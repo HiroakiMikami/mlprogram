@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import os
 
-from nl2prog.utils import TopKModel
+from mlprogram.utils import TopKModel
 
 
 class TestTopKModel(unittest.TestCase):

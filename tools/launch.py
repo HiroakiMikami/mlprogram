@@ -3,7 +3,7 @@ import argparse
 from typing import Callable
 
 import gin.torch.external_configurables  # noqa
-import nl2prog.gin.external_configurables  # noqa
+import mlprogram.gin.external_configurables  # noqa
 
 
 @gin.configurable

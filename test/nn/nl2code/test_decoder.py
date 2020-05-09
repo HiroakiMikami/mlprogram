@@ -2,9 +2,9 @@ import unittest
 import torch
 import numpy as np
 
-from nl2prog.nn.nl2code.decoder import query_history
-from nl2prog.nn.nl2code import DecoderCell, Decoder
-from nl2prog.nn.utils import rnn
+from mlprogram.nn.nl2code.decoder import query_history
+from mlprogram.nn.nl2code import DecoderCell, Decoder
+from mlprogram.nn.utils import rnn
 
 
 class TestQueryHistory(unittest.TestCase):

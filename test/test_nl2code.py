@@ -8,21 +8,23 @@ import os
 
 import torch
 import torch.optim as optim
-from nl2prog.gin import nl2prog, nl2code, workspace, optimizer
-from nl2prog.utils import Query, CommonBeamSearchSynthesizer
-from nl2prog.language.action \
+from mlprogram.gin import nl2prog, nl2code, workspace, optimizer
+from mlprogram.utils import Query
+from mlprogram.synthesizer import CommonBeamSearchSynthesizer
+from mlprogram.ast.action \
     import ast_to_action_sequence as to_seq, ActionOptions
-from nl2prog.utils.data \
+from mlprogram.utils.data \
     import Collate, CollateGroundTruth, collate_none, CollateNlFeature
-from nl2prog.utils.data.nl2code \
+from mlprogram.utils.data.nl2code \
     import CollateInput, CollateActionSequence, \
     CollateState, split_states
-from nl2prog.utils.transform \
+from mlprogram.utils.transform \
     import TransformDataset, TransformCode, TransformGroundTruth
-from nl2prog.utils.transform.nl2code import TransformQuery, TransformEvaluator
-from nl2prog.nn import Loss
-from nl2prog.nn.nl2code import TrainModel
-from nl2prog.metrics import Accuracy
+from mlprogram.utils.transform.nl2code \
+    import TransformQuery, TransformEvaluator
+from mlprogram.nn import Loss
+from mlprogram.nn.nl2code import TrainModel
+from mlprogram.metrics import Accuracy
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 

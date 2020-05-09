@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn.utils as utils
 
-import nl2prog.nn.utils.rnn as rnn
+import mlprogram.nn.utils.rnn as rnn
 
 
 class TestPadPackedSequence(unittest.TestCase):
