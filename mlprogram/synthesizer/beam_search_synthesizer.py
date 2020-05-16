@@ -206,7 +206,7 @@ class BeamSearchSynthesizer(Synthesizer):
 
                 if evaluator.head is None:
                     # Complete
-                    c = Candidate(score, evaluator.generate_ast())
+                    c = Candidate(score, evaluator.generate())
                     cs.append(c)
                     candidates.append(c)
                     ps.append(Progress(id, h.id, score,

@@ -212,7 +212,7 @@ class Evaluator:
             if token == A.CloseNode() or not self._options.split_non_terminal:
                 update_head()
 
-    def generate_ast(self) -> AST:
+    def generate(self) -> AST:
         """
         Generate AST from the action sequence
 
@@ -221,7 +221,7 @@ class Evaluator:
         AST
             The AST corresponding to the action sequence
         """
-        def generate_ast(head: int) -> AST:
+        def generate(head: int) -> AST:
             # The head action should be ApplyRule
             action = cast(A.ApplyRule, self._action_sequence[head])
             # The head action should apply ExpandTreeRule
@@ -235,7 +235,7 @@ class Evaluator:
                     # ApplyRule
                     ast.fields.append(
                         Field(name, node_type.type_name,
-                              generate_ast(actions[0])))
+                              generate(actions[0])))
                 elif node_type.constraint == A.NodeConstraint.Variadic:
                     # Variadic
                     if self._options.retain_variadic_fields:
@@ -245,9 +245,9 @@ class Evaluator:
                             if isinstance(a.rule, A.CloseVariadicFieldRule):
                                 break
                             assert isinstance(ast.fields[-1].value, list)
-                            ast.fields[-1].value.append(generate_ast(act))
+                            ast.fields[-1].value.append(generate(act))
                     else:
-                        childrens = cast(Node, generate_ast(actions[0]))
+                        childrens = cast(Node, generate(actions[0]))
                         ast.fields.append(Field(
                             name, node_type.type_name,
                             list(itertools.chain.from_iterable(
@@ -271,15 +271,15 @@ class Evaluator:
 
             return ast
         if len(self.action_sequence.sequence) == 0:
-            return generate_ast(0)
+            return generate(0)
         begin = self.action_sequence.sequence[0]
         if isinstance(begin, ApplyRule) and \
                 isinstance(begin.rule, ExpandTreeRule):
             if begin.rule.parent.type_name == Root():
                 # Ignore Root -> ???
-                return generate_ast(1)
-            return generate_ast(0)
-        return generate_ast(0)
+                return generate(1)
+            return generate(0)
+        return generate(0)
 
     def clone(self):
         """

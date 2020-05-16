@@ -192,7 +192,7 @@ class TestEvaluator(unittest.TestCase):
         with self.assertRaises(InvalidActionException):
             evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
 
-    def test_generate_ast(self):
+    def test_generate(self):
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
                                  [("name",
                                    NodeType("value", NodeConstraint.Token)),
@@ -234,7 +234,7 @@ class TestEvaluator(unittest.TestCase):
                                Field("arg1", "value", Leaf("value", "2"))
                            ])
                   ])]),
-            evaluator.generate_ast()
+            evaluator.generate()
         )
 
         evaluator = Evaluator(ActionOptions(False, True))
@@ -261,7 +261,7 @@ class TestEvaluator(unittest.TestCase):
                                Field("arg1", "value", Leaf("value", "2"))
                            ])
                   ])]),
-            evaluator.generate_ast()
+            evaluator.generate()
         )
 
         evaluator = Evaluator(ActionOptions(True, False))
@@ -284,7 +284,7 @@ class TestEvaluator(unittest.TestCase):
                                Field("arg1", "value", Leaf("value", "2"))
                            ])
                   ])]),
-            evaluator.generate_ast()
+            evaluator.generate()
         )
 
         evaluator = Evaluator(ActionOptions(False, False))
@@ -307,10 +307,10 @@ class TestEvaluator(unittest.TestCase):
                                Field("arg1", "value", Leaf("value", "2"))
                            ])
                   ])]),
-            evaluator.generate_ast()
+            evaluator.generate()
         )
 
-    def test_generate_ast_ignore_root_type(self):
+    def test_generate_ignore_root_type(self):
         evaluator = Evaluator()
         evaluator.eval(ApplyRule(ExpandTreeRule(
             NodeType(Root(), NodeConstraint.Node),
@@ -318,7 +318,7 @@ class TestEvaluator(unittest.TestCase):
         evaluator.eval(ApplyRule(ExpandTreeRule(
             NodeType("op", NodeConstraint.Node), []
         )))
-        self.assertEqual(Node("op", []), evaluator.generate_ast())
+        self.assertEqual(Node("op", []), evaluator.generate())
 
     def test_clone(self):
         evaluator = Evaluator()
@@ -328,7 +328,7 @@ class TestEvaluator(unittest.TestCase):
         evaluator.eval(ApplyRule(rule))
 
         evaluator2 = evaluator.clone()
-        self.assertEqual(evaluator.generate_ast(), evaluator2.generate_ast())
+        self.assertEqual(evaluator.generate(), evaluator2.generate())
 
         evaluator2.eval(ApplyRule(rule))
         self.assertNotEqual(evaluator._tree.children,
@@ -341,8 +341,8 @@ class TestEvaluator(unittest.TestCase):
                             evaluator2._head_action_index)
         self.assertNotEqual(evaluator._head_children_index,
                             evaluator2._head_children_index)
-        self.assertNotEqual(evaluator.generate_ast(),
-                            evaluator2.generate_ast())
+        self.assertNotEqual(evaluator.generate(),
+                            evaluator2.generate())
 
 
 if __name__ == "__main__":
