@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mlprogram.ast.ast import AST, Node, Leaf, Field, Root
+from mlprogram.action.ast import AST, Node, Leaf, Field, Root
 from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
 from enum import Enum
 import logging

@@ -2,7 +2,7 @@ import torch
 import unittest
 from torchnlp.encoders import LabelEncoder
 import mlprogram.nn.utils.rnn as rnn
-from mlprogram.ast.action import NodeConstraint, NodeType, ActionOptions
+from mlprogram.action.action import NodeConstraint, NodeType, ActionOptions
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 from mlprogram.nn.treegen import TrainModel
 

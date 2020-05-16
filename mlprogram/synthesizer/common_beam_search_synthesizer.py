@@ -4,8 +4,8 @@ import numpy as np
 import logging
 from typing import List, Callable, Optional, Tuple, Any, Dict, Union
 from dataclasses import dataclass
-from mlprogram.ast.action import ActionOptions, Rule, CloseNode
-from mlprogram.ast.evaluator import Evaluator
+from mlprogram.action.action import ActionOptions, Rule, CloseNode
+from mlprogram.action.evaluator import Evaluator
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.synthesizer.beam_search_synthesizer import Hypothesis
 from mlprogram.synthesizer \

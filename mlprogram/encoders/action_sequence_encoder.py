@@ -3,12 +3,12 @@ from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Optional, Union, cast
 from dataclasses import dataclass
 
-from mlprogram.ast.action import NodeType, NodeConstraint
-from mlprogram.ast.action import ActionSequence, ActionOptions
-from mlprogram.ast.action import ApplyRule, GenerateToken
-from mlprogram.ast.action import Rule, ExpandTreeRule
-from mlprogram.ast.action import CloseNode, CloseVariadicFieldRule
-from mlprogram.ast.evaluator import Evaluator
+from mlprogram.action.action import NodeType, NodeConstraint
+from mlprogram.action.action import ActionSequence, ActionOptions
+from mlprogram.action.action import ApplyRule, GenerateToken
+from mlprogram.action.action import Rule, ExpandTreeRule
+from mlprogram.action.action import CloseNode, CloseVariadicFieldRule
+from mlprogram.action.evaluator import Evaluator
 
 
 def convert_node_type_to_key(node_type: NodeType) -> NodeType:

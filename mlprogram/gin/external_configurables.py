@@ -16,7 +16,7 @@ import mlprogram.metrics.accuracy
 import mlprogram.metrics.python.bleu
 import mlprogram.language.python
 import mlprogram.language.bash
-import mlprogram.ast.action
+import mlprogram.action.action
 import mlprogram.utils
 import mlprogram.utils.data
 import mlprogram.utils.transform
@@ -89,10 +89,10 @@ gin.external_configurable(mlprogram.language.bash.unparse,
                           module="mlprogram.language.bash")
 gin.external_configurable(mlprogram.language.bash.is_subtype,
                           module="mlprogram.language.bash")
-gin.external_configurable(mlprogram.ast.action.ActionOptions,
-                          module="mlprogram.ast.action")
-gin.external_configurable(mlprogram.ast.action.code_to_action_sequence,
-                          module="mlprogram.ast.action")
+gin.external_configurable(mlprogram.action.action.ActionOptions,
+                          module="mlprogram.action.action")
+gin.external_configurable(mlprogram.action.action.code_to_action_sequence,
+                          module="mlprogram.action.action")
 gin.external_configurable(mlprogram.synthesizer.CommonBeamSearchSynthesizer,
                           module="mlprogram.utils")
 gin.external_configurable(

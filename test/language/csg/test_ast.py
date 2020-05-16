@@ -2,7 +2,7 @@ import unittest
 
 from mlprogram.language.csg.ast \
     import Circle, Rectangle, Translation, Rotation, Union, Difference
-from mlprogram.ast.ast import Node, Field, Leaf
+from mlprogram.action.ast import Node, Field, Leaf
 
 
 class TestAst(unittest.TestCase):

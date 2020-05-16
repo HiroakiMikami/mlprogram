@@ -2,7 +2,7 @@ import unittest
 import ast
 from mlprogram.utils import Query
 from mlprogram.language.python import to_ast
-from mlprogram.ast.action import ast_to_action_sequence, ActionOptions
+from mlprogram.action.action import ast_to_action_sequence, ActionOptions
 from mlprogram.utils.data \
     import Entry, ListDataset, to_eval_dataset, get_samples, get_words, \
     get_characters

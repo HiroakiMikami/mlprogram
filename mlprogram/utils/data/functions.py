@@ -1,7 +1,7 @@
 import torch
 import itertools
 from typing import Callable, List, Any, Optional, Tuple, Union, Iterable
-from mlprogram.ast.action \
+from mlprogram.action.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
 from mlprogram.encoders import Samples

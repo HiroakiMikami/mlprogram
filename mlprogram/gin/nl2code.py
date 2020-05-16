@@ -5,8 +5,8 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.gin import workspace
 from mlprogram.utils import Query
 from mlprogram.utils.data import get_samples, get_words
-from mlprogram.ast.ast import AST
-from mlprogram.ast.action import ActionSequence, ActionOptions
+from mlprogram.action.ast import AST
+from mlprogram.action.action import ActionSequence, ActionOptions
 
 
 def prepare_encoder(dataset: Dataset, word_threshold: int,

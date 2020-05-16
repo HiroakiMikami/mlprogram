@@ -3,8 +3,8 @@ import numpy as np
 
 from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.ast.action import ActionSequence
-from mlprogram.ast.evaluator import Evaluator
+from mlprogram.action.action import ActionSequence
+from mlprogram.action.evaluator import Evaluator
 from typing import List, Callable, Tuple, Any, Optional
 
 

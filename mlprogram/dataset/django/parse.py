@@ -51,7 +51,7 @@ SOFTWARE.
 import ast
 import re
 from typing import Optional
-from mlprogram.ast.ast import AST
+from mlprogram.action.ast import AST
 from mlprogram.language.python import to_ast
 
 p_elif = re.compile(r'^elif\s?')

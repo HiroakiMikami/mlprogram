@@ -2,10 +2,10 @@ import torch
 import unittest
 import numpy as np
 
-from mlprogram.ast.action \
+from mlprogram.action.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
     ApplyRule, GenerateToken, ActionOptions, CloseVariadicFieldRule
-from mlprogram.ast.evaluator import Evaluator
+from mlprogram.action.evaluator import Evaluator
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 
 

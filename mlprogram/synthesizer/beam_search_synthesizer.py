@@ -1,9 +1,9 @@
 from typing \
     import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
-from mlprogram.ast.evaluator import Evaluator
-from mlprogram.ast.ast import Root
-from mlprogram.ast.action \
+from mlprogram.action.evaluator import Evaluator
+from mlprogram.action.ast import Root
+from mlprogram.action.action \
     import NodeConstraint, NodeType, ExpandTreeRule, \
     ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
 from mlprogram.utils import TopKElement

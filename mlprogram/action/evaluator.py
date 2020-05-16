@@ -3,10 +3,10 @@ from typing import Dict, Optional, List, cast
 from copy import deepcopy
 import itertools
 
-import mlprogram.ast.action as A
-from mlprogram.ast.action \
+import mlprogram.action.action as A
+from mlprogram.action.action \
     import Action, ActionSequence, ApplyRule, ExpandTreeRule
-from mlprogram.ast.ast import AST, Node, Leaf, Field, Root
+from mlprogram.action.ast import AST, Node, Leaf, Field, Root
 
 
 class InvalidActionException(Exception):

@@ -1,6 +1,6 @@
 import ast as python_ast
 from typing import Union
-from mlprogram.ast.ast import Root
+from mlprogram.action.ast import Root
 
 BuiltinType = Union[int, float, bool, str, bytes, object, None]
 PythonAST = Union[python_ast.AST, BuiltinType]

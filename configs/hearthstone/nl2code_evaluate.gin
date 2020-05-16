@@ -7,13 +7,13 @@ dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.hearthstone.downl
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.ast.action.ActionOptions.retain_variadic_fields = True
-mlprogram.ast.action.ActionOptions.split_non_terminal     = True
+mlprogram.action.action.ActionOptions.retain_variadic_fields = True
+mlprogram.action.action.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
-mlprogram.ast.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
-mlprogram.ast.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.ast.action.code_to_action_sequence.options  = @mlprogram.ast.action.ActionOptions()
+mlprogram.action.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
+mlprogram.action.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
+mlprogram.action.action.code_to_action_sequence.options  = @mlprogram.action.action.ActionOptions()
 
 # Encoder
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
@@ -54,7 +54,7 @@ mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.split_states           
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.language.python.is_subtype
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.ast.action.ActionOptions()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.action.action.ActionOptions()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.max_steps               = 350
 synthesizer/mlprogram.gin.workspace.put.value                              = @mlprogram.synthesizer.CommonBeamSearchSynthesizer.create()

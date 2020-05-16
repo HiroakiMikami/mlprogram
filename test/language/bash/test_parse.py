@@ -1,6 +1,6 @@
 import unittest
 
-from mlprogram.ast.ast import Node, Leaf, Field
+from mlprogram.action.ast import Node, Leaf, Field
 from mlprogram.language.bash import parse, unparse
 
 

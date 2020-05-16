@@ -1,6 +1,6 @@
 from typing import List
 from mlprogram.gin import workspace
-from mlprogram.ast.ast import AST, Node, Leaf, Field
+from mlprogram.action.ast import AST, Node, Leaf, Field
 from mlprogram.utils.data import ListDataset, Entry
 
 

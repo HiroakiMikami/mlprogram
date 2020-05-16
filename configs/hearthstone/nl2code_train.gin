@@ -7,13 +7,13 @@ dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.hearthstone.downl
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.ast.action.ActionOptions.retain_variadic_fields = True
-mlprogram.ast.action.ActionOptions.split_non_terminal     = True
+mlprogram.action.action.ActionOptions.retain_variadic_fields = True
+mlprogram.action.action.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
-mlprogram.ast.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
-mlprogram.ast.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.ast.action.code_to_action_sequence.options  = @mlprogram.ast.action.ActionOptions()
+mlprogram.action.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
+mlprogram.action.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
+mlprogram.action.action.code_to_action_sequence.options  = @mlprogram.action.action.ActionOptions()
 
 # Encoder
 train_dataset/mlprogram.gin.get_key.key                  = "train"
@@ -22,7 +22,7 @@ mlprogram.gin.nl2code.prepare_encoder.dataset            = @train_dataset/mlprog
 mlprogram.gin.nl2code.prepare_encoder.word_threshold     = 3
 mlprogram.gin.nl2code.prepare_encoder.token_threshold    = 0
 mlprogram.gin.nl2code.prepare_encoder.parse              = @mlprogram.language.python.parse
-mlprogram.gin.nl2code.prepare_encoder.to_action_sequence = @mlprogram.ast.action.code_to_action_sequence
+mlprogram.gin.nl2code.prepare_encoder.to_action_sequence = @mlprogram.action.action.code_to_action_sequence
 mlprogram.gin.nl2code.prepare_encoder.extract_query      = @mlprogram.utils.python.tokenize_query
 mlprogram.gin.nl2code.prepare_encoder.tokenize_token     = @mlprogram.utils.python.tokenize_token
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
@@ -33,7 +33,7 @@ mlprogram.utils.transform.TransformDataset.transform_input                   = @
 mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.utils.python.tokenize_query
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
-mlprogram.utils.transform.TransformCode.to_action_sequence                   = @mlprogram.ast.action.code_to_action_sequence
+mlprogram.utils.transform.TransformCode.to_action_sequence                   = @mlprogram.action.action.code_to_action_sequence
 mlprogram.utils.transform.TransformDataset.transform_evaluator               = @mlprogram.utils.transform.nl2code.TransformEvaluator()
 mlprogram.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.nl2code.TransformEvaluator.train                   = True
