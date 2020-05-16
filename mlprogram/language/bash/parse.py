@@ -111,24 +111,24 @@ def unparse(ast: A.AST) -> Optional[str]:
                 if t is None:
                     return None
 
-                if cast(A.ASTProtocol,
-                        ast.fields[1].value).type_name != "None":
+                if cast(A.AST,
+                        ast.fields[1].value).get_type_name() != "None":
                     heredoc = unparse(cast(A.AST, ast.fields[1].value))
                 else:
                     heredoc = ""
                 if heredoc is None:
                     return None
 
-                if cast(A.ASTProtocol,
-                        ast.fields[2].value).type_name != "None":
+                if cast(A.AST,
+                        ast.fields[2].value).get_type_name() != "None":
                     input = unparse(cast(A.AST, ast.fields[2].value))
                 else:
                     input = ""
                 if input is None:
                     return None
 
-                if cast(A.ASTProtocol,
-                        ast.fields[3].value).type_name != "None":
+                if cast(A.AST,
+                        ast.fields[3].value).get_type_name() != "None":
                     output = unparse(cast(A.AST, ast.fields[3].value))
                 else:
                     output = ""
