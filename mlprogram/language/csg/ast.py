@@ -1,43 +1,60 @@
-from mlprogram.action.ast import Node, Leaf, Field
+from dataclasses import dataclass
 
 
-def Rectangle(w: int, h: int) -> Node:
-    return Node("Rectangle", [
-        Field("width", "number", Leaf("number", str(w))),
-        Field("height", "number", Leaf("number", str(h)))
-    ])
+class AST:
+    def type_name(self) -> str:
+        raise NotImplementedError
 
 
-def Circle(r: int) -> Node:
-    return Node("Circle", [
-        Field("r", "number", Leaf("number", str(r)))
-    ])
+@dataclass
+class Rectangle(AST):
+    w: int
+    h: int
+
+    def type_name(self) -> str:
+        return "Rectangle"
 
 
-def Translation(x: int, y: int, child: Node) -> Node:
-    return Node("Translation", [
-        Field("x", "number", Leaf("number", str(x))),
-        Field("y", "number", Leaf("number", str(y))),
-        Field("child", "CSG", child)
-    ])
+@dataclass
+class Circle(AST):
+    r: int
+
+    def type_name(self) -> str:
+        return "Circle"
 
 
-def Rotation(theta_degree: int, child: Node) -> Node:
-    return Node("Rotation", [
-        Field("theta", "number", Leaf("number", str(theta_degree))),
-        Field("child", "CSG", child)
-    ])
+@dataclass
+class Translation(AST):
+    x: int
+    y: int
+    child: AST
+
+    def type_name(self) -> str:
+        return "Translation"
 
 
-def Union(a: Node, b: Node) -> Node:
-    return Node("Union", [
-        Field("a", "CSG", a),
-        Field("b", "CSG", b)
-    ])
+@dataclass
+class Rotation(AST):
+    theta_degree: int
+    child: AST
+
+    def type_name(self) -> str:
+        return "Rotation"
 
 
-def Difference(a: Node, b: Node) -> Node:
-    return Node("Difference", [
-        Field("a", "CSG", a),
-        Field("b", "CSG", b)
-    ])
+@dataclass
+class Union(AST):
+    a: AST
+    b: AST
+
+    def type_name(self) -> str:
+        return "Union"
+
+
+@dataclass
+class Difference(AST):
+    a: AST
+    b: AST
+
+    def type_name(self) -> str:
+        return "Difference"

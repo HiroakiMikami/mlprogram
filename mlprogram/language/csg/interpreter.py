@@ -1,7 +1,7 @@
 import numpy as np
-from typing import cast
 from mlprogram.interpreter import Environment, Interpreter as BaseInterpreter
-from mlprogram.action.ast import AST, Node, Leaf
+from mlprogram.csg \
+    import AST, Circle, Rectangle, Rotation, Translation, Union, Difference
 
 
 class Canvas:
@@ -30,28 +30,22 @@ class Interpreter(BaseInterpreter):
         self.width = width
         self.height = height
 
-    def eval(self, env: Environment, ast: AST) -> Environment:
-        assert isinstance(ast, Node)
-
-        if ast in env:
+    def eval(self, env: Environment, code: AST) -> Environment:
+        if code in env:
             return env
 
-        node = cast(Node, ast)
-        if node.type_name == "Circle":
+        if isinstance(code, Circle):
             # canvus = Canvas(self.width, self.height)
-            r_node = node.fields[0].value
-            assert isinstance(r_node, Leaf)
-            r = int(r_node.value)
-            print(r)
-        elif node.type_name == "Rectangle":
             pass
-        elif node.type_name == "Rotation":
+        elif isinstance(code, Rectangle):
             pass
-        elif node.type_name == "Translation":
+        elif isinstance(code, Rotation):
             pass
-        elif node.type_name == "Union":
+        elif isinstance(code, Translation):
             pass
-        elif node.type_name == "Difference":
+        elif isinstance(code, Union):
+            pass
+        elif isinstance(code, Difference):
             pass
         else:
-            raise InvalidNodeTypeException(node.type_name)
+            raise InvalidNodeTypeException(code.type_name())
