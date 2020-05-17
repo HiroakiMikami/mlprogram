@@ -1,60 +1,90 @@
-from dataclasses import dataclass
+from typing import Any, Dict
 
 
 class AST:
     def type_name(self) -> str:
         raise NotImplementedError
 
+    def __eq__(self, rhs: Any) -> bool:
+        if isinstance(rhs, AST):
+            return self.type_name() == rhs.type_name() and \
+                self.state_dict() == rhs.state_dict()
+        return False
 
-@dataclass
+    def __hash__(self) -> int:
+        return hash(self.type_name()) ^ hash(tuple(self.state_dict().items()))
+
+    def state_dict(self) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
 class Rectangle(AST):
-    w: int
-    h: int
+    def __init__(self, w: int, h: int):
+        self.w = w
+        self.h = h
 
     def type_name(self) -> str:
         return "Rectangle"
 
+    def state_dict(self) -> Dict[str, Any]:
+        return {"w": self.w, "h": self.h}
 
-@dataclass
+
 class Circle(AST):
-    r: int
+    def __init__(self, r: int):
+        self.r = r
 
     def type_name(self) -> str:
         return "Circle"
 
+    def state_dict(self) -> Dict[str, Any]:
+        return {"r": self.r}
 
-@dataclass
+
 class Translation(AST):
-    x: int
-    y: int
-    child: AST
+    def __init__(self, x: int, y: int, child: AST):
+        self.x = x
+        self.y = y
+        self.child = child
 
     def type_name(self) -> str:
         return "Translation"
 
+    def state_dict(self) -> Dict[str, Any]:
+        return {"x": self.x, "y": self.y, "child": self.child}
 
-@dataclass
+
 class Rotation(AST):
-    theta_degree: int
-    child: AST
+    def __init__(self, theta_degree: int, child: AST):
+        self.theta_degree = theta_degree
+        self.child = child
 
     def type_name(self) -> str:
         return "Rotation"
 
+    def state_dict(self) -> Dict[str, Any]:
+        return {"theta_degree": self.theta_degree, "child": self.child}
 
-@dataclass
+
 class Union(AST):
-    a: AST
-    b: AST
+    def __init__(self, a: AST, b: AST):
+        self.a = a
+        self.b = b
 
     def type_name(self) -> str:
         return "Union"
 
+    def state_dict(self) -> Dict[str, Any]:
+        return {"a": self.a, "b": self.b}
 
-@dataclass
+
 class Difference(AST):
-    a: AST
-    b: AST
+    def __init__(self, a: AST, b: AST):
+        self.a = a
+        self.b = b
 
     def type_name(self) -> str:
         return "Difference"
+
+    def state_dict(self) -> Dict[str, Any]:
+        return {"a": self.a, "b": self.b}
