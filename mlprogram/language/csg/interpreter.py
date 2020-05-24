@@ -1,8 +1,8 @@
 import numpy as np
-from mlprogram.interpreter import Environment, Interpreter as BaseInterpreter
+from mlprogram.interpreter import Interpreter as BaseInterpreter
 from mlprogram.language.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference
-from typing import Callable
+from typing import Callable, Dict
 import math
 
 
@@ -45,8 +45,8 @@ class InvalidNodeTypeException(BaseException):
         super().__init__(f"Invalid node type: {type_name}")
 
 
-class Interpreter(BaseInterpreter):
-    def eval(self, env: Environment, code: AST) -> Environment:
+class Interpreter(BaseInterpreter[AST, AST, Shape]):
+    def eval(self, env: Dict[AST, Shape], code: AST) -> Dict[AST, Shape]:
         if code in env:
             return env
 

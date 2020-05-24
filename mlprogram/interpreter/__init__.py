@@ -1,1 +1,1 @@
-from .interpreter import Interpreter, Environment  # noqa
+from .interpreter import Interpreter  # noqa
