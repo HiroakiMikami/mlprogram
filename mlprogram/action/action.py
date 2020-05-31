@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from mlprogram.ast import AST, Node, Leaf, Field, Root
-from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
+from typing \
+    import Tuple, Union, List, Any, Callable, Optional, Sequence, \
+    TypeVar, Generic
 from enum import Enum
 import logging
 
@@ -143,8 +145,11 @@ class CloseNode:
         return cls._instance
 
 
+V = TypeVar("V")
+
+
 @dataclass
-class GenerateToken:
+class GenerateToken(Generic[V]):
     """
     The action to generate a token
 
@@ -153,7 +158,7 @@ class GenerateToken:
     token: Union[CloseNode, str]
         The value (token) to be generated
     """
-    token: Union[CloseNode, str]
+    token: V
 
     def __str__(self) -> str:
         return f"Generate {self.token}"
@@ -229,14 +234,14 @@ def ast_to_action_sequence(node: AST,
         elif isinstance(node, Leaf):
             if options.split_non_terminal:
                 assert tokenizer is not None
+                gen_tokens: List[Action] = []
                 if isinstance(node.value, str):
-                    tokens: List[Union[str, CloseNode]] = \
-                        list(tokenizer(node.value))
+                    for token in tokenizer(node.value):
+                        gen_tokens.append(GenerateToken[str](token))
                 else:
-                    # TODO
-                    tokens = [str(node.value)]
-                tokens.append(CloseNode())
-                return list(map(lambda x: GenerateToken(x), tokens))
+                    gen_tokens.append(GenerateToken[V](node.value))
+                gen_tokens.append(GenerateToken(CloseNode()))
+                return gen_tokens
             else:
                 return [GenerateToken(node.value)]
         else:
