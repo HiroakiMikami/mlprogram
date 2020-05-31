@@ -4,8 +4,8 @@ from mlprogram.action.action \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseNode, CloseVariadicFieldRule, \
     ActionOptions, ast_to_action_sequence
-from mlprogram.action import ast
-from mlprogram.action.ast import Root
+from mlprogram import ast
+from mlprogram.ast import Root
 
 
 class TestNodeType(unittest.TestCase):

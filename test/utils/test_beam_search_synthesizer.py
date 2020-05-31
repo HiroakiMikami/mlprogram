@@ -5,7 +5,7 @@ from math import log
 from mlprogram.synthesizer \
     import BeamSearchSynthesizer, Progress, Candidate, \
     LazyLogProbability
-from mlprogram.action.ast import Node, Field, Leaf, Root
+from mlprogram.ast import Node, Field, Leaf, Root
 from mlprogram.action.action \
     import NodeConstraint, NodeType, ExpandTreeRule, CloseVariadicFieldRule, \
     ApplyRule, GenerateToken, CloseNode, ActionOptions

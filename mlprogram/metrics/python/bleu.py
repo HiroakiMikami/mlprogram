@@ -1,6 +1,6 @@
 from typing import Callable, List, Iterable
 import re
-from mlprogram.action.ast import AST
+from mlprogram.ast import AST
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 from mlprogram.metrics import Metric

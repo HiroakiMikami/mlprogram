@@ -1,7 +1,7 @@
 import ast as python_ast
 from typing import List, Type, Union
 
-import mlprogram.action.ast as ast
+import mlprogram.ast as ast
 from mlprogram.language.python import PythonAST
 from .utils import is_builtin_type, BuiltinType
 

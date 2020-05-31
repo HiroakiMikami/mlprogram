@@ -1,5 +1,5 @@
 import unittest
-from mlprogram.action.ast import Leaf
+from mlprogram.ast import Leaf
 from mlprogram.metrics import Metric
 
 

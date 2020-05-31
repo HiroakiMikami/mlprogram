@@ -5,7 +5,7 @@ from mlprogram.action.evaluator \
 from mlprogram.action.action \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
     GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions
-from mlprogram.action.ast import Node, Leaf, Field, Root
+from mlprogram.ast import Node, Leaf, Field, Root
 
 
 class TestEvaluator(unittest.TestCase):

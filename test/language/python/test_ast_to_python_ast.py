@@ -1,7 +1,7 @@
 import unittest
 import ast as python_ast
 
-import mlprogram.action.ast as ast
+import mlprogram.ast as ast
 
 from mlprogram.language.python.ast_to_python_ast import to_builtin_type
 from mlprogram.language.python import to_ast, to_python_ast

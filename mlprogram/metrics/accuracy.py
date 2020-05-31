@@ -1,5 +1,5 @@
 from typing import Callable
-from mlprogram.action.ast import AST
+from mlprogram.ast import AST
 
 from .metric import Metric
 

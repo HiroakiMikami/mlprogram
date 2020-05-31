@@ -8,7 +8,7 @@ from torch import optim
 
 from mlprogram.gin import workspace
 from mlprogram.gin.nl2prog import train, evaluate
-from mlprogram.action.ast import Leaf
+from mlprogram.ast import Leaf
 from mlprogram.utils.data import ListDataset, Entry
 from mlprogram.synthesizer.beam_search_synthesizer import Candidate
 from mlprogram.metrics import Accuracy, Bleu

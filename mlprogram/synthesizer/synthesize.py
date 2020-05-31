@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from mlprogram.action.ast import AST
+from mlprogram.ast import AST
 
 from mlprogram.synthesizer import Synthesizer, Progress
 

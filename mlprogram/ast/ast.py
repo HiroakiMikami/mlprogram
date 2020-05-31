@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, List, Any
+from typing import Union, List, Any, Generic, TypeVar
 from copy import deepcopy
 
 
@@ -134,8 +134,11 @@ class Node(AST):
         return self.type_name
 
 
+V = TypeVar("V")
+
+
 @dataclass
-class Leaf(AST):
+class Leaf(AST, Generic[V]):
     """
     The leaf of AST
 
@@ -143,11 +146,11 @@ class Leaf(AST):
     ----------
     type_name: str
         The type of this leaf
-    value: str
+    value: V
         The value represented by this leaf
     """
     type_name: Union[str, Root]
-    value: str
+    value: V
 
     def clone(self):
         """

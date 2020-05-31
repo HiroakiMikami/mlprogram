@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mlprogram.action.ast import AST, Node, Leaf, Field, Root
+from mlprogram.ast import AST, Node, Leaf, Field, Root
 from typing import Tuple, Union, List, Any, Callable, Optional, Sequence
 from enum import Enum
 import logging
@@ -229,8 +229,12 @@ def ast_to_action_sequence(node: AST,
         elif isinstance(node, Leaf):
             if options.split_non_terminal:
                 assert tokenizer is not None
-                tokens: List[Union[str, CloseNode]] = \
-                    list(tokenizer(str(node.value)))
+                if isinstance(node.value, str):
+                    tokens: List[Union[str, CloseNode]] = \
+                        list(tokenizer(node.value))
+                else:
+                    # TODO
+                    tokens = [str(node.value)]
                 tokens.append(CloseNode())
                 return list(map(lambda x: GenerateToken(x), tokens))
             else:

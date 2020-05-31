@@ -5,7 +5,7 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.gin import workspace
 from mlprogram.utils import Query
 from mlprogram.utils.data import get_samples, get_words
-from mlprogram.action.ast import AST
+from mlprogram.ast import AST
 from mlprogram.action.action import ActionSequence, ActionOptions
 
 

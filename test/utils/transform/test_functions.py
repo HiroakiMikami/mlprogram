@@ -3,7 +3,7 @@ import numpy as np
 
 from mlprogram.utils import Query
 from mlprogram.utils.data import Entry, ListDataset, get_samples
-from mlprogram.action.ast import Node, Leaf, Field
+from mlprogram.ast import Node, Leaf, Field
 from mlprogram.action.action import ast_to_action_sequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform \

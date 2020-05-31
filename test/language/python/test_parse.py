@@ -2,7 +2,7 @@ import unittest
 import ast
 
 from mlprogram.language.python import to_ast, parse, unparse, ParseMode
-from mlprogram.action.ast import Node
+from mlprogram.ast import Node
 
 
 class TestParse(unittest.TestCase):

@@ -6,7 +6,7 @@ import itertools
 import mlprogram.action.action as A
 from mlprogram.action.action \
     import Action, ActionSequence, ApplyRule, ExpandTreeRule
-from mlprogram.action.ast import AST, Node, Leaf, Field, Root
+from mlprogram.ast import AST, Node, Leaf, Field, Root
 
 
 class InvalidActionException(Exception):

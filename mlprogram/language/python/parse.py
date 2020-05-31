@@ -2,7 +2,7 @@ import ast as python_ast
 import transpyle
 from enum import Enum
 from typing import Optional
-from mlprogram.action.ast import AST
+from mlprogram.ast import AST
 from .python_ast_to_ast import to_ast
 from .ast_to_python_ast import to_python_ast
 

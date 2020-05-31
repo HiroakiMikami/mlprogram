@@ -2,7 +2,7 @@ from typing \
     import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
 from mlprogram.action.evaluator import Evaluator
-from mlprogram.action.ast import Root
+from mlprogram.ast import Root
 from mlprogram.action.action \
     import NodeConstraint, NodeType, ExpandTreeRule, \
     ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
