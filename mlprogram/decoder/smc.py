@@ -1,5 +1,6 @@
-from typing import TypeVar, Generic, Callable, Optional, Generator, Dict, Tuple
-from mlprogram.decoder import DecoderState, Result, Decoder
+from typing import TypeVar, Generic, Optional, Generator, Dict, Tuple
+from mlprogram.samplers import Sampler, SamplerState
+from mlprogram.decoder import Result, Decoder
 import math
 import numpy as np
 
@@ -11,25 +12,19 @@ State = TypeVar("State")
 class SMC(Decoder[Input, Output], Generic[Input, Output, State]):
     def __init__(self, max_step_size: int, max_retry_num: int,
                  initial_particle_size: int,
-                 initialize: Callable[[Input], State],
-                 create_output: Callable[[State], Optional[Output]],
-                 random_samples: Callable[[DecoderState[State], int],
-                                          Generator[DecoderState[State], None,
-                                                    None]],
+                 sampler: Sampler[Input, Output, State],
                  factor: int = 2,
                  rng: Optional[np.random.RandomState] = None):
         self.max_step_size = max_step_size
         self.max_retry_num = max_retry_num
         self.initial_particle_size = initial_particle_size
         self.factor = factor
-        self.initialize = initialize
-        self.create_output = create_output
-        self.random_samples = random_samples
+        self.sampler = sampler
         self.rng = rng or np.random
 
     def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
         num_particle = self.initial_particle_size
-        initial_state = DecoderState(0.0, self.initialize(input))
+        initial_state = SamplerState(0.0, self.sampler.initialize(input))
         for _ in range(self.max_retry_num):
             # Initialize state
             particles = [(initial_state, num_particle)]
@@ -38,7 +33,7 @@ class SMC(Decoder[Input, Output], Generic[Input, Output, State]):
                 # Generate particles
                 samples: Dict[State, Tuple[float, int]] = {}
                 for state, n in particles:
-                    for sample in self.random_samples(state, n):
+                    for sample in self.sampler.random_samples(state, n):
                         if sample.state in samples:
                             samples[sample.state] = \
                                 (samples[sample.state][0],
@@ -46,12 +41,12 @@ class SMC(Decoder[Input, Output], Generic[Input, Output, State]):
                         else:
                             samples[sample.state] = (sample.score, 1)
 
-                        output_opt = self.create_output(sample.state)
+                        output_opt = self.sampler.create_output(sample.state)
                         if output_opt is not None:
                             yield Result(output_opt, sample.score)
 
                 # Resample
-                list_samples = [(DecoderState(score, state), n)
+                list_samples = [(SamplerState(score, state), n)
                                 for state, (score, n) in samples.items()]
                 log_weights = [math.log(n) + state.score
                                for state, n in list_samples]
