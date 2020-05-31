@@ -1,11 +1,13 @@
+import torch
 import unittest
+import numpy as np
 import ast
 from mlprogram.utils import Query
 from mlprogram.language.python import to_ast
 from mlprogram.action.action import ActionOptions
 from mlprogram.utils.data \
     import Entry, ListDataset, to_eval_dataset, get_samples, get_words, \
-    get_characters
+    get_characters, Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
 
 
@@ -64,6 +66,75 @@ class TestToEvalDataset(unittest.TestCase):
         query, ref = vdataset[0]
         self.assertEqual("foo bar", query)
         self.assertEqual(["y = x1"], ref)
+
+
+class TestCollate(unittest.TestCase):
+    def test_collate(self):
+        data = [
+            {
+                "pad0": torch.zeros(1),
+                "pad1": torch.ones(2, 1),
+                "stack0": torch.zeros(1),
+                "stack1": torch.ones(1, 3)
+            },
+            {
+                "pad0": torch.zeros(2) + 1,
+                "pad1": torch.ones(1, 1) + 1,
+                "stack0": torch.zeros(1) + 1,
+                "stack1": torch.ones(1, 3) + 1
+            }
+        ]
+        collate = Collate(device=torch.device("cpu"),
+                          pad0=CollateOptions(True, 0, -1),
+                          pad1=CollateOptions(True, 0, -1),
+                          stack0=CollateOptions(False, 0, -1),
+                          stack1=CollateOptions(False, 1, -1))
+        retval = collate.collate(data)
+        self.assertEqual(set(["pad0", "pad1", "stack0", "stack1"]),
+                         set(retval.keys()))
+
+        self.assertTrue(np.array_equal([[0, 1], [-1, 1]],
+                                       retval["pad0"].data.numpy()))
+        self.assertTrue(np.array_equal([[1, 1], [0, 1]],
+                                       retval["pad0"].mask.numpy()))
+        self.assertTrue(np.array_equal([[[1], [2]], [[1], [-1]]],
+                                       retval["pad1"].data.numpy()))
+        self.assertTrue(np.array_equal([[1, 1], [1, 0]],
+                                       retval["pad1"].mask.numpy()))
+
+        self.assertTrue(np.array_equal([[0], [1]],
+                                       retval["stack0"].data.numpy()))
+        self.assertTrue(np.array_equal([[[1, 1, 1], [2, 2, 2]]],
+                                       retval["stack1"].data.numpy()))
+
+    def test_split(self):
+        data = [
+            {
+                "pad0": torch.zeros(1),
+                "pad1": torch.ones(2, 1),
+                "stack0": torch.zeros(1),
+                "stack1": torch.ones(1, 3)
+            },
+            {
+                "pad0": torch.zeros(2) + 1,
+                "pad1": torch.ones(1, 1) + 1,
+                "stack0": torch.zeros(1) + 1,
+                "stack1": torch.ones(1, 3) + 1
+            }
+        ]
+        collate = Collate(device=torch.device("cpu"),
+                          pad0=CollateOptions(True, 0, -1),
+                          pad1=CollateOptions(True, 0, -1),
+                          stack0=CollateOptions(False, 0, -1),
+                          stack1=CollateOptions(False, 1, -1))
+        retval = collate.split(collate.collate(data))
+        self.assertEqual(2, len(retval))
+        for i in range(2):
+            expected = data[i]
+            actual = retval[i]
+            self.assertEqual(set(expected.keys()), set(actual.keys()))
+            for key in expected:
+                self.assertTrue(np.array_equal(expected[key], actual[key]))
 
 
 if __name__ == "__main__":

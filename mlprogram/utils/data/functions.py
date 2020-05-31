@@ -1,6 +1,7 @@
 import torch
 import itertools
-from typing import Callable, List, Any, Optional, Tuple, Union, Iterable
+from dataclasses import dataclass
+from typing import Callable, List, Any, Optional, Tuple, Union, Iterable, Dict
 from mlprogram.action.action \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
     ActionSequence
@@ -84,6 +85,72 @@ def to_eval_dataset(dataset: torch.utils.data.Dataset) \
         for entry in group:
             entries.append((entry.input, gts))
     return ListDataset(entries)
+
+
+@dataclass
+class CollateOptions:
+    use_pad_sequence: bool
+    dim: int
+    padding_value: float
+
+
+class Collate:
+    def __init__(self, device: torch.device,
+                 **kwargs: CollateOptions):
+        self.device = device
+        self.options: Dict[str, CollateOptions] = kwargs
+
+    def collate(self, tensors: List[Dict[str, torch.Tensor]]) \
+            -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
+        retval: Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]] = {}
+        tmp: Dict[str, List[torch.Tensor]] = {}
+        for i, t in enumerate(tensors):
+            for name, tensor in t.items():
+                if name not in tmp:
+                    tmp[name] = []
+                tmp[name].append(tensor)
+        for name, ts in tmp.items():
+            option = self.options[name]
+            if option.use_pad_sequence:
+                retval[name] = \
+                    rnn.pad_sequence(ts, padding_value=option.padding_value) \
+                    .to(self.device)
+            else:
+                retval[name] = torch.stack(ts, dim=option.dim).to(self.device)
+        return retval
+
+    def split(self, tensors: Dict[str, Union[torch.Tensor,
+                                             PaddedSequenceWithMask]]) \
+            -> List[Dict[str, torch.Tensor]]:
+        retval: List[Dict[str, torch.Tensor]] = []
+        for name, t in tensors.items():
+            option = self.options[name]
+            if option.use_pad_sequence:
+                B = t.data.shape[1]
+            else:
+                B = t.data.shape[option.dim]
+            if len(retval) == 0:
+                for _ in range(B):
+                    retval.append({})
+
+            if option.use_pad_sequence:
+                for b in range(B):
+                    inds = torch.nonzero(t.mask[:, b], as_tuple=False)
+                    data = t.data[:, b]
+                    shape = data.shape[1:]
+                    data = data[inds]
+                    data = data.reshape(-1, *shape)
+                    retval[b][name] = data
+            else:
+                shape = list(t.data.shape)
+                del shape[option.dim]
+                data = torch.split(t, 1, dim=option.dim)
+                for b in range(B):
+                    d = data[b]
+                    d = d.reshape(*shape)
+                    retval[b][name] = d
+
+        return retval
 
 
 class CollateGroundTruth:
