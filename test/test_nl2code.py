@@ -11,13 +11,13 @@ import torch.optim as optim
 from mlprogram.gin import nl2prog, nl2code, workspace, optimizer
 from mlprogram.utils import Query
 from mlprogram.synthesizer import CommonBeamSearchSynthesizer
-from mlprogram.action.action \
-    import ast_to_action_sequence as to_seq, ActionOptions
+from mlprogram.action.action import ActionOptions
 from mlprogram.utils.data \
     import Collate, CollateGroundTruth, collate_none, CollateNlFeature
 from mlprogram.utils.data.nl2code \
     import CollateInput, CollateActionSequence, \
     CollateState, split_states
+from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
     import TransformDataset, TransformCode, TransformGroundTruth
 from mlprogram.utils.transform.nl2code \
@@ -104,8 +104,8 @@ class TestNL2Code(unittest.TestCase):
 
     def train(self, options, tokenize_token, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            def to_action_sequence(ast):
-                return to_seq(ast, options=options, tokenizer=tokenize_token)
+            to_action_sequence = \
+                AstToSingleActionSequence(options, tokenize_token)
             collate_fn = Collate(
                 CollateInput(torch.device("cpu")),
                 CollateActionSequence(torch.device("cpu")),

@@ -11,9 +11,10 @@ mlprogram.action.action.ActionOptions.retain_variadic_fields = False
 mlprogram.action.action.ActionOptions.split_non_terminal     = False
 
 # to_action_sequence
-mlprogram.action.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
-mlprogram.action.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.action.action.code_to_action_sequence.options  = @mlprogram.action.action.ActionOptions()
+to_action_sequence/Compose.f = @mlprogram.language.python.parse
+to_action_sequence/Compose.g = @mlprogram.utils.transform.AstToSingleActionSequence()
+mlprogram.utils.transform.AstToSingleActionSequence.tokenize = @mlprogram.utils.python.tokenize_token
+mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.action.action.ActionOptions()
 
 # Encoder
 train_dataset/mlprogram.gin.get_key.key                  = "train"
@@ -23,7 +24,7 @@ mlprogram.gin.treegen.prepare_encoder.word_threshold     = 3
 mlprogram.gin.treegen.prepare_encoder.char_threshold     = 0
 mlprogram.gin.treegen.prepare_encoder.token_threshold    = 0
 mlprogram.gin.treegen.prepare_encoder.parse              = @mlprogram.language.python.parse
-mlprogram.gin.treegen.prepare_encoder.to_action_sequence = @mlprogram.action.action.code_to_action_sequence
+mlprogram.gin.treegen.prepare_encoder.to_action_sequence = @to_action_sequence/Compose()
 mlprogram.gin.treegen.prepare_encoder.extract_query      = @mlprogram.utils.python.tokenize_query
 mlprogram.gin.treegen.prepare_encoder.tokenize_token     = @mlprogram.utils.python.tokenize_token
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
@@ -37,7 +38,7 @@ mlprogram.utils.transform.treegen.TransformQuery.word_encoder                = @
 mlprogram.utils.transform.treegen.TransformQuery.char_encoder                = @char_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.treegen.TransformQuery.max_word_length             = 128
 mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
-mlprogram.utils.transform.TransformCode.to_action_sequence                   = @mlprogram.action.action.code_to_action_sequence
+mlprogram.utils.transform.TransformCode.to_action_sequence                   = @to_action_sequence/Compose()
 mlprogram.utils.transform.TransformDataset.transform_evaluator               = @mlprogram.utils.transform.treegen.TransformEvaluator()
 mlprogram.utils.transform.treegen.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.treegen.TransformEvaluator.max_arity               = 128

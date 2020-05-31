@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from mlprogram.ast import AST, Node, Leaf, Field, Root
+from mlprogram.ast import Root
 from typing \
-    import Tuple, Union, List, Any, Callable, Optional, Sequence, \
-    TypeVar, Generic
+    import Tuple, Union, List, Any, TypeVar, Generic
 from enum import Enum
 import logging
 
@@ -171,93 +170,3 @@ Action = Union[ApplyRule, GenerateToken]
 class ActionSequence:
     sequence: List[Action]
     options: ActionOptions
-
-
-Tokenizer = Callable[[str], Sequence[str]]
-
-
-def ast_to_action_sequence(node: AST,
-                           options: ActionOptions = ActionOptions(True, True),
-                           tokenizer: Optional[Tokenizer] = None) \
-        -> ActionSequence:
-    """
-    Return the action sequence corresponding to this AST
-
-    Parameters
-    ----------
-    node: AST
-    options: ActionOptions
-    tokenizer: Optional[Tokenizer]
-        function to tokenize a string.
-        This is required if the options.split_non_terminal is True.
-
-    Returns
-    -------
-    action.ActionSequence
-        The corresponding action sequence
-    """
-    def to_sequence(node: AST) -> List[Action]:
-        if isinstance(node, Node):
-            def to_node_type(field: Field) -> NodeType:
-                if isinstance(field.value, list):
-                    return NodeType(field.type_name,
-                                    NodeConstraint.Variadic)
-                else:
-                    if isinstance(field.value, Leaf):
-                        return NodeType(field.type_name,
-                                        NodeConstraint.Token)
-                    else:
-                        return NodeType(field.type_name,
-                                        NodeConstraint.Node)
-            children = list(
-                map(lambda f: (f.name, to_node_type(f)), node.fields))
-
-            seq: List[Action] = [ApplyRule(ExpandTreeRule(
-                NodeType(node.type_name, NodeConstraint.Node),
-                children))]
-            for field in node.fields:
-                if isinstance(field.value, list):
-                    if not options.retain_variadic_fields:
-                        elem_type_name = to_node_type(field).type_name
-                        elem = NodeType(elem_type_name, NodeConstraint.Node)
-                        seq.append(ApplyRule(ExpandTreeRule(
-                            NodeType(elem_type_name, NodeConstraint.Variadic),
-                            [(str(i), elem) for i in range(len(field.value))]
-                        )))
-                    for v in field.value:
-                        seq.extend(to_sequence(v))
-                    if options.retain_variadic_fields:
-                        seq.append(ApplyRule(CloseVariadicFieldRule()))
-                else:
-                    seq.extend(to_sequence(field.value))
-            return seq
-        elif isinstance(node, Leaf):
-            if options.split_non_terminal:
-                assert tokenizer is not None
-                gen_tokens: List[Action] = []
-                if isinstance(node.value, str):
-                    for token in tokenizer(node.value):
-                        gen_tokens.append(GenerateToken[str](token))
-                else:
-                    gen_tokens.append(GenerateToken[V](node.value))
-                gen_tokens.append(GenerateToken(CloseNode()))
-                return gen_tokens
-            else:
-                return [GenerateToken(node.value)]
-        else:
-            logger.warn(f"Invalid type of node: {type(node)}")
-            return []
-    return ActionSequence(
-        to_sequence(Node(Root(), [Field("root", Root(), node)])),
-        options)
-
-
-def code_to_action_sequence(
-    code: str, parse: Callable[[str], AST],
-    options: ActionOptions,
-    tokenize: Optional[Callable[[str], List[str]]] = None) \
-        -> Optional[ActionSequence]:
-    ast = parse(code)
-    if ast is None:
-        return None
-    return ast_to_action_sequence(ast, tokenizer=tokenize, options=options)

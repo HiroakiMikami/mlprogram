@@ -91,8 +91,7 @@ gin.external_configurable(mlprogram.language.bash.is_subtype,
                           module="mlprogram.language.bash")
 gin.external_configurable(mlprogram.action.action.ActionOptions,
                           module="mlprogram.action.action")
-gin.external_configurable(mlprogram.action.action.code_to_action_sequence,
-                          module="mlprogram.action.action")
+gin.external_configurable(mlprogram.utils.Compose, module="mlprogram.utils")
 gin.external_configurable(mlprogram.synthesizer.CommonBeamSearchSynthesizer,
                           module="mlprogram.utils")
 gin.external_configurable(
@@ -108,6 +107,8 @@ gin.external_configurable(mlprogram.utils.data.collate_none,
                           module="mlprogram.utils.data")
 gin.external_configurable(mlprogram.utils.data.split_none,
                           module="mlprogram.utils.data")
+gin.external_configurable(mlprogram.utils.transform.AstToSingleActionSequence,
+                          module="mlprogram.utils.transform")
 gin.external_configurable(mlprogram.utils.transform.TransformDataset,
                           module="mlprogram.utils.transform")
 gin.external_configurable(mlprogram.utils.transform.TransformCode,

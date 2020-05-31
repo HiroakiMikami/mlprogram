@@ -12,13 +12,13 @@ import fairseq.optim as optim
 from mlprogram.gin import nl2prog, treegen, optimizer, workspace
 from mlprogram.utils import Query
 from mlprogram.synthesizer import CommonBeamSearchSynthesizer
-from mlprogram.action.action \
-    import ast_to_action_sequence as to_seq, ActionOptions
+from mlprogram.action.action import ActionOptions
 from mlprogram.utils.data \
     import Collate, CollateGroundTruth, collate_none, split_none, \
     CollateNlFeature
 from mlprogram.utils.data.treegen \
     import CollateQuery, CollateActionSequence, CollateInput
+from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
     import TransformDataset, TransformGroundTruth, TransformCode
 from mlprogram.utils.transform.treegen \
@@ -113,8 +113,8 @@ class TestTreeGen(unittest.TestCase):
 
     def train(self, options, tokenize_token, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            def to_action_sequence(ast):
-                return to_seq(ast, options=options, tokenizer=tokenize_token)
+            to_action_sequence = \
+                AstToSingleActionSequence(options, tokenize_token)
 
             collate_fn = Collate(
                 CollateInput(torch.device("cpu")),

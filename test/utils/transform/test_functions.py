@@ -4,8 +4,8 @@ import numpy as np
 from mlprogram.utils import Query
 from mlprogram.utils.data import Entry, ListDataset, get_samples
 from mlprogram.ast import Node, Leaf, Field
-from mlprogram.action.action import ast_to_action_sequence
 from mlprogram.encoders import ActionSequenceEncoder
+from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
     import TransformCode, TransformGroundTruth, TransformDataset
 
@@ -32,7 +32,7 @@ def to_action_sequence(code: str):
                                  Node("Number", [Field("value", "number",
                                                        Leaf("number", "1"))]))]
                            ))])
-    return ast_to_action_sequence(ast, tokenizer=tokenize)
+    return AstToSingleActionSequence(tokenize=tokenize)(ast)
 
 
 class TestTransformCode(unittest.TestCase):

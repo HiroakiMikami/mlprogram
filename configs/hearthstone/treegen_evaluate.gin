@@ -10,11 +10,6 @@ dataset/mlprogram.gin.workspace.get.key   = "dataset"
 mlprogram.action.action.ActionOptions.retain_variadic_fields = False
 mlprogram.action.action.ActionOptions.split_non_terminal     = False
 
-# to_action_sequence
-mlprogram.action.action.code_to_action_sequence.parse    = @mlprogram.language.python.parse
-mlprogram.action.action.code_to_action_sequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.action.action.code_to_action_sequence.options  = @mlprogram.action.action.ActionOptions()
-
 # Encoder
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 char_encoder/mlprogram.gin.workspace.get.key             = "char_encoder"
