@@ -97,7 +97,7 @@ gin.external_configurable(mlprogram.synthesizer.CommonBeamSearchSynthesizer,
 gin.external_configurable(
     mlprogram.synthesizer.CommonBeamSearchSynthesizer.create,
     module="mlprogram.synthesizer.CommonBeamSearchSynthesizer")
-gin.external_configurable(mlprogram.utils.data.Collate,
+gin.external_configurable(mlprogram.utils.data.CollateAll,
                           module="mlprogram.utils.data")
 gin.external_configurable(mlprogram.utils.data.CollateGroundTruth,
                           module="mlprogram.utils.data")

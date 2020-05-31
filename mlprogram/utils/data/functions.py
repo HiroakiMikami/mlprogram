@@ -97,7 +97,7 @@ class CollateGroundTruth:
         return pad_ground_truths.to(self.device)
 
 
-class Collate:
+class CollateAll:
     def __init__(self, collate_input: Callable[[List[Any]], Any],
                  collate_action_sequence: Callable[[List[Any]], Any],
                  collate_query: Callable[[List[Any]], Any],

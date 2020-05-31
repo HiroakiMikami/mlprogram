@@ -13,7 +13,7 @@ from mlprogram.utils import Query
 from mlprogram.synthesizer import CommonBeamSearchSynthesizer
 from mlprogram.action.action import ActionOptions
 from mlprogram.utils.data \
-    import Collate, CollateGroundTruth, collate_none, CollateNlFeature
+    import CollateAll, CollateGroundTruth, collate_none, CollateNlFeature
 from mlprogram.utils.data.nl2code \
     import CollateInput, CollateActionSequence, \
     CollateState, split_states
@@ -106,7 +106,7 @@ class TestNL2Code(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = \
                 AstToSingleActionSequence(options, tokenize_token)
-            collate_fn = Collate(
+            collate_fn = CollateAll(
                 CollateInput(torch.device("cpu")),
                 CollateActionSequence(torch.device("cpu")),
                 collate_none,

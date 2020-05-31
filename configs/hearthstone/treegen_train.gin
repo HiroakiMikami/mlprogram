@@ -65,10 +65,10 @@ model/mlprogram.gin.workspace.put.value                              = @mlprogra
 model/mlprogram.gin.workspace.get.key                                = "model"
 
 # Collate
-mlprogram.utils.data.Collate.collate_input                = @mlprogram.utils.data.treegen.CollateInput()
-mlprogram.utils.data.Collate.collate_action_sequence      = @mlprogram.utils.data.treegen.CollateActionSequence()
-mlprogram.utils.data.Collate.collate_query                = @mlprogram.utils.data.treegen.CollateQuery()
-mlprogram.utils.data.Collate.collate_ground_truth         = @mlprogram.utils.data.CollateGroundTruth()
+mlprogram.utils.data.CollateAll.collate_input             = @mlprogram.utils.data.treegen.CollateInput()
+mlprogram.utils.data.CollateAll.collate_action_sequence   = @mlprogram.utils.data.treegen.CollateActionSequence()
+mlprogram.utils.data.CollateAll.collate_query             = @mlprogram.utils.data.treegen.CollateQuery()
+mlprogram.utils.data.CollateAll.collate_ground_truth      = @mlprogram.utils.data.CollateGroundTruth()
 mlprogram.utils.data.treegen.CollateInput.device          = @torch.device()
 mlprogram.utils.data.treegen.CollateActionSequence.device = @torch.device()
 mlprogram.utils.data.treegen.CollateQuery.device          = @torch.device()
@@ -94,7 +94,7 @@ mlprogram.gin.nl2prog.train.prepare_optimizer  = @optimizer/mlprogram.gin.worksp
 mlprogram.gin.nl2prog.train.transform_cls      = @mlprogram.utils.transform.TransformDataset
 mlprogram.gin.nl2prog.train.loss_fn            = @mlprogram.nn.Loss()
 mlprogram.gin.nl2prog.train.score_fn           = @mlprogram.nn.Accuracy()
-mlprogram.gin.nl2prog.train.collate_fn         = @mlprogram.utils.data.Collate()
+mlprogram.gin.nl2prog.train.collate_fn         = @mlprogram.utils.data.CollateAll()
 mlprogram.gin.nl2prog.train.batch_size         = 1
 mlprogram.gin.nl2prog.train.num_epochs         = 50
 mlprogram.gin.nl2prog.train.device             = @torch.device()

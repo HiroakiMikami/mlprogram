@@ -14,7 +14,7 @@ from mlprogram.utils import Query
 from mlprogram.synthesizer import CommonBeamSearchSynthesizer
 from mlprogram.action.action import ActionOptions
 from mlprogram.utils.data \
-    import Collate, CollateGroundTruth, collate_none, split_none, \
+    import CollateAll, CollateGroundTruth, collate_none, split_none, \
     CollateNlFeature
 from mlprogram.utils.data.treegen \
     import CollateQuery, CollateActionSequence, CollateInput
@@ -116,7 +116,7 @@ class TestTreeGen(unittest.TestCase):
             to_action_sequence = \
                 AstToSingleActionSequence(options, tokenize_token)
 
-            collate_fn = Collate(
+            collate_fn = CollateAll(
                 CollateInput(torch.device("cpu")),
                 CollateActionSequence(torch.device("cpu")),
                 CollateQuery(torch.device("cpu")),
