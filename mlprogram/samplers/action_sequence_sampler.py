@@ -14,11 +14,11 @@ from mlprogram.ast import AST
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKElement
+from mlprogram.utils.data import Collate
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-Input = TypeVar("Input")
 V = TypeVar("V")
 
 
@@ -32,6 +32,13 @@ class Token(Generic[V]):
 
 
 @dataclass
+class Input(Generic[V]):
+    input: Optional[Tensor]
+    raw_reference: List[Token[V]]
+    reference: Optional[Tensor]
+
+
+@dataclass
 class State(Generic[V]):
     input: Optional[Tensor]
     raw_reference: List[Token[V]]
@@ -42,25 +49,21 @@ class State(Generic[V]):
     # TODO eq, hash
 
 
-class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[Input, V]):
+class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
     def __init__(self,
                  encoder: ActionSequenceEncoder,
                  get_token_type: Callable[[V], Optional[str]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
-                 transform_input: Callable[[Input],
-                                           Tuple[Tensor, List[Token], Tensor]],
                  transform_evaluator: Callable[[Evaluator, List[Token]],
                                                Optional[Tuple[Tensor,
                                                               Optional[Tensor]]
                                                         ]],
-                 collate_input: Callable[[List[Tensor]], Tensor],
-                 collate_reference: Callable[[List[Tensor]], Tensor],
-                 collate_action_sequence: Callable[[List[Tensor]], Tensor],
-                 collate_query: Callable[[List[Tensor]], Tensor],
-                 collate_state: Callable[[List[Tensor]], Tensor],
-                 split_states: Callable[[Tensor], List[Tensor]],
-                 encoder_module: torch.nn.Module,
+                 collate_input: Collate,
+                 collate_reference: Collate,
+                 collate_action_sequence: Collate,
+                 collate_query: Collate,
+                 collate_state: Collate,
                  decoder_module: torch.nn.Module,
                  options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
@@ -69,28 +72,20 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[Input, V]):
         self.encoder = encoder
         self.get_token_type = get_token_type
         self.is_subtype = is_subtype
-        self.transform_input = transform_input
         self.transform_evaluator = transform_evaluator
         self.collate_input = collate_input
         self.collate_action_sequence = collate_action_sequence
         self.collate_reference = collate_reference
         self.collate_query = collate_query
         self.collate_state = collate_state
-        self.split_states = split_states
-        self.encoder_module = encoder_module
         self.decoder_module = decoder_module
         self.options = options
         self.eps = eps
         self.rng = rng
 
     def initialize(self, input: Input) -> State[V]:
-        input_tensor, raw_reference, reference = self.transform_input(input)
-        input_tensor = self.collate_input([input_tensor])
-        reference = self.collate_reference([reference])
-        input_tensor, reference = self.encoder_module(input=input_tensor,
-                                                      reference=reference)
-        return State[V](input_tensor, raw_reference, reference, None,
-                        Evaluator(self.options))
+        return State[V](input.input, input.raw_reference, input.reference,
+                        None, Evaluator(self.options))
 
     def create_output(self, state: State[V]) -> Optional[AST]:
         if state.evaluator.head is None:
@@ -101,29 +96,29 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[Input, V]):
     def batch_infer(self, states: List[SamplerState[State[V]]]):
         N = len(states)
 
-        inputs: List[Tensor] = []
-        references: List[Tensor] = []
-        action_sequences: List[Tensor] = []
-        queries: List[Tensor] = []
-        states_list: List[Optional[Tensor]] = []
+        inputs: List[Dict[str, Tensor]] = []
+        references: List[Dict[str, Tensor]] = []
+        action_sequences: List[Dict[str, Tensor]] = []
+        queries: List[Dict[str, Tensor]] = []
+        states_list: List[Dict[str, Optional[Tensor]]] = []
         for s in states:
             tmp = self.transform_evaluator(s.state.evaluator,
                                            s.state.raw_reference)
             if tmp is not None:
-                inputs.append(s.state.input)
-                references.append(s.state.reference)
+                inputs.append({"input": s.state.input})
+                references.append({"reference": s.state.reference})
                 action_sequence, query = tmp
-                action_sequences.append(action_sequence)
-                queries.append(query)
-                states_list.append(s.state.state)
+                action_sequences.append({"action_sequence": action_sequence})
+                queries.append({"query": query})
+                states_list.append({"state": s.state.state})
             else:
                 logger.warn("Invalid evaluator is in the set of hypothesis")
-        inputs_tensor = self.collate_input(inputs)
-        references_tensor = self.collate_reference(references)
+        inputs_tensor = self.collate_input.collate(inputs)
+        references_tensor = self.collate_reference.collate(references)
         action_sequences_tensor = \
-            self.collate_action_sequence(action_sequences)
-        queries_tensor = self.collate_query(queries)
-        states_tensor = self.collate_state(states_list)
+            self.collate_action_sequence.collate(action_sequences)
+        queries_tensor = self.collate_query.collate(queries)
+        states_tensor = self.collate_state.collate(states_list)
 
         with torch.no_grad():
             results, state = self.decoder_module(
@@ -136,9 +131,10 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[Input, V]):
         token_pred = results[1].data.cpu().reshape(N, -1)
         copy_pred = results[2].data.cpu().reshape(N, -1)
         if state is not None:
-            next_state = self.split_states(state)
+            next_state: List[Dict[str, Optional[torch.Tensor]]] = \
+                self.collate_state.split(state)
         else:
-            next_state = [None] * len(states)
+            next_state = [{"state": None}] * len(states)
         return rule_pred, token_pred, copy_pred, next_state
 
     def all_actions(self, states: List[SamplerState[State[V]]]) \
