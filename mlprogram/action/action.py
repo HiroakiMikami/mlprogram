@@ -16,12 +16,6 @@ class NodeConstraint(Enum):
 
 
 @dataclass
-class ActionOptions:
-    retain_variadic_fields: bool
-    split_non_terminal: bool
-
-
-@dataclass
 class NodeType:
     """
     The type of the AST node
@@ -164,9 +158,3 @@ class GenerateToken(Generic[V]):
 
 
 Action = Union[ApplyRule, GenerateToken]
-
-
-@dataclass
-class ActionSequence:
-    sequence: List[Action]
-    options: ActionOptions

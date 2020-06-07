@@ -1,8 +1,8 @@
 import unittest
 
-from mlprogram.action.evaluator \
-    import Evaluator, Parent, InvalidActionException
-from mlprogram.action.action \
+from mlprogram.action.action_sequence import Parent
+from mlprogram.action import ActionSequence, InvalidActionException
+from mlprogram.action \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
     GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions
 from mlprogram.ast import Node, Leaf, Field, Root
@@ -10,16 +10,16 @@ from mlprogram.ast import Node, Leaf, Field, Root
 
 class TestEvaluator(unittest.TestCase):
     def test_eval_root(self):
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         self.assertEqual(None, evaluator.head)
         with self.assertRaises(InvalidActionException):
-            evaluator = Evaluator()
+            evaluator = ActionSequence()
             evaluator.eval(GenerateToken(""))
         with self.assertRaises(InvalidActionException):
-            evaluator = Evaluator()
+            evaluator = ActionSequence()
             evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
 
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
                               [("name",
                                 NodeType("value", NodeConstraint.Node)),
@@ -28,12 +28,12 @@ class TestEvaluator(unittest.TestCase):
         evaluator.eval(ApplyRule(rule))
         self.assertEqual(0, evaluator.head.action)
         self.assertEqual(0, evaluator.head.field)
-        self.assertEqual([ApplyRule(rule)], evaluator.action_sequence.sequence)
+        self.assertEqual([ApplyRule(rule)], evaluator.action_sequence)
         self.assertEqual(None, evaluator.parent(0))
         self.assertEqual([[], []], evaluator._tree.children[0])
 
     def test_generate_token(self):
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
                               [("name",
                                 NodeType("value", NodeConstraint.Token)),
@@ -45,7 +45,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(0, evaluator.head.field)
         self.assertEqual([1], evaluator._tree.children[0][0])
         self.assertEqual([ApplyRule(rule), GenerateToken("foo")],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
         self.assertEqual(Parent(0, 0), evaluator.parent(1))
         self.assertEqual([], evaluator._tree.children[1])
 
@@ -55,7 +55,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual([1, 2], evaluator._tree.children[0][0])
         self.assertEqual([ApplyRule(rule),
                           GenerateToken("foo"), GenerateToken("bar")],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
 
         evaluator.eval(GenerateToken(CloseNode()))
         self.assertEqual(0, evaluator.head.action)
@@ -64,13 +64,13 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual([ApplyRule(rule),
                           GenerateToken("foo"), GenerateToken("bar"),
                           GenerateToken(CloseNode())],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
 
         with self.assertRaises(InvalidActionException):
             evaluator.eval(GenerateToken("foo"))
 
     def test_generate_token_with_split_non_terminal_False(self):
-        evaluator = Evaluator(ActionOptions(True, False))
+        evaluator = ActionSequence(ActionOptions(True, False))
         rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
                               [("name",
                                 NodeType("value", NodeConstraint.Token)),
@@ -82,20 +82,20 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(1, evaluator.head.field)
         self.assertEqual([1], evaluator._tree.children[0][0])
         self.assertEqual([ApplyRule(rule), GenerateToken("foo")],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
         self.assertEqual(Parent(0, 0), evaluator.parent(1))
         self.assertEqual([], evaluator._tree.children[1])
 
         with self.assertRaises(InvalidActionException):
             evaluator.eval(GenerateToken("bar"))
 
-        evaluator = Evaluator(ActionOptions(True, False))
+        evaluator = ActionSequence(ActionOptions(True, False))
         evaluator.eval(ApplyRule(rule))
         with self.assertRaises(InvalidActionException):
             evaluator.eval(GenerateToken(CloseNode()))
 
     def test_variadic_field(self):
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
                               [("elems",
                                 NodeType("value", NodeConstraint.Variadic))])
@@ -107,7 +107,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(0, evaluator.head.field)
         self.assertEqual([1], evaluator._tree.children[0][0])
         self.assertEqual([ApplyRule(rule), ApplyRule(rule0)],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
         self.assertEqual(Parent(0, 0), evaluator.parent(1))
         self.assertEqual([], evaluator._tree.children[1])
 
@@ -116,12 +116,12 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(0, evaluator.head.field)
         self.assertEqual([1, 2], evaluator._tree.children[0][0])
         self.assertEqual([ApplyRule(rule), ApplyRule(rule0), ApplyRule(rule0)],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
 
         evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
         self.assertEqual(None, evaluator.head)
 
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         rule1 = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
                                [("elems",
                                  NodeType("value", NodeConstraint.Variadic)),
@@ -136,7 +136,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(1, evaluator.head.field)
 
     def test_variadic_field_retain_variadic_fields_False(self):
-        evaluator = Evaluator(ActionOptions(False, True))
+        evaluator = ActionSequence(ActionOptions(False, True))
         rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
                               [("elems",
                                 NodeType("value", NodeConstraint.Variadic))])
@@ -150,14 +150,14 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(0, evaluator.head.field)
         self.assertEqual([], evaluator._tree.children[0][0])
         self.assertEqual([ApplyRule(rule)],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
         evaluator.eval(ApplyRule(rule0))
         self.assertEqual(1, evaluator.head.action)
         self.assertEqual(0, evaluator.head.field)
         self.assertEqual([1], evaluator._tree.children[0][0])
         self.assertEqual(Parent(0, 0), evaluator.parent(1))
         self.assertEqual([ApplyRule(rule), ApplyRule(rule0)],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
         evaluator.eval(ApplyRule(rule1))
         self.assertEqual(1, evaluator.head.action)
         self.assertEqual(1, evaluator.head.field)
@@ -165,7 +165,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual([], evaluator._tree.children[2])
         self.assertEqual(Parent(1, 0), evaluator.parent(2))
         self.assertEqual([ApplyRule(rule), ApplyRule(rule0), ApplyRule(rule1)],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
         evaluator.eval(ApplyRule(rule1))
         self.assertEqual(None, evaluator.head)
         self.assertEqual([3], evaluator._tree.children[1][1])
@@ -173,9 +173,9 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(Parent(1, 1), evaluator.parent(3))
         self.assertEqual([ApplyRule(rule), ApplyRule(rule0), ApplyRule(rule1),
                           ApplyRule(rule1)],
-                         evaluator.action_sequence.sequence)
+                         evaluator.action_sequence)
 
-        evaluator = Evaluator(ActionOptions(False, True))
+        evaluator = ActionSequence(ActionOptions(False, True))
         rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
                               [("elems",
                                 NodeType("value", NodeConstraint.Variadic)),
@@ -188,7 +188,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(0, evaluator.head.action)
         self.assertEqual(1, evaluator.head.field)
 
-        evaluator = Evaluator(ActionOptions(False, True))
+        evaluator = ActionSequence(ActionOptions(False, True))
         with self.assertRaises(InvalidActionException):
             evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
 
@@ -208,7 +208,7 @@ class TestEvaluator(unittest.TestCase):
                                ("arg1",
                                 NodeType("value", NodeConstraint.Token))])
 
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("_"))
@@ -237,7 +237,7 @@ class TestEvaluator(unittest.TestCase):
             evaluator.generate()
         )
 
-        evaluator = Evaluator(ActionOptions(False, True))
+        evaluator = ActionSequence(ActionOptions(False, True))
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f_0"))
         evaluator.eval(GenerateToken(CloseNode()))
@@ -264,7 +264,7 @@ class TestEvaluator(unittest.TestCase):
             evaluator.generate()
         )
 
-        evaluator = Evaluator(ActionOptions(True, False))
+        evaluator = ActionSequence(ActionOptions(True, False))
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f_0"))
         evaluator.eval(ApplyRule(expr))
@@ -287,7 +287,7 @@ class TestEvaluator(unittest.TestCase):
             evaluator.generate()
         )
 
-        evaluator = Evaluator(ActionOptions(False, False))
+        evaluator = ActionSequence(ActionOptions(False, False))
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f_0"))
         evaluator.eval(ApplyRule(expr_expand))
@@ -311,7 +311,7 @@ class TestEvaluator(unittest.TestCase):
         )
 
     def test_generate_ignore_root_type(self):
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(ExpandTreeRule(
             NodeType(Root(), NodeConstraint.Node),
             [("root", NodeType(Root(), NodeConstraint.Node))])))
@@ -321,7 +321,7 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(Node("op", []), evaluator.generate())
 
     def test_clone(self):
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
                               [("elems",
                                 NodeType("expr", NodeConstraint.Variadic))])

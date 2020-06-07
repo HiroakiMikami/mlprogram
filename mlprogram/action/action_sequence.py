@@ -3,10 +3,16 @@ from typing import Dict, Optional, List, cast
 from copy import deepcopy
 import itertools
 
-import mlprogram.action.action as A
-from mlprogram.action.action \
-    import Action, ActionSequence, ApplyRule, ExpandTreeRule
+import mlprogram.action as A
+from mlprogram.action \
+    import Action, ApplyRule, ExpandTreeRule
 from mlprogram.ast import AST, Node, Leaf, Field, Root
+
+
+@dataclass
+class ActionOptions:
+    retain_variadic_fields: bool
+    split_non_terminal: bool
 
 
 class InvalidActionException(Exception):
@@ -50,9 +56,9 @@ class Tree:
     parent: Dict[int, Optional[Parent]]
 
 
-class Evaluator:
+class ActionSequence:
     """
-    Evaluator of action sequence.
+    The action sequence.
     This receives a sequence of actions and generate a corresponding AST.
 
     Attributes
@@ -65,11 +71,11 @@ class Evaluator:
         The index of the head AST node.
     _head_children_index: Dict[Int, Int]
         The relation between actions and their head indexes of fields.
-    _options: A.ActionOptions
+    _options: ActionOptions
         The action sequence options.
     """
 
-    def __init__(self, options: A.ActionOptions = A.ActionOptions(True, True)):
+    def __init__(self, options: ActionOptions = ActionOptions(True, True)):
         self._tree = Tree(dict(), dict())
         self._action_sequence: List[Action] = []
         self._head_action_index: Optional[int] = None
@@ -270,9 +276,9 @@ class Evaluator:
                                             ))
 
             return ast
-        if len(self.action_sequence.sequence) == 0:
+        if len(self.action_sequence) == 0:
             return generate(0)
-        begin = self.action_sequence.sequence[0]
+        begin = self.action_sequence[0]
         if isinstance(begin, ApplyRule) and \
                 isinstance(begin.rule, ExpandTreeRule):
             if begin.rule.parent.type_name == Root():
@@ -290,7 +296,7 @@ class Evaluator:
         Evaluator
             The cloned evaluator
         """
-        evaluator = Evaluator(self._options)
+        evaluator = ActionSequence(self._options)
         for key, value in self._tree.children.items():
             v = []
             for src in value:
@@ -307,5 +313,5 @@ class Evaluator:
         return self._tree.parent[index]
 
     @property
-    def action_sequence(self) -> ActionSequence:
-        return ActionSequence(self._action_sequence, self._options)
+    def action_sequence(self) -> List[Action]:
+        return self._action_sequence

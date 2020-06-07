@@ -6,10 +6,10 @@ from typing \
     Tuple, cast, Dict
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.ast import Root
-from mlprogram.action.action \
+from mlprogram.action \
     import ExpandTreeRule, ApplyRule, NodeConstraint, ActionOptions, \
     GenerateToken, Action
-from mlprogram.action.evaluator import Evaluator
+from mlprogram.action import ActionSequence
 from mlprogram.ast import AST
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
@@ -44,7 +44,7 @@ class State(Generic[V]):
     raw_reference: List[Token[V]]
     reference: Optional[Tensor]
     state: Optional[Tensor]
-    evaluator: Evaluator
+    evaluator: ActionSequence
 
     # TODO eq, hash
 
@@ -55,7 +55,7 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                  get_token_type: Callable[[V], Optional[str]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
-                 transform_evaluator: Callable[[Evaluator, List[Token]],
+                 transform_evaluator: Callable[[ActionSequence, List[Token]],
                                                Optional[Tuple[Tensor,
                                                               Optional[Tensor]]
                                                         ]],
@@ -85,7 +85,7 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
 
     def initialize(self, input: Input) -> State[V]:
         return State[V](input.input, input.raw_reference, input.reference,
-                        None, Evaluator(self.options))
+                        None, ActionSequence(self.options))
 
     def create_output(self, state: State[V]) -> Optional[AST]:
         if state.evaluator.head is None:
@@ -151,7 +151,7 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
-                    state.state.evaluator.action_sequence.sequence[head.action]
+                    state.state.evaluator.action_sequence[head.action]
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 is_token = True

@@ -12,7 +12,7 @@ import fairseq.optim as optim
 from mlprogram.gin import nl2prog, treegen, optimizer, workspace
 from mlprogram.utils import Query
 from mlprogram.synthesizer import CommonBeamSearchSynthesizer
-from mlprogram.action.action import ActionOptions
+from mlprogram.action import ActionOptions
 from mlprogram.utils.data \
     import CollateAll, CollateGroundTruth, collate_none, split_none, \
     CollateNlFeature

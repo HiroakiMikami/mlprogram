@@ -7,8 +7,8 @@ dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.hearthstone.downl
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.action.action.ActionOptions.retain_variadic_fields = True
-mlprogram.action.action.ActionOptions.split_non_terminal     = True
+mlprogram.action.ActionOptions.retain_variadic_fields = True
+mlprogram.action.ActionOptions.split_non_terminal     = True
 
 # Encoder
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
@@ -49,7 +49,7 @@ mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.split_states           
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.language.python.is_subtype
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.action.action.ActionOptions()
+mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.action.ActionOptions()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.max_steps               = 350
 synthesizer/mlprogram.gin.workspace.put.value                              = @mlprogram.synthesizer.CommonBeamSearchSynthesizer.create()

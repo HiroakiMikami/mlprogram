@@ -1,9 +1,9 @@
 from typing \
     import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
-from mlprogram.action.evaluator import Evaluator
+from mlprogram.action import ActionSequence
 from mlprogram.ast import Root
-from mlprogram.action.action \
+from mlprogram.action \
     import NodeConstraint, NodeType, ExpandTreeRule, \
     ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
 from mlprogram.utils import TopKElement
@@ -39,7 +39,7 @@ class Hypothesis:
     id: int
     parent: Optional[int]
     score: float
-    evaluator: Evaluator
+    evaluator: ActionSequence
     state: Any
 
 
@@ -96,7 +96,7 @@ class BeamSearchSynthesizer(Synthesizer):
         n_ids = 0
 
         # Create initial hypothesis
-        evaluator = Evaluator(self._options)
+        evaluator = ActionSequence(self._options)
         # Add initial rule
         evaluator.eval(ApplyRule(
             ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
@@ -127,7 +127,7 @@ class BeamSearchSynthesizer(Synthesizer):
                 head_field = \
                     cast(ExpandTreeRule,
                          cast(ApplyRule,
-                              h.evaluator.action_sequence.sequence[head.action]
+                              h.evaluator.action_sequence[head.action]
                               ).rule
                          ).children[head.field][1]
                 if head_field.constraint == NodeConstraint.Token:
@@ -210,14 +210,14 @@ class BeamSearchSynthesizer(Synthesizer):
                     cs.append(c)
                     candidates.append(c)
                     ps.append(Progress(id, h.id, score,
-                                       evaluator.action_sequence.sequence[-1],
+                                       evaluator.action_sequence[-1],
                                        True))
                 else:
                     hs_new.append(Hypothesis(
                         id, h.id, score, evaluator,
                         state))
                     ps.append(Progress(id, h.id, score,
-                                       evaluator.action_sequence.sequence[-1],
+                                       evaluator.action_sequence[-1],
                                        False))
 
             hs = hs_new

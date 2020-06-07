@@ -7,14 +7,14 @@ dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.hearthstone.downl
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.action.action.ActionOptions.retain_variadic_fields = True
-mlprogram.action.action.ActionOptions.split_non_terminal     = True
+mlprogram.action.ActionOptions.retain_variadic_fields = True
+mlprogram.action.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
 to_action_sequence/Compose.f = @mlprogram.language.python.parse
 to_action_sequence/Compose.g = @mlprogram.utils.transform.AstToSingleActionSequence()
 mlprogram.utils.transform.AstToSingleActionSequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.action.action.ActionOptions()
+mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.action.ActionOptions()
 
 # Encoder
 train_dataset/mlprogram.gin.get_key.key                  = "train"

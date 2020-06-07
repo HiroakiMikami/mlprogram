@@ -3,8 +3,7 @@ import numpy as np
 
 from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.action.action import ActionSequence
-from mlprogram.action.evaluator import Evaluator
+from mlprogram.action import ActionSequence
 from typing import List, Callable, Tuple, Any, Optional
 
 
@@ -14,14 +13,8 @@ class TransformCode:
                                               Optional[ActionSequence]]):
         self.to_action_sequence = to_action_sequence
 
-    def __call__(self, code: Any) -> Optional[Evaluator]:
-        action_sequence = self.to_action_sequence(code)
-        if action_sequence is None:
-            return None
-        evaluator = Evaluator(options=action_sequence.options)
-        for action in action_sequence.sequence:
-            evaluator.eval(action)
-        return evaluator
+    def __call__(self, code: Any) -> Optional[ActionSequence]:
+        return self.to_action_sequence(code)
 
 
 class TransformGroundTruth:
@@ -30,7 +23,7 @@ class TransformGroundTruth:
 
         self.action_sequence_encoder = action_sequence_encoder
 
-    def __call__(self, evaluator: Evaluator, query_for_synth: List[str]) \
+    def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
             -> Optional[torch.Tensor]:
         a = self.action_sequence_encoder.encode_action(evaluator,
                                                        query_for_synth)
@@ -45,10 +38,10 @@ class TransformGroundTruth:
 class TransformDataset:
     def __init__(self,
                  transform_input: Callable[[Any], Tuple[List[str], Any]],
-                 transform_code: Callable[[Any], Optional[Evaluator]],
-                 transform_evaluator: Callable[[Evaluator, List[str]],
+                 transform_code: Callable[[Any], Optional[ActionSequence]],
+                 transform_evaluator: Callable[[ActionSequence, List[str]],
                                                Optional[Any]],
-                 transform_ground_truth: Callable[[Evaluator, List[str]],
+                 transform_ground_truth: Callable[[ActionSequence, List[str]],
                                                   Optional[torch.Tensor]]):
         self.transform_input = transform_input
         self.transform_code = transform_code

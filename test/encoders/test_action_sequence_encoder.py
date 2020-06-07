@@ -2,10 +2,10 @@ import torch
 import unittest
 import numpy as np
 
-from mlprogram.action.action \
+from mlprogram.action \
     import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
     ApplyRule, GenerateToken, ActionOptions, CloseVariadicFieldRule
-from mlprogram.action.evaluator import Evaluator
+from mlprogram.action import ActionSequence
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 
 
@@ -47,7 +47,7 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
@@ -88,7 +88,7 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
@@ -129,7 +129,7 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
@@ -164,7 +164,7 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         action = encoder.encode_action(evaluator, ["1"])
         parent = encoder.encode_parent(evaluator)
         d, m = encoder.encode_tree(evaluator)
@@ -205,7 +205,7 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
@@ -222,7 +222,7 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(none))
         action = encoder.encode_action(evaluator, ["1"])
         parent = encoder.encode_parent(evaluator)
@@ -263,7 +263,7 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
@@ -271,7 +271,7 @@ class TestEncoder(unittest.TestCase):
 
         result = encoder.decode(encoder.encode_action(
             evaluator, ["1"])[:-1, 1:], ["1"])
-        self.assertEqual(evaluator.action_sequence, result)
+        self.assertEqual(evaluator.action_sequence, result.action_sequence)
 
     def test_decode_invalid_tensor(self):
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
@@ -317,7 +317,7 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))
@@ -362,7 +362,7 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = Evaluator()
+        evaluator = ActionSequence()
         evaluator.eval(ApplyRule(funcdef))
         evaluator.eval(GenerateToken("f"))
         evaluator.eval(GenerateToken("1"))

@@ -2,9 +2,9 @@ import torch
 import itertools
 from dataclasses import dataclass
 from typing import Callable, List, Any, Optional, Tuple, Union, Iterable, Dict
-from mlprogram.action.action \
-    import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule, \
-    ActionSequence
+from mlprogram.action \
+    import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule
+from mlprogram.action import ActionSequence
 from mlprogram.encoders import Samples
 from mlprogram.utils.data import ListDataset
 from mlprogram.utils import Query
@@ -55,9 +55,9 @@ def get_samples(dataset: torch.utils.data.Dataset,
             if action_sequence is None:
                 continue
             if options is not None:
-                assert(options == action_sequence.options)
-            options = action_sequence.options
-            for action in action_sequence.sequence:
+                assert(options == action_sequence._options)
+            options = action_sequence._options
+            for action in action_sequence.action_sequence:
                 if isinstance(action, ApplyRule):
                     rule = action.rule
                     if not isinstance(rule, CloseVariadicFieldRule):

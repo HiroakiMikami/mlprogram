@@ -1,5 +1,5 @@
 from typing import Any, Tuple, List, Generator, Dict, Optional
-from mlprogram.action.action import Action
+from mlprogram.action import Action
 from mlprogram.ast import AST
 from dataclasses import dataclass
 

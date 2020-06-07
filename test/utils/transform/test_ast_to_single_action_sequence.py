@@ -1,5 +1,5 @@
 import unittest
-from mlprogram.action.action \
+from mlprogram.action \
     import ActionOptions, ApplyRule, ExpandTreeRule, NodeType, \
     NodeConstraint, GenerateToken, CloseNode, CloseVariadicFieldRule
 from mlprogram import ast
@@ -23,9 +23,9 @@ class TestAstToActionSequence(unittest.TestCase):
                                        ])),
                 GenerateToken("t0"), GenerateToken(
                 "t1"), GenerateToken(CloseNode())],
-            seq.sequence
+            seq.action_sequence
         )
-        self.assertEqual(ActionOptions(True, True), seq.options)
+        self.assertEqual(ActionOptions(True, True), seq._options)
 
         f = AstToSingleActionSequence(ActionOptions(True, False))
         seq = f(ast.Leaf("str", "t0 t1"))
@@ -35,9 +35,9 @@ class TestAstToActionSequence(unittest.TestCase):
                                                          NodeConstraint.Token))
                                        ])),
              GenerateToken("t0 t1")],
-            seq.sequence
+            seq.action_sequence
         )
-        self.assertEqual(ActionOptions(True, False), seq.options)
+        self.assertEqual(ActionOptions(True, False), seq._options)
 
     def test_node(self):
         a = ast.Node(
@@ -57,9 +57,9 @@ class TestAstToActionSequence(unittest.TestCase):
                    NodeType("literal", NodeConstraint.Token))])),
              GenerateToken("foo"),
              GenerateToken(CloseNode())],
-            seq.sequence
+            seq.action_sequence
         )
-        self.assertEqual(ActionOptions(True, True), seq.options)
+        self.assertEqual(ActionOptions(True, True), seq._options)
 
     def test_node_with_variadic_fields(self):
         a = ast.Node("list", [ast.Field("elems", "literal", [
@@ -84,9 +84,9 @@ class TestAstToActionSequence(unittest.TestCase):
                  NodeType("str", NodeConstraint.Node),
                  [])),
              ApplyRule(CloseVariadicFieldRule())],
-            seq.sequence
+            seq.action_sequence
         )
-        self.assertEqual(seq.options, ActionOptions(True, True))
+        self.assertEqual(seq._options, ActionOptions(True, True))
 
         f = AstToSingleActionSequence(ActionOptions(False, True),
                                       tokenize=tokenize)
@@ -111,9 +111,9 @@ class TestAstToActionSequence(unittest.TestCase):
              ApplyRule(ExpandTreeRule(
                  NodeType("str", NodeConstraint.Node),
                  []))],
-            seq.sequence
+            seq.action_sequence
         )
-        self.assertEqual(ActionOptions(False, True), seq.options)
+        self.assertEqual(ActionOptions(False, True), seq._options)
 
 
 if __name__ == "__main__":

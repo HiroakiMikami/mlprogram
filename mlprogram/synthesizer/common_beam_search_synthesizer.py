@@ -4,8 +4,8 @@ import numpy as np
 import logging
 from typing import List, Callable, Optional, Tuple, Any, Dict, Union
 from dataclasses import dataclass
-from mlprogram.action.action import ActionOptions, Rule, CloseNode
-from mlprogram.action.evaluator import Evaluator
+from mlprogram.action import ActionOptions, Rule, CloseNode
+from mlprogram.action import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.synthesizer.beam_search_synthesizer import Hypothesis
 from mlprogram.synthesizer \
@@ -28,7 +28,7 @@ class State:
 class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  transform_input: Callable[[Any], Tuple[List[str], Any]],
-                 transform_evaluator: Callable[[Evaluator, List[str]],
+                 transform_evaluator: Callable[[ActionSequence, List[str]],
                                                Optional[Any]],
                  collate_input: Callable[[List[Any]], Any],
                  collate_action_sequence: Callable[[List[Any]], Any],
@@ -92,7 +92,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     @staticmethod
     def create(beam_size: int,
                transform_input: Callable[[Any], Tuple[List[str], Any]],
-               transform_evaluator: Callable[[Evaluator, List[str]],
+               transform_evaluator: Callable[[ActionSequence, List[str]],
                                              Optional[Any]],
                collate_input: Callable[[List[Any]], Any],
                collate_action_sequence: Callable[[List[Any]], Any],

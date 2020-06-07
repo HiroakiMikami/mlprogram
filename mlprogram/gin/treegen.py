@@ -6,7 +6,8 @@ from mlprogram.gin import workspace
 from mlprogram.utils import Query
 from mlprogram.utils.data import get_samples, get_words, get_characters
 from mlprogram.ast import AST
-from mlprogram.action.action import ActionSequence, ActionOptions
+from mlprogram.action import ActionOptions
+from mlprogram.action import ActionSequence
 
 
 def prepare_encoder(dataset: Dataset, word_threshold: int, char_threshold: int,

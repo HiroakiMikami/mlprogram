@@ -3,7 +3,7 @@ import numpy as np
 from typing import Callable, List, Any, Optional, Tuple
 from torchnlp.encoders import LabelEncoder
 
-from mlprogram.action.evaluator import Evaluator
+from mlprogram.action import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Query
 
@@ -41,7 +41,7 @@ class TransformEvaluator:
         self.max_depth = max_depth
         self.train = train
 
-    def __call__(self, evaluator: Evaluator, query_for_synth: List[str]) \
+    def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
             -> Optional[Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor,
                                     torch.Tensor], torch.Tensor]]:
         a = self.action_sequence_encoder.encode_action(evaluator,

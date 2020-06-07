@@ -1,11 +1,12 @@
 from typing import Callable, Sequence, Optional, List
 import logging
 from mlprogram.ast import AST, Node, Leaf, Field, Root
-from mlprogram.action.action import ActionOptions, ActionSequence
-from mlprogram.action.action import Action, NodeType, NodeConstraint
-from mlprogram.action.action import ApplyRule, ExpandTreeRule
-from mlprogram.action.action import CloseVariadicFieldRule
-from mlprogram.action.action import GenerateToken, CloseNode
+from mlprogram.action import ActionOptions
+from mlprogram.action import Action, NodeType, NodeConstraint
+from mlprogram.action import ApplyRule, ExpandTreeRule
+from mlprogram.action import CloseVariadicFieldRule
+from mlprogram.action import GenerateToken, CloseNode
+from mlprogram.action import ActionSequence
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class AstToSingleActionSequence:
 
         Returns
         -------
-        action.ActionSequence
+        actionSequence
             The corresponding action sequence
         """
         def to_sequence(node: AST) -> List[Action]:
@@ -101,6 +102,7 @@ class AstToSingleActionSequence:
             else:
                 logger.warn(f"Invalid type of node: {type(node)}")
                 return []
-        return ActionSequence(
-            to_sequence(Node(Root(), [Field("root", Root(), node)])),
-            self.options)
+        evaluator = ActionSequence(self.options)
+        for action in to_sequence(Node(Root(), [Field("root", Root(), node)])):
+            evaluator.eval(action)
+        return evaluator
