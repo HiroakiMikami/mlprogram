@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Tuple, Dict, Optional, cast
 
 from mlprogram.nn import SeparableConv1d, EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
     import index_embeddings, gelu, lne_to_nel, nel_to_lne
+from mlprogram.datatypes import Tensor
 from .gating import Gating
 from .embedding import ElementEmbedding
 
@@ -98,33 +99,35 @@ class NLReader(nn.Module):
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
-    def forward(self, input: Tuple[PaddedSequenceWithMask,
-                                   PaddedSequenceWithMask]) \
-            -> PaddedSequenceWithMask:
+    def forward(self, **inputs: Optional[Tensor]) \
+            -> Dict[str, Optional[Tensor]]:
         """
         Parameters
         ----------
-        input
-            token_query: rnn.PaddedSequenceWithMask
-                The minibatch of sequences.
-                The shape of each sequence is (sequence_length).
-            char_query: rnn.PaddedSequenceWithMask
-                The minibatch of sequences.
-                The shape of each sequence is (sequence_length, max_token_len).
-                The padding value should be -1.
+        word_nl_query: rnn.PaddedSequenceWithMask
+            The minibatch of sequences.
+            The shape of each sequence is (sequence_length).
+        char_nl_query: rnn.PaddedSequenceWithMask
+            The minibatch of sequences.
+            The shape of each sequence is (sequence_length, max_token_len).
+            The padding value should be -1.
 
         Returns
         -------
-        PaddedSequenceWithMask
+        nl_query_features: PaddedSequenceWithMask
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        token_query, char_query = input
-        e_token_query = self.query_embed(token_query.data)
-        char_query = \
-            char_query.data + (char_query.data == -1) * (self.char_num + 1)
-        e_char_query = self.query_elem_embed(char_query)
-        block_input = PaddedSequenceWithMask(e_token_query, token_query.mask)
+        token_nl_query = cast(PaddedSequenceWithMask, inputs["word_nl_query"])
+        char_nl_query = cast(PaddedSequenceWithMask, inputs["char_nl_query"])
+        e_token_query = self.query_embed(token_nl_query.data)
+        char_nl_query = \
+            char_nl_query.data + \
+            (char_nl_query.data == -1) * (self.char_num + 1)
+        e_char_query = self.query_elem_embed(char_nl_query)
+        block_input = PaddedSequenceWithMask(e_token_query,
+                                             token_nl_query.mask)
         for block in self.blocks:
             block_input, _ = block(block_input, e_char_query)
-        return block_input
+        inputs["nl_query_features"] = block_input
+        return inputs

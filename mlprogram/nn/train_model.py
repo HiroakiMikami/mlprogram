@@ -1,6 +1,6 @@
 import torch.nn as nn
-from typing import Tuple
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
+from typing import Optional, Dict
+from mlprogram.datatypes import Tensor
 
 
 class TrainModel(nn.Module):
@@ -13,15 +13,12 @@ class TrainModel(nn.Module):
         self.decoder = decoder
         self.predictor = predictor
 
-    def forward(self, input, action_sequence, query) \
-            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask,
-                     PaddedSequenceWithMask]:
+    def forward(self, **inputs: Optional[Tensor]) \
+            -> Dict[str, Optional[Tensor]]:
         """
         Parameters
         ----------
-        input
-        action_sequence
-        query
+        inputs
 
         Returns
         -------
@@ -32,7 +29,7 @@ class TrainModel(nn.Module):
         copy_pred: PaddedSequenceWithMask
             The probabilities of copy-token
         """
-        nl_feature = self.input_reader(input)
-        ast_feature = self.action_sequence_reader(action_sequence)
-        feature, _ = self.decoder(query, nl_feature, ast_feature)
-        return self.predictor(nl_feature, feature)
+        inputs = self.input_reader(**inputs)
+        inputs = self.action_sequence_reader(**inputs)
+        inputs = self.decoder(**inputs)
+        return self.predictor(**inputs)

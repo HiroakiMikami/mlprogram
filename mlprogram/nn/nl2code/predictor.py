@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Dict, Optional, cast
 
+from mlprogram.datatypes import Tensor
 from mlprogram.nn.nl2code import ActionSequenceReader
 from mlprogram.nn import PointerNet
 from mlprogram.nn.embedding import EmbeddingInverse
@@ -45,45 +46,46 @@ class Predictor(nn.Module):
         nn.init.xavier_uniform_(self._l_generate.weight)
         nn.init.zeros_(self._l_generate.bias)
 
-    def forward(self, nl_feature: PaddedSequenceWithMask,
-                feature: Tuple[PaddedSequenceWithMask,
-                               PaddedSequenceWithMask]) \
-            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask,
-                     PaddedSequenceWithMask]:
+    def forward(self, **inputs: Optional[Tensor]) \
+            -> Dict[str, Optional[Tensor]]:
         """
         Parameters
         ----------
-        nl_feature: PaddedSequenceWithMask
+        nl_query_features: PaddedSequenceWithMask
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
-        feature:
-            output: PaddedSequenceWithMask
+        action_features: PaddedSequenceWithMask
                 Packed sequence containing the output hidden states.
-            contexts: PaddedSequenceWithMask
+        action_contexts: PaddedSequenceWithMask
                 Packed sequence containing the context vectors.
 
         Returns
         -------
-        rule_prob: PaddedSequenceWithMask
+        rule_probs: PaddedSequenceWithMask
             (L_ast, N, rule_size) where L_ast is the sequence length,
             N is the batch_size.
-        token_prob: PaddedSequenceWithMask
+        token_probs: PaddedSequenceWithMask
            (L_ast, N, token_size) where L_ast is the sequence length,
             N is the batch_size.
-        copy_prob: PaddedSequenceWithMask
+        copy_probs: PaddedSequenceWithMask
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
-        L_q, B, _ = nl_feature.data.shape
-        output, contexts = feature
+        nl_query_features = cast(PaddedSequenceWithMask,
+                                 inputs["nl_query_features"])
+        action_features = cast(PaddedSequenceWithMask,
+                               inputs["action_features"])
+        action_contexts = cast(PaddedSequenceWithMask,
+                               inputs["action_contexts"])
+        L_q, B, _ = nl_query_features.data.shape
 
         # Decode embeddings
         # (L_a, B, hidden_size + query_size)
-        dc = torch.cat([output.data, contexts.data], dim=2)
+        dc = torch.cat([action_features.data, action_contexts.data], dim=2)
 
         # Calculate probabilities
         # (L_a, B, embedding_size)
-        rule_pred = torch.tanh(self._l_rule(output.data))
+        rule_pred = torch.tanh(self._l_rule(action_features.data))
         rule_pred = self._rule_embed_inv(
             rule_pred,
             self._reader._rule_embed)  # (L_a, B, num_rules + 1)
@@ -97,18 +99,24 @@ class Predictor(nn.Module):
         token_pred = torch.softmax(
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
-        copy_pred = self._pointer_net(dc, nl_feature)  # (L_a, B, query_length)
+        # (L_a, B, query_length)
+        copy_pred = self._pointer_net(dc, nl_query_features)
         copy_pred = torch.exp(copy_pred)
         copy_pred = copy_pred * \
-            nl_feature.mask.permute(1, 0).view(1, B, L_q).to(copy_pred.dtype)
+            nl_query_features.mask.permute(1, 0).view(1, B, L_q)\
+            .to(copy_pred.dtype)
 
         generate_pred = torch.softmax(
-            self._l_generate(output.data), dim=2)  # (L_a, B, 2)
+            self._l_generate(action_features.data), dim=2)  # (L_a, B, 2)
         token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
 
         token_pred = token * token_pred  # (L_a, B, num_tokens)
         copy_pred = copy * copy_pred  # (L_a, B, query_length)
 
-        return (PaddedSequenceWithMask(rule_pred, output.mask),
-                PaddedSequenceWithMask(token_pred, output.mask),
-                PaddedSequenceWithMask(copy_pred, output.mask))
+        inputs["rule_probs"] = \
+            PaddedSequenceWithMask(rule_pred, action_features.mask)
+        inputs["token_probs"] = \
+            PaddedSequenceWithMask(token_pred, action_features.mask)
+        inputs["copy_probs"] = \
+            PaddedSequenceWithMask(copy_pred, action_features.mask)
+        return inputs

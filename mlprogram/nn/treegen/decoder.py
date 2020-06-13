@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Tuple, Dict, Optional, cast
 
+from mlprogram.datatypes import Tensor
 from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional import gelu
@@ -112,37 +113,39 @@ class Decoder(nn.Module):
             max_depth, feature_size, feature_size
         )
 
-    def forward(self, query: PaddedSequenceWithMask,
-                nl_feature: PaddedSequenceWithMask,
-                ast_feature: PaddedSequenceWithMask,
-                states: None = None) -> Tuple[PaddedSequenceWithMask, None]:
+    def forward(self, **inputs: Optional[Tensor]) \
+            -> Dict[str, Optional[Tensor]]:
         """
         Parameters
         ----------
-        query: PaddedSequenceWithMask
+        nl_query_features: torch.Tensor
+            (L_nl, N, nl_feature_size) where L_nl is the sequence length,
+            N is the batch size.
+        action_queries: PaddedSequenceWithMask
             (L_ast, N, max_depth) where L_ast is the sequence length,
             N is the batch size.
             This tensor encodes the path from the root node to the target node.
             The padding value should be -1.
-        nl_feature: torch.Tensor
-            (L_nl, N, nl_feature_size) where L_nl is the sequence length,
-            N is the batch size.
-        ast_feature: torch.Tensor
+        action_features: PaddedSequenceWithMask
             (L_ast, N, ast_feature_size) where L_ast is the sequence length,
             N is the batch size.
-        states
-            dummy arguments
 
         Returns
         -------
-        output: PaddedSequenceWithMask
+        action_features: PaddedSequenceWithMask
             (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
-        states:
         """
-        q = query.data + (query.data == -1) * (self.rule_num + 1)
+        nl_query_features = cast(
+            PaddedSequenceWithMask, inputs["nl_query_features"])
+        action_queries = cast(PaddedSequenceWithMask, inputs["action_queries"])
+        action_features = cast(PaddedSequenceWithMask,
+                               inputs["action_features"])
+        q = action_queries.data + \
+            (action_queries.data == -1) * (self.rule_num + 1)
         embed = self.query_embed(q)
-        input = PaddedSequenceWithMask(embed, query.mask)
+        input = PaddedSequenceWithMask(embed, action_queries.mask)
         for block in self.blocks:
-            input, _, _ = block(input, nl_feature, ast_feature)
-        return input, _
+            input, _, _ = block(input, nl_query_features, action_features)
+        inputs["action_features"] = input
+        return inputs

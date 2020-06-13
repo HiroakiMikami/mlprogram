@@ -25,8 +25,13 @@ class TestPredictor(unittest.TestCase):
         query1 = torch.rand(1, 2)
         query = rnn.pad_sequence([query0, query1])
 
-        rule_pred, token_pred, copy_pred = predictor(
-            query, (feature, context))
+        inputs = predictor(
+            nl_query_features=query,
+            action_features=feature,
+            action_contexts=context)
+        rule_pred = inputs["rule_probs"]
+        token_pred = inputs["token_probs"]
+        copy_pred = inputs["copy_probs"]
         self.assertTrue(np.array_equal(
             [[1, 1], [1, 0]], rule_pred.mask.numpy()))
         self.assertEqual((2, 2, 1), rule_pred.data.shape)

@@ -23,7 +23,10 @@ class TestLoss(unittest.TestCase):
         copy_prob = rnn.pad_sequence([copy_prob0])
 
         loss = NL2ProgLoss()
-        objective = loss(rule_prob, token_prob, copy_prob, gt)
+        objective = loss(rule_probs=rule_prob,
+                         token_probs=token_prob,
+                         copy_probs=copy_prob,
+                         ground_truth_actions=gt)
         self.assertEqual((), objective.shape)
 
 

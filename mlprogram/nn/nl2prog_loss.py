@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
+from typing import Optional, cast
 
+from mlprogram.datatypes import Tensor
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -8,33 +10,34 @@ class NL2ProgLoss(nn.Module):
     def __init__(self):
         super(NL2ProgLoss, self).__init__()
 
-    def forward(self,
-                rule_prob: PaddedSequenceWithMask,
-                token_prob: PaddedSequenceWithMask,
-                copy_prob: PaddedSequenceWithMask,
-                ground_truth_action: PaddedSequenceWithMask) -> torch.Tensor:
+    def forward(self, **inputs: Optional[Tensor]) -> torch.Tensor:
         """
         Parameters
         ----------
-        rule_prob: PaddedSequenceWithMask
+        rule_probs: PaddedSequenceWithMask
             The probabilities of apply-rule. The shape is (L_a, B, num_rules).
-        token_pred: PaddedSequenceWithMask
+        token_probs: PaddedSequenceWithMask
             The probabilities of gen-token. The shape is (L_a, B, num_tokens).
-        copy_pred: PaddedSequenceWithMask
+        copy_probs: PaddedSequenceWithMask
             The probabilities of copy-token. The shape is
             (L_a, B, query_length).
-        ground_truth_action: PaddedSequenceWithMask
+        ground_truth_actions: PaddedSequenceWithMask
             The input sequence of action. Each action is represented by
             the tuple of (ID of the applied rule, ID of the inserted token,
             the index of the word copied from the query).
             The padding value should be -1.
         """
-        L_a, B, num_rules = rule_prob.data.shape
-        _, _, num_tokens = token_prob.data.shape
-        _, _, query_length = copy_prob.data.shape
+        rule_probs = cast(PaddedSequenceWithMask, inputs["rule_probs"])
+        token_probs = cast(PaddedSequenceWithMask, inputs["token_probs"])
+        copy_probs = cast(PaddedSequenceWithMask, inputs["copy_probs"])
+        ground_truth_actions = cast(PaddedSequenceWithMask,
+                                    inputs["ground_truth_actions"])
+        L_a, B, num_rules = rule_probs.data.shape
+        _, _, num_tokens = token_probs.data.shape
+        _, _, query_length = copy_probs.data.shape
 
         gt_rule, gt_token, gt_copy = torch.split(
-            ground_truth_action.data, 1, dim=2)  # (L_a, B, 1)
+            ground_truth_actions.data, 1, dim=2)  # (L_a, B, 1)
         gt_rule = gt_rule.reshape([L_a, B])  # (L_a, B)
         gt_token = gt_token.reshape([L_a, B])  # (L_a, B)
         gt_copy = gt_copy.reshape([L_a, B])  # (L_a, B)
@@ -58,11 +61,11 @@ class NL2ProgLoss(nn.Module):
         # (L_a, B, query_length)
         copy = copy[:, :, :-1]
 
-        rule_prob_tensor = rule_prob.data * rule  # (L_a, B, num_rules)
+        rule_prob_tensor = rule_probs.data * rule  # (L_a, B, num_rules)
         rule_prob_tensor = torch.sum(rule_prob_tensor, dim=2)  # (L_a, B)
-        token_prob_tensor = token_prob.data * token  # (L_a, B, num_tokens)
+        token_prob_tensor = token_probs.data * token  # (L_a, B, num_tokens)
         token_prob_tensor = torch.sum(token_prob_tensor, dim=2)  # (L_a, B)
-        copy_prob_tensor = copy_prob.data * copy  # (L_a, B, query_length)
+        copy_prob_tensor = copy_probs.data * copy  # (L_a, B, query_length)
         copy_prob_tensor = torch.sum(copy_prob_tensor, dim=2)  # (L_a, B)
 
         prob = rule_prob_tensor + token_prob_tensor + copy_prob_tensor
@@ -71,5 +74,5 @@ class NL2ProgLoss(nn.Module):
 
         likelihood = torch.log(prob)  # (L_a, B)
         loss = -likelihood * \
-            ground_truth_action.mask.to(rule_prob_tensor.dtype)  # (L_a, B)
+            ground_truth_actions.mask.to(rule_prob_tensor.dtype)  # (L_a, B)
         return torch.mean(torch.sum(loss, dim=0))

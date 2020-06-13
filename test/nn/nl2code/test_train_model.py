@@ -36,12 +36,17 @@ class TestTrain(unittest.TestCase):
 
         action = rnn.pad_sequence([action0, action1], -1)
         prev_action = rnn.pad_sequence([prev_action0, prev_action1], -1)
-        results = model(query, (action, prev_action), None)
-        rule_prob = results[0]
-        token_prob = results[1]
-        copy_prob = results[2]
+        results = model(
+            word_nl_query=query,
+            actions=action,
+            previous_actions=prev_action,
+            history=None,
+            hidden_state=None,
+            state=None)
+        rule_prob = results["rule_probs"]
+        token_prob = results["token_probs"]
+        copy_prob = results["copy_probs"]
 
-        self.assertEqual(3, len(results))
         self.assertEqual((2, 2, 3), rule_prob.data.shape)
         self.assertEqual((2, 2, 3), token_prob.data.shape)
         self.assertEqual((2, 2, 3), copy_prob.data.shape)

@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Optional
+from typing import Dict, Tuple, Optional, cast
 
 from mlprogram.nn.utils import rnn
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
+from mlprogram.datatypes import Tensor
 
 
 def query_history(history: torch.FloatTensor, index: torch.LongTensor) \
@@ -169,68 +171,67 @@ class Decoder(nn.Module):
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
 
-    def forward(self,
-                query: None,
-                nl_feature: rnn.PaddedSequenceWithMask,
-                ast_feature: Tuple[rnn.PaddedSequenceWithMask,
-                                   rnn.PaddedSequenceWithMask],
-                state: Optional[Tuple[torch.Tensor, torch.Tensor,
-                                      torch.Tensor]] = None
-                ) -> Tuple[Tuple[rnn.PaddedSequenceWithMask,
-                                 rnn.PaddedSequenceWithMask],
-                           Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
+    def forward(self, **inputs: Optional[Tensor]) \
+            -> Dict[str, Optional[Tensor]]:
         """
         Parameters
         ----------
-        query
-        nl_feature: rnn.PackedSequenceWithMask
+        nl_query_features: rnn.PackedSequenceWithMask
             The query embedding vector
             The shape of the query embedding vector is (L_q, B, query_size).
-        ast_feature:
-            input: rnn.PackedSequenceWithMask
-                The input sequence of feature vectors.
-                The shape of input is (L_a, B, input_size)
-            parent_index: rnn.PackedSequenceWithMask
-                The sequence of parent action indexes.
-                If index is 0, it means that the action is root action.
-        state:
-            history: torch.FloatTensor
-                The list of LSTM states. The shape is (B, L_h, hidden_size)
-            (h_0, c_0): Tuple[torch.FloatTensor, torch.FloatTensor]
-                The tuple of the LSTM initial states. The shape of each tensor
-                is (B, hidden_size)
+        action_features: rnn.PackedSequenceWithMask
+            The input sequence of feature vectors.
+            The shape of input is (L_a, B, input_size)
+        parent_indexes: rnn.PackedSequenceWithMask
+            The sequence of parent action indexes.
+            If index is 0, it means that the action is root action.
+        history: torch.FloatTensor
+            The list of LSTM states. The shape is (B, L_h, hidden_size)
+        hidden_state: torch.Tensor
+            The LSTM initial hidden state. The shape is (B, hidden_size)
+        state: torch.Tensor
+            The LSTM initial state. The shape is (B, hidden_size)
 
         Returns
         -------
-        feature:
-            output: PaddedSequenceWithMask
-                Packed sequence containing the output hidden states.
-            contexts: PaddedSequenceWithMask
-                Packed sequence containing the context vectors.
-        state:
-            history: torch.FloatTensor
-                The list of LSTM states. The shape is (L_h, B, hidden_size)
-            (h_n, c_n) : Tuple[torch.FloatTensor, torch.FloatTensor]
-                The tuple of the next states. The shape of each tensor is
-                (B, hidden_size)
+        action_features: PaddedSequenceWithMask
+            Packed sequence containing the output hidden states.
+        action_contexts: PaddedSequenceWithMask
+            Packed sequence containing the context vectors.
+        history: torch.FloatTensor
+            The list of LSTM states. The shape is (L_h, B, hidden_size)
+        hidden_state: torch.Tensor
+            The tuple of the next hidden state. The shape is (B, hidden_size)
+        state: torch.Tensor
+            The tuple of the next state. The shape is (B, hidden_size)
         """
-        input, parent_index = ast_feature
-        B = nl_feature.data.shape[1]
-        if state is None:
+        action_features = cast(PaddedSequenceWithMask,
+                               inputs["action_features"])
+        parent_indexes = cast(PaddedSequenceWithMask, inputs["parent_indexes"])
+        nl_query_features = cast(
+            PaddedSequenceWithMask, inputs["nl_query_features"])
+        history = inputs["history"]
+        h_n = inputs["hidden_state"]
+        c_n = inputs["state"]
+        B = nl_query_features.data.shape[1]
+        if history is None:
             history = torch.zeros(1, B, self.hidden_size,
-                                  device=nl_feature.data.device)
+                                  device=nl_query_features.data.device)
+        if h_n is None:
             h_n = torch.zeros(B, self.hidden_size,
-                              device=nl_feature.data.device)
+                              device=nl_query_features.data.device)
+        if c_n is None:
             c_n = torch.zeros(B, self.hidden_size,
-                              device=nl_feature.data.device)
-        else:
-            history, h_n, c_n = state
+                              device=nl_query_features.data.device)
+        history = cast(torch.Tensor, history)
+        h_n = cast(torch.Tensor, h_n)
+        c_n = cast(torch.Tensor, c_n)
         s = (h_n, c_n)
         hs = []
         cs = []
-        for d, i in zip(torch.split(input.data, 1, dim=0),
-                        torch.split(parent_index.data, 1, dim=0)):
-            ctx, s = self._cell(nl_feature, d.reshape(
+        for d, i in zip(torch.split(action_features.data, 1, dim=0),
+                        torch.split(parent_indexes.data, 1, dim=0)):
+            ctx, s = self._cell(nl_query_features, d.reshape(
                 d.shape[1:]), i, history, s)
             hs.append(s[0])
             cs.append(ctx)
@@ -240,6 +241,12 @@ class Decoder(nn.Module):
         cs = torch.stack(cs)
         h_n, c_n = s
 
-        return ((rnn.PaddedSequenceWithMask(hs, input.mask),
-                 rnn.PaddedSequenceWithMask(cs, input.mask)),
-                (history, h_n, c_n))
+        inputs["action_features"] = rnn.PaddedSequenceWithMask(
+            hs, action_features.mask)
+        inputs["action_contexts"] = rnn.PaddedSequenceWithMask(
+            cs, action_features.mask)
+        inputs["history"] = history
+        inputs["hidden_state"] = h_n
+        inputs["state"] = c_n
+
+        return inputs

@@ -59,8 +59,15 @@ class TestDecoder(unittest.TestCase):
         h_0 = torch.rand(2, 5)
         c_0 = torch.rand(2, 5)
 
-        (output, contexts), (history, h_n, c_n) = decoder(
-            None, query, (input, parent_index), (history, h_0, c_0))
+        inputs = decoder(
+            nl_query_features=query, action_features=input,
+            parent_indexes=parent_index, history=history,
+            hidden_state=h_0, state=c_0)
+        output = inputs["action_features"]
+        contexts = inputs["action_contexts"]
+        history = inputs["history"]
+        h_n = inputs["hidden_state"]
+        c_n = inputs["state"]
         self.assertEqual((3, 2, 5), output.data.shape)
         self.assertTrue(np.array_equal(
             [[1, 1], [1, 0], [1, 0]], output.mask.numpy()))
