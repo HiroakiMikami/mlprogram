@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, cast
+from typing import Dict, Any, cast
 
-from mlprogram.datatypes import Tensor
 from mlprogram.nn.nl2code import ActionSequenceReader
 from mlprogram.nn import PointerNet
 from mlprogram.nn.embedding import EmbeddingInverse
@@ -46,8 +45,8 @@ class Predictor(nn.Module):
         nn.init.xavier_uniform_(self._l_generate.weight)
         nn.init.zeros_(self._l_generate.bias)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

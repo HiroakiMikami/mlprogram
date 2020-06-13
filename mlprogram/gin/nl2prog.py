@@ -26,12 +26,8 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
           prepare_model: Callable[[str], None],
           prepare_optimizer: Callable[[str], None],
           transform_cls: Callable[[], Callable[[Dataset], Dataset]],
-          loss_fn: Callable[[PaddedSequenceWithMask, PaddedSequenceWithMask,
-                             PaddedSequenceWithMask, PaddedSequenceWithMask],
-                            torch.Tensor],
-          score_fn: Callable[[PaddedSequenceWithMask, PaddedSequenceWithMask,
-                              PaddedSequenceWithMask, PaddedSequenceWithMask],
-                             torch.Tensor],
+          loss_fn,
+          score_fn,
           collate_fn: Callable[[Any], Any],
           batch_size: int, num_epochs: int,
           num_checkpoints: int = 2, num_models: int = 3,
@@ -125,14 +121,12 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
             for i, batch in enumerate(loader):
                 if i == n_iter:
                     break
-                input = batch[:-1]
-                ground_truth = batch[-1]
                 output = cast(Tuple[PaddedSequenceWithMask,
                                     PaddedSequenceWithMask,
                                     PaddedSequenceWithMask],
-                              model(*input))
-                loss = loss_fn(*output, ground_truth)
-                score = score_fn(*output, ground_truth)
+                              model(**batch))
+                loss = loss_fn(**output)
+                score = score_fn(**output)
                 model.zero_grad()
                 loss.backward()
                 optimizer.step()

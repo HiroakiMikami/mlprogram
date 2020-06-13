@@ -12,6 +12,7 @@ from mlprogram.synthesizers \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
 from mlprogram.nn import TrainModel
+from mlprogram.utils.data import Collate
 
 
 logger = logging.getLogger(__name__)
@@ -20,21 +21,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class State:
     query: List[str]
-    nl_feature: Any
-    state: Optional[Any]
+    data: Dict[str, Any]
 
 
 class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
-                 transform_input: Callable[[Any], Tuple[List[str], Any]],
+                 transform_input: Callable[[Any],
+                                           Tuple[List[str], Dict[str, Any]]],
                  transform_evaluator: Callable[[ActionSequence, List[str]],
-                                               Optional[Any]],
-                 collate_input: Callable[[List[Any]], Any],
-                 collate_action_sequence: Callable[[List[Any]], Any],
-                 collate_query: Callable[[List[Any]], Any],
-                 collate_state: Callable[[List[Any]], Any],
-                 collate_nl_feature: Callable[[List[Any]], Any],
-                 split_states: Callable[[Any], List[Any]],
+                                               Optional[Dict[str, Any]]],
+                 collate: Collate,
                  input_reader: nn.Module,  # Callable[[Any], Tuple[Any, Any]],
                  action_sequence_reader: nn.Module,  # Callable[[Any], Any],
                  decoder: nn.Module,  # Callable[[Any, Any, Any,
@@ -73,12 +69,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             beam_size, is_subtype, options, max_steps)
         self.transform_input = transform_input
         self.transform_evaluator = transform_evaluator
-        self.collate_input = collate_input
-        self.collate_action_sequence = collate_action_sequence
-        self.collate_query = collate_query
-        self.collate_state = collate_state
-        self.collate_nl_feature = collate_nl_feature
-        self.split_states = split_states
+        self.collate = collate
         self.input_reader = input_reader.to(device)
         self.action_sequence_reader = action_sequence_reader.to(device)
         self.decoder = decoder.to(device)
@@ -88,15 +79,11 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
     @staticmethod
     def create(beam_size: int,
-               transform_input: Callable[[Any], Tuple[List[str], Any]],
+               transform_input: Callable[[Any],
+                                         Tuple[List[str], Dict[str, Any]]],
                transform_evaluator: Callable[[ActionSequence, List[str]],
-                                             Optional[Any]],
-               collate_input: Callable[[List[Any]], Any],
-               collate_action_sequence: Callable[[List[Any]], Any],
-               collate_query: Callable[[List[Any]], Any],
-               collate_state: Callable[[List[Any]], Any],
-               collate_nl_feature: Callable[[List[Any]], Any],
-               split_states: Callable[[Any], List[Any]],
+                                             Optional[Dict[str, Any]]],
+               collate: Collate,
                model: TrainModel,
                action_sequence_encoder: ActionSequenceEncoder,
                is_subtype: IsSubtype,
@@ -105,9 +92,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                max_steps: Optional[int] = None,
                device: torch.device = torch.device("cpu")):
         return CommonBeamSearchSynthesizer(
-            beam_size, transform_input, transform_evaluator, collate_input,
-            collate_action_sequence, collate_query, collate_state,
-            collate_nl_feature, split_states,
+            beam_size, transform_input, transform_evaluator,
+            collate,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, action_sequence_encoder, is_subtype, options, eps,
             max_steps, device)
@@ -122,52 +108,50 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
     def initialize(self, input: Any) -> State:
         query_for_synth, input = self.transform_input(input)
-        input = self.collate_input([input])
-        nl_feature = self.input_reader(input)
-        nl_feature = nl_feature.data
-        L = nl_feature.shape[0]
-        nl_feature = nl_feature.view(L, -1)
+        inputs = self.collate.collate([input])
+        inputs = self.input_reader(**inputs)
+        input = self.collate.split(inputs)[0]
 
-        return State(query_for_synth, nl_feature, None)
+        return State(query_for_synth, input)
 
     def batch_update(self, hs: List[Hypothesis]) \
             -> List[Tuple[State, LazyLogProbability]]:
         # Create batch of hypothesis
-        nl_features = []
-        action_sequences = []
-        queries = []
-        states = []
+        data = []
         for h in hs:
             tmp = self.transform_evaluator(h.evaluator, h.state.query)
             if tmp is not None:
-                nl_features.append(h.state.nl_feature)
-                action_sequence, query = tmp
-                action_sequences.append(action_sequence)
-                queries.append(query)
-                states.append(h.state.state)
+                new_data = {key: value.clone()
+                            for key, value in h.state.data.items()}
+                for key, value in tmp.items():
+                    if value is None and key in new_data.keys():
+                        continue
+                    new_data[key] = value
+                data.append(new_data)
             else:
                 logger.warn("Invalid evaluator is in the set of hypothesis")
-        nl_features = self.collate_nl_feature(nl_features)
-        action_sequences = self.collate_action_sequence(action_sequences)
-        queries = self.collate_query(queries)
-        states = self.collate_state(states)
+        inputs = self.collate.collate(data)
 
         with torch.no_grad():
-            ast_feature = self.action_sequence_reader(action_sequences)
-            feature, state = self.decoder(
-                queries, nl_features, ast_feature, states)
-            results = self.predictor(nl_features, feature)
+            inputs = self.action_sequence_reader(**inputs)
+            inputs = self.decoder(**inputs)
+            results = self.predictor(**inputs)
         # (len(hs), n_rules)
-        rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)
+        rule_pred = \
+            results["rule_probs"].data[-1, :, :].cpu().reshape(len(hs), -1)
         # (len(hs), n_tokens)
-        token_pred = results[1].data[-1, :, :].cpu().reshape(len(hs), -1)
+        token_pred = \
+            results["token_probs"].data[-1, :, :].cpu().reshape(len(hs), -1)
         # (len(hs), query_length)
-        copy_pred = results[2].data[-1, :, :].cpu().reshape(len(hs), -1)
-        states = self.split_states(state)
+        copy_pred = \
+            results["copy_probs"].data[-1, :, :].cpu().reshape(len(hs), -1)
+        inputs = {key: value for key, value in inputs.items()
+                  if key in self.collate.options.keys()}
+        data = self.collate.split(inputs)
 
         retval = []
-        for i, (h, s) in enumerate(zip(hs, states)):
-            state = State(h.state.query, h.state.nl_feature, s)
+        for i, (h, d) in enumerate(zip(hs, data)):
+            state = State(h.state.query, d)
 
             class Functions:
                 def __init__(self, i: int,

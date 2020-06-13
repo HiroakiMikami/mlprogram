@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Dict, Optional, cast
+from typing import Tuple, Dict, Any, cast
 
-from mlprogram.datatypes import Tensor
 from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional import gelu
@@ -113,8 +112,8 @@ class Decoder(nn.Module):
             max_depth, feature_size, feature_size
         )
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

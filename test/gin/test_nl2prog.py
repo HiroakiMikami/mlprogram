@@ -22,8 +22,16 @@ class TestTrain(unittest.TestCase):
         workspace.put("encoder", 0)
 
     def prepare_model(self, model_path):
-        model = nn.Linear(1, 1)
-        workspace.put(model_path, model)
+        class DummyModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.m = nn.Linear(1, 1)
+
+            def forward(self, **kwargs):
+                kwargs["value"] = self.m(kwargs["value"])
+                return kwargs
+
+        workspace.put(model_path, DummyModel())
 
     def prepare_optimizer(self, optimizer_path):
         model = workspace.get("model")
@@ -32,7 +40,7 @@ class TestTrain(unittest.TestCase):
     def collate_fn(self, elems):
         B = len(elems)
         tensor = torch.tensor(elems).reshape(B, 1).float()
-        return tensor, tensor
+        return {"value": tensor, "target": tensor}
 
     def test_happy_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -42,7 +50,11 @@ class TestTrain(unittest.TestCase):
                   ws, output,
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x, nn.MSELoss(), nn.MSELoss(),
+                  lambda: lambda x: x,
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
                   self.collate_fn, 1, 2)
             self.assertTrue(os.path.exists(os.path.join(ws,
                                                         "encoder.pt")))
@@ -83,7 +95,11 @@ class TestTrain(unittest.TestCase):
                   ws, output,
                   self.prepare_dataset, dummpy_prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x, nn.MSELoss(), nn.MSELoss(),
+                  lambda: lambda x: x,
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
                   self.collate_fn, 1, 2)
             self.assertTrue(os.path.exists(os.path.join(ws,
                                                         "encoder.pt")))
@@ -98,7 +114,11 @@ class TestTrain(unittest.TestCase):
                   ws, output,
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x, nn.MSELoss(), nn.MSELoss(),
+                  lambda: lambda x: x,
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
                   self.collate_fn, 1, 2,
                   num_checkpoints=1)
             self.assertFalse(os.path.exists(
@@ -114,7 +134,11 @@ class TestTrain(unittest.TestCase):
                   ws, output,
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x, nn.MSELoss(), nn.MSELoss(),
+                  lambda: lambda x: x,
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
                   self.collate_fn, 1, 1)
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -123,7 +147,11 @@ class TestTrain(unittest.TestCase):
                   ws, output,
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x, nn.MSELoss(), nn.MSELoss(),
+                  lambda: lambda x: x,
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
+                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
+                                                kwargs["target"]),
                   self.collate_fn, 1, 2)
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "checkpoint", "0.pt")))

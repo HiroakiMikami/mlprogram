@@ -50,7 +50,8 @@ class TestTransformGroundTruth(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformGroundTruth(aencoder)
-        ground_truth = transform(evaluator, ["foo", "bar"])
+        ground_truth = \
+            transform(evaluator, ["foo", "bar"])["ground_truth_actions"]
         self.assertTrue(np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 2, -1], [-1, 1, -1],
@@ -76,16 +77,14 @@ class TestTransformGroundTruth(unittest.TestCase):
 class TestTransformDataset(unittest.TestCase):
     def test_happy_path(self):
         dataset = ListDataset([[Entry("foo bar", "y = x + 1")]])
-        transform = TransformDataset(lambda x: ([x], 0), lambda x: "evaluator",
-                                     lambda x, y: (x, y),
-                                     lambda x, y: y)
+        transform = TransformDataset(lambda x: ([x], {}),
+                                     lambda x: "evaluator",
+                                     lambda x, y: {},
+                                     lambda x, y: {})
         dataset = transform(dataset)
         self.assertEqual(1, len(dataset))
-        input, action_seq, query, ground_truth = dataset[0]
-        self.assertEqual(0, input)
-        self.assertEqual("evaluator", action_seq)
-        self.assertEqual(["foo bar"], query)
-        self.assertEqual(["foo bar"], ground_truth)
+        entry = dataset[0]
+        self.assertEqual(0, len(entry))
 
 
 if __name__ == "__main__":

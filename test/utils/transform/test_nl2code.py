@@ -44,7 +44,7 @@ class TestTransformQuery(unittest.TestCase):
         transform = TransformQuery(tokenize_query, LabelEncoder(["dnn"]))
         query_for_synth, query_tensor = transform("")
         self.assertEqual([""], query_for_synth)
-        self.assertEqual([1], query_tensor.numpy().tolist())
+        self.assertEqual([1], query_tensor["word_nl_query"].numpy().tolist())
 
 
 class TestTransformEvaluator(unittest.TestCase):
@@ -55,8 +55,9 @@ class TestTransformEvaluator(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformEvaluator(aencoder)
         evaluator = TransformCode(to_action_sequence)("y = x + 1")
-        (action_tensor, prev_action_tensor), query = transform(evaluator,
-                                                               ["foo", "bar"])
+        result = transform(evaluator, ["foo", "bar"])
+        action_tensor = result["actions"]
+        prev_action_tensor = result["previous_actions"]
         self.assertTrue(np.array_equal(
             [
                 [1, 2, 0], [3, 3, 1], [5, 4, 2], [5, 4, 2], [4, 3, 1],
@@ -74,7 +75,6 @@ class TestTransformEvaluator(unittest.TestCase):
             ],
             prev_action_tensor.numpy()
         ))
-        self.assertEqual(None, query)
 
     def test_eval(self):
         entries = [Entry("foo bar", "y = x + 1")]
@@ -83,8 +83,9 @@ class TestTransformEvaluator(unittest.TestCase):
         aencoder = ActionSequenceEncoder(d, 0)
         evaluator = TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformEvaluator(aencoder, train=False)
-        (action_tensor, prev_action_tensor), query = transform(evaluator,
-                                                               ["foo", "bar"])
+        result = transform(evaluator, ["foo", "bar"])
+        action_tensor = result["actions"]
+        prev_action_tensor = result["previous_actions"]
 
         self.assertTrue(np.array_equal(
             [[-1, -1, -1]],
@@ -94,7 +95,6 @@ class TestTransformEvaluator(unittest.TestCase):
             [[-1, 1, -1]],
             prev_action_tensor.numpy()
         ))
-        self.assertEqual(None, query)
 
     def test_impossible_case(self):
         entries = [Entry("foo bar", "y = x + 1")]

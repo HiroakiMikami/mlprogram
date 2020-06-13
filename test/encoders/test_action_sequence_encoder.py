@@ -136,7 +136,7 @@ class TestEncoder(unittest.TestCase):
         d, m = encoder.encode_tree(evaluator)
 
         self.assertTrue(np.array_equal(
-            [[0], [1], [1]], d.numpy()
+            [0, 1, 1], d.numpy()
         ))
         self.assertTrue(np.array_equal(
             [[0, 1, 1], [0, 0, 0], [0, 0, 0]],
@@ -181,7 +181,7 @@ class TestEncoder(unittest.TestCase):
             ],
             parent.numpy()
         ))
-        self.assertTrue(np.array_equal(np.zeros((0, 1)), d.numpy()))
+        self.assertTrue(np.array_equal(np.zeros((0,)), d.numpy()))
         self.assertTrue(np.array_equal(np.zeros((0, 0)), m.numpy()))
 
     def test_encode_invalid_sequence(self):

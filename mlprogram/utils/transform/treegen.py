@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import Callable, List, Any, Optional, Tuple
+from typing import Callable, List, Any, Optional, Tuple, Dict
 from torchnlp.encoders import LabelEncoder
 
 from mlprogram.actions import ActionSequence
@@ -17,7 +17,7 @@ class TransformQuery:
         self.char_encoder = char_encoder
         self.max_word_length = max_word_length
 
-    def __call__(self, input: Any) -> Tuple[List[str], Any]:
+    def __call__(self, input: Any) -> Tuple[List[str], Dict[str, Any]]:
         query = self.extract_query(input)
 
         word_query = self.word_encoder.batch_encode(query.query_for_dnn)
@@ -29,7 +29,10 @@ class TransformQuery:
             length = min(self.max_word_length, len(chars))
             char_query[i, :length] = \
                 self.char_encoder.batch_encode(word)[:length]
-        return query.query_for_synth, (word_query, char_query)
+        return query.query_for_synth, {
+            "word_nl_query": word_query,
+            "char_nl_query": char_query
+        }
 
 
 class TransformEvaluator:
@@ -42,8 +45,7 @@ class TransformEvaluator:
         self.train = train
 
     def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
-            -> Optional[Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor,
-                                    torch.Tensor], torch.Tensor]]:
+            -> Optional[Dict[str, Any]]:
         a = self.action_sequence_encoder.encode_action(evaluator,
                                                        query_for_synth)
         rule_prev_action = \
@@ -69,4 +71,10 @@ class TransformEvaluator:
                 self.action_sequence_encoder.encode_each_action(
                     evaluator, query_for_synth, self.max_arity)
 
-        return (prev_action, rule_prev_action, depth, matrix), query
+        return {
+            "previous_actions": prev_action,
+            "previous_action_rules": rule_prev_action,
+            "depthes": depth,
+            "adjacency_matrix": matrix,
+            "action_queries": query
+        }

@@ -1,10 +1,9 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, cast
+from typing import Dict, cast, Any
 
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn import EmbeddingWithMask
-from mlprogram.datatypes import Tensor
 
 
 class ActionSequenceReader(nn.Module):
@@ -40,8 +39,7 @@ class ActionSequenceReader(nn.Module):
         nn.init.normal_(self._token_embed.weight, std=0.01)
         nn.init.normal_(self._node_type_embed.weight, std=0.01)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) -> Dict[str, Any]:
         """
         Parameters
         ----------

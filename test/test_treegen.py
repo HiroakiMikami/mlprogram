@@ -13,11 +13,7 @@ from mlprogram.gin import nl2prog, treegen, optimizer, workspace
 from mlprogram.utils import Query
 from mlprogram.synthesizers import CommonBeamSearchSynthesizer
 from mlprogram.actions import ActionOptions
-from mlprogram.utils.data \
-    import CollateAll, CollateGroundTruth, collate_none, split_none, \
-    CollateNlFeature
-from mlprogram.utils.data.treegen \
-    import CollateQuery, CollateActionSequence, CollateInput
+from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
     import TransformDataset, TransformGroundTruth, TransformCode
@@ -76,11 +72,18 @@ class TestTreeGen(unittest.TestCase):
         transform_evaluator = TransformEvaluator(aencoder, 2, 4, train=False)
         synthesizer = CommonBeamSearchSynthesizer(
             5, transform_input, transform_evaluator,
-            CollateInput(torch.device("cpu")),
-            CollateActionSequence(torch.device("cpu")),
-            CollateQuery(torch.device("cpu")), collate_none,
-            CollateNlFeature(torch.device("cpu")),
-            split_none,
+            Collate(
+                torch.device("cpu"),
+                word_nl_query=CollateOptions(True, 0, -1),
+                char_nl_query=CollateOptions(True, 0, -1),
+                nl_query_features=CollateOptions(True, 0, -1),
+                previous_actions=CollateOptions(True, 0, -1),
+                previous_action_rules=CollateOptions(True, 0, -1),
+                depthes=CollateOptions(False, 1, 0),
+                adjacency_matrix=CollateOptions(False, 0, 0),
+                action_queries=CollateOptions(True, 0, -1),
+                ground_truth_actions=CollateOptions(True, 0, -1)
+            ),
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, aencoder, is_subtype,
             options=options, max_steps=20)
@@ -116,11 +119,18 @@ class TestTreeGen(unittest.TestCase):
             to_action_sequence = \
                 AstToSingleActionSequence(options, tokenize_token)
 
-            collate_fn = CollateAll(
-                CollateInput(torch.device("cpu")),
-                CollateActionSequence(torch.device("cpu")),
-                CollateQuery(torch.device("cpu")),
-                CollateGroundTruth(torch.device("cpu")))
+            collate_fn = Collate(
+                torch.device("cpu"),
+                word_nl_query=CollateOptions(True, 0, -1),
+                char_nl_query=CollateOptions(True, 0, -1),
+                nl_query_features=CollateOptions(True, 0, -1),
+                previous_actions=CollateOptions(True, 0, -1),
+                previous_action_rules=CollateOptions(True, 0, -1),
+                depthes=CollateOptions(False, 1, 0),
+                adjacency_matrix=CollateOptions(False, 0, 0),
+                action_queries=CollateOptions(True, 0, -1),
+                ground_truth_actions=CollateOptions(True, 0, -1)
+            ).collate
 
             nl2prog.train(
                 "dataset", "model", "optimizer",
@@ -131,7 +141,8 @@ class TestTreeGen(unittest.TestCase):
                 lambda: self.prepare_encoder(to_action_sequence),
                 self.prepare_model, self.prepare_optimizer,
                 lambda: self.transform_cls(to_action_sequence),
-                NL2ProgLoss(), lambda *args: -NL2ProgLoss()(*args), collate_fn,
+                NL2ProgLoss(), lambda **args: -NL2ProgLoss()(**args),
+                collate_fn,
                 1, 10,
                 num_models=1
             )

@@ -44,7 +44,9 @@ class TestTransformQuery(unittest.TestCase):
         qencoder = LabelEncoder(words, 0)
         cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
         transform = TransformQuery(tokenize_query, qencoder, cencoder, 3)
-        query_for_synth, (word_query, char_query) = transform("ab test")
+        query_for_synth, result = transform("ab test")
+        word_query = result["word_nl_query"]
+        char_query = result["char_nl_query"]
         self.assertEqual(["ab", "test"], query_for_synth)
         self.assertTrue(np.array_equal([1, 2], word_query.numpy()))
         self.assertTrue(np.array_equal([[1, 2, -1], [3, 4, 0]],
@@ -60,8 +62,12 @@ class TestTransformEvaluator(unittest.TestCase):
         evaluator = \
             TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformEvaluator(aencoder, 2, 3)
-        (prev_action, prev_rule_action, depth, matrix), query = \
-            transform(evaluator, ["ab", "test"])
+        result = transform(evaluator, ["ab", "test"])
+        prev_action = result["previous_actions"]
+        prev_rule_action = result["previous_action_rules"]
+        depth = result["depthes"]
+        matrix = result["adjacency_matrix"]
+        query = result["action_queries"]
         self.assertTrue(np.array_equal(
             [
                 [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
@@ -94,7 +100,7 @@ class TestTransformEvaluator(unittest.TestCase):
             prev_rule_action.numpy()
         ))
         self.assertTrue(np.array_equal(
-            [[0], [1], [2], [3], [2], [3], [3], [4], [3]],
+            [0, 1, 2, 3, 2, 3, 3, 4, 3],
             depth.numpy()
         ))
         self.assertTrue(np.array_equal(
@@ -126,8 +132,12 @@ class TestTransformEvaluator(unittest.TestCase):
         evaluator = \
             TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformEvaluator(aencoder, 2, 3, train=False)
-        (prev_action, prev_rule_action, depth, matrix), query = \
-            transform(evaluator, ["ab", "test"])
+        result = transform(evaluator, ["ab", "test"])
+        prev_action = result["previous_actions"]
+        prev_rule_action = result["previous_action_rules"]
+        depth = result["depthes"]
+        matrix = result["adjacency_matrix"]
+        query = result["action_queries"]
         self.assertTrue(np.array_equal(
             [
                 [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
@@ -161,7 +171,7 @@ class TestTransformEvaluator(unittest.TestCase):
             prev_rule_action.numpy()
         ))
         self.assertTrue(np.array_equal(
-            [[0], [1], [2], [3], [2], [3], [3], [4], [3], [4]],
+            [0, 1, 2, 3, 2, 3, 3, 4, 3, 4],
             depth.numpy()
         ))
         self.assertTrue(np.array_equal(

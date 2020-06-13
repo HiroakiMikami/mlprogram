@@ -30,21 +30,31 @@ mlprogram.nn.nl2code.TrainModel.hidden_state_size       = 50
 mlprogram.nn.nl2code.TrainModel.dropout                 = 0.2
 
 # Collate
-mlprogram.utils.data.nl2code.CollateInput.device          = @torch.device()
-mlprogram.utils.data.nl2code.CollateActionSequence.device = @torch.device()
-mlprogram.utils.data.nl2code.CollateState.device          = @torch.device()
-mlprogram.utils.data.CollateNlFeature.device              = @torch.device()
+sequence_option/mlprogram.utils.data.CollateOptions.use_pad_sequence = True
+sequence_option/mlprogram.utils.data.CollateOptions.dim              = 0
+sequence_option/mlprogram.utils.data.CollateOptions.padding_value    = -1
+history_option/mlprogram.utils.data.CollateOptions.use_pad_sequence = False
+history_option/mlprogram.utils.data.CollateOptions.dim              = 1
+history_option/mlprogram.utils.data.CollateOptions.padding_value    = 0
+state_option/mlprogram.utils.data.CollateOptions.use_pad_sequence = False
+state_option/mlprogram.utils.data.CollateOptions.dim              = 0
+state_option/mlprogram.utils.data.CollateOptions.padding_value    = 0
+mlprogram.utils.data.Collate.device                = @torch.device()
+mlprogram.utils.data.Collate.word_nl_query         = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.nl_query_features     = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.actions               = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.previous_actions      = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.previous_action_rules = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.history               = @history_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.hidden_state          = @state_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.state                 = @state_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.ground_truth_actions  = @sequence_option/mlprogram.utils.data.CollateOptions()
 
 # Synthesizer
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.beam_size               = 15
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_input         = @mlprogram.utils.transform.nl2code.TransformQuery()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_evaluator     = @mlprogram.utils.transform.nl2code.TransformEvaluator()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_input           = @mlprogram.utils.data.nl2code.CollateInput()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_action_sequence = @mlprogram.utils.data.nl2code.CollateActionSequence()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_query           = @mlprogram.utils.data.collate_none
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_state           = @mlprogram.utils.data.nl2code.CollateState()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @mlprogram.utils.data.CollateNlFeature()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.split_states            = @mlprogram.utils.data.nl2code.split_states
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate                 = @mlprogram.utils.data.Collate()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.languages.bash.is_subtype

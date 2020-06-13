@@ -53,13 +53,25 @@ model/mlprogram.gin.workspace.put.value                 = @mlprogram.nn.nl2code.
 model/mlprogram.gin.workspace.get.key                   = "model"
 
 # Collate
-mlprogram.utils.data.CollateAll.collate_input             = @mlprogram.utils.data.nl2code.CollateInput()
-mlprogram.utils.data.CollateAll.collate_action_sequence   = @mlprogram.utils.data.nl2code.CollateActionSequence()
-mlprogram.utils.data.CollateAll.collate_query             = @mlprogram.utils.data.collate_none
-mlprogram.utils.data.CollateAll.collate_ground_truth      = @mlprogram.utils.data.CollateGroundTruth()
-mlprogram.utils.data.nl2code.CollateInput.device          = @torch.device()
-mlprogram.utils.data.nl2code.CollateActionSequence.device = @torch.device()
-mlprogram.utils.data.CollateGroundTruth.device            = @torch.device()
+sequence_option/mlprogram.utils.data.CollateOptions.use_pad_sequence = True
+sequence_option/mlprogram.utils.data.CollateOptions.dim              = 0
+sequence_option/mlprogram.utils.data.CollateOptions.padding_value    = -1
+history_option/mlprogram.utils.data.CollateOptions.use_pad_sequence = False
+history_option/mlprogram.utils.data.CollateOptions.dim              = 1
+history_option/mlprogram.utils.data.CollateOptions.padding_value    = 0
+state_option/mlprogram.utils.data.CollateOptions.use_pad_sequence = False
+state_option/mlprogram.utils.data.CollateOptions.dim              = 0
+state_option/mlprogram.utils.data.CollateOptions.padding_value    = 0
+mlprogram.utils.data.Collate.device                = @torch.device()
+mlprogram.utils.data.Collate.word_nl_query         = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.nl_query_features     = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.actions               = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.previous_actions      = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.previous_action_rules = @sequence_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.history               = @history_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.hidden_state          = @state_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.state                 = @state_option/mlprogram.utils.data.CollateOptions()
+mlprogram.utils.data.Collate.ground_truth_actions  = @sequence_option/mlprogram.utils.data.CollateOptions()
 
 # Optimizer
 mlprogram.gin.optimizer.create_optimizer.optimizer_cls = @torch.optim.Adam
@@ -81,7 +93,7 @@ mlprogram.gin.nl2prog.train.prepare_optimizer  = @optimizer/mlprogram.gin.worksp
 mlprogram.gin.nl2prog.train.transform_cls      = @mlprogram.utils.transform.TransformDataset
 mlprogram.gin.nl2prog.train.loss_fn            = @mlprogram.nn.NL2ProgLoss()
 mlprogram.gin.nl2prog.train.score_fn           = @mlprogram.nn.NL2ProgAccuracy()
-mlprogram.gin.nl2prog.train.collate_fn         = @mlprogram.utils.data.CollateAll()
+mlprogram.gin.nl2prog.train.collate_fn         = @mlprogram.utils.data.Collate()
 mlprogram.gin.nl2prog.train.batch_size         = 1
 mlprogram.gin.nl2prog.train.num_epochs         = 50
 mlprogram.gin.nl2prog.train.device             = @torch.device()

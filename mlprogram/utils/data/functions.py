@@ -1,7 +1,7 @@
 import torch
-import itertools
+from torch.nn import functional as F
 from dataclasses import dataclass
-from typing import Callable, List, Any, Optional, Tuple, Union, Iterable, Dict
+from typing import Callable, List, Any, Optional, Union, Dict
 from mlprogram.actions \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
@@ -100,7 +100,11 @@ class Collate:
         self.device = device
         self.options: Dict[str, CollateOptions] = kwargs
 
-    def collate(self, tensors: List[Dict[str, torch.Tensor]]) \
+    def __call__(self, tensors: List[Dict[str, Optional[torch.Tensor]]]) \
+            -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
+        return self.collate(tensors)
+
+    def collate(self, tensors: List[Dict[str, Optional[torch.Tensor]]]) \
             -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
         retval: Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]] = {}
         tmp: Dict[str, List[torch.Tensor]] = {}
@@ -111,12 +115,35 @@ class Collate:
                 tmp[name].append(tensor)
         for name, ts in tmp.items():
             option = self.options[name]
-            if option.use_pad_sequence:
+            if all(map(lambda x: x is None, ts)):
+                retval[name] = None
+            elif option.use_pad_sequence:
                 retval[name] = \
-                    rnn.pad_sequence(ts, padding_value=option.padding_value) \
+                    rnn.pad_sequence(ts,
+                                     padding_value=option.padding_value) \
                     .to(self.device)
             else:
-                retval[name] = torch.stack(ts, dim=option.dim).to(self.device)
+                # pad tensors
+                shape: List[int] = []
+                for tensor in ts:
+                    if len(shape) == 0:
+                        for x in tensor.shape:
+                            shape.append(x)
+                    else:
+                        for i, x in enumerate(tensor.shape):
+                            shape[i] = max(shape[i], x)
+                padded_ts = []
+                for tensor in ts:
+                    p = []
+                    for dst, src in zip(shape, tensor.shape):
+                        p.append(dst - src)
+                        p.append(0)
+                    p.reverse()
+                    padded_ts.append(F.pad(tensor, p,
+                                           value=option.padding_value))
+
+                retval[name] = \
+                    torch.stack(padded_ts, dim=option.dim).to(self.device)
         return retval
 
     def split(self, tensors: Dict[str, Union[torch.Tensor,
@@ -151,59 +178,3 @@ class Collate:
                     retval[b][name] = d
 
         return retval
-
-
-class CollateGroundTruth:
-    def __init__(self, device: torch.device):
-        self.device = device
-
-    def __call__(self, ground_truths: List[torch.Tensor]) \
-            -> PaddedSequenceWithMask:
-        pad_ground_truths = rnn.pad_sequence(ground_truths, padding_value=-1)
-
-        return pad_ground_truths.to(self.device)
-
-
-class CollateAll:
-    def __init__(self, collate_input: Callable[[List[Any]], Any],
-                 collate_action_sequence: Callable[[List[Any]], Any],
-                 collate_query: Callable[[List[Any]], Any],
-                 collate_ground_truth: Callable[[List[Any]], Any]):
-        self.collate_input = collate_input
-        self.collate_action_sequence = collate_action_sequence
-        self.collate_query = collate_query
-        self.collate_ground_truth = collate_ground_truth
-
-    def __call__(self, data: List[Tuple[Any, Any, Any, Any]]) \
-            -> Tuple[Any, Any, Any, Any]:
-        inputs = self.collate_input([elem[0] for elem in data])
-        action_sequences = \
-            self.collate_action_sequence([elem[1] for elem in data])
-        queries = self.collate_query([elem[2] for elem in data])
-        ground_truths = self.collate_ground_truth([elem[3] for elem in data])
-
-        return inputs, action_sequences, queries, ground_truths
-
-
-class CollateNlFeature:
-    def __init__(self, device: torch.device):
-        self.device = device
-
-    def __call__(self, data: List[PaddedSequenceWithMask]) \
-            -> PaddedSequenceWithMask:
-        nl_features = []
-        for nl_feature in data:
-            nl_feature_tensor = nl_feature.data
-            L = nl_feature_tensor.shape[0]
-            nl_feature_tensor = nl_feature_tensor.view(L, -1)
-            nl_features.append(nl_feature_tensor)
-
-        return rnn.pad_sequence(nl_features).to(self.device)
-
-
-def collate_none(data: List[Any]) -> None:
-    return None
-
-
-def split_none(state: Tuple[Any]) -> Iterable[None]:
-    return itertools.repeat(None)

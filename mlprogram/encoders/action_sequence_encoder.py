@@ -245,7 +245,7 @@ class ActionSequenceEncoder:
         Returns
         -------
         depth: torch.Tensor
-            The depth of each action. The shape is (len(action_sequence), 1).
+            The depth of each action. The shape is (len(action_sequence),).
         adjacency_matrix: torch.Tensor
             The encoded tensor. The shape of tensor is
             (len(action_sequence), len(action_sequence)). If i th action is
@@ -253,7 +253,7 @@ class ActionSequenceEncoder:
             will be 0 otherwise.
         """
         L = len(evaluator.action_sequence)
-        depth = torch.zeros(L, 1)
+        depth = torch.zeros(L)
         m = torch.zeros(L, L)
 
         for i in range(L):

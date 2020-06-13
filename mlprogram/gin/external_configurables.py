@@ -23,11 +23,9 @@ import mlprogram.utils.transform
 import mlprogram.utils.python
 
 import mlprogram.nn.nl2code
-import mlprogram.utils.data.nl2code
 import mlprogram.utils.transform.nl2code
 
 import mlprogram.nn.treegen
-import mlprogram.utils.data.treegen
 import mlprogram.utils.transform.treegen
 
 import mlprogram.gin.torch.external_configurables  # noqa
@@ -97,15 +95,9 @@ gin.external_configurable(mlprogram.synthesizers.CommonBeamSearchSynthesizer,
 gin.external_configurable(
     mlprogram.synthesizers.CommonBeamSearchSynthesizer.create,
     module="mlprogram.synthesizers.CommonBeamSearchSynthesizer")
-gin.external_configurable(mlprogram.utils.data.CollateAll,
+gin.external_configurable(mlprogram.utils.data.Collate,
                           module="mlprogram.utils.data")
-gin.external_configurable(mlprogram.utils.data.CollateGroundTruth,
-                          module="mlprogram.utils.data")
-gin.external_configurable(mlprogram.utils.data.CollateNlFeature,
-                          module="mlprogram.utils.data")
-gin.external_configurable(mlprogram.utils.data.collate_none,
-                          module="mlprogram.utils.data")
-gin.external_configurable(mlprogram.utils.data.split_none,
+gin.external_configurable(mlprogram.utils.data.CollateOptions,
                           module="mlprogram.utils.data")
 gin.external_configurable(mlprogram.utils.transform.AstToSingleActionSequence,
                           module="mlprogram.utils.transform")
@@ -130,14 +122,6 @@ gin.external_configurable(mlprogram.nn.nl2code.Decoder,
                           module="mlprogram.nn.nl2code")
 gin.external_configurable(mlprogram.nn.nl2code.Predictor,
                           module="mlprogram.nn.nl2code")
-gin.external_configurable(mlprogram.utils.data.nl2code.CollateInput,
-                          module="mlprogram.utils.data.nl2code")
-gin.external_configurable(mlprogram.utils.data.nl2code.CollateActionSequence,
-                          module="mlprogram.utils.data.nl2code")
-gin.external_configurable(mlprogram.utils.data.nl2code.CollateState,
-                          module="mlprogram.utils.data.nl2code")
-gin.external_configurable(mlprogram.utils.data.nl2code.split_states,
-                          module="mlprogram.utils.data.nl2code")
 gin.external_configurable(mlprogram.utils.transform.nl2code.TransformQuery,
                           module="mlprogram.utils.transform.nl2code")
 gin.external_configurable(mlprogram.utils.transform.nl2code.TransformEvaluator,
@@ -153,12 +137,6 @@ gin.external_configurable(mlprogram.nn.treegen.Decoder,
                           module="mlprogram.nn.treegen")
 gin.external_configurable(mlprogram.nn.treegen.Predictor,
                           module="mlprogram.nn.treegen")
-gin.external_configurable(mlprogram.utils.data.treegen.CollateInput,
-                          module="mlprogram.utils.data.treegen")
-gin.external_configurable(mlprogram.utils.data.treegen.CollateActionSequence,
-                          module="mlprogram.utils.data.treegen")
-gin.external_configurable(mlprogram.utils.data.treegen.CollateQuery,
-                          module="mlprogram.utils.data.treegen")
 gin.external_configurable(mlprogram.utils.transform.treegen.TransformQuery,
                           module="mlprogram.utils.transform.treegen")
 gin.external_configurable(mlprogram.utils.transform.treegen.TransformEvaluator,

@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Dict, Optional, cast
+from typing import Tuple, Dict, Any, cast
 
-from mlprogram.datatypes import Tensor
 from mlprogram.nn import TreeConvolution
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
@@ -117,8 +116,8 @@ class ActionSequenceReader(nn.Module):
                                      hidden_size),
             max_arity + 1, hidden_size, rule_embed_size)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

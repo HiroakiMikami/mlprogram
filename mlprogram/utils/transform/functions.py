@@ -4,7 +4,7 @@ import numpy as np
 from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
-from typing import List, Callable, Tuple, Any, Optional
+from typing import List, Callable, Tuple, Any, Optional, Dict
 
 
 class TransformCode:
@@ -24,7 +24,7 @@ class TransformGroundTruth:
         self.action_sequence_encoder = action_sequence_encoder
 
     def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
-            -> Optional[torch.Tensor]:
+            -> Optional[Dict[str, Optional[torch.Tensor]]]:
         a = self.action_sequence_encoder.encode_action(evaluator,
                                                        query_for_synth)
         if a is None:
@@ -32,17 +32,22 @@ class TransformGroundTruth:
         if np.any(a[-1, :].numpy() != -1):
             return None
         ground_truth = a[1:-1, 1:]
-        return ground_truth
+        return {"ground_truth_actions": ground_truth}
 
 
 class TransformDataset:
     def __init__(self,
-                 transform_input: Callable[[Any], Tuple[List[str], Any]],
+                 transform_input: Callable[[Any], Tuple[List[str],
+                                                        Dict[str, Any]]],
                  transform_code: Callable[[Any], Optional[ActionSequence]],
                  transform_evaluator: Callable[[ActionSequence, List[str]],
-                                               Optional[Any]],
+                                               Optional[Dict[str,
+                                                             Any]]
+                                               ],
                  transform_ground_truth: Callable[[ActionSequence, List[str]],
-                                                  Optional[torch.Tensor]]):
+                                                  Optional[
+                                                      Dict[str, torch.Tensor]]
+                                                  ]):
         self.transform_input = transform_input
         self.transform_code = transform_code
         self.transform_evaluator = transform_evaluator
@@ -53,18 +58,29 @@ class TransformDataset:
         entries = []
         for group in dataset:
             for entry in group:
-                query_for_synth, input_tensor = \
+                query_for_synth, input = \
                     self.transform_input(entry.input)
                 evaluator = self.transform_code(entry.ground_truth)
                 if evaluator is None:
                     continue
-                tmp = self.transform_evaluator(
+                action_sequence = self.transform_evaluator(
                     evaluator, query_for_synth)
                 ground_truth = self.transform_ground_truth(
                     evaluator, query_for_synth)
-                if ground_truth is None or tmp is None:
+                if ground_truth is None or action_sequence is None:
                     continue
-                action_sequence, query = tmp
-                entries.append((input_tensor, action_sequence, query,
-                                ground_truth))
+                entry = {}
+                for key, value in input.items():
+                    if value is None and key in entry:
+                        continue
+                    entry[key] = value
+                for key, value in action_sequence.items():
+                    if value is None and key in entry:
+                        continue
+                    entry[key] = value
+                for key, value in ground_truth.items():
+                    if value is None and key in entry:
+                        continue
+                    entry[key] = value
+                entries.append(entry)
         return ListDataset(entries)

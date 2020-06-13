@@ -1,10 +1,9 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, cast
+from typing import Dict, Any, cast
 from mlprogram.nn.embedding import EmbeddingWithMask
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
-from mlprogram.datatypes import Tensor
 
 
 class NLReader(nn.Module):
@@ -33,8 +32,8 @@ class NLReader(nn.Module):
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

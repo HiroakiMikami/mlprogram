@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import Optional, cast
+from typing import Any, cast
 
-from mlprogram.datatypes import Tensor
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -10,7 +9,7 @@ class NL2ProgLoss(nn.Module):
     def __init__(self):
         super(NL2ProgLoss, self).__init__()
 
-    def forward(self, **inputs: Optional[Tensor]) -> torch.Tensor:
+    def forward(self, **inputs: Any) -> torch.Tensor:
         """
         Parameters
         ----------

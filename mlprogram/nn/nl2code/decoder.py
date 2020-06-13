@@ -1,10 +1,9 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Tuple, Optional, cast
+from typing import Dict, Tuple, Any, cast
 
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
-from mlprogram.datatypes import Tensor
 
 
 def query_history(history: torch.FloatTensor, index: torch.LongTensor) \
@@ -171,8 +170,8 @@ class Decoder(nn.Module):
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

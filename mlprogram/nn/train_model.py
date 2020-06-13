@@ -1,6 +1,5 @@
 import torch.nn as nn
-from typing import Optional, Dict
-from mlprogram.datatypes import Tensor
+from typing import Dict, Any
 
 
 class TrainModel(nn.Module):
@@ -13,8 +12,8 @@ class TrainModel(nn.Module):
         self.decoder = decoder
         self.predictor = predictor
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

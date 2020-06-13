@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Dict, Optional, cast
+from typing import Tuple, Dict, Any, cast
 
 from mlprogram.nn import SeparableConv1d, EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
     import index_embeddings, gelu, lne_to_nel, nel_to_lne
-from mlprogram.datatypes import Tensor
 from .gating import Gating
 from .embedding import ElementEmbedding
 
@@ -99,8 +98,8 @@ class NLReader(nn.Module):
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, cast
+from typing import Dict, Any, cast
 
-from mlprogram.datatypes import Tensor
 from mlprogram.nn import PointerNet
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -16,8 +15,8 @@ class Predictor(nn.Module):
         self.token = nn.Linear(feature_size, token_size)
         self.copy = PointerNet(feature_size, nl_feature_size, hidden_size)
 
-    def forward(self, **inputs: Optional[Tensor]) \
-            -> Dict[str, Optional[Tensor]]:
+    def forward(self, **inputs: Any) \
+            -> Dict[str, Any]:
         """
         Parameters
         ----------

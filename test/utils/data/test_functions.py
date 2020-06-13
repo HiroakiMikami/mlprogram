@@ -107,6 +107,25 @@ class TestCollate(unittest.TestCase):
         self.assertTrue(np.array_equal([[[1, 1, 1], [2, 2, 2]]],
                                        retval["stack1"].data.numpy()))
 
+    def test_collate_with_pad(self):
+        data = [
+            {
+                "x": torch.zeros(2, 1),
+            },
+            {
+                "x": torch.zeros(1, 2),
+            }
+        ]
+        collate = Collate(device=torch.device("cpu"),
+                          x=CollateOptions(False, 0, -1))
+        retval = collate.collate(data)
+        self.assertEqual(set(["x"]), set(retval.keys()))
+        self.assertTrue(np.array_equal((2, 2, 2),
+                                       retval["x"].shape))
+        self.assertTrue(np.array_equal([[[0, -1], [0, -1]],
+                                        [[0, 0], [-1, -1]]],
+                                       retval["x"].numpy()))
+
     def test_split(self):
         data = [
             {
