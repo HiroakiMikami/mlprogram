@@ -4,9 +4,9 @@ import torch.nn as nn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
-class Loss(nn.Module):
+class NL2ProgLoss(nn.Module):
     def __init__(self):
-        super(Loss, self).__init__()
+        super(NL2ProgLoss, self).__init__()
 
     def forward(self,
                 rule_prob: PaddedSequenceWithMask,

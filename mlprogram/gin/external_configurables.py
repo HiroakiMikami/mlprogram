@@ -69,8 +69,8 @@ gin.external_configurable(mlprogram.dataset.nl2bash.tokenize_query,
 gin.external_configurable(mlprogram.dataset.nl2bash.tokenize_token,
                           module="mlprogram.dataset.nl2bash")
 
-gin.external_configurable(mlprogram.nn.Loss, module="mlprogram.nn")
-gin.external_configurable(mlprogram.nn.Accuracy, module="mlprogram.nn")
+gin.external_configurable(mlprogram.nn.NL2ProgLoss, module="mlprogram.nn")
+gin.external_configurable(mlprogram.nn.NL2ProgAccuracy, module="mlprogram.nn")
 gin.external_configurable(mlprogram.nn.TrainModel, module="mlprogram.nn")
 gin.external_configurable(mlprogram.metrics.Accuracy,
                           module="mlprogram.metrics")

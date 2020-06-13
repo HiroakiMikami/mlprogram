@@ -23,7 +23,7 @@ from mlprogram.utils.transform \
     import TransformDataset, TransformGroundTruth, TransformCode
 from mlprogram.utils.transform.treegen \
     import TransformQuery, TransformEvaluator
-from mlprogram.nn import Loss
+from mlprogram.nn import NL2ProgLoss
 from mlprogram.nn.treegen import TrainModel
 from mlprogram.metrics import Accuracy
 
@@ -131,7 +131,8 @@ class TestTreeGen(unittest.TestCase):
                 lambda: self.prepare_encoder(to_action_sequence),
                 self.prepare_model, self.prepare_optimizer,
                 lambda: self.transform_cls(to_action_sequence),
-                Loss(), lambda *args: -Loss()(*args), collate_fn, 1, 10,
+                NL2ProgLoss(), lambda *args: -NL2ProgLoss()(*args), collate_fn,
+                1, 10,
                 num_models=1
             )
 
