@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class State:
     query: List[str]
     nl_feature: Any
-    other_feature: Any
     state: Optional[Any]
 
 
@@ -35,7 +34,6 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                  collate_query: Callable[[List[Any]], Any],
                  collate_state: Callable[[List[Any]], Any],
                  collate_nl_feature: Callable[[List[Any]], Any],
-                 collate_other_feature: Callable[[List[Any]], Any],
                  split_states: Callable[[Any], List[Any]],
                  input_reader: nn.Module,  # Callable[[Any], Tuple[Any, Any]],
                  action_sequence_reader: nn.Module,  # Callable[[Any], Any],
@@ -80,7 +78,6 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         self.collate_query = collate_query
         self.collate_state = collate_state
         self.collate_nl_feature = collate_nl_feature
-        self.collate_other_feature = collate_other_feature
         self.split_states = split_states
         self.input_reader = input_reader.to(device)
         self.action_sequence_reader = action_sequence_reader.to(device)
@@ -99,7 +96,6 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                collate_query: Callable[[List[Any]], Any],
                collate_state: Callable[[List[Any]], Any],
                collate_nl_feature: Callable[[List[Any]], Any],
-               collate_other_feature: Callable[[List[Any]], Any],
                split_states: Callable[[Any], List[Any]],
                model: TrainModel,
                action_sequence_encoder: ActionSequenceEncoder,
@@ -111,7 +107,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         return CommonBeamSearchSynthesizer(
             beam_size, transform_input, transform_evaluator, collate_input,
             collate_action_sequence, collate_query, collate_state,
-            collate_nl_feature, collate_other_feature, split_states,
+            collate_nl_feature, split_states,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, action_sequence_encoder, is_subtype, options, eps,
             max_steps, device)
@@ -127,18 +123,17 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def initialize(self, input: Any) -> State:
         query_for_synth, input = self.transform_input(input)
         input = self.collate_input([input])
-        nl_feature, other_feature = self.input_reader(input)
+        nl_feature = self.input_reader(input)
         nl_feature = nl_feature.data
         L = nl_feature.shape[0]
         nl_feature = nl_feature.view(L, -1)
 
-        return State(query_for_synth, nl_feature, other_feature, None)
+        return State(query_for_synth, nl_feature, None)
 
     def batch_update(self, hs: List[Hypothesis]) \
             -> List[Tuple[State, LazyLogProbability]]:
         # Create batch of hypothesis
         nl_features = []
-        other_features = []
         action_sequences = []
         queries = []
         states = []
@@ -146,7 +141,6 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             tmp = self.transform_evaluator(h.evaluator, h.state.query)
             if tmp is not None:
                 nl_features.append(h.state.nl_feature)
-                other_features.append(h.state.other_feature)
                 action_sequence, query = tmp
                 action_sequences.append(action_sequence)
                 queries.append(query)
@@ -154,15 +148,14 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
             else:
                 logger.warn("Invalid evaluator is in the set of hypothesis")
         nl_features = self.collate_nl_feature(nl_features)
-        other_features = self.collate_other_feature(other_features)
         action_sequences = self.collate_action_sequence(action_sequences)
         queries = self.collate_query(queries)
         states = self.collate_state(states)
 
         with torch.no_grad():
             ast_feature = self.action_sequence_reader(action_sequences)
-            feature, state = self.decoder(queries, nl_features, other_features,
-                                          ast_feature, states)
+            feature, state = self.decoder(
+                queries, nl_features, ast_feature, states)
             results = self.predictor(nl_features, feature)
         # (len(hs), n_rules)
         rule_pred = results[0].data[-1, :, :].cpu().reshape(len(hs), -1)
@@ -174,8 +167,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
 
         retval = []
         for i, (h, s) in enumerate(zip(hs, states)):
-            state = State(h.state.query, h.state.nl_feature,
-                          h.state.other_feature, s)
+            state = State(h.state.query, h.state.nl_feature, s)
 
             class Functions:
                 def __init__(self, i: int,

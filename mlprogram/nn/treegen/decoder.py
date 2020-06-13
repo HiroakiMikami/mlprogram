@@ -114,7 +114,6 @@ class Decoder(nn.Module):
 
     def forward(self, query: PaddedSequenceWithMask,
                 nl_feature: PaddedSequenceWithMask,
-                other_feature: None,
                 ast_feature: PaddedSequenceWithMask,
                 states: None = None) -> Tuple[PaddedSequenceWithMask, None]:
         """
@@ -128,8 +127,6 @@ class Decoder(nn.Module):
         nl_feature: torch.Tensor
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
-        other_feature
-            dummy arguments
         ast_feature: torch.Tensor
             (L_ast, N, ast_feature_size) where L_ast is the sequence length,
             N is the batch size.

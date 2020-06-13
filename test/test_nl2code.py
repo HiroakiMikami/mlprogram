@@ -73,7 +73,7 @@ class TestNL2Code(unittest.TestCase):
             CollateActionSequence(torch.device("cpu")),
             collate_none, CollateState(torch.device("cpu")),
             CollateNlFeature(torch.device("cpu")),
-            collate_none, split_states,
+            split_states,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, aencoder, is_subtype,
             options=options, max_steps=20)

@@ -55,7 +55,6 @@ mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_action_sequence
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_query           = @mlprogram.utils.data.treegen.CollateQuery()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_state           = @mlprogram.utils.data.collate_none
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @mlprogram.utils.data.CollateNlFeature()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_other_feature   = @mlprogram.utils.data.collate_none
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.split_states            = @mlprogram.utils.data.split_none
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.treegen.TrainModel()
 mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()

@@ -9,7 +9,7 @@ class TestCommonBeamSearchSynthesizer(unittest.TestCase):
     def test_create(self):
         dummy = None
         synthesizer = CommonBeamSearchSynthesizer.create(
-            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
+            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
             TrainModel(nn.Linear(1, 1), nn.Linear(2, 2), nn.Linear(3, 3),
                        nn.Linear(5, 5)),
             dummy, dummy)
@@ -18,7 +18,7 @@ class TestCommonBeamSearchSynthesizer(unittest.TestCase):
     def test_state_dict(self):
         dummy = None
         synthesizer = CommonBeamSearchSynthesizer(
-            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
+            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
             nn.Linear(1, 1), nn.Linear(2, 2), nn.Linear(3, 3), nn.Linear(5, 5),
             dummy, dummy)
         state_dict = synthesizer.state_dict()
@@ -37,7 +37,7 @@ class TestCommonBeamSearchSynthesizer(unittest.TestCase):
     def test_load_state_dict(self):
         dummy = None
         synthesizer = CommonBeamSearchSynthesizer(
-            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
+            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
             nn.Linear(1, 1), nn.Linear(2, 2), nn.Linear(3, 3), nn.Linear(5, 5),
             dummy, dummy)
         state_dict = synthesizer.state_dict()
@@ -48,7 +48,7 @@ class TestCommonBeamSearchSynthesizer(unittest.TestCase):
         train_model = TrainModel(
             nn.Linear(1, 1), nn.Linear(2, 2), nn.Linear(3, 3), nn.Linear(5, 5))
         synthesizer = CommonBeamSearchSynthesizer(
-            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
+            1, dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy,
             nn.Linear(1, 1), nn.Linear(2, 2), nn.Linear(3, 3), nn.Linear(5, 5),
             dummy, dummy)
         synthesizer.load_state_dict(train_model.state_dict())

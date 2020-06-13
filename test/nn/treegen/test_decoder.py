@@ -105,7 +105,7 @@ class TestDecoder(unittest.TestCase):
         nl0 = torch.Tensor(11, 1)
         ast0 = torch.Tensor(7, 1)
         out, _ = decoder(pad_sequence([query0], 0),
-                         pad_sequence([nl0], 0), None,
+                         pad_sequence([nl0], 0),
                          pad_sequence([ast0], 0))
         self.assertEqual((7, 1, 5), out.data.shape)
         self.assertEqual((7, 1), out.mask.shape)
@@ -117,10 +117,10 @@ class TestDecoder(unittest.TestCase):
         nl1 = torch.rand(13, 1)
         ast0 = torch.rand(7, 1)
         out0, _ = decoder(pad_sequence([query0], 0),
-                          pad_sequence([nl0], 0), None,
+                          pad_sequence([nl0], 0),
                           pad_sequence([ast0], 0))
         out1, _ = decoder(pad_sequence([query0, query0], 0),
-                          pad_sequence([nl0, nl1], 0), None,
+                          pad_sequence([nl0, nl1], 0),
                           pad_sequence([ast0, ast0], 0))
         out0 = out0.data
         out1 = out1.data[:7, :1, :]
@@ -135,10 +135,10 @@ class TestDecoder(unittest.TestCase):
         ast0 = torch.rand(7, 1)
         ast1 = torch.rand(9, 1)
         out0, _ = block(pad_sequence([query0], 0),
-                        pad_sequence([nl0], 0), None,
+                        pad_sequence([nl0], 0),
                         pad_sequence([ast0], 0))
         out1, _ = block(pad_sequence([query0, query1], 0),
-                        pad_sequence([nl0, nl0], 0), None,
+                        pad_sequence([nl0, nl0], 0),
                         pad_sequence([ast0, ast1], 0))
         out0 = out0.data
         out1 = out1.data[:7, :1, :]
@@ -151,10 +151,10 @@ class TestDecoder(unittest.TestCase):
         nl0 = torch.rand(11, 1)
         ast0 = torch.rand(7, 1)
         out0, _ = block(pad_sequence([query0[:5, :]], 0),
-                        pad_sequence([nl0], 0), None,
+                        pad_sequence([nl0], 0),
                         pad_sequence([ast0[:5, :]], 0))
         out1, _ = block(pad_sequence([query0], 0),
-                        pad_sequence([nl0], 0), None,
+                        pad_sequence([nl0], 0),
                         pad_sequence([ast0], 0))
         out0 = out0.data
         out1 = out1.data[:5, :1, :]

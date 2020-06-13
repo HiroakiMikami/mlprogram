@@ -172,7 +172,6 @@ class Decoder(nn.Module):
     def forward(self,
                 query: None,
                 nl_feature: rnn.PaddedSequenceWithMask,
-                other_feature: None,
                 ast_feature: Tuple[rnn.PaddedSequenceWithMask,
                                    rnn.PaddedSequenceWithMask],
                 state: Optional[Tuple[torch.Tensor, torch.Tensor,
@@ -187,7 +186,6 @@ class Decoder(nn.Module):
         nl_feature: rnn.PackedSequenceWithMask
             The query embedding vector
             The shape of the query embedding vector is (L_q, B, query_size).
-        other_feature
         ast_feature:
             input: rnn.PackedSequenceWithMask
                 The input sequence of feature vectors.

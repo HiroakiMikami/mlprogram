@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
 from mlprogram.nn.embedding import EmbeddingWithMask
 from mlprogram.nn.utils import rnn
 
@@ -32,7 +31,7 @@ class NLReader(nn.Module):
         self._dropout_h = nn.Dropout(dropout)
 
     def forward(self, query: rnn.PaddedSequenceWithMask) \
-            -> Tuple[rnn.PaddedSequenceWithMask, None]:
+            -> rnn.PaddedSequenceWithMask:
         """
         Parameters
         ----------
@@ -44,7 +43,6 @@ class NLReader(nn.Module):
         -------
         word_features: rnn.PaddedSeqeunceWithMask
             The output sequences of the LSTM
-        other_features: None
         """
         # Embed query
         q = query.data + (query.data == -1).long() * (self.num_words + 1)
@@ -81,4 +79,4 @@ class NLReader(nn.Module):
                 .view(1, B, -1)  # (1, B, hidden_size)
 
         output = torch.cat(output, dim=0)  # (L, B, hidden_size)
-        return rnn.PaddedSequenceWithMask(output, query.mask), None
+        return rnn.PaddedSequenceWithMask(output, query.mask)

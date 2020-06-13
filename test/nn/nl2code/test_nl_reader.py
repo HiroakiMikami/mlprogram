@@ -15,7 +15,7 @@ class TestInputReader(unittest.TestCase):
         q0 = torch.LongTensor([1, 2])
         q1 = torch.LongTensor([1, 2, 3])
         query = rnn.pad_sequence([q0, q1])
-        output, _ = encoder(query)
+        output = encoder(query)
         self.assertEqual((3, 2, 14), output.data.shape)
 
     def test_mask(self):
@@ -23,7 +23,7 @@ class TestInputReader(unittest.TestCase):
         q0 = torch.LongTensor([1, 2])
         q1 = torch.LongTensor([1, 2, 3])
         query = rnn.pad_sequence([q0, q1])
-        output, _ = encoder(query)
+        output = encoder(query)
         self.assertTrue(np.all(output.data[2, 0, :].detach().numpy() == 0))
 
 

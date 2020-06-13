@@ -100,7 +100,7 @@ class NLReader(nn.Module):
 
     def forward(self, input: Tuple[PaddedSequenceWithMask,
                                    PaddedSequenceWithMask]) \
-            -> Tuple[PaddedSequenceWithMask, None]:
+            -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
@@ -118,7 +118,6 @@ class NLReader(nn.Module):
         PaddedSequenceWithMask
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
-        other_features: None
         """
         token_query, char_query = input
         e_token_query = self.query_embed(token_query.data)
@@ -128,4 +127,4 @@ class NLReader(nn.Module):
         block_input = PaddedSequenceWithMask(e_token_query, token_query.mask)
         for block in self.blocks:
             block_input, _ = block(block_input, e_char_query)
-        return block_input, None
+        return block_input

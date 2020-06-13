@@ -32,8 +32,7 @@ class TrainModel(nn.Module):
         copy_pred: PaddedSequenceWithMask
             The probabilities of copy-token
         """
-        nl_feature, other_feature = self.input_reader(input)
+        nl_feature = self.input_reader(input)
         ast_feature = self.action_sequence_reader(action_sequence)
-        feature, _ = self.decoder(query, nl_feature, other_feature,
-                                  ast_feature)
+        feature, _ = self.decoder(query, nl_feature, ast_feature)
         return self.predictor(nl_feature, feature)

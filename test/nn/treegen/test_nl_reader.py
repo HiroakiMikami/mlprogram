@@ -48,7 +48,7 @@ class TestNLReader(unittest.TestCase):
         in0 = pad_sequence([in0], 0)
         in1 = torch.zeros(5, 7).long()
         in1 = pad_sequence([in1], 0)
-        out, _ = reader((in0, in1))
+        out = reader((in0, in1))
         self.assertEqual((5, 1, 3), out.data.shape)
         self.assertEqual((5, 1), out.mask.shape)
 
@@ -58,10 +58,10 @@ class TestNLReader(unittest.TestCase):
         in01 = torch.zeros(7).long()
         in10 = torch.zeros(5, 7).long()
         in11 = torch.zeros(7, 7).long()
-        out0, _ = reader((pad_sequence([in00, in01], 0),
-                          pad_sequence([in10, in11])))
-        out1, _ = reader((pad_sequence([in00], 0),
-                          pad_sequence([in10])))
+        out0 = reader((pad_sequence([in00, in01], 0),
+                       pad_sequence([in10, in11])))
+        out1 = reader((pad_sequence([in00], 0),
+                       pad_sequence([in10])))
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
         self.assertTrue(np.allclose(out0.detach().numpy(),

@@ -80,7 +80,7 @@ class TestTreeGen(unittest.TestCase):
             CollateActionSequence(torch.device("cpu")),
             CollateQuery(torch.device("cpu")), collate_none,
             CollateNlFeature(torch.device("cpu")),
-            collate_none, split_none,
+            split_none,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, aencoder, is_subtype,
             options=options, max_steps=20)
