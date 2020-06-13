@@ -1,5 +1,5 @@
 from typing import Callable
-from mlprogram.ast import AST
+from mlprogram.asts import AST
 from nltk.translate.bleu_score import sentence_bleu
 
 from .metric import Metric

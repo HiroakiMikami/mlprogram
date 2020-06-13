@@ -3,8 +3,8 @@ import unittest
 import numpy as np
 import ast
 from mlprogram.utils import Query
-from mlprogram.language.python import to_ast
-from mlprogram.action import ActionOptions
+from mlprogram.languages.python import to_ast
+from mlprogram.actions import ActionOptions
 from mlprogram.utils.data \
     import Entry, ListDataset, to_eval_dataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions

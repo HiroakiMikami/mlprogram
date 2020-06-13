@@ -4,11 +4,11 @@ import numpy as np
 import logging
 from typing import List, Callable, Optional, Tuple, Any, Dict, Union
 from dataclasses import dataclass
-from mlprogram.action import ActionOptions, Rule, CloseNode
-from mlprogram.action import ActionSequence
+from mlprogram.actions import ActionOptions, Rule, CloseNode
+from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.synthesizer.beam_search_synthesizer import Hypothesis
-from mlprogram.synthesizer \
+from mlprogram.synthesizers.beam_search_synthesizer import Hypothesis
+from mlprogram.synthesizers \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
 from mlprogram.nn import TrainModel

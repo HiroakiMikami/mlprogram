@@ -1,6 +1,6 @@
 import unittest
 
-from mlprogram.language.csg.ast \
+from mlprogram.languages.csg.ast \
     import Circle, Rectangle, Translation, Rotation, Union, Difference
 
 

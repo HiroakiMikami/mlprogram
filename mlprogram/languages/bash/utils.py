@@ -1,6 +1,6 @@
 from typing import Union
 
-from mlprogram.ast import Root
+from mlprogram.asts import Root
 
 
 def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torchnlp.encoders import LabelEncoder
 from typing import Callable, List, Any, Optional, Tuple
-from mlprogram.action import ActionSequence
+from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Query
 

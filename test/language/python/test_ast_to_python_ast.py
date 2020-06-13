@@ -1,10 +1,10 @@
 import unittest
 import ast as python_ast
 
-import mlprogram.ast as ast
+import mlprogram.asts as ast
 
-from mlprogram.language.python.ast_to_python_ast import to_builtin_type
-from mlprogram.language.python import to_ast, to_python_ast
+from mlprogram.languages.python.ast_to_python_ast import to_builtin_type
+from mlprogram.languages.python import to_ast, to_python_ast
 
 
 class TestToBuiltinType(unittest.TestCase):

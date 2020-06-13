@@ -1,7 +1,7 @@
 import unittest
 
-from mlprogram.ast import Node, Leaf, Field
-from mlprogram.language.bash import parse, unparse
+from mlprogram.asts import Node, Leaf, Field
+from mlprogram.languages.bash import parse, unparse
 
 
 class TestParse(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from mlprogram.language.csg import Canvas, Shape, Interpreter
-from mlprogram.language.csg \
+from mlprogram.languages.csg import Canvas, Shape, Interpreter
+from mlprogram.languages.csg \
     import Circle, Rectangle, Translation, Rotation, Union, Difference
 
 

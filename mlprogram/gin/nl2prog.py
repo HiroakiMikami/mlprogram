@@ -12,7 +12,7 @@ from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
 from mlprogram.utils import evaluate as eval, TopKModel
 from mlprogram.utils.data import to_eval_dataset, ListDataset
-from mlprogram.synthesizer import synthesize, BeamSearchSynthesizer
+from mlprogram.synthesizers import synthesize, BeamSearchSynthesizer
 
 
 logger = logging.getLogger(__name__)

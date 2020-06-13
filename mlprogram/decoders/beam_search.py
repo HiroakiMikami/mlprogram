@@ -1,6 +1,6 @@
 from typing import TypeVar, Generic, Generator
 from mlprogram.samplers import Sampler, SamplerState
-from mlprogram.decoder import Decoder, Result
+from mlprogram.decoders import Decoder, Result
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")

@@ -1,6 +1,6 @@
 import unittest
 from mlprogram.samplers import Sampler, SamplerState
-from mlprogram.decoder import BeamSearch, Result
+from mlprogram.decoders import BeamSearch, Result
 from typing import List, Tuple
 
 

@@ -1,6 +1,6 @@
 import bashlex
 from typing import Optional, cast
-import mlprogram.ast as A
+import mlprogram.asts as A
 from .bashlex_ast_to_ast import bashlex_ast_to_ast
 
 

@@ -3,18 +3,18 @@ torch.device.type_str = "cuda"
 torch.device.index    = 0
 
 # Dataset
-dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.hearthstone.download()
+dataset/mlprogram.gin.workspace.put.value = @mlprogram.datasets.hearthstone.download()
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.action.ActionOptions.retain_variadic_fields = False
-mlprogram.action.ActionOptions.split_non_terminal     = False
+mlprogram.actions.ActionOptions.retain_variadic_fields = False
+mlprogram.actions.ActionOptions.split_non_terminal     = False
 
 # to_action_sequence
-to_action_sequence/Compose.f = @mlprogram.language.python.parse
+to_action_sequence/Compose.f = @mlprogram.languages.python.parse
 to_action_sequence/Compose.g = @mlprogram.utils.transform.AstToSingleActionSequence()
 mlprogram.utils.transform.AstToSingleActionSequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.action.ActionOptions()
+mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.actions.ActionOptions()
 
 # Encoder
 train_dataset/mlprogram.gin.get_key.key                  = "train"
@@ -23,7 +23,7 @@ mlprogram.gin.treegen.prepare_encoder.dataset            = @train_dataset/mlprog
 mlprogram.gin.treegen.prepare_encoder.word_threshold     = 3
 mlprogram.gin.treegen.prepare_encoder.char_threshold     = 0
 mlprogram.gin.treegen.prepare_encoder.token_threshold    = 0
-mlprogram.gin.treegen.prepare_encoder.parse              = @mlprogram.language.python.parse
+mlprogram.gin.treegen.prepare_encoder.parse              = @mlprogram.languages.python.parse
 mlprogram.gin.treegen.prepare_encoder.to_action_sequence = @to_action_sequence/Compose()
 mlprogram.gin.treegen.prepare_encoder.extract_query      = @mlprogram.utils.python.tokenize_query
 mlprogram.gin.treegen.prepare_encoder.tokenize_token     = @mlprogram.utils.python.tokenize_token

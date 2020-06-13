@@ -1,8 +1,8 @@
 import unittest
 import ast
 from typing import List
-from mlprogram.language.python import to_ast
-from mlprogram.synthesizer \
+from mlprogram.languages.python import to_ast
+from mlprogram.synthesizers \
     import Progress, Candidate, synthesize as _synthesize
 
 

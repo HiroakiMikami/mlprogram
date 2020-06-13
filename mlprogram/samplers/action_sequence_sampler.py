@@ -5,12 +5,12 @@ from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
     Tuple, cast, Dict
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.ast import Root
-from mlprogram.action \
+from mlprogram.asts import Root
+from mlprogram.actions \
     import ExpandTreeRule, ApplyRule, NodeConstraint, ActionOptions, \
     GenerateToken, Action
-from mlprogram.action import ActionSequence
-from mlprogram.ast import AST
+from mlprogram.actions import ActionSequence
+from mlprogram.asts import AST
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKElement

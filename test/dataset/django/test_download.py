@@ -1,7 +1,7 @@
 import unittest
 
 from mlprogram.utils.data import Entry
-from mlprogram.dataset.django import download
+from mlprogram.datasets.django import download
 
 
 class TestDownload(unittest.TestCase):

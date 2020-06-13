@@ -1,5 +1,5 @@
 from typing import Union, Callable, Set, List, Optional
-from mlprogram.ast import AST
+from mlprogram.asts import AST
 import logging
 
 logger = logging.getLogger()

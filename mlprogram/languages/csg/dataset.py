@@ -5,10 +5,10 @@ from torch.utils.data import IterableDataset
 
 from typing import Optional, Any, Callable, Tuple
 
-from mlprogram.language.csg import AST, Canvas, Interpreter
-from mlprogram.language.csg import Circle, Rectangle
-from mlprogram.language.csg import Translation, Rotation
-from mlprogram.language.csg import Union, Difference
+from mlprogram.languages.csg import AST, Canvas, Interpreter
+from mlprogram.languages.csg import Circle, Rectangle
+from mlprogram.languages.csg import Translation, Rotation
+from mlprogram.languages.csg import Union, Difference
 
 
 class Dataset(IterableDataset):

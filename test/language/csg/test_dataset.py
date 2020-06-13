@@ -1,6 +1,6 @@
 import unittest
 import torch
-from mlprogram.language.csg import Dataset
+from mlprogram.languages.csg import Dataset
 
 
 class TestDataset(unittest.TestCase):

@@ -6,17 +6,17 @@ import mlprogram.gin.optimizer
 import mlprogram.gin.nl2prog
 import mlprogram.gin.nl2code
 import mlprogram.gin.treegen
-import mlprogram.dataset.django
-import mlprogram.dataset.hearthstone
-import mlprogram.dataset.nl2bash
+import mlprogram.datasets.django
+import mlprogram.datasets.hearthstone
+import mlprogram.datasets.nl2bash
 import mlprogram.nn
 import mlprogram.metrics
 import mlprogram.metrics.python
 import mlprogram.metrics.accuracy
 import mlprogram.metrics.python.bleu
-import mlprogram.language.python
-import mlprogram.language.bash
-import mlprogram.action
+import mlprogram.languages.python
+import mlprogram.languages.bash
+import mlprogram.actions
 import mlprogram.utils
 import mlprogram.utils.data
 import mlprogram.utils.transform
@@ -54,20 +54,20 @@ gin.external_configurable(mlprogram.gin.nl2code.prepare_encoder,
 gin.external_configurable(mlprogram.gin.treegen.prepare_encoder,
                           module="mlprogram.gin.treegen")
 
-gin.external_configurable(mlprogram.dataset.django.download,
-                          module="mlprogram.dataset.django")
-gin.external_configurable(mlprogram.dataset.django.parse,
-                          module="mlprogram.dataset.django")
-gin.external_configurable(mlprogram.dataset.django.tokenize_query,
-                          module="mlprogram.dataset.django")
-gin.external_configurable(mlprogram.dataset.hearthstone.download,
-                          module="mlprogram.dataset.hearthstone")
-gin.external_configurable(mlprogram.dataset.nl2bash.download,
-                          module="mlprogram.dataset.nl2bash")
-gin.external_configurable(mlprogram.dataset.nl2bash.tokenize_query,
-                          module="mlprogram.dataset.nl2bash")
-gin.external_configurable(mlprogram.dataset.nl2bash.tokenize_token,
-                          module="mlprogram.dataset.nl2bash")
+gin.external_configurable(mlprogram.datasets.django.download,
+                          module="mlprogram.datasets.django")
+gin.external_configurable(mlprogram.datasets.django.parse,
+                          module="mlprogram.datasets.django")
+gin.external_configurable(mlprogram.datasets.django.tokenize_query,
+                          module="mlprogram.datasets.django")
+gin.external_configurable(mlprogram.datasets.hearthstone.download,
+                          module="mlprogram.datasets.hearthstone")
+gin.external_configurable(mlprogram.datasets.nl2bash.download,
+                          module="mlprogram.datasets.nl2bash")
+gin.external_configurable(mlprogram.datasets.nl2bash.tokenize_query,
+                          module="mlprogram.datasets.nl2bash")
+gin.external_configurable(mlprogram.datasets.nl2bash.tokenize_token,
+                          module="mlprogram.datasets.nl2bash")
 
 gin.external_configurable(mlprogram.nn.NL2ProgLoss, module="mlprogram.nn")
 gin.external_configurable(mlprogram.nn.NL2ProgAccuracy, module="mlprogram.nn")
@@ -77,26 +77,26 @@ gin.external_configurable(mlprogram.metrics.Accuracy,
 gin.external_configurable(mlprogram.metrics.Bleu, module="mlprogram.metrics")
 gin.external_configurable(mlprogram.metrics.python.bleu.Bleu,
                           module="mlprogram.metrics.python")
-gin.external_configurable(mlprogram.language.python.parse,
-                          module="mlprogram.language.python")
-gin.external_configurable(mlprogram.language.python.unparse,
-                          module="mlprogram.language.python")
-gin.external_configurable(mlprogram.language.python.is_subtype,
-                          module="mlprogram.language.python")
-gin.external_configurable(mlprogram.language.bash.parse,
-                          module="mlprogram.language.bash")
-gin.external_configurable(mlprogram.language.bash.unparse,
-                          module="mlprogram.language.bash")
-gin.external_configurable(mlprogram.language.bash.is_subtype,
-                          module="mlprogram.language.bash")
-gin.external_configurable(mlprogram.action.ActionOptions,
-                          module="mlprogram.action")
+gin.external_configurable(mlprogram.languages.python.parse,
+                          module="mlprogram.languages.python")
+gin.external_configurable(mlprogram.languages.python.unparse,
+                          module="mlprogram.languages.python")
+gin.external_configurable(mlprogram.languages.python.is_subtype,
+                          module="mlprogram.languages.python")
+gin.external_configurable(mlprogram.languages.bash.parse,
+                          module="mlprogram.languages.bash")
+gin.external_configurable(mlprogram.languages.bash.unparse,
+                          module="mlprogram.languages.bash")
+gin.external_configurable(mlprogram.languages.bash.is_subtype,
+                          module="mlprogram.languages.bash")
+gin.external_configurable(mlprogram.actions.ActionOptions,
+                          module="mlprogram.actions")
 gin.external_configurable(mlprogram.utils.Compose, module="mlprogram.utils")
-gin.external_configurable(mlprogram.synthesizer.CommonBeamSearchSynthesizer,
+gin.external_configurable(mlprogram.synthesizers.CommonBeamSearchSynthesizer,
                           module="mlprogram.utils")
 gin.external_configurable(
-    mlprogram.synthesizer.CommonBeamSearchSynthesizer.create,
-    module="mlprogram.synthesizer.CommonBeamSearchSynthesizer")
+    mlprogram.synthesizers.CommonBeamSearchSynthesizer.create,
+    module="mlprogram.synthesizers.CommonBeamSearchSynthesizer")
 gin.external_configurable(mlprogram.utils.data.CollateAll,
                           module="mlprogram.utils.data")
 gin.external_configurable(mlprogram.utils.data.CollateGroundTruth,
@@ -165,9 +165,9 @@ gin.external_configurable(mlprogram.utils.transform.treegen.TransformEvaluator,
                           module="mlprogram.utils.transform.treegen")
 
 # Constants
-gin.constant("mlprogram.language.python.ParseMode.Eval",
-             mlprogram.language.python.ParseMode.Eval)
-gin.constant("mlprogram.language.python.ParseMode.Exec",
-             mlprogram.language.python.ParseMode.Exec)
-gin.constant("mlprogram.language.python.ParseMode.Single",
-             mlprogram.language.python.ParseMode.Single)
+gin.constant("mlprogram.languages.python.ParseMode.Eval",
+             mlprogram.languages.python.ParseMode.Eval)
+gin.constant("mlprogram.languages.python.ParseMode.Exec",
+             mlprogram.languages.python.ParseMode.Exec)
+gin.constant("mlprogram.languages.python.ParseMode.Single",
+             mlprogram.languages.python.ParseMode.Single)

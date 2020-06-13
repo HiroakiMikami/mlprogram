@@ -3,7 +3,7 @@ import numpy as np
 
 from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.action import ActionSequence
+from mlprogram.actions import ActionSequence
 from typing import List, Callable, Tuple, Any, Optional
 
 

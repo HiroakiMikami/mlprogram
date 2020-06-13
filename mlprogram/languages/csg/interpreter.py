@@ -1,6 +1,6 @@
 import numpy as np
-from mlprogram.interpreter import Interpreter as BaseInterpreter
-from mlprogram.language.csg \
+from mlprogram.interpreters import Interpreter as BaseInterpreter
+from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference
 from typing import Callable, Dict
 import math

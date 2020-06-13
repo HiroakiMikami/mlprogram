@@ -1,7 +1,7 @@
 from typing import List, Tuple
-from mlprogram.ast import AST
+from mlprogram.asts import AST
 
-from mlprogram.synthesizer import Synthesizer, Progress
+from mlprogram.synthesizers import Synthesizer, Progress
 
 
 def synthesize(query: str,

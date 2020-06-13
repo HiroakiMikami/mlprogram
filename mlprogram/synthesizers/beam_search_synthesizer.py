@@ -1,13 +1,13 @@
 from typing \
     import List, Callable, Any, Tuple, Dict, Optional, Union, cast, Generator
 from dataclasses import dataclass
-from mlprogram.action import ActionSequence
-from mlprogram.ast import Root
-from mlprogram.action \
+from mlprogram.actions import ActionSequence
+from mlprogram.asts import Root
+from mlprogram.actions \
     import NodeConstraint, NodeType, ExpandTreeRule, \
     ApplyRule, GenerateToken, ActionOptions, Rule, CloseNode
 from mlprogram.utils import TopKElement
-from mlprogram.synthesizer import Synthesizer, Candidate, Progress
+from mlprogram.synthesizers import Synthesizer, Candidate, Progress
 
 
 """

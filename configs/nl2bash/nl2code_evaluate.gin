@@ -3,19 +3,19 @@ torch.device.type_str = "cuda"
 torch.device.index    = 0
 
 # Dataset
-dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.nl2bash.download()
+dataset/mlprogram.gin.workspace.put.value = @mlprogram.datasets.nl2bash.download()
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.action.ActionOptions.retain_variadic_fields = True
-mlprogram.action.ActionOptions.split_non_terminal     = True
+mlprogram.actions.ActionOptions.retain_variadic_fields = True
+mlprogram.actions.ActionOptions.split_non_terminal     = True
 
 # Encoder
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.dataset.nl2bash.tokenize_query
+mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.datasets.nl2bash.tokenize_query
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.nl2code.TransformEvaluator.train                   = False
@@ -36,28 +36,28 @@ mlprogram.utils.data.nl2code.CollateState.device          = @torch.device()
 mlprogram.utils.data.CollateNlFeature.device              = @torch.device()
 
 # Synthesizer
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.beam_size               = 15
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.transform_input         = @mlprogram.utils.transform.nl2code.TransformQuery()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.transform_evaluator     = @mlprogram.utils.transform.nl2code.TransformEvaluator()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_input           = @mlprogram.utils.data.nl2code.CollateInput()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_action_sequence = @mlprogram.utils.data.nl2code.CollateActionSequence()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_query           = @mlprogram.utils.data.collate_none
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_state           = @mlprogram.utils.data.nl2code.CollateState()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @mlprogram.utils.data.CollateNlFeature()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.split_states            = @mlprogram.utils.data.nl2code.split_states
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.language.bash.is_subtype
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.action.ActionOptions()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
-mlprogram.synthesizer.CommonBeamSearchSynthesizer.create.max_steps               = 350
-synthesizer/mlprogram.gin.workspace.put.value                              = @mlprogram.synthesizer.CommonBeamSearchSynthesizer.create()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.beam_size               = 15
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_input         = @mlprogram.utils.transform.nl2code.TransformQuery()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_evaluator     = @mlprogram.utils.transform.nl2code.TransformEvaluator()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_input           = @mlprogram.utils.data.nl2code.CollateInput()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_action_sequence = @mlprogram.utils.data.nl2code.CollateActionSequence()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_query           = @mlprogram.utils.data.collate_none
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_state           = @mlprogram.utils.data.nl2code.CollateState()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate_nl_feature      = @mlprogram.utils.data.CollateNlFeature()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.split_states            = @mlprogram.utils.data.nl2code.split_states
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.languages.bash.is_subtype
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.actions.ActionOptions()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.max_steps               = 350
+synthesizer/mlprogram.gin.workspace.put.value                              = @mlprogram.synthesizers.CommonBeamSearchSynthesizer.create()
 
 # Metrics
-mlprogram.metrics.Accuracy.parse   = @mlprogram.language.bash.parse
-mlprogram.metrics.Accuracy.unparse = @mlprogram.language.bash.unparse
-mlprogram.metrics.Bleu.parse       = @mlprogram.language.bash.parse
-mlprogram.metrics.Bleu.unparse     = @mlprogram.language.bash.unparse
+mlprogram.metrics.Accuracy.parse   = @mlprogram.languages.bash.parse
+mlprogram.metrics.Accuracy.unparse = @mlprogram.languages.bash.unparse
+mlprogram.metrics.Bleu.parse       = @mlprogram.languages.bash.parse
+mlprogram.metrics.Bleu.unparse     = @mlprogram.languages.bash.unparse
 
 # Task
 entrypoint.task                                  = @mlprogram.gin.nl2prog.evaluate

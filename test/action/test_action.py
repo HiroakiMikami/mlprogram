@@ -1,6 +1,6 @@
 import unittest
 
-from mlprogram.action \
+from mlprogram.actions \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseNode, CloseVariadicFieldRule
 

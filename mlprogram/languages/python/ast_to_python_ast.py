@@ -1,8 +1,8 @@
 import ast as python_ast  # noqa
 # from typing import List
 
-import mlprogram.ast as ast
-from mlprogram.language.python import PythonAST
+import mlprogram.asts as ast
+from mlprogram.languages.python import PythonAST
 from .utils import BuiltinType
 
 

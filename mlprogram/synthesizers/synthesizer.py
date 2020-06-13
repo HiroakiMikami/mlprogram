@@ -1,6 +1,6 @@
 from typing import Any, Tuple, List, Generator, Dict, Optional
-from mlprogram.action import Action
-from mlprogram.ast import AST
+from mlprogram.actions import Action
+from mlprogram.asts import AST
 from dataclasses import dataclass
 
 

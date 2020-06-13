@@ -10,8 +10,8 @@ import torch
 import torch.optim as optim
 from mlprogram.gin import nl2prog, nl2code, workspace, optimizer
 from mlprogram.utils import Query
-from mlprogram.synthesizer import CommonBeamSearchSynthesizer
-from mlprogram.action import ActionOptions
+from mlprogram.synthesizers import CommonBeamSearchSynthesizer
+from mlprogram.actions import ActionOptions
 from mlprogram.utils.data \
     import CollateAll, CollateGroundTruth, collate_none, CollateNlFeature
 from mlprogram.utils.data.nl2code \

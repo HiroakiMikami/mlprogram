@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mlprogram.ast import Root
+from mlprogram.asts import Root
 from typing \
     import Tuple, Union, List, Any, TypeVar, Generic
 from enum import Enum

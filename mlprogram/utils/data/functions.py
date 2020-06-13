@@ -2,9 +2,9 @@ import torch
 import itertools
 from dataclasses import dataclass
 from typing import Callable, List, Any, Optional, Tuple, Union, Iterable, Dict
-from mlprogram.action \
+from mlprogram.actions \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule
-from mlprogram.action import ActionSequence
+from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
 from mlprogram.utils.data import ListDataset
 from mlprogram.utils import Query

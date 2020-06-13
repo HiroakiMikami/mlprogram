@@ -1,6 +1,6 @@
 import unittest
 
-from mlprogram.dataset.django import tokenize_query
+from mlprogram.datasets.django import tokenize_query
 
 
 class TestTokenizeQuery(unittest.TestCase):

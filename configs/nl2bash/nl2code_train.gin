@@ -3,18 +3,18 @@ torch.device.type_str = "cuda"
 torch.device.index    = 0
 
 # Dataset
-dataset/mlprogram.gin.workspace.put.value = @mlprogram.dataset.nl2bash.download()
+dataset/mlprogram.gin.workspace.put.value = @mlprogram.datasets.nl2bash.download()
 dataset/mlprogram.gin.workspace.get.key   = "dataset"
 
 # ActionOptions
-mlprogram.action.ActionOptions.retain_variadic_fields = True
-mlprogram.action.ActionOptions.split_non_terminal     = True
+mlprogram.actions.ActionOptions.retain_variadic_fields = True
+mlprogram.actions.ActionOptions.split_non_terminal     = True
 
 # to_action_sequence
-to_action_sequence/Compose.f = @mlprogram.language.bash.parse
+to_action_sequence/Compose.f = @mlprogram.languages.bash.parse
 to_action_sequence/Compose.g = @mlprogram.utils.transform.AstToSingleActionSequence()
 mlprogram.utils.transform.AstToSingleActionSequence.tokenize = @mlprogram.utils.python.tokenize_token
-mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.action.ActionOptions()
+mlprogram.utils.transform.AstToSingleActionSequence.options  = @mlprogram.actions.ActionOptions()
 
 # Encoder
 train_dataset/mlprogram.gin.get_key.key                  = "train"
@@ -22,16 +22,16 @@ train_dataset/mlprogram.gin.get_key.target               = @dataset/mlprogram.gi
 mlprogram.gin.nl2code.prepare_encoder.dataset            = @train_dataset/mlprogram.gin.get_key()
 mlprogram.gin.nl2code.prepare_encoder.word_threshold     = 3
 mlprogram.gin.nl2code.prepare_encoder.token_threshold    = 0
-mlprogram.gin.nl2code.prepare_encoder.parse              = @mlprogram.language.bash.parse
+mlprogram.gin.nl2code.prepare_encoder.parse              = @mlprogram.languages.bash.parse
 mlprogram.gin.nl2code.prepare_encoder.to_action_sequence = @to_action_sequence/Compose()
-mlprogram.gin.nl2code.prepare_encoder.extract_query      = @mlprogram.dataset.nl2bash.tokenize_query
-mlprogram.gin.nl2code.prepare_encoder.tokenize_token     = @mlprogram.dataset.nl2bash.tokenize_token
+mlprogram.gin.nl2code.prepare_encoder.extract_query      = @mlprogram.datasets.nl2bash.tokenize_query
+mlprogram.gin.nl2code.prepare_encoder.tokenize_token     = @mlprogram.datasets.nl2bash.tokenize_token
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
 mlprogram.utils.transform.TransformDataset.transform_input                   = @mlprogram.utils.transform.nl2code.TransformQuery()
-mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.dataset.nl2bash.tokenize_query
+mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.datasets.nl2bash.tokenize_query
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
 mlprogram.utils.transform.TransformCode.to_action_sequence                   = @to_action_sequence/Compose()

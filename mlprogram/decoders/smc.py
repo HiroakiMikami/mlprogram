@@ -1,6 +1,6 @@
 from typing import TypeVar, Generic, Optional, Generator, Dict, Tuple
 from mlprogram.samplers import Sampler, SamplerState
-from mlprogram.decoder import Result, Decoder
+from mlprogram.decoders import Result, Decoder
 import math
 import numpy as np
 

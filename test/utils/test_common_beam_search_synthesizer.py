@@ -2,7 +2,7 @@ import unittest
 import torch.nn as nn
 import numpy as np
 from mlprogram.nn import TrainModel
-from mlprogram.synthesizer import CommonBeamSearchSynthesizer
+from mlprogram.synthesizers import CommonBeamSearchSynthesizer
 
 
 class TestCommonBeamSearchSynthesizer(unittest.TestCase):

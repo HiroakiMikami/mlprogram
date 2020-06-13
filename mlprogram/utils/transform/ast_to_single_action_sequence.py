@@ -1,12 +1,12 @@
 from typing import Callable, Sequence, Optional, List
 import logging
-from mlprogram.ast import AST, Node, Leaf, Field, Root
-from mlprogram.action import ActionOptions
-from mlprogram.action import Action, NodeType, NodeConstraint
-from mlprogram.action import ApplyRule, ExpandTreeRule
-from mlprogram.action import CloseVariadicFieldRule
-from mlprogram.action import GenerateToken, CloseNode
-from mlprogram.action import ActionSequence
+from mlprogram.asts import AST, Node, Leaf, Field, Root
+from mlprogram.actions import ActionOptions
+from mlprogram.actions import Action, NodeType, NodeConstraint
+from mlprogram.actions import ApplyRule, ExpandTreeRule
+from mlprogram.actions import CloseVariadicFieldRule
+from mlprogram.actions import GenerateToken, CloseNode
+from mlprogram.actions import ActionSequence
 
 
 logger = logging.getLogger(__name__)

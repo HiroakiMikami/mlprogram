@@ -1,9 +1,9 @@
 import unittest
-from mlprogram.action \
+from mlprogram.actions \
     import ActionOptions, ApplyRule, ExpandTreeRule, NodeType, \
     NodeConstraint, GenerateToken, CloseNode, CloseVariadicFieldRule
-from mlprogram import ast
-from mlprogram.ast import Root
+from mlprogram import asts
+from mlprogram.asts import Root
 from mlprogram.utils.transform import AstToSingleActionSequence
 
 
@@ -15,7 +15,7 @@ class TestAstToActionSequence(unittest.TestCase):
     def test_leaf(self):
         f = AstToSingleActionSequence(ActionOptions(True, True),
                                       tokenize=tokenize)
-        seq = f(ast.Leaf("str", "t0 t1"))
+        seq = f(asts.Leaf("str", "t0 t1"))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
@@ -28,7 +28,7 @@ class TestAstToActionSequence(unittest.TestCase):
         self.assertEqual(ActionOptions(True, True), seq._options)
 
         f = AstToSingleActionSequence(ActionOptions(True, False))
-        seq = f(ast.Leaf("str", "t0 t1"))
+        seq = f(asts.Leaf("str", "t0 t1"))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                                       [("root", NodeType(Root(),
@@ -40,9 +40,9 @@ class TestAstToActionSequence(unittest.TestCase):
         self.assertEqual(ActionOptions(True, False), seq._options)
 
     def test_node(self):
-        a = ast.Node(
+        a = asts.Node(
             "def",
-            [ast.Field("name", "literal", ast.Leaf("str", "foo"))])
+            [asts.Field("name", "literal", asts.Leaf("str", "foo"))])
         f = AstToSingleActionSequence(ActionOptions(True, True),
                                       tokenize=tokenize)
         seq = f(a)
@@ -62,8 +62,8 @@ class TestAstToActionSequence(unittest.TestCase):
         self.assertEqual(ActionOptions(True, True), seq._options)
 
     def test_node_with_variadic_fields(self):
-        a = ast.Node("list", [ast.Field("elems", "literal", [
-                     ast.Node("str", []), ast.Node("str", [])])])
+        a = asts.Node("list", [asts.Field("elems", "literal", [
+            asts.Node("str", []), asts.Node("str", [])])])
         f = AstToSingleActionSequence(ActionOptions(True, True),
                                       tokenize=tokenize)
         seq = f(a)
