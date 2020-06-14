@@ -1,24 +1,29 @@
 import torch
 import numpy as np
 from torchnlp.encoders import LabelEncoder
-from typing import Callable, List, Any, Optional, Tuple, Dict
+from typing import Callable, List, Any, Optional, Dict, TypeVar, Generic, cast
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Query
 
+Input = TypeVar("Input")
 
-class TransformQuery:
-    def __init__(self, extract_query: Callable[[Any], Query],
+
+class TransformQuery(Generic[Input]):
+    def __init__(self, extract_query: Callable[[Input], Query],
                  word_encoder: LabelEncoder):
         self.extract_query = extract_query
         self.word_encoder = word_encoder
 
-    def __call__(self, input: Any) -> Tuple[List[str], Dict[str, Any]]:
+    def __call__(self, **entry: Any) -> Dict[str, Any]:
+        input = cast(Input, entry["input"])
         query = self.extract_query(input)
 
-        return query.query_for_synth, \
-            {"word_nl_query":
-             self.word_encoder.batch_encode(query.query_for_dnn)}
+        entry["query_for_synth"] = query.query_for_synth
+        entry["word_nl_query"] = \
+            self.word_encoder.batch_encode(query.query_for_dnn)
+
+        return entry
 
 
 class TransformActionSequence:
@@ -28,9 +33,9 @@ class TransformActionSequence:
         self.action_sequence_encoder = action_sequence_encoder
         self.train = train
 
-    def __call__(self, action_sequence: ActionSequence,
-                 query_for_synth: List[str]) \
-            -> Optional[Dict[str, Any]]:
+    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+        action_sequence = cast(ActionSequence, entry["action_sequence"])
+        query_for_synth = cast(List[str], entry["query_for_synth"])
         a = self.action_sequence_encoder.encode_action(action_sequence,
                                                        query_for_synth)
         p = self.action_sequence_encoder.encode_parent(action_sequence)
@@ -48,10 +53,10 @@ class TransformActionSequence:
                 [a[-1, 0].view(1, -1), p[-1, 1:3].view(1, -1)], dim=1)
             prev_action = a[-2, 1:].view(1, -1)
 
-        return {
-            "actions": action_tensor,
-            "previous_actions": prev_action,
-            "history": None,
-            "hidden_state": None,
-            "state": None
-        }
+        entry["actions"] = action_tensor
+        entry["previous_actions"] = prev_action
+        entry["history"] = None
+        entry["hidden_state"] = None
+        entry["state"] = None
+
+        return entry

@@ -1,7 +1,7 @@
 import requests
-from typing import Callable, Tuple, List, Dict
+from typing import Callable, Tuple, List, Dict, Any
 
-from mlprogram.utils.data import Entry, ListDataset
+from mlprogram.utils.data import ListDataset
 from .format_annotations import format_annotations
 
 BASE_PATH = "https://raw.githubusercontent.com/" + \
@@ -20,9 +20,9 @@ def download(base_path: str = BASE_PATH,
     annotation = format_annotations(annotation)
     code = get(BASE_PATH + "all.code").split("\n")
 
-    def to_group(elem: Tuple[str, str]) -> List[Entry]:
+    def to_group(elem: Tuple[str, str]) -> Dict[str, List[Any]]:
         anno, code = elem
-        return [Entry(anno, code)]
+        return {"input": [anno], "ground_truth": [code]}
     data = list(map(to_group, zip(annotation, code)))
 
     train = ListDataset(data[:num_train])

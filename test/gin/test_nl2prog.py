@@ -9,7 +9,7 @@ from torch import optim
 from mlprogram.gin import workspace
 from mlprogram.gin.nl2prog import train, evaluate
 from mlprogram.asts import Leaf
-from mlprogram.utils.data import ListDataset, Entry
+from mlprogram.utils.data import ListDataset
 from mlprogram.synthesizers.beam_search_synthesizer import Candidate
 from mlprogram.metrics import Accuracy, Bleu
 
@@ -166,8 +166,10 @@ class TestTrain(unittest.TestCase):
 class TestEvaluate(unittest.TestCase):
     def prepare_dataset(self, dataset_path):
         workspace.put(dataset_path,
-                      {"test": ListDataset([[Entry("query", "name0")]]),
-                       "valid": ListDataset([[Entry("query", "name0")]])})
+                      {"test": ListDataset([{"input": ["query"],
+                                             "ground_truth": ["name0"]}]),
+                       "valid": ListDataset([{"input": ["query"],
+                                              "ground_truth": ["name0"]}])})
 
     def prepare_synthesizer(self, synthesizer_path):
         class MockSynthesizer:

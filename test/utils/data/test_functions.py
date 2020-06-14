@@ -6,7 +6,7 @@ from mlprogram.utils import Query
 from mlprogram.languages.python import to_ast
 from mlprogram.actions import ActionOptions
 from mlprogram.utils.data \
-    import Entry, ListDataset, to_eval_dataset, get_samples, get_words, \
+    import ListDataset, to_eval_dataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
 
@@ -26,18 +26,18 @@ def to_action_sequence(code: str):
 
 class TestGetWords(unittest.TestCase):
     def test_get_words(self):
-        entries = [Entry("foo bar", "y = x + 1"),
-                   Entry("test foo", "f(x)")]
-        dataset = ListDataset([entries])
+        entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
+                   {"input": ["test foo"], "ground_truth": ["f(x)"]}]
+        dataset = ListDataset(entries)
         words = get_words(dataset, tokenize_query)
         self.assertEqual(["foo", "bar", "test", "foo"], words)
 
 
 class TestGetCharacters(unittest.TestCase):
     def test_get_characters(self):
-        entries = [Entry("foo bar", "y = x + 1"),
-                   Entry("test foo", "f(x)")]
-        dataset = ListDataset([entries])
+        entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
+                   {"input": ["test foo"], "ground_truth": ["f(x)"]}]
+        dataset = ListDataset(entries)
         chars = get_characters(dataset, tokenize_query)
         self.assertEqual([
             "f", "o", "o",
@@ -48,9 +48,9 @@ class TestGetCharacters(unittest.TestCase):
 
 class TestGetSamples(unittest.TestCase):
     def test_get_samples(self):
-        entries = [Entry("foo bar", "y = x + 1"),
-                   Entry("test foo", "f(x)")]
-        dataset = ListDataset([entries])
+        entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
+                   {"input": ["test foo"], "ground_truth": ["f(x)"]}]
+        dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
         self.assertEqual(12, len(d.rules))
@@ -60,7 +60,7 @@ class TestGetSamples(unittest.TestCase):
 
 class TestToEvalDataset(unittest.TestCase):
     def test_simple_case(self):
-        groups = [[Entry("foo bar", "y = x1")]]
+        groups = [{"input": ["foo bar"], "ground_truth": ["y = x1"]}]
         dataset = ListDataset(groups)
         vdataset = to_eval_dataset(dataset)
         query, ref = vdataset[0]
@@ -106,6 +106,28 @@ class TestCollate(unittest.TestCase):
                                        retval["stack0"].data.numpy()))
         self.assertTrue(np.array_equal([[[1, 1, 1], [2, 2, 2]]],
                                        retval["stack1"].data.numpy()))
+
+    def test_collate_with_skip(self):
+        data = [
+            {
+                "pad0": torch.zeros(1),
+            },
+            None
+        ]
+        collate = Collate(device=torch.device("cpu"),
+                          pad0=CollateOptions(True, 0, -1))
+        retval = collate.collate(data)
+        self.assertEqual(set(["pad0"]),
+                         set(retval.keys()))
+        self.assertTrue(np.array_equal([[0]],
+                                       retval["pad0"].data.numpy()))
+
+    def test_collate_with_all_none_batch(self):
+        data = [None]
+        collate = Collate(device=torch.device("cpu"),
+                          pad0=CollateOptions(True, 0, -1))
+        retval = collate.collate(data)
+        self.assertEqual({}, retval)
 
     def test_collate_with_pad(self):
         data = [

@@ -1,7 +1,7 @@
 from typing import List
 from mlprogram.gin import workspace
 from mlprogram.asts import AST, Node, Leaf, Field
-from mlprogram.utils.data import ListDataset, Entry
+from mlprogram.utils.data import ListDataset
 
 
 # Definition of dummy language
@@ -51,16 +51,20 @@ def FunctionCall(name: str, args: List[AST]):
 
 # Dataset
 traindata = [
-    [Entry("x is assigned the value of 0", Assign("x", Number(0)))],
-    [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
-    [Entry("dump the value of xy and x",
-           FunctionCall("print", [Name("xy"), Name("x")]))]
+    {"input": ["x is assigned the value of 0"],
+     "ground_truth": [Assign("x", Number(0))]},
+    {"input": ["dump the value of xy"],
+     "ground_truth": [FunctionCall("print", [Name("xy")])]},
+    {"input": ["dump the value of xy and x"],
+     "ground_truth": [FunctionCall("print", [Name("xy"), Name("x")])]}
 ]
 test_dataset = ListDataset([
-    [Entry("x is assigned the value of 4", Assign("x", Number(4)))],
-    [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
-    [Entry("dump the value of xy and x",
-           FunctionCall("print", [Name("xy"), Name("x")]))]
+    {"input": ["x is assigned the value of 4"],
+     "ground_truth": [Assign("x", Number(4))]},
+    {"input": ["dump the value of xy"],
+     "ground_truth": [FunctionCall("print", [Name("xy")])]},
+    {"input": ["dump the value of xy and x"],
+     "ground_truth": [FunctionCall("print", [Name("xy"), Name("x")])]}
 ])
 
 

@@ -1,7 +1,7 @@
 import requests
 from typing import Callable, Dict
 
-from mlprogram.utils.data import Entry, ListDataset
+from mlprogram.utils.data import ListDataset
 
 BASE_PATH = "https://raw.githubusercontent.com/" + \
     "deepmind/card2code/master/third_party/hearthstone/"
@@ -28,6 +28,6 @@ def download(base_path: str = BASE_PATH,
         for q, c in zip(query, code):
             if q == "" and c == "":
                 continue
-            groups.append([Entry(q, c)])
+            groups.append({"input": [q], "ground_truth": [c]})
         dataset[target] = ListDataset(groups)
     return dataset

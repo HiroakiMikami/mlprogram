@@ -2,12 +2,12 @@ import unittest
 import numpy as np
 
 from mlprogram.utils import Query
-from mlprogram.utils.data import Entry, ListDataset, get_samples
+from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Leaf, Field
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
-    import TransformCode, TransformGroundTruth, TransformDataset
+    import TransformCode, TransformGroundTruth, TransformDataset, RandomChoice
 
 
 def tokenize(query: str):
@@ -38,20 +38,22 @@ def to_action_sequence(code: str):
 class TestTransformCode(unittest.TestCase):
     def test_simple_case(self):
         transform = TransformCode(to_action_sequence)
-        action_sequence = transform("y = x + 1")
+        action_sequence = \
+            transform(ground_truth="y = x + 1")["action_sequence"]
         self.assertEqual(None, action_sequence.head)
 
 
 class TestTransformGroundTruth(unittest.TestCase):
     def test_simple_case(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = ListDataset([entries])
+        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
+        input = TransformCode(to_action_sequence)(ground_truth="y = x + 1")
         transform = TransformGroundTruth(aencoder)
         ground_truth = \
-            transform(action_sequence, ["foo", "bar"])["ground_truth_actions"]
+            transform(query_for_synth=["foo", "bar"],
+                      **input)["ground_truth_actions"]
         self.assertTrue(np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 2, -1], [-1, 1, -1],
@@ -63,28 +65,40 @@ class TestTransformGroundTruth(unittest.TestCase):
         ))
 
     def test_impossible_case(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = ListDataset([entries])
+        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
+        action_sequence = TransformCode(to_action_sequence)(
+            ground_truth="y = x + 1")["action_sequence"]
         transform = TransformGroundTruth(aencoder)
-        ground_truth = transform(action_sequence, ["foo", "bar"])
+        ground_truth = transform(action_sequence=action_sequence,
+                                 query_for_synth=["foo", "bar"]
+                                 )
         self.assertEqual(None, ground_truth)
 
 
 class TestTransformDataset(unittest.TestCase):
     def test_happy_path(self):
-        dataset = ListDataset([[Entry("foo bar", "y = x + 1")]])
-        transform = TransformDataset(lambda x: ([x], {}),
-                                     lambda x: "action_sequence",
-                                     lambda x, y: {},
-                                     lambda x, y: {})
+        dataset = ListDataset([{"input": ["foo bar"],
+                                "ground_truth": ["y = x + 1"]}])
+        transform = TransformDataset(lambda **x: {},
+                                     lambda **x: {},
+                                     lambda **x: {},
+                                     lambda **x: {})
         dataset = transform(dataset)
         self.assertEqual(1, len(dataset))
         entry = dataset[0]
         self.assertEqual(0, len(entry))
+
+
+class TestRandomChoise(unittest.TestCase):
+    def test_choice(self):
+        transform = RandomChoice()
+        x = transform(x=[0, 1], y=[0, 1])
+        self.assertTrue(isinstance(x["x"], int))
+        self.assertTrue(isinstance(x["y"], int))
 
 
 if __name__ == "__main__":

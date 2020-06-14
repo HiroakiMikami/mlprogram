@@ -3,7 +3,7 @@ import numpy as np
 import logging
 from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
-    Tuple, cast, Dict
+    Tuple, cast, Dict, Any, Sequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
@@ -131,7 +131,7 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
         token_pred = results[1].data.cpu().reshape(N, -1)
         copy_pred = results[2].data.cpu().reshape(N, -1)
         if state is not None:
-            next_state: List[Dict[str, Optional[torch.Tensor]]] = \
+            next_state: Sequence[Dict[str, Any]] = \
                 self.collate_state.split(state)
         else:
             next_state = [{"state": None}] * len(states)

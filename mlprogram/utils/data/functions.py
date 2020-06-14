@@ -1,7 +1,7 @@
 import torch
 from torch.nn import functional as F
 from dataclasses import dataclass
-from typing import Callable, List, Any, Optional, Union, Dict
+from typing import Callable, Sequence, Any, Optional, Union, Dict, List
 from mlprogram.actions \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
@@ -14,12 +14,12 @@ from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 def get_words(dataset: torch.utils.data.Dataset,
               extract_query: Callable[[Any], Query],
-              ) -> List[str]:
+              ) -> Sequence[str]:
     words = []
 
     for group in dataset:
-        for entry in group:
-            query = extract_query(entry.input)
+        for input in group["input"]:
+            query = extract_query(input)
             words.extend(query.query_for_dnn)
 
     return words
@@ -27,12 +27,12 @@ def get_words(dataset: torch.utils.data.Dataset,
 
 def get_characters(dataset: torch.utils.data.Dataset,
                    extract_query: Callable[[Any], Query],
-                   ) -> List[str]:
+                   ) -> Sequence[str]:
     chars: List[str] = []
 
     for group in dataset:
-        for entry in group:
-            query = extract_query(entry.input)
+        for input in group["input"]:
+            query = extract_query(input)
             for token in query.query_for_dnn:
                 chars.extend(token)
 
@@ -40,7 +40,7 @@ def get_characters(dataset: torch.utils.data.Dataset,
 
 
 def get_samples(dataset: torch.utils.data.Dataset,
-                tokenize_token: Callable[[str], List[str]],
+                tokenize_token: Callable[[str], Sequence[str]],
                 to_action_sequence: Callable[[Any],
                                              Optional[ActionSequence]]
                 ) -> Samples:
@@ -50,8 +50,8 @@ def get_samples(dataset: torch.utils.data.Dataset,
     options = None
 
     for group in dataset:
-        for entry in group:
-            action_sequence = to_action_sequence(entry.ground_truth)
+        for gt in group["ground_truth"]:
+            action_sequence = to_action_sequence(gt)
             if action_sequence is None:
                 continue
             if options is not None:
@@ -80,10 +80,10 @@ def to_eval_dataset(dataset: torch.utils.data.Dataset) \
     entries = []
     for group in dataset:
         gts = []
-        for entry in group:
-            gts.append(entry.ground_truth)
-        for entry in group:
-            entries.append((entry.input, gts))
+        for ground_truth in group["ground_truth"]:
+            gts.append(ground_truth)
+        for input in group["input"]:
+            entries.append((input, gts))
     return ListDataset(entries)
 
 
@@ -100,20 +100,28 @@ class Collate:
         self.device = device
         self.options: Dict[str, CollateOptions] = kwargs
 
-    def __call__(self, tensors: List[Dict[str, Optional[torch.Tensor]]]) \
+    def __call__(self, tensors: Sequence[Optional[Dict[str,
+                                                       Optional[torch.Tensor]
+                                                       ]]]) \
             -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
         return self.collate(tensors)
 
-    def collate(self, tensors: List[Dict[str, Optional[torch.Tensor]]]) \
+    def collate(self, tensors: Sequence[Optional[Dict[str,
+                                                      Optional[torch.Tensor]
+                                                      ]]]) \
             -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
         retval: Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]] = {}
         tmp: Dict[str, List[torch.Tensor]] = {}
         for i, t in enumerate(tensors):
+            if t is None:
+                continue
             for name, tensor in t.items():
                 if name not in tmp:
                     tmp[name] = []
                 tmp[name].append(tensor)
         for name, ts in tmp.items():
+            if name not in self.options:
+                continue
             option = self.options[name]
             if all(map(lambda x: x is None, ts)):
                 retval[name] = None
@@ -148,7 +156,9 @@ class Collate:
 
     def split(self, tensors: Dict[str, Union[torch.Tensor,
                                              PaddedSequenceWithMask]]) \
-            -> List[Dict[str, torch.Tensor]]:
+            -> Sequence[Dict[str, torch.Tensor]]:
+        tensors = {key: value for key, value in tensors.items()
+                   if key in self.options.keys()}
         retval: List[Dict[str, torch.Tensor]] = []
         for name, t in tensors.items():
             option = self.options[name]

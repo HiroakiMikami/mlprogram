@@ -119,6 +119,9 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
             avg_score = 0.0
             model.train()
             for i, batch in enumerate(loader):
+                if len(batch) == 0:
+                    logger.info(f"Skip {i} th batch")
+                    continue
                 if i == n_iter:
                     break
                 output = cast(Tuple[PaddedSequenceWithMask,

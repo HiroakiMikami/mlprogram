@@ -4,17 +4,25 @@ import numpy as np
 from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
-from typing import List, Callable, Tuple, Any, Optional, Dict
+from typing import List, Callable, Any, Optional, Dict, cast, Generic, TypeVar
 
 
-class TransformCode:
+Code = TypeVar("Code")
+
+
+class TransformCode(Generic[Code]):
     def __init__(self,
-                 to_action_sequence: Callable[[Any],
+                 to_action_sequence: Callable[[Code],
                                               Optional[ActionSequence]]):
         self.to_action_sequence = to_action_sequence
 
-    def __call__(self, code: Any) -> Optional[ActionSequence]:
-        return self.to_action_sequence(code)
+    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+        code = cast(Code, entry["ground_truth"])
+        seq = self.to_action_sequence(code)
+        if seq is None:
+            return None
+        entry["action_sequence"] = seq
+        return entry
 
 
 class TransformGroundTruth:
@@ -23,9 +31,9 @@ class TransformGroundTruth:
 
         self.action_sequence_encoder = action_sequence_encoder
 
-    def __call__(self, action_sequence: ActionSequence,
-                 query_for_synth: List[str]) \
-            -> Optional[Dict[str, Optional[torch.Tensor]]]:
+    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+        action_sequence = cast(ActionSequence, entry["action_sequence"])
+        query_for_synth = cast(List[str], entry["query_for_synth"])
         a = self.action_sequence_encoder.encode_action(action_sequence,
                                                        query_for_synth)
         if a is None:
@@ -33,21 +41,30 @@ class TransformGroundTruth:
         if np.any(a[-1, :].numpy() != -1):
             return None
         ground_truth = a[1:-1, 1:]
-        return {"ground_truth_actions": ground_truth}
+        entry["ground_truth_actions"] = ground_truth
+        return entry
+
+
+class RandomChoice:
+    def __init__(self, rng: Optional[np.random.RandomState] = None):
+        if rng is None:
+            rng = np.random
+        self.rng = rng
+
+    def __call__(self, **entry: Any) -> Dict[str, Any]:
+        output = {}
+        for key, value in entry.items():
+            output[key] = self.rng.choice(value, size=()).item()
+        return output
 
 
 class TransformDataset:
     def __init__(self,
-                 transform_input: Callable[[Any], Tuple[List[str],
-                                                        Dict[str, Any]]],
-                 transform_code: Callable[[Any], Optional[ActionSequence]],
-                 transform_action_sequence: Callable[
-                     [ActionSequence, List[str]],
-                     Optional[Dict[str, Any]]],
-                 transform_ground_truth: Callable[[ActionSequence, List[str]],
-                                                  Optional[
-                                                      Dict[str, torch.Tensor]]
-                                                  ]):
+                 transform_input,
+                 transform_code,
+                 transform_action_sequence,
+                 transform_ground_truth):
+        self.choice = RandomChoice()
         self.transform_input = transform_input
         self.transform_code = transform_code
         self.transform_action_sequence = transform_action_sequence
@@ -57,30 +74,16 @@ class TransformDataset:
             -> torch.utils.data.Dataset:
         entries = []
         for group in dataset:
-            for entry in group:
-                query_for_synth, input = \
-                    self.transform_input(entry.input)
-                actions = self.transform_code(entry.ground_truth)
-                if actions is None:
-                    continue
-                action_sequence = self.transform_action_sequence(
-                    actions, query_for_synth)
-                ground_truth = self.transform_ground_truth(
-                    actions, query_for_synth)
-                if ground_truth is None or action_sequence is None:
-                    continue
-                entry = {}
-                for key, value in input.items():
-                    if value is None and key in entry:
-                        continue
-                    entry[key] = value
-                for key, value in action_sequence.items():
-                    if value is None and key in entry:
-                        continue
-                    entry[key] = value
-                for key, value in ground_truth.items():
-                    if value is None and key in entry:
-                        continue
-                    entry[key] = value
-                entries.append(entry)
+            entry = self.choice(**group)
+            entry = self.transform_input(**entry)
+            entry = self.transform_code(**entry)
+            if entry is None:
+                continue
+            entry = self.transform_action_sequence(**entry)
+            if entry is None:
+                continue
+            entry = self.transform_ground_truth(**entry)
+            if entry is None:
+                continue
+            entries.append(entry)
         return ListDataset(entries)

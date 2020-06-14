@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from torchnlp.encoders import LabelEncoder
 from mlprogram.utils import Query
-from mlprogram.utils.data import Entry, ListDataset, get_samples
+from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Leaf, Field
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
@@ -42,20 +42,22 @@ class TestTransformQuery(unittest.TestCase):
             return Query([value], [value + "dnn"])
 
         transform = TransformQuery(tokenize_query, LabelEncoder(["dnn"]))
-        query_for_synth, query_tensor = transform("")
-        self.assertEqual([""], query_for_synth)
-        self.assertEqual([1], query_tensor["word_nl_query"].numpy().tolist())
+        result = transform(input="")
+        self.assertEqual([""], result["query_for_synth"])
+        self.assertEqual([1], result["word_nl_query"].numpy().tolist())
 
 
 class TestTransformActionSequence(unittest.TestCase):
     def test_simple_case(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = ListDataset([entries])
+        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
-        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
-        result = transform(action_sequence, ["foo", "bar"])
+        action_sequence = TransformCode(to_action_sequence)(
+            ground_truth="y = x + 1")["action_sequence"]
+        result = transform(action_sequence=action_sequence,
+                           query_for_synth=["foo", "bar"])
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
         self.assertTrue(np.array_equal(
@@ -77,13 +79,15 @@ class TestTransformActionSequence(unittest.TestCase):
         ))
 
     def test_eval(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = ListDataset([entries])
+        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
+        action_sequence = TransformCode(to_action_sequence)(
+            ground_truth="y = x + 1")["action_sequence"]
         transform = TransformActionSequence(aencoder, train=False)
-        result = transform(action_sequence, ["foo", "bar"])
+        result = transform(action_sequence=action_sequence,
+                           query_for_synth=["foo", "bar"])
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
 
@@ -97,14 +101,16 @@ class TestTransformActionSequence(unittest.TestCase):
         ))
 
     def test_impossible_case(self):
-        entries = [Entry("foo bar", "y = x + 1")]
-        dataset = ListDataset([entries])
+        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
-        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
-        result = transform(action_sequence, ["foo", "bar"])
+        action_sequence = TransformCode(to_action_sequence)(
+            ground_truth="y = x + 1")["action_sequence"]
+        result = transform(action_sequence=action_sequence,
+                           query_for_synth=["foo", "bar"])
         self.assertEqual(None, result)
 
 

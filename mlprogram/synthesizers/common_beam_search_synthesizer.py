@@ -12,6 +12,7 @@ from mlprogram.synthesizers \
     import BeamSearchSynthesizer as BaseBeamSearchSynthesizer, \
     IsSubtype, LazyLogProbability
 from mlprogram.nn import TrainModel
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils.data import Collate
 
 
@@ -26,10 +27,8 @@ class State:
 
 class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
-                 transform_input: Callable[[Any],
-                                           Tuple[List[str], Dict[str, Any]]],
-                 transform_action_sequence: Callable[
-                     [ActionSequence, List[str]], Optional[Dict[str, Any]]],
+                 transform_input,
+                 transform_action_sequence,
                  collate: Collate,
                  input_reader: nn.Module,  # Callable[[Any], Tuple[Any, Any]],
                  action_sequence_reader: nn.Module,  # Callable[[Any], Any],
@@ -107,21 +106,24 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                    self.decoder, self.predictor).load_state_dict(state_dict)
 
     def initialize(self, input: Any) -> State:
-        query_for_synth, input = self.transform_input(input)
-        inputs = self.collate.collate([input])
+        output = self.transform_input(input=input)
+        inputs = self.collate.collate([output])
         self.input_reader.eval()
         inputs = self.input_reader(**inputs)
         input = self.collate.split(inputs)[0]
 
-        return State(query_for_synth, input)
+        return State(output["query_for_synth"], input)
 
     def batch_update(self, hs: List[Hypothesis]) \
             -> List[Tuple[State, LazyLogProbability]]:
         # Create batch of hypothesis
-        data = []
+        data: List[Optional[Dict[str,
+                                 Union[torch.Tensor, PaddedSequenceWithMask]
+                                 ]]] = []
         for h in hs:
             tmp = self.transform_action_sequence(
-                h.action_sequence, h.state.query)
+                action_sequence=h.action_sequence,
+                query_for_synth=h.state.query)
             if tmp is not None:
                 new_data = {key: value.clone()
                             for key, value in h.state.data.items()}
@@ -134,14 +136,15 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                 logger.warn(
                     "Invalid action_sequence is in the set of hypothesis")
         inputs = self.collate.collate(data)
+        assert inputs is not None
 
         with torch.no_grad():
             self.action_sequence_reader.eval()
             self.decoder.eval()
             self.predictor.eval()
-            inputs = self.action_sequence_reader(**inputs)
-            inputs = self.decoder(**inputs)
-            results = self.predictor(**inputs)
+            outputs = self.action_sequence_reader(**inputs)
+            outputs = self.decoder(**outputs)
+            results = self.predictor(**outputs)
         # (len(hs), n_rules)
         rule_pred = \
             results["rule_probs"].data.cpu().reshape(len(hs), -1)
@@ -151,12 +154,9 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         # (len(hs), query_length)
         copy_pred = \
             results["copy_probs"].data.cpu().reshape(len(hs), -1)
-        inputs = {key: value for key, value in inputs.items()
-                  if key in self.collate.options.keys()}
-        data = self.collate.split(inputs)
 
         retval = []
-        for i, (h, d) in enumerate(zip(hs, data)):
+        for i, (h, d) in enumerate(zip(hs, self.collate.split(outputs))):
             state = State(h.state.query, d)
 
             class Functions:

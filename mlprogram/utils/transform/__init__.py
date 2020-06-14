@@ -1,4 +1,2 @@
-from .functions import TransformCode, TransformGroundTruth, TransformDataset
+from .functions import RandomChoice, TransformCode, TransformGroundTruth, TransformDataset  # noqa
 from .ast_to_single_action_sequence import AstToSingleActionSequence  # noqa
-
-__all__ = ["TransformCode", "TransformGroundTruth", "TransformDataset"]

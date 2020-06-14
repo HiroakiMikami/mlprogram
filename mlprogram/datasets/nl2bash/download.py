@@ -2,9 +2,9 @@ import subprocess
 import tempfile
 import os
 import json
-from typing import Dict, List
+from typing import Dict, List, Any
 
-from mlprogram.utils.data import Entry, ListDataset
+from mlprogram.utils.data import ListDataset
 
 
 def download(bin_dir: str = "bin") -> Dict[str, ListDataset]:
@@ -22,11 +22,13 @@ def download(bin_dir: str = "bin") -> Dict[str, ListDataset]:
                                "dev.filtered.json")) as file:
             valid = json.load(file)
 
-    def to_entry(example: Dict[str, str]) -> Entry:
-        return Entry(example["source"], example["target"])
-
-    def to_group(group) -> List[Entry]:
-        return [to_entry(example) for example in group["examples"]]
+    def to_group(group) -> Dict[str, List[Any]]:
+        input = []
+        ground_truth = []
+        for example in group["examples"]:
+            input.append(example["source"])
+            ground_truth.append(example["target"])
+        return {"input": input, "ground_truth": ground_truth}
     dataset = {}
     dataset["train"] = \
         ListDataset([to_group(group) for group in train["examples"]])
