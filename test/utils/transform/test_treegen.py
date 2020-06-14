@@ -9,7 +9,7 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform import TransformCode
 from mlprogram.utils.transform.treegen \
-    import TransformQuery, TransformEvaluator
+    import TransformQuery, TransformActionSequence
 
 
 def tokenize(query: str):
@@ -53,16 +53,16 @@ class TestTransformQuery(unittest.TestCase):
                                        char_query.numpy()))
 
 
-class TestTransformEvaluator(unittest.TestCase):
+class TestTransformActionSequence(unittest.TestCase):
     def test_simple_case(self):
         entries = [Entry("ab test", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        evaluator = \
+        action_sequence = \
             TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, 2, 3)
-        result = transform(evaluator, ["ab", "test"])
+        transform = TransformActionSequence(aencoder, 2, 3)
+        result = transform(action_sequence, ["ab", "test"])
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
         depth = result["depthes"]
@@ -129,10 +129,10 @@ class TestTransformEvaluator(unittest.TestCase):
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        evaluator = \
+        action_sequence = \
             TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, 2, 3, train=False)
-        result = transform(evaluator, ["ab", "test"])
+        transform = TransformActionSequence(aencoder, 2, 3, train=False)
+        result = transform(action_sequence, ["ab", "test"])
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
         depth = result["depthes"]
@@ -202,10 +202,10 @@ class TestTransformEvaluator(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        evaluator = \
+        action_sequence = \
             TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, 3, 3)
-        result = transform(evaluator, ["ab", "test"])
+        transform = TransformActionSequence(aencoder, 3, 3)
+        result = transform(action_sequence, ["ab", "test"])
         self.assertEqual(None, result)
 
 

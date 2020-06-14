@@ -28,8 +28,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def __init__(self, beam_size: int,
                  transform_input: Callable[[Any],
                                            Tuple[List[str], Dict[str, Any]]],
-                 transform_evaluator: Callable[[ActionSequence, List[str]],
-                                               Optional[Dict[str, Any]]],
+                 transform_action_sequence: Callable[
+                     [ActionSequence, List[str]], Optional[Dict[str, Any]]],
                  collate: Collate,
                  input_reader: nn.Module,  # Callable[[Any], Tuple[Any, Any]],
                  action_sequence_reader: nn.Module,  # Callable[[Any], Any],
@@ -68,7 +68,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         super(CommonBeamSearchSynthesizer, self).__init__(
             beam_size, is_subtype, options, max_steps)
         self.transform_input = transform_input
-        self.transform_evaluator = transform_evaluator
+        self.transform_action_sequence = transform_action_sequence
         self.collate = collate
         self.input_reader = input_reader.to(device)
         self.action_sequence_reader = action_sequence_reader.to(device)
@@ -81,8 +81,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def create(beam_size: int,
                transform_input: Callable[[Any],
                                          Tuple[List[str], Dict[str, Any]]],
-               transform_evaluator: Callable[[ActionSequence, List[str]],
-                                             Optional[Dict[str, Any]]],
+               transform_action_sequence: Callable[[ActionSequence, List[str]],
+                                                   Optional[Dict[str, Any]]],
                collate: Collate,
                model: TrainModel,
                action_sequence_encoder: ActionSequenceEncoder,
@@ -92,7 +92,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                max_steps: Optional[int] = None,
                device: torch.device = torch.device("cpu")):
         return CommonBeamSearchSynthesizer(
-            beam_size, transform_input, transform_evaluator,
+            beam_size, transform_input, transform_action_sequence,
             collate,
             model.input_reader, model.action_sequence_reader, model.decoder,
             model.predictor, action_sequence_encoder, is_subtype, options, eps,
@@ -119,7 +119,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         # Create batch of hypothesis
         data = []
         for h in hs:
-            tmp = self.transform_evaluator(h.evaluator, h.state.query)
+            tmp = self.transform_action_sequence(
+                h.action_sequence, h.state.query)
             if tmp is not None:
                 new_data = {key: value.clone()
                             for key, value in h.state.data.items()}
@@ -129,7 +130,8 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
                     new_data[key] = value
                 data.append(new_data)
             else:
-                logger.warn("Invalid evaluator is in the set of hypothesis")
+                logger.warn(
+                    "Invalid action_sequence is in the set of hypothesis")
         inputs = self.collate.collate(data)
 
         with torch.no_grad():

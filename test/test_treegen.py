@@ -18,7 +18,7 @@ from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
     import TransformDataset, TransformGroundTruth, TransformCode
 from mlprogram.utils.transform.treegen \
-    import TransformQuery, TransformEvaluator
+    import TransformQuery, TransformActionSequence
 from mlprogram.nn import NL2ProgLoss
 from mlprogram.nn.treegen import TrainModel
 from mlprogram.metrics import Accuracy
@@ -69,9 +69,10 @@ class TestTreeGen(unittest.TestCase):
 
         transform_input = TransformQuery(tokenize_query, qencoder,
                                          cencoder, 32)
-        transform_evaluator = TransformEvaluator(aencoder, 2, 4, train=False)
+        transform_action_sequence = TransformActionSequence(aencoder, 2, 4,
+                                                            train=False)
         synthesizer = CommonBeamSearchSynthesizer(
-            5, transform_input, transform_evaluator,
+            5, transform_input, transform_action_sequence,
             Collate(
                 torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),
@@ -95,7 +96,7 @@ class TestTreeGen(unittest.TestCase):
         aencoder = workspace.get("action_sequence_encoder")
         tquery = TransformQuery(tokenize_query, qencoder, cencoder, 32)
         tcode = TransformCode(to_action_sequence)
-        teval = TransformEvaluator(aencoder, 2, 4)
+        teval = TransformActionSequence(aencoder, 2, 4)
         tgt = TransformGroundTruth(aencoder)
         return TransformDataset(tquery, tcode, teval, tgt)
 

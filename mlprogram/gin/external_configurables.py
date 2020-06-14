@@ -124,8 +124,9 @@ gin.external_configurable(mlprogram.nn.nl2code.Predictor,
                           module="mlprogram.nn.nl2code")
 gin.external_configurable(mlprogram.utils.transform.nl2code.TransformQuery,
                           module="mlprogram.utils.transform.nl2code")
-gin.external_configurable(mlprogram.utils.transform.nl2code.TransformEvaluator,
-                          module="mlprogram.utils.transform.nl2code")
+gin.external_configurable(
+    mlprogram.utils.transform.nl2code.TransformActionSequence,
+    module="mlprogram.utils.transform.nl2code")
 
 gin.external_configurable(mlprogram.nn.treegen.TrainModel,
                           module="mlprogram.nn.treegen")
@@ -139,8 +140,9 @@ gin.external_configurable(mlprogram.nn.treegen.Predictor,
                           module="mlprogram.nn.treegen")
 gin.external_configurable(mlprogram.utils.transform.treegen.TransformQuery,
                           module="mlprogram.utils.transform.treegen")
-gin.external_configurable(mlprogram.utils.transform.treegen.TransformEvaluator,
-                          module="mlprogram.utils.transform.treegen")
+gin.external_configurable(
+    mlprogram.utils.transform.treegen.TransformActionSequence,
+    module="mlprogram.utils.transform.treegen")
 
 # Constants
 gin.constant("mlprogram.languages.python.ParseMode.Eval",

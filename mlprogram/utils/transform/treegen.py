@@ -35,7 +35,7 @@ class TransformQuery:
         }
 
 
-class TransformEvaluator:
+class TransformActionSequence:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
                  max_arity: int, max_depth: int, train: bool = True):
@@ -44,16 +44,19 @@ class TransformEvaluator:
         self.max_depth = max_depth
         self.train = train
 
-    def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
+    def __call__(self,
+                 action_sequence: ActionSequence, query_for_synth: List[str]) \
             -> Optional[Dict[str, Any]]:
-        a = self.action_sequence_encoder.encode_action(evaluator,
+        a = self.action_sequence_encoder.encode_action(action_sequence,
                                                        query_for_synth)
         rule_prev_action = \
             self.action_sequence_encoder.encode_each_action(
-                evaluator, query_for_synth, self.max_arity)
+                action_sequence, query_for_synth, self.max_arity)
         path = \
-            self.action_sequence_encoder.encode_path(evaluator, self.max_depth)
-        depth, matrix = self.action_sequence_encoder.encode_tree(evaluator)
+            self.action_sequence_encoder.encode_path(
+                action_sequence, self.max_depth)
+        depth, matrix = self.action_sequence_encoder.encode_tree(
+            action_sequence)
         if a is None:
             return None
         if self.train:
@@ -69,7 +72,7 @@ class TransformEvaluator:
             query = path
             rule_prev_action = \
                 self.action_sequence_encoder.encode_each_action(
-                    evaluator, query_for_synth, self.max_arity)
+                    action_sequence, query_for_synth, self.max_arity)
 
         return {
             "previous_actions": prev_action,

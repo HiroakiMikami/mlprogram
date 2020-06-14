@@ -17,7 +17,7 @@ from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
     import TransformDataset, TransformCode, TransformGroundTruth
 from mlprogram.utils.transform.nl2code \
-    import TransformQuery, TransformEvaluator
+    import TransformQuery, TransformActionSequence
 from mlprogram.nn import NL2ProgLoss
 from mlprogram.nn.nl2code import TrainModel
 from mlprogram.metrics import Accuracy
@@ -62,9 +62,10 @@ class TestNL2Code(unittest.TestCase):
         self.prepare_model("model")
         model = workspace.get("model")
         transform_input = TransformQuery(tokenize_query, qencoder)
-        transform_evaluator = TransformEvaluator(aencoder, train=False)
+        transform_action_sequence = TransformActionSequence(aencoder,
+                                                            train=False)
         synthesizer = CommonBeamSearchSynthesizer(
-            5, transform_input, transform_evaluator,
+            5, transform_input, transform_action_sequence,
             Collate(
                 torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),
@@ -87,7 +88,7 @@ class TestNL2Code(unittest.TestCase):
         aencoder = workspace.get("action_sequence_encoder")
         tquery = TransformQuery(tokenize_query, qencoder)
         tcode = TransformCode(to_action_sequence)
-        teval = TransformEvaluator(aencoder)
+        teval = TransformActionSequence(aencoder)
         tgt = TransformGroundTruth(aencoder)
         return TransformDataset(tquery, tcode, teval, tgt)
 

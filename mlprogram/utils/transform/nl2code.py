@@ -21,18 +21,19 @@ class TransformQuery:
              self.word_encoder.batch_encode(query.query_for_dnn)}
 
 
-class TransformEvaluator:
+class TransformActionSequence:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
                  train: bool = True):
         self.action_sequence_encoder = action_sequence_encoder
         self.train = train
 
-    def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
+    def __call__(self, action_sequence: ActionSequence,
+                 query_for_synth: List[str]) \
             -> Optional[Dict[str, Any]]:
-        a = self.action_sequence_encoder.encode_action(evaluator,
+        a = self.action_sequence_encoder.encode_action(action_sequence,
                                                        query_for_synth)
-        p = self.action_sequence_encoder.encode_parent(evaluator)
+        p = self.action_sequence_encoder.encode_parent(action_sequence)
         if a is None:
             return None
         if self.train:

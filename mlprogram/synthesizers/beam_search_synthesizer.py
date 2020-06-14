@@ -39,7 +39,7 @@ class Hypothesis:
     id: int
     parent: Optional[int]
     score: float
-    evaluator: ActionSequence
+    action_sequence: ActionSequence
     state: Any
 
 
@@ -96,14 +96,14 @@ class BeamSearchSynthesizer(Synthesizer):
         n_ids = 0
 
         # Create initial hypothesis
-        evaluator = ActionSequence(self._options)
+        action_sequence = ActionSequence(self._options)
         # Add initial rule
-        evaluator.eval(ApplyRule(
+        action_sequence.eval(ApplyRule(
             ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
                            [("root", NodeType(Root(), NodeConstraint.Node))])))
         state = self.initialize(input)
         hs: List[Hypothesis] = \
-            [Hypothesis(0, None, 0.0, evaluator,
+            [Hypothesis(0, None, 0.0, action_sequence,
                         state)]
         n_ids += 1
 
@@ -120,14 +120,14 @@ class BeamSearchSynthesizer(Synthesizer):
             topk = TopKElement(elem_size)
             for i, (h, (state, lazy_prob)) in enumerate(zip(hs, results)):
                 # Create hypothesis from h
-                head = h.evaluator.head
+                head = h.action_sequence.head
                 is_token = False
                 if head is None:
                     continue
                 head_field = \
                     cast(ExpandTreeRule,
                          cast(ApplyRule,
-                              h.evaluator.action_sequence[head.action]
+                              h.action_sequence.action_sequence[head.action]
                               ).rule
                          ).children[head.field][1]
                 if head_field.constraint == NodeConstraint.Token:
@@ -201,23 +201,23 @@ class BeamSearchSynthesizer(Synthesizer):
                 state = results[i][0]
                 id = n_ids
                 n_ids += 1
-                evaluator = h.evaluator.clone()
-                evaluator.eval(action)
+                action_sequence = h.action_sequence.clone()
+                action_sequence.eval(action)
 
-                if evaluator.head is None:
+                if action_sequence.head is None:
                     # Complete
-                    c = Candidate(score, evaluator.generate())
+                    c = Candidate(score, action_sequence.generate())
                     cs.append(c)
                     candidates.append(c)
                     ps.append(Progress(id, h.id, score,
-                                       evaluator.action_sequence[-1],
+                                       action_sequence.action_sequence[-1],
                                        True))
                 else:
                     hs_new.append(Hypothesis(
-                        id, h.id, score, evaluator,
+                        id, h.id, score, action_sequence,
                         state))
                     ps.append(Progress(id, h.id, score,
-                                       evaluator.action_sequence[-1],
+                                       action_sequence.action_sequence[-1],
                                        False))
 
             hs = hs_new

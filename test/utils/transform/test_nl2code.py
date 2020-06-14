@@ -8,7 +8,7 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform import TransformCode
 from mlprogram.utils.transform.nl2code \
-    import TransformQuery, TransformEvaluator
+    import TransformQuery, TransformActionSequence
 
 
 def tokenize(query: str):
@@ -47,15 +47,15 @@ class TestTransformQuery(unittest.TestCase):
         self.assertEqual([1], query_tensor["word_nl_query"].numpy().tolist())
 
 
-class TestTransformEvaluator(unittest.TestCase):
+class TestTransformActionSequence(unittest.TestCase):
     def test_simple_case(self):
         entries = [Entry("foo bar", "y = x + 1")]
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformEvaluator(aencoder)
-        evaluator = TransformCode(to_action_sequence)("y = x + 1")
-        result = transform(evaluator, ["foo", "bar"])
+        transform = TransformActionSequence(aencoder)
+        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
+        result = transform(action_sequence, ["foo", "bar"])
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
         self.assertTrue(np.array_equal(
@@ -81,9 +81,9 @@ class TestTransformEvaluator(unittest.TestCase):
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        evaluator = TransformCode(to_action_sequence)("y = x + 1")
-        transform = TransformEvaluator(aencoder, train=False)
-        result = transform(evaluator, ["foo", "bar"])
+        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
+        transform = TransformActionSequence(aencoder, train=False)
+        result = transform(action_sequence, ["foo", "bar"])
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
 
@@ -102,9 +102,9 @@ class TestTransformEvaluator(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        transform = TransformEvaluator(aencoder)
-        evaluator = TransformCode(to_action_sequence)("y = x + 1")
-        result = transform(evaluator, ["foo", "bar"])
+        transform = TransformActionSequence(aencoder)
+        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
+        result = transform(action_sequence, ["foo", "bar"])
         self.assertEqual(None, result)
 
 

@@ -38,8 +38,8 @@ def to_action_sequence(code: str):
 class TestTransformCode(unittest.TestCase):
     def test_simple_case(self):
         transform = TransformCode(to_action_sequence)
-        evaluator = transform("y = x + 1")
-        self.assertEqual(None, evaluator.head)
+        action_sequence = transform("y = x + 1")
+        self.assertEqual(None, action_sequence.head)
 
 
 class TestTransformGroundTruth(unittest.TestCase):
@@ -48,10 +48,10 @@ class TestTransformGroundTruth(unittest.TestCase):
         dataset = ListDataset([entries])
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformGroundTruth(aencoder)
         ground_truth = \
-            transform(evaluator, ["foo", "bar"])["ground_truth_actions"]
+            transform(action_sequence, ["foo", "bar"])["ground_truth_actions"]
         self.assertTrue(np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 2, -1], [-1, 1, -1],
@@ -68,9 +68,9 @@ class TestTransformGroundTruth(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        evaluator = TransformCode(to_action_sequence)("y = x + 1")
+        action_sequence = TransformCode(to_action_sequence)("y = x + 1")
         transform = TransformGroundTruth(aencoder)
-        ground_truth = transform(evaluator, ["foo", "bar"])
+        ground_truth = transform(action_sequence, ["foo", "bar"])
         self.assertEqual(None, ground_truth)
 
 
@@ -78,7 +78,7 @@ class TestTransformDataset(unittest.TestCase):
     def test_happy_path(self):
         dataset = ListDataset([[Entry("foo bar", "y = x + 1")]])
         transform = TransformDataset(lambda x: ([x], {}),
-                                     lambda x: "evaluator",
+                                     lambda x: "action_sequence",
                                      lambda x, y: {},
                                      lambda x, y: {})
         dataset = transform(dataset)

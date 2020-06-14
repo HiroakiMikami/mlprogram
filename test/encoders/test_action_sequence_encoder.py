@@ -47,13 +47,13 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        evaluator.eval(GenerateToken("2"))
-        evaluator.eval(GenerateToken(CloseNode()))
-        action = encoder.encode_action(evaluator, ["1", "2"])
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        action_sequence.eval(GenerateToken("2"))
+        action_sequence.eval(GenerateToken(CloseNode()))
+        action = encoder.encode_action(action_sequence, ["1", "2"])
 
         self.assertTrue(np.array_equal(
             [
@@ -88,13 +88,13 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        evaluator.eval(GenerateToken("2"))
-        evaluator.eval(GenerateToken(CloseNode()))
-        parent = encoder.encode_parent(evaluator)
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        action_sequence.eval(GenerateToken("2"))
+        action_sequence.eval(GenerateToken(CloseNode()))
+        parent = encoder.encode_parent(action_sequence)
 
         self.assertTrue(np.array_equal(
             [
@@ -129,11 +129,11 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        d, m = encoder.encode_tree(evaluator)
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        d, m = encoder.encode_tree(action_sequence)
 
         self.assertTrue(np.array_equal(
             [0, 1, 1], d.numpy()
@@ -164,10 +164,10 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        action = encoder.encode_action(evaluator, ["1"])
-        parent = encoder.encode_parent(evaluator)
-        d, m = encoder.encode_tree(evaluator)
+        action_sequence = ActionSequence()
+        action = encoder.encode_action(action_sequence, ["1"])
+        parent = encoder.encode_parent(action_sequence)
+        d, m = encoder.encode_tree(action_sequence)
 
         self.assertTrue(np.array_equal(
             [
@@ -205,13 +205,13 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        evaluator.eval(GenerateToken(CloseNode()))
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        action_sequence.eval(GenerateToken(CloseNode()))
 
-        self.assertEqual(None, encoder.encode_action(evaluator, ["2"]))
+        self.assertEqual(None, encoder.encode_action(action_sequence, ["2"]))
 
     def test_encode_completed_sequence(self):
         none = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
@@ -222,10 +222,10 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(none))
-        action = encoder.encode_action(evaluator, ["1"])
-        parent = encoder.encode_parent(evaluator)
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(none))
+        action = encoder.encode_action(action_sequence, ["1"])
+        parent = encoder.encode_parent(action_sequence)
 
         self.assertTrue(np.array_equal(
             [
@@ -263,15 +263,16 @@ class TestEncoder(unittest.TestCase):
                     ["f"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        evaluator.eval(GenerateToken(CloseNode()))
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        action_sequence.eval(GenerateToken(CloseNode()))
 
         result = encoder.decode(encoder.encode_action(
-            evaluator, ["1"])[:-1, 1:], ["1"])
-        self.assertEqual(evaluator.action_sequence, result.action_sequence)
+            action_sequence, ["1"])[:-1, 1:], ["1"])
+        self.assertEqual(action_sequence.action_sequence,
+                         result.action_sequence)
 
     def test_decode_invalid_tensor(self):
         funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
@@ -317,17 +318,17 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        evaluator.eval(GenerateToken("2"))
-        evaluator.eval(GenerateToken(CloseNode()))
-        evaluator.eval(ApplyRule(expr))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken(CloseNode()))
-        evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
-        action = encoder.encode_each_action(evaluator, ["1", "2"], 1)
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        action_sequence.eval(GenerateToken("2"))
+        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(expr))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
+        action = encoder.encode_each_action(action_sequence, ["1", "2"], 1)
 
         self.assertTrue(np.array_equal(
             np.array([
@@ -362,17 +363,17 @@ class TestEncoder(unittest.TestCase):
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
-        evaluator = ActionSequence()
-        evaluator.eval(ApplyRule(funcdef))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken("1"))
-        evaluator.eval(GenerateToken("2"))
-        evaluator.eval(GenerateToken(CloseNode()))
-        evaluator.eval(ApplyRule(expr))
-        evaluator.eval(GenerateToken("f"))
-        evaluator.eval(GenerateToken(CloseNode()))
-        evaluator.eval(ApplyRule(CloseVariadicFieldRule()))
-        path = encoder.encode_path(evaluator, 2)
+        action_sequence = ActionSequence()
+        action_sequence.eval(ApplyRule(funcdef))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken("1"))
+        action_sequence.eval(GenerateToken("2"))
+        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(expr))
+        action_sequence.eval(GenerateToken("f"))
+        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
+        path = encoder.encode_path(action_sequence, 2)
 
         self.assertTrue(np.array_equal(
             np.array([
@@ -388,7 +389,7 @@ class TestEncoder(unittest.TestCase):
             ], dtype=np.long),
             path.numpy()
         ))
-        path = encoder.encode_path(evaluator, 1)
+        path = encoder.encode_path(action_sequence, 1)
         self.assertTrue(np.array_equal(
             np.array([
                 [-1],  # funcdef

@@ -17,8 +17,8 @@ action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_enco
 # Transform
 mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.datasets.nl2bash.tokenize_query
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
-mlprogram.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
-mlprogram.utils.transform.nl2code.TransformEvaluator.train                   = False
+mlprogram.utils.transform.nl2code.TransformActionSequence.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.nl2code.TransformActionSequence.train                   = False
 
 # Model
 mlprogram.nn.nl2code.TrainModel.query_encoder           = @word_encoder/mlprogram.gin.workspace.get()
@@ -53,7 +53,7 @@ mlprogram.utils.data.Collate.ground_truth_actions  = @sequence_option/mlprogram.
 # Synthesizer
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.beam_size               = 15
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_input         = @mlprogram.utils.transform.nl2code.TransformQuery()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_evaluator     = @mlprogram.utils.transform.nl2code.TransformEvaluator()
+mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_action_sequence     = @mlprogram.utils.transform.nl2code.TransformActionSequence()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate                 = @mlprogram.utils.data.Collate()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
 mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()

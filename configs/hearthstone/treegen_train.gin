@@ -39,11 +39,11 @@ mlprogram.utils.transform.treegen.TransformQuery.char_encoder                = @
 mlprogram.utils.transform.treegen.TransformQuery.max_word_length             = 128
 mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
 mlprogram.utils.transform.TransformCode.to_action_sequence                   = @to_action_sequence/Compose()
-mlprogram.utils.transform.TransformDataset.transform_evaluator               = @mlprogram.utils.transform.treegen.TransformEvaluator()
-mlprogram.utils.transform.treegen.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
-mlprogram.utils.transform.treegen.TransformEvaluator.max_arity               = 128
-mlprogram.utils.transform.treegen.TransformEvaluator.max_depth               = 128
-mlprogram.utils.transform.treegen.TransformEvaluator.train                   = True
+mlprogram.utils.transform.TransformDataset.transform_action_sequence               = @mlprogram.utils.transform.treegen.TransformActionSequence()
+mlprogram.utils.transform.treegen.TransformActionSequence.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.treegen.TransformActionSequence.max_arity               = 128
+mlprogram.utils.transform.treegen.TransformActionSequence.max_depth               = 128
+mlprogram.utils.transform.treegen.TransformActionSequence.train                   = True
 mlprogram.utils.transform.TransformDataset.transform_ground_truth            = @mlprogram.utils.transform.TransformGroundTruth()
 mlprogram.utils.transform.TransformGroundTruth.action_sequence_encoder       = @action_sequence_encoder/mlprogram.gin.workspace.get()
 

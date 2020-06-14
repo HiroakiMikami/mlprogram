@@ -44,7 +44,7 @@ class State(Generic[V]):
     raw_reference: List[Token[V]]
     reference: Optional[Tensor]
     state: Optional[Tensor]
-    evaluator: ActionSequence
+    action_sequence: ActionSequence
 
     # TODO eq, hash
 
@@ -55,10 +55,9 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                  get_token_type: Callable[[V], Optional[str]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
-                 transform_evaluator: Callable[[ActionSequence, List[Token]],
-                                               Optional[Tuple[Tensor,
-                                                              Optional[Tensor]]
-                                                        ]],
+                 transform_action_sequence: Callable[
+                     [ActionSequence, List[Token]],
+                     Optional[Tuple[Tensor, Optional[Tensor]]]],
                  collate_input: Collate,
                  collate_reference: Collate,
                  collate_action_sequence: Collate,
@@ -72,7 +71,7 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
         self.encoder = encoder
         self.get_token_type = get_token_type
         self.is_subtype = is_subtype
-        self.transform_evaluator = transform_evaluator
+        self.transform_action_sequence = transform_action_sequence
         self.collate_input = collate_input
         self.collate_action_sequence = collate_action_sequence
         self.collate_reference = collate_reference
@@ -88,9 +87,9 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                         None, ActionSequence(self.options))
 
     def create_output(self, state: State[V]) -> Optional[AST]:
-        if state.evaluator.head is None:
+        if state.action_sequence.head is None:
             # complete
-            return state.evaluator.generate()
+            return state.action_sequence.generate()
         return None
 
     def batch_infer(self, states: List[SamplerState[State[V]]]):
@@ -102,8 +101,8 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
         queries: List[Dict[str, Tensor]] = []
         states_list: List[Dict[str, Optional[Tensor]]] = []
         for s in states:
-            tmp = self.transform_evaluator(s.state.evaluator,
-                                           s.state.raw_reference)
+            tmp = self.transform_action_sequence(s.state.action_sequence,
+                                                 s.state.raw_reference)
             if tmp is not None:
                 inputs.append({"input": s.state.input})
                 references.append({"reference": s.state.reference})
@@ -112,7 +111,8 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                 queries.append({"query": query})
                 states_list.append({"state": s.state.state})
             else:
-                logger.warn("Invalid evaluator is in the set of hypothesis")
+                logger.warn(
+                    "Invalid action_sequence is in the set of hypothesis")
         inputs_tensor = self.collate_input.collate(inputs)
         references_tensor = self.collate_reference.collate(references)
         action_sequences_tensor = \
@@ -144,14 +144,14 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
             self.batch_infer(states)
         for i, state in enumerate(states):
             state = states[i]
-            head = state.state.evaluator.head
+            head = state.state.action_sequence.head
             is_token = False
             if head is None:
                 continue
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
-                    state.state.evaluator.action_sequence[head.action]
+                    state.state.action_sequence.action_sequence[head.action]
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 is_token = True
@@ -248,12 +248,12 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
 
         # Instantiate top-k hypothesis
         for score, (state, new_state, action) in topk.elements:
-            evaluator = state.state.evaluator.clone()
-            evaluator.eval(action)
+            action_sequence = state.state.action_sequence.clone()
+            action_sequence.eval(action)
             yield SamplerState[State](score, State(
                 state.state.input, state.state.raw_reference,
                 state.state.reference,
-                new_state, evaluator))
+                new_state, action_sequence))
 
     def random_samples(self, state: SamplerState[State[V]], n: int) \
             -> Generator[SamplerState[State[V]], None, None]:
@@ -265,9 +265,9 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
         resamples = self.rng.multinomial(n, probs)
         for (score, state, new_state, action), m in zip(actions, resamples):
             for _ in range(m):
-                evaluator = state.state.evaluator.clone()
-                evaluator.eval(action)
+                action_sequence = state.state.action_sequence.clone()
+                action_sequence.eval(action)
                 yield SamplerState[State](score, State(
                     state.state.input, state.state.raw_reference,
                     state.state.reference,
-                    new_state, evaluator))
+                    new_state, action_sequence))

@@ -289,25 +289,26 @@ class ActionSequence:
 
     def clone(self):
         """
-        Generate and return the clone of this evaluator
+        Generate and return the clone of this action_sequence
 
         Returns
         -------
-        Evaluator
-            The cloned evaluator
+        action_sequence
+            The cloned action_sequence
         """
-        evaluator = ActionSequence(self._options)
+        action_sequence = ActionSequence(self._options)
         for key, value in self._tree.children.items():
             v = []
             for src in value:
                 v.append(deepcopy(src))
-            evaluator._tree.children[key] = v
-        evaluator._tree.parent = deepcopy(self._tree.parent)
-        evaluator._action_sequence = deepcopy(self._action_sequence)
-        evaluator._head_action_index = self._head_action_index
-        evaluator._head_children_index = deepcopy(self._head_children_index)
+            action_sequence._tree.children[key] = v
+        action_sequence._tree.parent = deepcopy(self._tree.parent)
+        action_sequence._action_sequence = deepcopy(self._action_sequence)
+        action_sequence._head_action_index = self._head_action_index
+        action_sequence._head_children_index = \
+            deepcopy(self._head_children_index)
 
-        return evaluator
+        return action_sequence
 
     def parent(self, index: int) -> Optional[Parent]:
         return self._tree.parent[index]

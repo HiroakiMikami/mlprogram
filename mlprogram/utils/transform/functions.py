@@ -23,9 +23,10 @@ class TransformGroundTruth:
 
         self.action_sequence_encoder = action_sequence_encoder
 
-    def __call__(self, evaluator: ActionSequence, query_for_synth: List[str]) \
+    def __call__(self, action_sequence: ActionSequence,
+                 query_for_synth: List[str]) \
             -> Optional[Dict[str, Optional[torch.Tensor]]]:
-        a = self.action_sequence_encoder.encode_action(evaluator,
+        a = self.action_sequence_encoder.encode_action(action_sequence,
                                                        query_for_synth)
         if a is None:
             return None
@@ -40,17 +41,16 @@ class TransformDataset:
                  transform_input: Callable[[Any], Tuple[List[str],
                                                         Dict[str, Any]]],
                  transform_code: Callable[[Any], Optional[ActionSequence]],
-                 transform_evaluator: Callable[[ActionSequence, List[str]],
-                                               Optional[Dict[str,
-                                                             Any]]
-                                               ],
+                 transform_action_sequence: Callable[
+                     [ActionSequence, List[str]],
+                     Optional[Dict[str, Any]]],
                  transform_ground_truth: Callable[[ActionSequence, List[str]],
                                                   Optional[
                                                       Dict[str, torch.Tensor]]
                                                   ]):
         self.transform_input = transform_input
         self.transform_code = transform_code
-        self.transform_evaluator = transform_evaluator
+        self.transform_action_sequence = transform_action_sequence
         self.transform_ground_truth = transform_ground_truth
 
     def __call__(self, dataset: torch.utils.data.Dataset) \
@@ -60,13 +60,13 @@ class TransformDataset:
             for entry in group:
                 query_for_synth, input = \
                     self.transform_input(entry.input)
-                evaluator = self.transform_code(entry.ground_truth)
-                if evaluator is None:
+                actions = self.transform_code(entry.ground_truth)
+                if actions is None:
                     continue
-                action_sequence = self.transform_evaluator(
-                    evaluator, query_for_synth)
+                action_sequence = self.transform_action_sequence(
+                    actions, query_for_synth)
                 ground_truth = self.transform_ground_truth(
-                    evaluator, query_for_synth)
+                    actions, query_for_synth)
                 if ground_truth is None or action_sequence is None:
                     continue
                 entry = {}

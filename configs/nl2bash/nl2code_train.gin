@@ -35,9 +35,9 @@ mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
 mlprogram.utils.transform.TransformCode.to_action_sequence                   = @to_action_sequence/Compose()
-mlprogram.utils.transform.TransformDataset.transform_evaluator               = @mlprogram.utils.transform.nl2code.TransformEvaluator()
-mlprogram.utils.transform.nl2code.TransformEvaluator.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
-mlprogram.utils.transform.nl2code.TransformEvaluator.train                   = True
+mlprogram.utils.transform.TransformDataset.transform_action_sequence               = @mlprogram.utils.transform.nl2code.TransformActionSequence()
+mlprogram.utils.transform.nl2code.TransformActionSequence.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.nl2code.TransformActionSequence.train                   = True
 mlprogram.utils.transform.TransformDataset.transform_ground_truth            = @mlprogram.utils.transform.TransformGroundTruth()
 mlprogram.utils.transform.TransformGroundTruth.action_sequence_encoder       = @action_sequence_encoder/mlprogram.gin.workspace.get()
 
