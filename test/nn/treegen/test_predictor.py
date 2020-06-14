@@ -40,6 +40,20 @@ class TestPredictor(unittest.TestCase):
         self.assertEqual((11, 1, 13), copy.data.shape)
         self.assertEqual((11, 1), copy.mask.shape)
 
+    def test_shape_eval(self):
+        predictor = Predictor(2, 3, 5, 7, 11)
+        f = torch.Tensor(11, 2)
+        nl = torch.Tensor(13, 3)
+        predictor.eval()
+        inputs = predictor(nl_query_features=pad_sequence([nl]),
+                           action_features=pad_sequence([f]))
+        rule = inputs["rule_probs"]
+        token = inputs["token_probs"]
+        copy = inputs["copy_probs"]
+        self.assertEqual((1, 5), rule.shape)
+        self.assertEqual((1, 7), token.shape)
+        self.assertEqual((1, 13), copy.shape)
+
     def test_prog(self):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.rand(11, 2)

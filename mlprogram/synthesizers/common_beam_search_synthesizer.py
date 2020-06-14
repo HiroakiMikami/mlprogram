@@ -109,6 +109,7 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
     def initialize(self, input: Any) -> State:
         query_for_synth, input = self.transform_input(input)
         inputs = self.collate.collate([input])
+        self.input_reader.eval()
         inputs = self.input_reader(**inputs)
         input = self.collate.split(inputs)[0]
 
@@ -135,18 +136,21 @@ class CommonBeamSearchSynthesizer(BaseBeamSearchSynthesizer):
         inputs = self.collate.collate(data)
 
         with torch.no_grad():
+            self.action_sequence_reader.eval()
+            self.decoder.eval()
+            self.predictor.eval()
             inputs = self.action_sequence_reader(**inputs)
             inputs = self.decoder(**inputs)
             results = self.predictor(**inputs)
         # (len(hs), n_rules)
         rule_pred = \
-            results["rule_probs"].data[-1, :, :].cpu().reshape(len(hs), -1)
+            results["rule_probs"].data.cpu().reshape(len(hs), -1)
         # (len(hs), n_tokens)
         token_pred = \
-            results["token_probs"].data[-1, :, :].cpu().reshape(len(hs), -1)
+            results["token_probs"].data.cpu().reshape(len(hs), -1)
         # (len(hs), query_length)
         copy_pred = \
-            results["copy_probs"].data[-1, :, :].cpu().reshape(len(hs), -1)
+            results["copy_probs"].data.cpu().reshape(len(hs), -1)
         inputs = {key: value for key, value in inputs.items()
                   if key in self.collate.options.keys()}
         data = self.collate.split(inputs)

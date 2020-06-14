@@ -112,10 +112,15 @@ class Predictor(nn.Module):
         token_pred = token * token_pred  # (L_a, B, num_tokens)
         copy_pred = copy * copy_pred  # (L_a, B, query_length)
 
-        inputs["rule_probs"] = \
-            PaddedSequenceWithMask(rule_pred, action_features.mask)
-        inputs["token_probs"] = \
-            PaddedSequenceWithMask(token_pred, action_features.mask)
-        inputs["copy_probs"] = \
-            PaddedSequenceWithMask(copy_pred, action_features.mask)
+        if self.training:
+            inputs["rule_probs"] = \
+                PaddedSequenceWithMask(rule_pred, action_features.mask)
+            inputs["token_probs"] = \
+                PaddedSequenceWithMask(token_pred, action_features.mask)
+            inputs["copy_probs"] = \
+                PaddedSequenceWithMask(copy_pred, action_features.mask)
+        else:
+            inputs["rule_probs"] = rule_pred[-1, :, :]
+            inputs["token_probs"] = token_pred[-1, :, :]
+            inputs["copy_probs"] = copy_pred[-1, :, :]
         return inputs
