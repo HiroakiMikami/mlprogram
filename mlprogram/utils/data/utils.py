@@ -36,3 +36,18 @@ class ListDataset(torch.utils.data.Dataset):
         if self.transform is not None:
             return self.transform(item)
         return item
+
+
+class DatasetWithTransform:
+    def __init__(self, dataset: Any, transform: Callable):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __getitem__(self, index: int):
+        return self.transform(self.dataset.__getitem__(index))
+
+    def __add__(self, other):
+        return self.dataset.__add__(other)
+
+    def __len__(self):
+        return self.dataset.__len__()
