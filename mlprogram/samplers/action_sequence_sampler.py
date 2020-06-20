@@ -3,12 +3,12 @@ import numpy as np
 import logging
 from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
-    Tuple, cast, Dict, Any, Sequence
+    Tuple, cast, Dict, Any
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
     import ExpandTreeRule, ApplyRule, NodeConstraint, ActionOptions, \
-    GenerateToken, Action
+    GenerateToken, Action, NodeType
 from mlprogram.actions import ActionSequence
 from mlprogram.asts import AST
 from mlprogram.samplers import SamplerState, Sampler
@@ -32,24 +32,23 @@ class Token(Generic[V]):
 
 
 @dataclass
-class Input(Generic[V]):
-    input: Optional[Tensor]
-    raw_reference: List[Token[V]]
-    reference: Optional[Tensor]
+class ActionSequenceSamplerInput(Generic[V]):
+    state: Dict[str, Any]
+    reference: List[Token[V]]
 
 
 @dataclass
-class State(Generic[V]):
-    input: Optional[Tensor]
-    raw_reference: List[Token[V]]
-    reference: Optional[Tensor]
-    state: Optional[Tensor]
+class ActionSequenceSamplerState(Generic[V]):
+    state: Dict[str, Any]
+    reference: List[Token[V]]
     action_sequence: ActionSequence
 
     # TODO eq, hash
 
 
-class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
+class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
+                                    ActionSequenceSamplerState[V]],
+                            Generic[V]):
     def __init__(self,
                  encoder: ActionSequenceEncoder,
                  get_token_type: Callable[[V], Optional[str]],
@@ -57,12 +56,8 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                                       bool],
                  transform_action_sequence: Callable[
                      [ActionSequence, List[Token]],
-                     Optional[Tuple[Tensor, Optional[Tensor]]]],
-                 collate_input: Collate,
-                 collate_reference: Collate,
-                 collate_action_sequence: Collate,
-                 collate_query: Collate,
-                 collate_state: Collate,
+                     Optional[Dict[str, Any]]],
+                 collate: Collate,
                  decoder_module: torch.nn.Module,
                  options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
@@ -72,73 +67,63 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
         self.get_token_type = get_token_type
         self.is_subtype = is_subtype
         self.transform_action_sequence = transform_action_sequence
-        self.collate_input = collate_input
-        self.collate_action_sequence = collate_action_sequence
-        self.collate_reference = collate_reference
-        self.collate_query = collate_query
-        self.collate_state = collate_state
+        self.collate = collate
         self.decoder_module = decoder_module
         self.options = options
         self.eps = eps
         self.rng = rng
 
-    def initialize(self, input: Input) -> State[V]:
-        return State[V](input.input, input.raw_reference, input.reference,
-                        None, ActionSequence(self.options))
+    def initialize(self, input: ActionSequenceSamplerInput) \
+            -> ActionSequenceSamplerState[V]:
+        action_sequence = ActionSequence(self.options)
+        # Add initial rule
+        action_sequence.eval(ApplyRule(
+            ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+                           [("root", NodeType(Root(), NodeConstraint.Node))])))
+        return ActionSequenceSamplerState[V](input.state, input.reference,
+                                             action_sequence)
 
-    def create_output(self, state: State[V]) -> Optional[AST]:
+    def create_output(self, state: ActionSequenceSamplerState[V]) \
+            -> Optional[AST]:
         if state.action_sequence.head is None:
             # complete
             return state.action_sequence.generate()
         return None
 
-    def batch_infer(self, states: List[SamplerState[State[V]]]):
+    def batch_infer(self,
+                    states: List[SamplerState[ActionSequenceSamplerState[V]]]):
         N = len(states)
 
-        inputs: List[Dict[str, Tensor]] = []
-        references: List[Dict[str, Tensor]] = []
-        action_sequences: List[Dict[str, Tensor]] = []
-        queries: List[Dict[str, Tensor]] = []
-        states_list: List[Dict[str, Optional[Tensor]]] = []
+        state_list: List[Dict[str, Any]] = []
         for s in states:
             tmp = self.transform_action_sequence(s.state.action_sequence,
-                                                 s.state.raw_reference)
+                                                 s.state.reference)
             if tmp is not None:
-                inputs.append({"input": s.state.input})
-                references.append({"reference": s.state.reference})
-                action_sequence, query = tmp
-                action_sequences.append({"action_sequence": action_sequence})
-                queries.append({"query": query})
-                states_list.append({"state": s.state.state})
+                state = {}
+                for key, value in s.state.state.items():
+                    state[key] = value
+                for key, value in tmp.items():
+                    state[key] = value
+                state_list.append(state)
             else:
                 logger.warn(
                     "Invalid action_sequence is in the set of hypothesis")
-        inputs_tensor = self.collate_input.collate(inputs)
-        references_tensor = self.collate_reference.collate(references)
-        action_sequences_tensor = \
-            self.collate_action_sequence.collate(action_sequences)
-        queries_tensor = self.collate_query.collate(queries)
-        states_tensor = self.collate_state.collate(states_list)
+        states_tensor = self.collate.collate(state_list)
 
         with torch.no_grad():
-            results, state = self.decoder_module(
-                inputs=inputs_tensor,
-                references=references_tensor,
-                action_sequences=action_sequences_tensor,
-                queries=queries_tensor,
-                states=states_tensor)
-        rule_pred = results[0].data.cpu().reshape(N, -1)
-        token_pred = results[1].data.cpu().reshape(N, -1)
-        copy_pred = results[2].data.cpu().reshape(N, -1)
-        if state is not None:
-            next_state: Sequence[Dict[str, Any]] = \
-                self.collate_state.split(state)
-        else:
-            next_state = [{"state": None}] * len(states)
-        return rule_pred, token_pred, copy_pred, next_state
+            next_states = self.decoder_module(**states_tensor)
 
-    def all_actions(self, states: List[SamplerState[State[V]]]) \
-            -> Generator[Tuple[float, SamplerState[State[V]], Tensor, Action],
+        rule_pred = next_states.pop("rule_probs").data.cpu().reshape(N, -1)
+        token_pred = next_states.pop("token_probs").data.cpu().reshape(N, -1)
+        copy_pred = next_states.pop("copy_probs").data.cpu().reshape(N, -1)
+        next_state_list = self.collate.split(next_states)
+        return rule_pred, token_pred, copy_pred, next_state_list
+
+    def all_actions(
+        self, states: List[SamplerState[ActionSequenceSamplerState[V]]]) \
+            -> Generator[Tuple[float,
+                               SamplerState[ActionSequenceSamplerState[V]],
+                               Tensor, Action],
                          None, None]:
         rule_pred, token_pred, copy_pred, next_states = \
             self.batch_infer(states)
@@ -164,19 +149,19 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                     p = token_pred[i, j].item()
                     token = self.encoder._token_encoder.vocab[j]
                     t = self.get_token_type(token)
-                    if t is not None and self.is_subtype(t,
-                                                         head_field.type_name):
+                    if t is not None and \
+                            not self.is_subtype(t, head_field.type_name):
                         continue
                     if token not in probs:
                         probs[token] = 0.0
                     probs[token] += p
                 # reference
-                for j in range(len(state.state.raw_reference)):
+                for j in range(len(state.state.reference)):
                     p = copy_pred[i, j].item()
-                    token = state.state.raw_reference[j].value
-                    t = state.state.raw_reference[j].type_name
-                    if t is not None and self.is_subtype(t,
-                                                         head_field.type_name):
+                    token = state.state.reference[j].value
+                    t = state.state.reference[j].type_name
+                    if t is not None and \
+                            not self.is_subtype(t, head_field.type_name):
                         continue
                     if token not in probs:
                         probs[token] = 0.0
@@ -201,36 +186,11 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                         lp = np.log(p)
                     rule = self.encoder._rule_encoder.vocab[j]
                     if isinstance(rule, ExpandTreeRule):
-                        if head_field.type_name == Root() and \
-                            (rule.parent.constraint !=
-                                NodeConstraint.Variadic) and \
-                            (rule.parent.type_name !=
-                                Root()):
-                            yield (state.score + lp, states[i], next_states[i],
-                                   ApplyRule(rule))
-                        else:
-                            if head_field.type_name == Root() and \
-                                (rule.parent.type_name !=
-                                    Root()) and \
-                                (rule.parent.constraint !=
-                                    NodeConstraint.Variadic):
-                                yield (state.score + lp, states[i],
-                                       next_states[i], ApplyRule(rule))
-                            elif rule.parent.type_name != Root() and \
-                                ((head_field.constraint ==
-                                    NodeConstraint.Variadic) or
-                                 (rule.parent.constraint ==
-                                    NodeConstraint.Variadic)):
-                                if rule.parent == \
-                                        head_field:
-                                    yield (state.score + lp, states[i],
-                                           next_states[i], ApplyRule(rule))
-                            elif rule.parent.type_name != Root() and \
-                                self.is_subtype(
-                                    rule.parent.type_name,
-                                    head_field.type_name):
-                                yield (state.score + lp, states[i],
-                                       next_states[i], ApplyRule(rule))
+                        if self.is_subtype(
+                                rule.parent.type_name,
+                                head_field.type_name):
+                            yield (state.score + lp, states[i],
+                                   next_states[i], ApplyRule(rule))
                     else:
                         # CloseVariadicFieldRule
                         if self.options.retain_variadic_fields and \
@@ -240,8 +200,9 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
                             yield (state.score + lp, states[i], next_states[i],
                                    ApplyRule(rule))
 
-    def top_k_samples(self, states: List[SamplerState[State]], k: int) \
-            -> Generator[SamplerState[State], None, None]:
+    def top_k_samples(
+        self, states: List[SamplerState[ActionSequenceSamplerState]], k: int) \
+            -> Generator[SamplerState[ActionSequenceSamplerState], None, None]:
         topk = TopKElement(k)
         for score, state, new_state, action in self.all_actions(states):
             topk.add(score, (state, new_state, action))
@@ -250,13 +211,17 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
         for score, (state, new_state, action) in topk.elements:
             action_sequence = state.state.action_sequence.clone()
             action_sequence.eval(action)
-            yield SamplerState[State](score, State(
-                state.state.input, state.state.raw_reference,
-                state.state.reference,
-                new_state, action_sequence))
+            yield SamplerState[ActionSequenceSamplerState](
+                score,
+                ActionSequenceSamplerState(
+                    new_state,
+                    state.state.reference,
+                    action_sequence))
 
-    def random_samples(self, state: SamplerState[State[V]], n: int) \
-            -> Generator[SamplerState[State[V]], None, None]:
+    def random_samples(
+        self, state: SamplerState[ActionSequenceSamplerState[V]], n: int) \
+            -> Generator[SamplerState[ActionSequenceSamplerState[V]],
+                         None, None]:
         actions = list(self.all_actions([state]))
         # log_prob -> prob
         probs = [np.exp(score) for score, _, _, _ in actions]
@@ -267,7 +232,7 @@ class ActionSequenceSampler(Sampler[Input, AST, State[V]], Generic[V]):
             for _ in range(m):
                 action_sequence = state.state.action_sequence.clone()
                 action_sequence.eval(action)
-                yield SamplerState[State](score, State(
-                    state.state.input, state.state.raw_reference,
-                    state.state.reference,
-                    new_state, action_sequence))
+                yield SamplerState[ActionSequenceSamplerState](
+                    score, ActionSequenceSamplerState(
+                        cast(Dict[str, Any], new_state), state.state.reference,
+                        action_sequence))
