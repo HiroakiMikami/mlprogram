@@ -13,10 +13,11 @@ from mlprogram.utils import Query, Token
 from mlprogram.decoders import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.actions import ActionOptions
+from mlprogram.utils import Sequence
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
-    import TransformDataset, TransformCode, TransformGroundTruth
+    import RandomChoice, TransformCode, TransformGroundTruth
 from mlprogram.utils.transform.nl2code \
     import TransformQuery, TransformActionSequence
 from mlprogram.nn import NL2ProgLoss
@@ -93,7 +94,9 @@ class TestNL2Code(unittest.TestCase):
         tcode = TransformCode(to_action_sequence)
         teval = TransformActionSequence(aencoder)
         tgt = TransformGroundTruth(aencoder)
-        return TransformDataset(tquery, tcode, teval, tgt)
+        return Sequence(
+            f0=RandomChoice(), f1=tquery, f2=tcode, f3=teval, f4=tgt
+        )
 
     def evaluate(self, options, dir):
         with tempfile.TemporaryDirectory() as tmpdir:

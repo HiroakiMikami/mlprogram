@@ -1,8 +1,6 @@
-import torch
 import numpy as np
 
 from mlprogram.utils import Token
-from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
 from typing import List, Callable, Any, Optional, Dict, cast, Generic, TypeVar
@@ -58,34 +56,3 @@ class RandomChoice:
         for key, value in entry.items():
             output[key] = self.rng.choice(value, size=()).item()
         return output
-
-
-class TransformDataset:
-    def __init__(self,
-                 transform_input,
-                 transform_code,
-                 transform_action_sequence,
-                 transform_ground_truth):
-        self.choice = RandomChoice()
-        self.transform_input = transform_input
-        self.transform_code = transform_code
-        self.transform_action_sequence = transform_action_sequence
-        self.transform_ground_truth = transform_ground_truth
-
-    def __call__(self, dataset: torch.utils.data.Dataset) \
-            -> torch.utils.data.Dataset:
-        entries = []
-        for group in dataset:
-            entry = self.choice(**group)
-            entry = self.transform_input(**entry)
-            entry = self.transform_code(**entry)
-            if entry is None:
-                continue
-            entry = self.transform_action_sequence(**entry)
-            if entry is None:
-                continue
-            entry = self.transform_ground_truth(**entry)
-            if entry is None:
-                continue
-            entries.append(entry)
-        return ListDataset(entries)

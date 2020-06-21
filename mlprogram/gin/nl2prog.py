@@ -12,7 +12,7 @@ from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
 from mlprogram.decoders import Decoder
 from mlprogram.utils import TopKModel
-from mlprogram.utils.data import ListDataset
+from mlprogram.utils.data import ListDataset, DatasetWithTransform
 from mlprogram.utils.nl2prog import evaluate as eval, EvaluationResult
 
 
@@ -56,8 +56,9 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
             torch.save({key: workspace.get(key) for key in encoder_keys},
                        encoder_path)
 
-        logger.info("Transform the dataset")
-        dataset = transform_cls()(raw_train_dataset)
+        logger.info("Prepare transform")
+        transform = transform_cls()
+        dataset = DatasetWithTransform(raw_train_dataset, transform)
 
         logger.info("Prepare model")
         prepare_model(model_key)

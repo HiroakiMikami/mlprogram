@@ -7,7 +7,7 @@ from mlprogram.asts import Node, Leaf, Field
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
-    import TransformCode, TransformGroundTruth, TransformDataset, RandomChoice
+    import TransformCode, TransformGroundTruth, RandomChoice
 
 
 def tokenize(query: str):
@@ -81,21 +81,7 @@ class TestTransformGroundTruth(unittest.TestCase):
         self.assertEqual(None, ground_truth)
 
 
-class TestTransformDataset(unittest.TestCase):
-    def test_happy_path(self):
-        dataset = ListDataset([{"input": ["foo bar"],
-                                "ground_truth": ["y = x + 1"]}])
-        transform = TransformDataset(lambda **x: {},
-                                     lambda **x: {},
-                                     lambda **x: {},
-                                     lambda **x: {})
-        dataset = transform(dataset)
-        self.assertEqual(1, len(dataset))
-        entry = dataset[0]
-        self.assertEqual(0, len(entry))
-
-
-class TestRandomChoise(unittest.TestCase):
+class TestRandomChoice(unittest.TestCase):
     def test_choice(self):
         transform = RandomChoice()
         x = transform(x=[0, 1], y=[0, 1])

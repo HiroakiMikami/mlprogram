@@ -30,16 +30,17 @@ word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-mlprogram.utils.transform.TransformDataset.transform_input                   = @mlprogram.utils.transform.nl2code.TransformQuery()
-mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.datasets.django.tokenize_query
-mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
-mlprogram.utils.transform.TransformDataset.transform_code                    = @mlprogram.utils.transform.TransformCode()
-mlprogram.utils.transform.TransformCode.to_action_sequence                   = @to_action_sequence/Compose()
-mlprogram.utils.transform.TransformDataset.transform_action_sequence               = @mlprogram.utils.transform.nl2code.TransformActionSequence()
+mlprogram.utils.transform.nl2code.TransformQuery.extract_query                    = @mlprogram.datasets.django.tokenize_query
+mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                     = @word_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.TransformCode.to_action_sequence                        = @to_action_sequence/Compose()
 mlprogram.utils.transform.nl2code.TransformActionSequence.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.nl2code.TransformActionSequence.train                   = True
-mlprogram.utils.transform.TransformDataset.transform_ground_truth            = @mlprogram.utils.transform.TransformGroundTruth()
-mlprogram.utils.transform.TransformGroundTruth.action_sequence_encoder       = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.transform.TransformGroundTruth.action_sequence_encoder            = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.utils.Sequence.f0 = @mlprogram.utils.transform.RandomChoice()
+mlprogram.utils.Sequence.f1 = @mlprogram.utils.transform.nl2code.TransformQuery()
+mlprogram.utils.Sequence.f2 = @mlprogram.utils.transform.TransformCode()
+mlprogram.utils.Sequence.f3 = @mlprogram.utils.transform.nl2code.TransformActionSequence()
+mlprogram.utils.Sequence.f4 = @mlprogram.utils.transform.TransformGroundTruth()
 
 # Model
 mlprogram.nn.nl2code.TrainModel.query_encoder           = @word_encoder/mlprogram.gin.workspace.get()
@@ -90,7 +91,7 @@ mlprogram.gin.nl2prog.train.prepare_dataset    = @dataset/mlprogram.gin.workspac
 mlprogram.gin.nl2prog.train.prepare_encoder    = @mlprogram.gin.nl2code.prepare_encoder
 mlprogram.gin.nl2prog.train.prepare_model      = @model/mlprogram.gin.workspace.put
 mlprogram.gin.nl2prog.train.prepare_optimizer  = @optimizer/mlprogram.gin.workspace.put
-mlprogram.gin.nl2prog.train.transform_cls      = @mlprogram.utils.transform.TransformDataset
+mlprogram.gin.nl2prog.train.transform_cls      = @mlprogram.utils.Sequence
 mlprogram.gin.nl2prog.train.loss_fn            = @mlprogram.nn.NL2ProgLoss()
 mlprogram.gin.nl2prog.train.score_fn           = @mlprogram.nn.NL2ProgAccuracy()
 mlprogram.gin.nl2prog.train.collate_fn         = @mlprogram.utils.data.Collate()
