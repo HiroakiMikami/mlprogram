@@ -1,13 +1,14 @@
 import torch
 import torch.nn as nn
+from typing import List
 import unittest
 from mlprogram.samplers \
-    import ActionSequenceSampler, ActionSequenceSamplerInput, SamplerState, \
-    Token
+    import ActionSequenceSampler, SamplerState
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
     import NodeConstraint, NodeType, ActionOptions, ExpandTreeRule, CloseNode
+from mlprogram.utils import Token
 from mlprogram.utils.data import Collate, CollateOptions
 from math import log
 
@@ -48,7 +49,31 @@ def create_encoder(options: ActionOptions):
                                          ["x", "1"], options), 0)
 
 
-collate = Collate(torch.device("cpu"), length=CollateOptions(False, 0, -1))
+collate = Collate(torch.device("cpu"),
+                  input=CollateOptions(False, 0, -1),
+                  length=CollateOptions(False, 0, -1))
+
+
+def create_transform_input(reference: List[Token[str]]):
+    def transform_input(**kwargs):
+        kwargs["reference"] = reference
+        kwargs["input"] = torch.zeros((1,))
+        return kwargs
+    return transform_input
+
+
+def transform_action_sequence(**kwargs):
+    kwargs["length"] = \
+        torch.tensor(len(kwargs["action_sequence"]._action_sequence))
+    return kwargs
+
+
+class EncoderModule(nn.Module):
+    def forward(self, **kwargs):
+        return kwargs
+
+
+encoder_module = EncoderModule()
 
 
 class DecoderModule(nn.Module):
@@ -66,20 +91,28 @@ class DecoderModule(nn.Module):
         return kwargs
 
 
+class Module(nn.Module):
+    def __init__(self, encoder, decoder):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+
+
 class TestActionSequenceSampler(unittest.TestCase):
     def test_initialize(self):
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, True)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": len(x.sequence)},
+            create_transform_input([]), transform_action_sequence,
             collate,
-            DecoderModule([], [], [])
+            Module(encoder_module,
+                   DecoderModule([], [], []))
         )
-        s = sampler.initialize(ActionSequenceSamplerInput({}, []))
-        self.assertEqual({}, s.state)
-        self.assertEqual([], s.reference)
-        self.assertEqual(1, len(s.action_sequence._action_sequence))
+        s = sampler.initialize({})
+        self.assertEqual(1, len(s["action_sequence"]._action_sequence))
+        s.pop("action_sequence")
+        self.assertEqual({"input": torch.zeros((1,)), "reference": []}, s)
 
     def test_rule(self):
         rule_prob = torch.tensor([
@@ -105,25 +138,24 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_encoder(ActionOptions(True, True)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": torch.tensor([len(x._action_sequence)])},
+            create_transform_input([]), transform_action_sequence,
             collate,
-            DecoderModule(rule_prob, token_prob, copy_prob)
+            Module(encoder_module,
+                   DecoderModule(rule_prob, token_prob, copy_prob))
         )
-        s = SamplerState(0.0,
-                         sampler.initialize(ActionSequenceSamplerInput({}, []))
-                         )
+        s = SamplerState(0.0, sampler.initialize({}))
         topk_results = list(sampler.top_k_samples([s], 1))
         self.assertEqual(1, len(topk_results))
-        self.assertEqual(1, topk_results[0].state.state["length"].item())
+        self.assertEqual(1, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2), topk_results[0].score)
         random_results = list(sampler.random_samples(s, 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(1, random_results[0].state.state["length"].item())
+        self.assertEqual(1, random_results[0].state["length"].item())
         self.assertTrue(
             log(0.1) - 1e-5 <= random_results[0].score <= log(0.2) + 1e-5)
 
         next = list(sampler.top_k_samples(topk_results, 1))[0]
-        self.assertEqual(2, next.state.state["length"].item())
+        self.assertEqual(2, next.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5), next.score)
 
     def test_variadic_rule(self):
@@ -158,25 +190,24 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_encoder(ActionOptions(True, True)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": torch.tensor([len(x._action_sequence)])},
+            create_transform_input([]), transform_action_sequence,
             collate,
-            DecoderModule(rule_prob, token_prob, copy_prob)
+            Module(encoder_module,
+                   DecoderModule(rule_prob, token_prob, copy_prob))
         )
-        s = SamplerState(0.0,
-                         sampler.initialize(ActionSequenceSamplerInput({}, []))
-                         )
+        s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 2))
         self.assertEqual(2, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
+        self.assertEqual(3, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5) +
                                log(0.8), topk_results[0].score)
         self.assertAlmostEqual(log(0.2) + log(0.5) +
                                log(0.2), topk_results[1].score)
         random_results = list(sampler.random_samples(results[0], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
+        self.assertEqual(3, random_results[0].state["length"].item())
         self.assertTrue(
             (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
                 random_results[0].score <=
@@ -211,22 +242,21 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_encoder(ActionOptions(False, True)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": torch.tensor([len(x._action_sequence)])},
+            create_transform_input([]), transform_action_sequence,
             collate,
-            DecoderModule(rule_prob, token_prob, copy_prob),
+            Module(encoder_module,
+                   DecoderModule(rule_prob, token_prob, copy_prob)),
             options=ActionOptions(False, True)
         )
-        s = SamplerState(0.0,
-                         sampler.initialize(ActionSequenceSamplerInput({}, []))
-                         )
+        s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 1))[0]
-        self.assertEqual(3, topk_results.state.state["length"].item())
+        self.assertEqual(3, topk_results.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5) + log(0.2),
                                topk_results.score)
         random_results = list(sampler.random_samples(results[0], 1))[0]
-        self.assertEqual(3, random_results.state.state["length"].item())
+        self.assertEqual(3, random_results.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5) + log(0.2),
                                random_results.score)
 
@@ -263,25 +293,24 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_encoder(ActionOptions(True, True)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": torch.tensor([len(x._action_sequence)])},
+            create_transform_input([]), transform_action_sequence,
             collate,
-            DecoderModule(rule_prob, token_prob, copy_prob)
+            Module(encoder_module,
+                   DecoderModule(rule_prob, token_prob, copy_prob))
         )
-        s = SamplerState(0.0,
-                         sampler.initialize(ActionSequenceSamplerInput({}, []))
-                         )
+        s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 2))
         self.assertEqual(2, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
+        self.assertEqual(3, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.8),
                                topk_results[0].score)
         self.assertAlmostEqual(log(0.2) + log(0.2),
                                topk_results[1].score)
         random_results = list(sampler.random_samples(results[0], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
+        self.assertEqual(3, random_results[0].state["length"].item())
         self.assertTrue(
             (log(0.2) + log(0.2) - 1e-5 <=
                 random_results[0].score <=
@@ -319,24 +348,23 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_encoder(ActionOptions(True, False)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": torch.tensor([len(x._action_sequence)])},
+            create_transform_input([]), transform_action_sequence,
             collate,
-            DecoderModule(rule_prob, token_prob, copy_prob),
+            Module(encoder_module,
+                   DecoderModule(rule_prob, token_prob, copy_prob)),
             options=ActionOptions(True, False)
         )
-        s = SamplerState(0.0,
-                         sampler.initialize(ActionSequenceSamplerInput({}, []))
-                         )
+        s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 2))
         self.assertEqual(1, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
+        self.assertEqual(3, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.2),
                                topk_results[0].score)
         random_results = list(sampler.random_samples(results[0], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
+        self.assertEqual(3, random_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.2), random_results[0].score)
 
     def test_copy(self):
@@ -359,39 +387,36 @@ class TestActionSequenceSampler(unittest.TestCase):
             ]],
             [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]])
         token_prob = torch.tensor([
-            [[0.0, 0.0, 0.0, 0.0]],
-            [[0.0, 0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0]],
             [[
                 1.0,  # Unknown
-                0.8,  # CloseNode
                 0.2,  # x
                 0.8,  # 1
             ]]])
         copy_prob = torch.tensor([[[0.0]], [[0.0]], [[0.8]]])
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, True)),
+            create_encoder(ActionOptions(True, False)),
             get_token_type,
             is_subtype,
-            lambda x, y: {"length": torch.tensor([len(x._action_sequence)])},
+            create_transform_input([Token("Str", "x")]),
+            transform_action_sequence,
             collate,
-            DecoderModule(rule_prob, token_prob, copy_prob)
+            Module(encoder_module,
+                   DecoderModule(rule_prob, token_prob, copy_prob)),
+            options=ActionOptions(True, False)
         )
-        s = SamplerState(0.0,
-                         sampler.initialize(ActionSequenceSamplerInput(
-                             {},
-                             [Token("Str", "x")]))
-                         )
+        s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 1))
         self.assertEqual(1, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(1.0),
+        self.assertEqual(3, topk_results[0].state["length"].item())
+        self.assertAlmostEqual(log(0.2) + log(1.),
                                topk_results[0].score)
         random_results = list(sampler.random_samples(results[0], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
-        print(random_results[0].state.action_sequence._action_sequence)
+        self.assertEqual(3, random_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(1.0),
                                random_results[0].score)
 

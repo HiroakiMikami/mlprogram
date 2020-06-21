@@ -25,7 +25,9 @@ def is_builtin_type(node: PythonAST) -> bool:
 
 
 def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
-    if isinstance(subtype, Root) or isinstance(basetype, Root):
+    if isinstance(basetype, Root):
+        return True
+    if isinstance(subtype, Root):
         return False
     if subtype.endswith("__list") or \
             basetype.endswith("__list"):

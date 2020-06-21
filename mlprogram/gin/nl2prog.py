@@ -10,9 +10,10 @@ from math import ceil
 from mlprogram.gin import workspace
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
-from mlprogram.utils import evaluate as eval, TopKModel
-from mlprogram.utils.data import to_eval_dataset, ListDataset
-from mlprogram.synthesizers import synthesize, BeamSearchSynthesizer
+from mlprogram.decoders import Decoder
+from mlprogram.utils import TopKModel
+from mlprogram.utils.data import ListDataset
+from mlprogram.utils.nl2prog import evaluate as eval, EvaluationResult
 
 
 logger = logging.getLogger(__name__)
@@ -194,13 +195,11 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
         prepare_dataset(dataset_key)
         raw_dataset = workspace.get(dataset_key)
         assert raw_dataset is not None
-        raw_test_dataset = raw_dataset["test"]
-        raw_valid_dataset = raw_dataset["valid"]
+        test_dataset = raw_dataset["test"]
+        valid_dataset = raw_dataset["valid"]
         if n_samples is not None:
-            raw_test_dataset = ListDataset(raw_test_dataset[:n_samples])
-            raw_valid_dataset = ListDataset(raw_valid_dataset[:n_samples])
-        test_dataset = to_eval_dataset(raw_test_dataset)
-        valid_dataset = to_eval_dataset(raw_valid_dataset)
+            test_dataset = ListDataset(test_dataset[:n_samples])
+            valid_dataset = ListDataset(valid_dataset[:n_samples])
 
         encoder_path = os.path.join(input_dir, "encoder.pt")
         logger.info(f"Load encoder from {encoder_path}")
@@ -209,7 +208,7 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
 
         logger.info("Prepare synthesizer")
         prepare_synthesizer(synthesizer_key)
-        synthesizer = cast(BeamSearchSynthesizer,
+        synthesizer = cast(Decoder,
                            workspace.get(synthesizer_key))
         assert synthesizer is not None
 
@@ -233,16 +232,16 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
             if progress_bar is not None:
                 test_data = progress_bar(test_data)
 
-            result = eval(test_data,
-                          lambda query: synthesize(query, synthesizer),
-                          metrics=metrics, top_n=top_n)
+            result: EvaluationResult = eval(test_data,
+                                            synthesizer,
+                                            metrics=metrics, top_n=top_n)
             logger.info(f"{name}: {result.metrics}")
             results["test"][name] = result
             torch.save(results, results_path)
 
         logger.info("Find best model")
         best_model: Optional[str] = None
-        best_score: float = 0.0
+        best_score: float = -1.0
         for name, result in results["test"].items():
             m = result.metrics[main_metric[0]][main_metric[1]]
             if best_score < m:
@@ -261,7 +260,7 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
                 test_data = progress_bar(test_data)
 
             result = eval(test_data,
-                          lambda query: synthesize(query, synthesizer),
+                          synthesizer,
                           metrics=metrics, top_n=top_n)
             logger.info(f"{name}: {result.metrics}")
             results["best_model"] = best_model

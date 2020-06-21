@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram.utils import Token
 from mlprogram.utils.data import ListDataset
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
@@ -33,9 +34,10 @@ class TransformGroundTruth:
 
     def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        query_for_synth = cast(List[str], entry["query_for_synth"])
-        a = self.action_sequence_encoder.encode_action(action_sequence,
-                                                       query_for_synth)
+        reference = cast(List[Token[str]], entry["reference"])
+        # TODO use type in encoding action sequence
+        a = self.action_sequence_encoder.encode_action(
+            action_sequence, list(map(lambda x: x.value, reference)))
         if a is None:
             return None
         if np.any(a[-1, :].numpy() != -1):

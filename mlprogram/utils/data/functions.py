@@ -6,7 +6,6 @@ from mlprogram.actions \
     import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
-from mlprogram.utils.data import ListDataset
 from mlprogram.utils import Query
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
@@ -75,18 +74,6 @@ def get_samples(dataset: torch.utils.data.Dataset,
     return Samples(rules, node_types, tokens, options)
 
 
-def to_eval_dataset(dataset: torch.utils.data.Dataset) \
-        -> torch.utils.data.Dataset:
-    entries = []
-    for group in dataset:
-        gts = []
-        for ground_truth in group["ground_truth"]:
-            gts.append(ground_truth)
-        for input in group["input"]:
-            entries.append((input, gts))
-    return ListDataset(entries)
-
-
 @dataclass
 class CollateOptions:
     use_pad_sequence: bool
@@ -100,17 +87,13 @@ class Collate:
         self.device = device
         self.options: Dict[str, CollateOptions] = kwargs
 
-    def __call__(self, tensors: Sequence[Optional[Dict[str,
-                                                       Optional[torch.Tensor]
-                                                       ]]]) \
+    def __call__(self, tensors: Sequence[Optional[Dict[str, Any]]]) \
             -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
         return self.collate(tensors)
 
-    def collate(self, tensors: Sequence[Optional[Dict[str,
-                                                      Optional[torch.Tensor]
-                                                      ]]]) \
-            -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
-        retval: Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]] = {}
+    def collate(self, tensors: Sequence[Optional[Dict[str, Any]]]) \
+            -> Dict[str, Any]:
+        retval: Dict[str, Any] = {}
         tmp: Dict[str, List[torch.Tensor]] = {}
         for i, t in enumerate(tensors):
             if t is None:
@@ -121,6 +104,7 @@ class Collate:
                 tmp[name].append(tensor)
         for name, ts in tmp.items():
             if name not in self.options:
+                retval[name] = ts
                 continue
             option = self.options[name]
             if all(map(lambda x: x is None, ts)):
@@ -154,37 +138,45 @@ class Collate:
                     torch.stack(padded_ts, dim=option.dim).to(self.device)
         return retval
 
-    def split(self, tensors: Dict[str, Union[torch.Tensor,
-                                             PaddedSequenceWithMask]]) \
-            -> Sequence[Dict[str, torch.Tensor]]:
-        tensors = {key: value for key, value in tensors.items()
-                   if key in self.options.keys()}
+    def split(self, tensors: Dict[str, Any]) \
+            -> Sequence[Dict[str, Any]]:
         retval: List[Dict[str, torch.Tensor]] = []
         for name, t in tensors.items():
-            option = self.options[name]
-            if option.use_pad_sequence:
-                B = t.data.shape[1]
-            else:
-                B = t.data.shape[option.dim]
-            if len(retval) == 0:
-                for _ in range(B):
-                    retval.append({})
+            if name in self.options:
+                option = self.options[name]
+                if option.use_pad_sequence:
+                    B = t.data.shape[1]
+                else:
+                    B = t.data.shape[option.dim]
+                if len(retval) == 0:
+                    for _ in range(B):
+                        retval.append({})
 
-            if option.use_pad_sequence:
+                if option.use_pad_sequence:
+                    for b in range(B):
+                        inds = torch.nonzero(t.mask[:, b], as_tuple=False)
+                        data = t.data[:, b]
+                        shape = data.shape[1:]
+                        data = data[inds]
+                        data = data.reshape(-1, *shape)
+                        retval[b][name] = data
+                else:
+                    shape = list(t.data.shape)
+                    del shape[option.dim]
+                    data = torch.split(t, 1, dim=option.dim)
+                    for b in range(B):
+                        d = data[b]
+                        if len(shape) == 0:
+                            d = d.reshape(())
+                        else:
+                            d = d.reshape(*shape)
+                        retval[b][name] = d
+            elif isinstance(t, list):
+                B = len(t)
+                if len(retval) == 0:
+                    for _ in range(B):
+                        retval.append({})
                 for b in range(B):
-                    inds = torch.nonzero(t.mask[:, b], as_tuple=False)
-                    data = t.data[:, b]
-                    shape = data.shape[1:]
-                    data = data[inds]
-                    data = data.reshape(-1, *shape)
-                    retval[b][name] = data
-            else:
-                shape = list(t.data.shape)
-                del shape[option.dim]
-                data = torch.split(t, 1, dim=option.dim)
-                for b in range(B):
-                    d = data[b]
-                    d = d.reshape(*shape)
-                    retval[b][name] = d
+                    retval[b][name] = t[b]
 
         return retval

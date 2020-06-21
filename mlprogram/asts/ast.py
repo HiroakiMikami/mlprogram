@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, List, Any, Generic, TypeVar
+from typing import Union, List, Any, Generic, TypeVar, Optional
 from copy import deepcopy
 
 
@@ -40,7 +40,7 @@ class AST:
         """
         raise NotImplementedError
 
-    def get_type_name(self) -> Union[str, Root]:
+    def get_type_name(self) -> Optional[Union[str, Root]]:
         raise NotImplementedError
 
 
@@ -105,7 +105,7 @@ class Node(AST):
     fields: List[Field]
         The list of fields
     """
-    type_name: Union[str, Root]
+    type_name: Optional[Union[str, Root]]
     fields: List[Field]
 
     def clone(self):
@@ -130,7 +130,7 @@ class Node(AST):
         else:
             return False
 
-    def get_type_name(self) -> Union[str, Root]:
+    def get_type_name(self) -> Optional[Union[str, Root]]:
         return self.type_name
 
 
@@ -173,5 +173,5 @@ class Leaf(AST, Generic[V]):
         else:
             return False
 
-    def get_type_name(self) -> Union[str, Root]:
+    def get_type_name(self) -> Optional[Union[str, Root]]:
         return self.type_name

@@ -237,6 +237,7 @@ class ActionSequence:
             for (name, node_type), actions in zip(
                     rule.children,
                     self._tree.children[head]):
+                assert node_type.type_name is not None
                 if node_type.constraint == NodeConstraint.Node:
                     # ApplyRule
                     ast.fields.append(

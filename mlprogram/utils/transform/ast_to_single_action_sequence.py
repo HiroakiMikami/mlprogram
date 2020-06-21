@@ -103,6 +103,7 @@ class AstToSingleActionSequence:
                 logger.warn(f"Invalid type of node: {type(node)}")
                 return []
         action_sequence = ActionSequence(self.options)
-        for action in to_sequence(Node(Root(), [Field("root", Root(), node)])):
+        for action in to_sequence(Node(None,
+                                       [Field("root", Root(), node)])):
             action_sequence.eval(action)
         return action_sequence

@@ -1,7 +1,7 @@
 import re
 from nltk import tokenize
 from typing import Dict
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
@@ -42,19 +42,19 @@ def tokenize_query(query: str) -> Query:
         mappings[p] = str(w)
         word_to_placeholder[str(w)] = p
 
-    query_for_synth = []
+    reference = []
     query_for_dnn = []
     for word in tokenizer.tokenize(query):
         if word in mappings:
-            query_for_synth.append(mappings[word])
+            reference.append(Token[str](None, mappings[word]))
         else:
-            query_for_synth.append(word)
+            reference.append(Token[str](None, word))
         query_for_dnn.append(word)
 
         vars = list(filter(lambda x: len(x) > 0,
                            word.split('.')))  # split by '.'
         if len(vars) > 1:
             for v in vars:
-                query_for_synth.append(v)
+                reference.append(Token(None, v))
                 query_for_dnn.append(v)
-    return Query(query_for_synth, query_for_dnn)
+    return Query(reference, query_for_dnn)

@@ -1,6 +1,6 @@
 import torch
 from typing \
-    import Callable, List, Dict, TypeVar, Generic
+    import Callable, List, Dict, TypeVar, Generic, Mapping, Any
 from dataclasses import dataclass
 
 from mlprogram.decoders import Decoder
@@ -29,9 +29,8 @@ Metric = Callable[[List[GroundTruth], Code], float]
 
 
 def evaluate(dataset: torch.utils.data.Dataset,
-             encoder: Callable[[str], DecoderInput],
-             synthesizer: Decoder[DecoderInput, Code],
-             metrics: Dict[str, Metric],
+             synthesizer: Decoder[Dict[str, Any], Code],
+             metrics: Mapping[str, Metric],
              top_n: List[int] = [1, 3],
              ) -> EvaluationResult[Code, GroundTruth]:
     results: List[Result[Code, GroundTruth]] = []
@@ -41,14 +40,13 @@ def evaluate(dataset: torch.utils.data.Dataset,
         for name in metrics.keys():
             t[name] = 0.0
         total[n] = t
+    n_query = 0
     for group in dataset:
-        queries = group["query"]
+        queries = group["input"]
         gts: List[GroundTruth] = group["ground_truth"]
-        n_query = 0
         for query in queries:
             n_query += 1
-            state = encoder(query)
-            candidates = list(synthesizer(state))
+            candidates = list(synthesizer({"input": query}))
             candidates.sort(key=lambda x: -x.score)
             ms = {}
             for n in top_n:
@@ -62,7 +60,6 @@ def evaluate(dataset: torch.utils.data.Dataset,
                     total[n][name] += \
                         m[name] if m[name] is not None else 0
                 ms[n] = m
-
             results.append(Result(query, gts,
                                   list(map(lambda x: x.output, candidates)),
                                   ms))

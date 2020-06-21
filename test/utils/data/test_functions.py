@@ -2,11 +2,11 @@ import torch
 import unittest
 import numpy as np
 import ast
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 from mlprogram.languages.python import to_ast
 from mlprogram.actions import ActionOptions
 from mlprogram.utils.data \
-    import ListDataset, to_eval_dataset, get_samples, get_words, \
+    import ListDataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
 
@@ -15,8 +15,10 @@ def tokenize(query: str):
     return query.split(" ")
 
 
-def tokenize_query(query: str):
-    return Query(query.split(" "), query.split(" "))
+def tokenize_query(str: str) -> Query:
+    return Query(
+        list(map(lambda x: Token(None, x), str.split(" "))),
+        str.split(" "))
 
 
 def to_action_sequence(code: str):
@@ -56,16 +58,6 @@ class TestGetSamples(unittest.TestCase):
         self.assertEqual(12, len(d.rules))
         self.assertEqual(28, len(d.node_types))
         self.assertEqual(ActionOptions(True, True), d.options)
-
-
-class TestToEvalDataset(unittest.TestCase):
-    def test_simple_case(self):
-        groups = [{"input": ["foo bar"], "ground_truth": ["y = x1"]}]
-        dataset = ListDataset(groups)
-        vdataset = to_eval_dataset(dataset)
-        query, ref = vdataset[0]
-        self.assertEqual("foo bar", query)
-        self.assertEqual(["y = x1"], ref)
 
 
 class TestCollate(unittest.TestCase):
@@ -122,6 +114,17 @@ class TestCollate(unittest.TestCase):
         self.assertTrue(np.array_equal([[0]],
                                        retval["pad0"].data.numpy()))
 
+    def test_collate_with_additional_key(self):
+        data = [
+            {"pad0": 1},
+            {"pad0": 2}
+        ]
+        collate = Collate(device=torch.device("cpu"))
+        retval = collate.collate(data)
+        self.assertEqual(set(["pad0"]),
+                         set(retval.keys()))
+        self.assertEqual([1, 2], retval["pad0"])
+
     def test_collate_with_all_none_batch(self):
         data = [None]
         collate = Collate(device=torch.device("cpu"),
@@ -176,6 +179,16 @@ class TestCollate(unittest.TestCase):
             self.assertEqual(set(expected.keys()), set(actual.keys()))
             for key in expected:
                 self.assertTrue(np.array_equal(expected[key], actual[key]))
+
+    def test_split_with_additional_key(self):
+        data = [
+            {"pad0": 1},
+            {"pad0": 2}
+        ]
+        collate = Collate(device=torch.device("cpu"))
+        retval = collate.split(collate.collate(data))
+        self.assertEqual(1, retval[0]["pad0"])
+        self.assertEqual(2, retval[1]["pad0"])
 
 
 if __name__ == "__main__":

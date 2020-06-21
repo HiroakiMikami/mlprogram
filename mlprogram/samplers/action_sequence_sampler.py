@@ -10,97 +10,80 @@ from mlprogram.actions \
     import ExpandTreeRule, ApplyRule, NodeConstraint, ActionOptions, \
     GenerateToken, Action, NodeType
 from mlprogram.actions import ActionSequence
-from mlprogram.asts import AST
+from mlprogram.asts import AST, Node
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKElement
 from mlprogram.utils.data import Collate
-from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+Input = TypeVar("Input")
 V = TypeVar("V")
 
 
 Tensor = Union[torch.Tensor, PaddedSequenceWithMask]
 
 
-@dataclass
-class Token(Generic[V]):
-    type_name: Optional[str]
-    value: V
-
-
-@dataclass
-class ActionSequenceSamplerInput(Generic[V]):
-    state: Dict[str, Any]
-    reference: List[Token[V]]
-
-
-@dataclass
-class ActionSequenceSamplerState(Generic[V]):
-    state: Dict[str, Any]
-    reference: List[Token[V]]
-    action_sequence: ActionSequence
-
-    # TODO eq, hash
-
-
-class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
-                                    ActionSequenceSamplerState[V]],
+class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                             Generic[V]):
     def __init__(self,
                  encoder: ActionSequenceEncoder,
-                 get_token_type: Callable[[V], Optional[str]],
+                 get_token_type: Optional[Callable[[V], Optional[str]]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
-                 transform_action_sequence: Callable[
-                     [ActionSequence, List[Token]],
-                     Optional[Dict[str, Any]]],
+                 transform_input,
+                 transform_action_sequence,
                  collate: Collate,
-                 decoder_module: torch.nn.Module,
+                 module: torch.nn.Module,
                  options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
                  rng: np.random.RandomState = np.random
                  ):
         self.encoder = encoder
-        self.get_token_type = get_token_type
+        self.get_token_type = get_token_type or (lambda x: None)
         self.is_subtype = is_subtype
+        self.transform_input = transform_input
         self.transform_action_sequence = transform_action_sequence
         self.collate = collate
-        self.decoder_module = decoder_module
+        self.module = module
         self.options = options
         self.eps = eps
         self.rng = rng
 
-    def initialize(self, input: ActionSequenceSamplerInput) \
-            -> ActionSequenceSamplerState[V]:
+    def initialize(self, input: Dict[str, Any]) \
+            -> Dict[str, Any]:
         action_sequence = ActionSequence(self.options)
+        state_list = self.transform_input(**input)
+        state_tensor = self.collate.collate([state_list])
+        state_tensor = self.module.encoder(**state_tensor)
+        state = self.collate.split(state_tensor)[0]
+
         # Add initial rule
         action_sequence.eval(ApplyRule(
-            ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+            ExpandTreeRule(NodeType(None, NodeConstraint.Token),
                            [("root", NodeType(Root(), NodeConstraint.Node))])))
-        return ActionSequenceSamplerState[V](input.state, input.reference,
-                                             action_sequence)
+        state["action_sequence"] = action_sequence
+        return state
 
-    def create_output(self, state: ActionSequenceSamplerState[V]) \
+    def create_output(self, state: Dict[str, Any]) \
             -> Optional[AST]:
-        if state.action_sequence.head is None:
+        if state["action_sequence"].head is None:
             # complete
-            return state.action_sequence.generate()
+            ast = cast(Node, state["action_sequence"].generate())
+            return ast.fields[0].value
         return None
 
     def batch_infer(self,
-                    states: List[SamplerState[ActionSequenceSamplerState[V]]]):
+                    states: List[SamplerState[Dict[str, Any]]]):
         N = len(states)
 
         state_list: List[Dict[str, Any]] = []
         for s in states:
-            tmp = self.transform_action_sequence(s.state.action_sequence,
-                                                 s.state.reference)
+            tmp = self.transform_action_sequence(**s.state)
             if tmp is not None:
                 state = {}
-                for key, value in s.state.state.items():
+                for key, value in s.state.items():
                     state[key] = value
                 for key, value in tmp.items():
                     state[key] = value
@@ -111,7 +94,7 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
         states_tensor = self.collate.collate(state_list)
 
         with torch.no_grad():
-            next_states = self.decoder_module(**states_tensor)
+            next_states = self.module.decoder(**states_tensor)
 
         rule_pred = next_states.pop("rule_probs").data.cpu().reshape(N, -1)
         token_pred = next_states.pop("token_probs").data.cpu().reshape(N, -1)
@@ -120,23 +103,23 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
         return rule_pred, token_pred, copy_pred, next_state_list
 
     def all_actions(
-        self, states: List[SamplerState[ActionSequenceSamplerState[V]]]) \
+        self, states: List[SamplerState[Dict[str, Any]]]) \
             -> Generator[Tuple[float,
-                               SamplerState[ActionSequenceSamplerState[V]],
-                               Tensor, Action],
+                               SamplerState[Dict[str, Any]],
+                               Dict[str, Any], Action],
                          None, None]:
         rule_pred, token_pred, copy_pred, next_states = \
             self.batch_infer(states)
         for i, state in enumerate(states):
             state = states[i]
-            head = state.state.action_sequence.head
+            head = state.state["action_sequence"].head
             is_token = False
             if head is None:
                 continue
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
-                    state.state.action_sequence.action_sequence[head.action]
+                    state.state["action_sequence"].action_sequence[head.action]
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 is_token = True
@@ -144,7 +127,8 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
                 # Generate token
                 probs: Dict[V, float] = {}
                 # predefined token
-                for j in range(1, token_pred.shape[1]):
+                for j in range(1, min(self.encoder._token_encoder.vocab_size,
+                                      token_pred.shape[1])):
                     # 0 is unknown token
                     p = token_pred[i, j].item()
                     token = self.encoder._token_encoder.vocab[j]
@@ -156,10 +140,11 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
                         probs[token] = 0.0
                     probs[token] += p
                 # reference
-                for j in range(len(state.state.reference)):
+                for j in range(min(copy_pred.shape[1],
+                                   len(state.state["reference"]))):
                     p = copy_pred[i, j].item()
-                    token = state.state.reference[j].value
-                    t = state.state.reference[j].type_name
+                    token = state.state["reference"][j].value
+                    t = state.state["reference"][j].type_name
                     if t is not None and \
                             not self.is_subtype(t, head_field.type_name):
                         continue
@@ -177,7 +162,8 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
                            GenerateToken(token))
             else:
                 # Apply rule
-                for j in range(1, rule_pred.shape[1]):
+                for j in range(1, min(rule_pred.shape[1],
+                                      self.encoder._rule_encoder.vocab_size)):
                     # 0 is unknown rule
                     p = rule_pred[i, j].item()
                     if p < self.eps:
@@ -186,7 +172,8 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
                         lp = np.log(p)
                     rule = self.encoder._rule_encoder.vocab[j]
                     if isinstance(rule, ExpandTreeRule):
-                        if self.is_subtype(
+                        if rule.parent.type_name is not None and \
+                            self.is_subtype(
                                 rule.parent.type_name,
                                 head_field.type_name):
                             yield (state.score + lp, states[i],
@@ -201,27 +188,26 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
                                    ApplyRule(rule))
 
     def top_k_samples(
-        self, states: List[SamplerState[ActionSequenceSamplerState]], k: int) \
-            -> Generator[SamplerState[ActionSequenceSamplerState], None, None]:
+        self, states: List[SamplerState[Dict[str, Any]]], k: int) \
+            -> Generator[SamplerState[Dict[str, Any]], None, None]:
+        self.module.eval()
         topk = TopKElement(k)
         for score, state, new_state, action in self.all_actions(states):
             topk.add(score, (state, new_state, action))
 
         # Instantiate top-k hypothesis
         for score, (state, new_state, action) in topk.elements:
-            action_sequence = state.state.action_sequence.clone()
+            action_sequence = state.state["action_sequence"].clone()
             action_sequence.eval(action)
-            yield SamplerState[ActionSequenceSamplerState](
-                score,
-                ActionSequenceSamplerState(
-                    new_state,
-                    state.state.reference,
-                    action_sequence))
+            s = {key: value for key, value in new_state.items()}
+            s["action_sequence"] = action_sequence
+            yield SamplerState[Dict[str, Any]](score, s)
 
     def random_samples(
-        self, state: SamplerState[ActionSequenceSamplerState[V]], n: int) \
-            -> Generator[SamplerState[ActionSequenceSamplerState[V]],
+        self, state: SamplerState[Dict[str, Any]], n: int) \
+            -> Generator[SamplerState[Dict[str, Any]],
                          None, None]:
+        self.module.eval()
         actions = list(self.all_actions([state]))
         # log_prob -> prob
         probs = [np.exp(score) for score, _, _, _ in actions]
@@ -230,9 +216,11 @@ class ActionSequenceSampler(Sampler[ActionSequenceSamplerInput, AST,
         resamples = self.rng.multinomial(n, probs)
         for (score, state, new_state, action), m in zip(actions, resamples):
             for _ in range(m):
-                action_sequence = state.state.action_sequence.clone()
+                action_sequence = state.state["action_sequence"].clone()
                 action_sequence.eval(action)
-                yield SamplerState[ActionSequenceSamplerState](
-                    score, ActionSequenceSamplerState(
-                        cast(Dict[str, Any], new_state), state.state.reference,
-                        action_sequence))
+                s = {key: value for key, value in new_state.items()}
+                s["action_sequence"] = action_sequence
+                yield SamplerState[Dict[str, Any]](score, s)
+
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        self.module.load_state_dict(state_dict)

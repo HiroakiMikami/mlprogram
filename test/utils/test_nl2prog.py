@@ -7,25 +7,25 @@ from mlprogram.decoders import Result as DecoderResult
 
 class TestEvaluate(unittest.TestCase):
     def test_simple_case(self):
-        def encode(query):
+        def synthesize(input):
+            query = input["input"]
+            output = []
             if query == "query0":
-                return {"output": ["c0", "c1", "c2"]}
+                output = ["c0", "c1", "c2"]
             elif query == "query1":
-                return {"output": ["c2", "c3", "c0"]}
+                output = ["c2", "c3", "c0"]
             else:
-                return {"output": ["c2", "c3", "c5"]}
+                output = ["c2", "c3", "c5"]
 
-        def synthesize(state):
-            for i, s in enumerate(state["output"]):
+            for i, s in enumerate(output):
                 yield DecoderResult(s, -i)
 
         accuracy = Accuracy(str, str)
-        dataset = \
-            ListDataset([{
-                "query": ["query0", "query1", "query2"],
-                "ground_truth": ["c0", "c1", "c4"]
-            }])
-        results = evaluate(dataset, encode, synthesize,
+        dataset = ListDataset([{
+            "input": ["query0", "query1", "query2"],
+            "ground_truth": ["c0", "c1", "c4"]
+        }])
+        results = evaluate(dataset, synthesize,
                            metrics={"accuracy": accuracy})
 
         self.assertEqual(

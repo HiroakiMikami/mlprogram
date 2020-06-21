@@ -1,13 +1,14 @@
 import re
 from nltk import tokenize
 from typing import List
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
 
-def get_subtokens(token: str) -> List[str]:
-    return list(re.findall(r"[A-Za-z]+|\d+|\s+|.", token))
+def get_subtokens(token: str) -> List[Token[str]]:
+    return list(map(lambda x: Token[str](None, x),
+                    re.findall(r"[A-Za-z]+|\d+|\s+|.", token)))
 
 
 def tokenize_query(query: str) -> Query:
@@ -23,23 +24,22 @@ def tokenize_query(query: str) -> Query:
     Query
     """
 
-    query_for_synth = []
+    reference = []
     for word in tokenizer.tokenize(query):
         subtokens = get_subtokens(word)
-        assert(word == "".join(subtokens))
+        assert(word == "".join(map(lambda x: x.value, subtokens)))
 
         if len(subtokens) == 1:
-            query_for_synth.append(word)
+            reference.append(Token[str](None, word))
         else:
-            query_for_synth.append("SUB_START")
-            query_for_synth.extend(subtokens)
-            query_for_synth.append("SUB_END")
-    return Query(query_for_synth, query_for_synth)
+            reference.append(Token[str](None, "SUB_START"))
+            reference.extend(subtokens)
+            reference.append(Token[str](None, "SUB_END"))
+    return Query(reference, list(map(lambda x: x.value, reference)))
 
 
 def tokenize_token(value: str) -> List[str]:
-    tokens = []
-    tokens = get_subtokens(value)
+    tokens = list(map(lambda x: x.value, get_subtokens(value)))
     assert(value == "".join(tokens))
 
     return tokens

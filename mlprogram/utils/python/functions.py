@@ -1,7 +1,7 @@
 import re
 from nltk import tokenize
 from typing import List
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
@@ -19,16 +19,16 @@ def tokenize_query(query: str) -> Query:
     Query
     """
 
-    query_for_synth = []
+    reference = []
     for word in tokenizer.tokenize(query):
-        query_for_synth.append(word)
+        reference.append(Token[str](None, word))
 
         vars = list(filter(lambda x: len(x) > 0,
                            word.split('.')))  # split by '.'
         if len(vars) > 1:
             for v in vars:
-                query_for_synth.append(v)
-    return Query(query_for_synth, query_for_synth)
+                reference.append(Token[str](None, v))
+    return Query(reference, list(map(lambda x: x.value, reference)))
 
 
 def tokenize_token(value: str, split_camel_case: bool = False) -> List[str]:

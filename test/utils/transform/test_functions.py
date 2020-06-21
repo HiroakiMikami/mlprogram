@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Leaf, Field
 from mlprogram.encoders import ActionSequenceEncoder
@@ -15,7 +15,9 @@ def tokenize(query: str):
 
 
 def tokenize_query(query: str):
-    return Query(query.split(" "), query.split(" "))
+    return Query(
+        list(map(lambda x: Token(None, x), query.split(" "))),
+        query.split(" "))
 
 
 def to_action_sequence(code: str):
@@ -52,7 +54,7 @@ class TestTransformGroundTruth(unittest.TestCase):
         input = TransformCode(to_action_sequence)(ground_truth="y = x + 1")
         transform = TransformGroundTruth(aencoder)
         ground_truth = \
-            transform(query_for_synth=["foo", "bar"],
+            transform(reference=[Token(None, "foo"), Token(None, "bar")],
                       **input)["ground_truth_actions"]
         self.assertTrue(np.array_equal(
             [
@@ -73,9 +75,9 @@ class TestTransformGroundTruth(unittest.TestCase):
         action_sequence = TransformCode(to_action_sequence)(
             ground_truth="y = x + 1")["action_sequence"]
         transform = TransformGroundTruth(aencoder)
-        ground_truth = transform(action_sequence=action_sequence,
-                                 query_for_synth=["foo", "bar"]
-                                 )
+        ground_truth = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "foo"), Token(None, "bar")])
         self.assertEqual(None, ground_truth)
 
 

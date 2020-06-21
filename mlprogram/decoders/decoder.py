@@ -1,4 +1,6 @@
-from typing import Generic, TypeVar, Generator
+
+
+from typing import Generic, TypeVar, Generator, Dict, Any
 from dataclasses import dataclass
 
 
@@ -15,4 +17,7 @@ class Result(Generic[Output]):
 
 class Decoder(Generic[Input, Output]):
     def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
+        raise NotImplementedError
+
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         raise NotImplementedError

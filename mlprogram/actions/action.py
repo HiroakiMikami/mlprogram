@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from mlprogram.asts import Root
 from typing \
-    import Tuple, Union, List, Any, TypeVar, Generic
+    import Tuple, Union, List, Any, TypeVar, Generic, Optional
 from enum import Enum
 import logging
 
@@ -26,7 +26,7 @@ class NodeType:
     constraint: NodeConstraint
         It represents the constraint of this type
     """
-    type_name: Union[str, Root]
+    type_name: Optional[Union[str, Root]]
     constraint: NodeConstraint
 
     def __hash__(self) -> int:

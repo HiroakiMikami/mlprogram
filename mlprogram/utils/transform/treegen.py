@@ -5,7 +5,7 @@ from torchnlp.encoders import LabelEncoder
 
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 
 
 Input = TypeVar("Input")
@@ -33,7 +33,7 @@ class TransformQuery(Generic[Input]):
             length = min(self.max_word_length, len(chars))
             char_query[i, :length] = \
                 self.char_encoder.batch_encode(word)[:length]
-        entry["query_for_synth"] = query.query_for_synth
+        entry["reference"] = query.reference
         entry["word_nl_query"] = word_query
         entry["char_nl_query"] = char_query
 
@@ -51,12 +51,14 @@ class TransformActionSequence:
 
     def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        query_for_synth = cast(List[str], entry["query_for_synth"])
-        a = self.action_sequence_encoder.encode_action(action_sequence,
-                                                       query_for_synth)
+        reference = cast(List[Token[str]], entry["reference"])
+        refs = list(map(lambda x: x.value, reference))
+        # TODO use type in encoding action sequence
+        a = self.action_sequence_encoder.encode_action(
+            action_sequence, refs)
         rule_prev_action = \
             self.action_sequence_encoder.encode_each_action(
-                action_sequence, query_for_synth, self.max_arity)
+                action_sequence, refs, self.max_arity)
         path = \
             self.action_sequence_encoder.encode_path(
                 action_sequence, self.max_depth)
@@ -77,7 +79,7 @@ class TransformActionSequence:
             query = path
             rule_prev_action = \
                 self.action_sequence_encoder.encode_each_action(
-                    action_sequence, query_for_synth, self.max_arity)
+                    action_sequence, refs, self.max_arity)
 
         entry["previous_actions"] = prev_action
         entry["previous_action_rules"] = rule_prev_action

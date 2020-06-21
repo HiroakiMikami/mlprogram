@@ -10,7 +10,7 @@ from mlprogram.gin import workspace
 from mlprogram.gin.nl2prog import train, evaluate
 from mlprogram.asts import Leaf
 from mlprogram.utils.data import ListDataset
-from mlprogram.synthesizers.beam_search_synthesizer import Candidate
+from mlprogram.decoders import Result
 from mlprogram.metrics import Accuracy, Bleu
 
 
@@ -176,11 +176,9 @@ class TestEvaluate(unittest.TestCase):
             def load_state_dict(self, state_dict):
                 self.state_dict = state_dict
 
-            def synthesize(self, query):
-                cs = [Candidate(self.state_dict["score"],
-                                Leaf("str", self.state_dict["name"]))]
-                ps = []
-                yield cs, ps
+            def __call__(self, query):
+                yield Result(Leaf("str", self.state_dict["name"]),
+                             self.state_dict["score"])
         workspace.put(synthesizer_path, MockSynthesizer())
 
     def test_happy_path(self):

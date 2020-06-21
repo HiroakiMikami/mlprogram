@@ -4,7 +4,7 @@ from torchnlp.encoders import LabelEncoder
 from typing import Callable, List, Any, Optional, Dict, TypeVar, Generic, cast
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 
 Input = TypeVar("Input")
 
@@ -19,7 +19,7 @@ class TransformQuery(Generic[Input]):
         input = cast(Input, entry["input"])
         query = self.extract_query(input)
 
-        entry["query_for_synth"] = query.query_for_synth
+        entry["reference"] = query.reference
         entry["word_nl_query"] = \
             self.word_encoder.batch_encode(query.query_for_dnn)
 
@@ -35,9 +35,10 @@ class TransformActionSequence:
 
     def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        query_for_synth = cast(List[str], entry["query_for_synth"])
-        a = self.action_sequence_encoder.encode_action(action_sequence,
-                                                       query_for_synth)
+        reference = cast(List[Token[str]], entry["reference"])
+        # TODO use type in encoding action sequence
+        a = self.action_sequence_encoder.encode_action(
+            action_sequence, list(map(lambda x: x.value, reference)))
         p = self.action_sequence_encoder.encode_parent(action_sequence)
         if a is None:
             return None
@@ -55,8 +56,11 @@ class TransformActionSequence:
 
         entry["actions"] = action_tensor
         entry["previous_actions"] = prev_action
-        entry["history"] = None
-        entry["hidden_state"] = None
-        entry["state"] = None
+        if self.train or "history" not in entry:
+            entry["history"] = None
+        if self.train or "hidden_state" not in entry:
+            entry["hidden_state"] = None
+        if self.train or "state" not in entry:
+            entry["state"] = None
 
         return entry

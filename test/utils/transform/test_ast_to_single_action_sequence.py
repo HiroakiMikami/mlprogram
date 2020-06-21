@@ -17,7 +17,7 @@ class TestAstToActionSequence(unittest.TestCase):
                                       tokenize=tokenize)
         seq = f(asts.Leaf("str", "t0 t1"))
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+            [ApplyRule(ExpandTreeRule(NodeType(None, NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Token))
                                        ])),
@@ -30,7 +30,7 @@ class TestAstToActionSequence(unittest.TestCase):
         f = AstToSingleActionSequence(ActionOptions(True, False))
         seq = f(asts.Leaf("str", "t0 t1"))
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+            [ApplyRule(ExpandTreeRule(NodeType(None, NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Token))
                                        ])),
@@ -47,7 +47,7 @@ class TestAstToActionSequence(unittest.TestCase):
                                       tokenize=tokenize)
         seq = f(a)
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+            [ApplyRule(ExpandTreeRule(NodeType(None, NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Node))
                                        ])),
@@ -68,7 +68,7 @@ class TestAstToActionSequence(unittest.TestCase):
                                       tokenize=tokenize)
         seq = f(a)
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+            [ApplyRule(ExpandTreeRule(NodeType(None, NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Node))
                                        ])),
@@ -92,7 +92,7 @@ class TestAstToActionSequence(unittest.TestCase):
                                       tokenize=tokenize)
         seq = f(a)
         self.assertEqual(
-            [ApplyRule(ExpandTreeRule(NodeType(Root(), NodeConstraint.Node),
+            [ApplyRule(ExpandTreeRule(NodeType(None, NodeConstraint.Node),
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Node))
                                        ])),

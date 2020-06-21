@@ -17,6 +17,7 @@ import mlprogram.metrics.python.bleu
 import mlprogram.languages.python
 import mlprogram.languages.bash
 import mlprogram.actions
+import mlprogram.decoders
 import mlprogram.utils
 import mlprogram.utils.data
 import mlprogram.utils.transform
@@ -90,11 +91,13 @@ gin.external_configurable(mlprogram.languages.bash.is_subtype,
 gin.external_configurable(mlprogram.actions.ActionOptions,
                           module="mlprogram.actions")
 gin.external_configurable(mlprogram.utils.Compose, module="mlprogram.utils")
-gin.external_configurable(mlprogram.synthesizers.CommonBeamSearchSynthesizer,
-                          module="mlprogram.utils")
-gin.external_configurable(
-    mlprogram.synthesizers.CommonBeamSearchSynthesizer.create,
-    module="mlprogram.synthesizers.CommonBeamSearchSynthesizer")
+
+gin.external_configurable(mlprogram.decoders.BeamSearch,
+                          module="mlprogram.decoders")
+gin.external_configurable(mlprogram.decoders.SMC, module="mlprogram.decoders")
+gin.external_configurable(mlprogram.samplers.ActionSequenceSampler,
+                          module="mlprogram.samplers")
+
 gin.external_configurable(mlprogram.utils.data.Collate,
                           module="mlprogram.utils.data")
 gin.external_configurable(mlprogram.utils.data.CollateOptions,

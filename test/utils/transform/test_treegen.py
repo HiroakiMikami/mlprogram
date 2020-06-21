@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from torchnlp.encoders import LabelEncoder
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Field, Leaf
 from mlprogram.actions import ActionOptions
@@ -16,8 +16,10 @@ def tokenize(query: str):
     return query.split(" ")
 
 
-def tokenize_query(query: str):
-    return Query(query.split(" "), query.split(" "))
+def tokenize_query(str: str) -> Query:
+    return Query(
+        list(map(lambda x: Token(None, x), str.split(" "))),
+        str.split(" "))
 
 
 def to_action_sequence(code: str):
@@ -45,10 +47,10 @@ class TestTransformQuery(unittest.TestCase):
         cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
         transform = TransformQuery(tokenize_query, qencoder, cencoder, 3)
         result = transform(input="ab test")
-        query_for_synth = result["query_for_synth"]
+        reference = result["reference"]
         word_query = result["word_nl_query"]
         char_query = result["char_nl_query"]
-        self.assertEqual(["ab", "test"], query_for_synth)
+        self.assertEqual([Token(None, "ab"), Token(None, "test")], reference)
         self.assertTrue(np.array_equal([1, 2], word_query.numpy()))
         self.assertTrue(np.array_equal([[1, 2, -1], [3, 4, 0]],
                                        char_query.numpy()))
@@ -64,8 +66,9 @@ class TestTransformActionSequence(unittest.TestCase):
             TransformCode(to_action_sequence)(
                 ground_truth="y = x + 1")["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3)
-        result = transform(action_sequence=action_sequence,
-                           query_for_synth=["ab", "test"])
+        result = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "ab"), Token(None, "test")])
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
         depth = result["depthes"]
@@ -81,24 +84,24 @@ class TestTransformActionSequence(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                # Root -> Root
-                [[1, -1, -1], [1, -1, -1], [-1, -1, -1]],
+                # None -> Root
+                [[1, -1, -1], [2, -1, -1], [-1, -1, -1]],
                 # Assign -> Name, expr
-                [[2, -1, -1], [3, -1, -1], [4, -1, -1]],
+                [[3, -1, -1], [4, -1, -1], [5, -1, -1]],
                 # Name -> str
-                [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
+                [[4, -1, -1], [6, -1, -1], [-1, -1, -1]],
                 # str -> "x"
                 [[-1, -1, -1], [-1, 1, -1], [-1, -1, -1]],
                 # Op -> str, expr, expr
-                [[6, -1, -1], [5, -1, -1], [4, -1, -1]],
+                [[7, -1, -1], [6, -1, -1], [5, -1, -1]],
                 # str -> "+"
                 [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
                 # Name -> str
-                [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
+                [[4, -1, -1], [6, -1, -1], [-1, -1, -1]],
                 # str -> "y"
                 [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
                 # Number -> number
-                [[7, -1, -1], [8, -1, -1], [-1, -1, -1]],
+                [[8, -1, -1], [9, -1, -1], [-1, -1, -1]],
             ],
             prev_rule_action.numpy()
         ))
@@ -136,8 +139,9 @@ class TestTransformActionSequence(unittest.TestCase):
             TransformCode(to_action_sequence)(
                 ground_truth="y = x + 1")["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3, train=False)
-        result = transform(action_sequence=action_sequence,
-                           query_for_synth=["ab", "test"])
+        result = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "ab"), Token(None, "test")])
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
         depth = result["depthes"]
@@ -153,24 +157,24 @@ class TestTransformActionSequence(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                # Root -> Root
-                [[1, -1, -1], [1, -1, -1], [-1, -1, -1]],
+                # None -> Root
+                [[1, -1, -1], [2, -1, -1], [-1, -1, -1]],
                 # Assign -> Name, expr
-                [[2, -1, -1], [3, -1, -1], [4, -1, -1]],
+                [[3, -1, -1], [4, -1, -1], [5, -1, -1]],
                 # Name -> str
-                [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
+                [[4, -1, -1], [6, -1, -1], [-1, -1, -1]],
                 # str -> "x"
                 [[-1, -1, -1], [-1, 1, -1], [-1, -1, -1]],
                 # Op -> str, expr, expr
-                [[6, -1, -1], [5, -1, -1], [4, -1, -1]],
+                [[7, -1, -1], [6, -1, -1], [5, -1, -1]],
                 # str -> "+"
                 [[-1, -1, -1], [-1, 2, -1], [-1, -1, -1]],
                 # Name -> str
-                [[3, -1, -1], [5, -1, -1], [-1, -1, -1]],
+                [[4, -1, -1], [6, -1, -1], [-1, -1, -1]],
                 # str -> "y"
                 [[-1, -1, -1], [-1, 3, -1], [-1, -1, -1]],
                 # Number -> number
-                [[7, -1, -1], [8, -1, -1], [-1, -1, -1]],
+                [[8, -1, -1], [9, -1, -1], [-1, -1, -1]],
                 [[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]],
             ],
             prev_rule_action.numpy()
@@ -211,8 +215,9 @@ class TestTransformActionSequence(unittest.TestCase):
             TransformCode(to_action_sequence)(
                 ground_truth="y = x + 1")["action_sequence"]
         transform = TransformActionSequence(aencoder, 3, 3)
-        result = transform(action_sequence=action_sequence,
-                           query_for_synth=["ab", "test"])
+        result = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "ab"), Token(None, "test")])
         self.assertEqual(None, result)
 
 

@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from torchnlp.encoders import LabelEncoder
-from mlprogram.utils import Query
+from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Leaf, Field
 from mlprogram.encoders import ActionSequenceEncoder
@@ -15,8 +15,10 @@ def tokenize(query: str):
     return query.split(" ")
 
 
-def tokenize_query(query: str):
-    return Query(query.split(" "), query.split(" "))
+def tokenize_query(str: str) -> Query:
+    return Query(
+        list(map(lambda x: Token(None, x), str.split(" "))),
+        str.split(" "))
 
 
 def to_action_sequence(code: str):
@@ -39,11 +41,11 @@ def to_action_sequence(code: str):
 class TestTransformQuery(unittest.TestCase):
     def test_happy_path(self):
         def tokenize_query(value: str):
-            return Query([value], [value + "dnn"])
+            return Query([Token(None, value)], [value + "dnn"])
 
         transform = TransformQuery(tokenize_query, LabelEncoder(["dnn"]))
         result = transform(input="")
-        self.assertEqual([""], result["query_for_synth"])
+        self.assertEqual([Token(None, "")], result["reference"])
         self.assertEqual([1], result["word_nl_query"].numpy().tolist())
 
 
@@ -56,15 +58,16 @@ class TestTransformActionSequence(unittest.TestCase):
         transform = TransformActionSequence(aencoder)
         action_sequence = TransformCode(to_action_sequence)(
             ground_truth="y = x + 1")["action_sequence"]
-        result = transform(action_sequence=action_sequence,
-                           query_for_synth=["foo", "bar"])
+        result = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "foo"), Token(None, "bar")])
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
         self.assertTrue(np.array_equal(
             [
-                [1, 2, 0], [3, 3, 1], [5, 4, 2], [5, 4, 2], [4, 3, 1],
-                [5, 5, 5], [5, 5, 5], [4, 5, 5], [5, 4, 8], [5, 4, 8],
-                [4, 5, 5], [8, 6, 11], [8, 6, 11]
+                [2, 2, 0], [4, 3, 1], [6, 4, 2], [6, 4, 2], [5, 3, 1],
+                [6, 5, 5], [6, 5, 5], [5, 5, 5], [6, 4, 8], [6, 4, 8],
+                [5, 5, 5], [9, 6, 11], [9, 6, 11]
             ],
             action_tensor.numpy()
         ))
@@ -86,8 +89,9 @@ class TestTransformActionSequence(unittest.TestCase):
         action_sequence = TransformCode(to_action_sequence)(
             ground_truth="y = x + 1")["action_sequence"]
         transform = TransformActionSequence(aencoder, train=False)
-        result = transform(action_sequence=action_sequence,
-                           query_for_synth=["foo", "bar"])
+        result = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "foo"), Token(None, "bar")])
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
 
@@ -109,8 +113,9 @@ class TestTransformActionSequence(unittest.TestCase):
         transform = TransformActionSequence(aencoder)
         action_sequence = TransformCode(to_action_sequence)(
             ground_truth="y = x + 1")["action_sequence"]
-        result = transform(action_sequence=action_sequence,
-                           query_for_synth=["foo", "bar"])
+        result = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "foo"), Token(None, "bar")])
         self.assertEqual(None, result)
 
 

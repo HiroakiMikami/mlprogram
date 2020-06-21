@@ -9,8 +9,9 @@ import os
 import torch
 import torch.optim as optim
 from mlprogram.gin import nl2prog, nl2code, workspace, optimizer
-from mlprogram.utils import Query
-from mlprogram.synthesizers import CommonBeamSearchSynthesizer
+from mlprogram.utils import Query, Token
+from mlprogram.decoders import BeamSearch
+from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.actions import ActionOptions
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
@@ -26,7 +27,9 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
 def tokenize_query(str: str) -> Query:
-    return Query(str.split(" "), str.split(" "))
+    return Query(
+        list(map(lambda x: Token(None, x), str.split(" "))),
+        str.split(" "))
 
 
 def tokenize_token(token: str) -> List[str]:
@@ -64,23 +67,23 @@ class TestNL2Code(unittest.TestCase):
         transform_input = TransformQuery(tokenize_query, qencoder)
         transform_action_sequence = TransformActionSequence(aencoder,
                                                             train=False)
-        synthesizer = CommonBeamSearchSynthesizer(
-            5, transform_input, transform_action_sequence,
-            Collate(
-                torch.device("cpu"),
-                word_nl_query=CollateOptions(True, 0, -1),
-                nl_query_features=CollateOptions(True, 0, -1),
-                actions=CollateOptions(True, 0, -1),
-                previous_actions=CollateOptions(True, 0, -1),
-                previous_action_rules=CollateOptions(True, 0, -1),
-                history=CollateOptions(False, 1, 0),
-                hidden_state=CollateOptions(False, 0, 0),
-                state=CollateOptions(False, 0, 0),
-                ground_truth_actions=CollateOptions(True, 0, -1)
-            ),
-            model.input_reader, model.action_sequence_reader, model.decoder,
-            model.predictor, aencoder, is_subtype,
-            options=options, max_steps=20)
+        collate = Collate(
+            torch.device("cpu"),
+            word_nl_query=CollateOptions(True, 0, -1),
+            nl_query_features=CollateOptions(True, 0, -1),
+            actions=CollateOptions(True, 0, -1),
+            previous_actions=CollateOptions(True, 0, -1),
+            previous_action_rules=CollateOptions(True, 0, -1),
+            history=CollateOptions(False, 1, 0),
+            hidden_state=CollateOptions(False, 0, 0),
+            state=CollateOptions(False, 0, 0),
+            ground_truth_actions=CollateOptions(True, 0, -1)
+        )
+        synthesizer = BeamSearch(
+            5, 20,
+            ActionSequenceSampler(
+                aencoder, lambda x: None, is_subtype, transform_input,
+                transform_action_sequence, collate, model, options=options))
         workspace.put(synthesizer_key, synthesizer)
 
     def transform_cls(self, to_action_sequence):
@@ -108,8 +111,8 @@ class TestNL2Code(unittest.TestCase):
 
     def train(self, options, tokenize_token, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = \
-                AstToSingleActionSequence(options, tokenize_token)
+            to_action_sequence = AstToSingleActionSequence(
+                options, tokenize_token)
             collate_fn = Collate(
                 torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),

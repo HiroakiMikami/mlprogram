@@ -51,17 +51,18 @@ mlprogram.utils.data.Collate.state                 = @state_option/mlprogram.uti
 mlprogram.utils.data.Collate.ground_truth_actions  = @sequence_option/mlprogram.utils.data.CollateOptions()
 
 # Synthesizer
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.beam_size               = 15
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_input         = @mlprogram.utils.transform.nl2code.TransformQuery()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.transform_action_sequence     = @mlprogram.utils.transform.nl2code.TransformActionSequence()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.collate                 = @mlprogram.utils.data.Collate()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.model                   = @mlprogram.nn.nl2code.TrainModel()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.is_subtype              = @mlprogram.languages.python.is_subtype
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.options                 = @mlprogram.actions.ActionOptions()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.device                  = @torch.device()
-mlprogram.synthesizers.CommonBeamSearchSynthesizer.create.max_steps               = 100
-synthesizer/mlprogram.gin.workspace.put.value                              = @mlprogram.synthesizers.CommonBeamSearchSynthesizer.create()
+mlprogram.decoders.BeamSearch.beam_size                            = 15
+mlprogram.decoders.BeamSearch.max_step_size                        = 100
+mlprogram.decoders.BeamSearch.sampler                              = @mlprogram.samplers.ActionSequenceSampler()
+mlprogram.samplers.ActionSequenceSampler.encoder                   = @action_sequence_encoder/mlprogram.gin.workspace.get()
+mlprogram.samplers.ActionSequenceSampler.get_token_type            = None
+mlprogram.samplers.ActionSequenceSampler.is_subtype                = @mlprogram.languages.python.is_subtype
+mlprogram.samplers.ActionSequenceSampler.transform_input           = @mlprogram.utils.transform.nl2code.TransformQuery()
+mlprogram.samplers.ActionSequenceSampler.transform_action_sequence = @mlprogram.utils.transform.nl2code.TransformActionSequence()
+mlprogram.samplers.ActionSequenceSampler.collate                   = @mlprogram.utils.data.Collate()
+mlprogram.samplers.ActionSequenceSampler.module                    = @mlprogram.nn.nl2code.TrainModel()
+mlprogram.samplers.ActionSequenceSampler.options                   = @mlprogram.actions.ActionOptions()
+synthesizer/mlprogram.gin.workspace.put.value                      = @mlprogram.decoders.BeamSearch()
 
 # Metrics
 mlprogram.metrics.Accuracy.parse          = @mlprogram.datasets.django.parse

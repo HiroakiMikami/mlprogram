@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Union
 from mlprogram.gin import workspace
-from mlprogram.asts import AST, Node, Leaf, Field
+from mlprogram.asts import AST, Node, Leaf, Field, Root
 from mlprogram.utils.data import ListDataset
 
 
@@ -15,7 +15,9 @@ Name and Number are subtypes of Value
 """
 
 
-def is_subtype(subtype: str, basetype: str) -> bool:
+def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
+    if isinstance(basetype, Root):
+        return True
     if subtype == basetype:
         return True
     if subtype in set(["Name", "Number", "List"]) and basetype == "Value":

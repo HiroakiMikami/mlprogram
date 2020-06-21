@@ -42,9 +42,7 @@ class ConfigTest(unittest.TestCase):
                 "mlprogram.gin.nl2prog.evaluate.output_dir = "
                 f"\"{tmpdir}/output\"")
             gin.parse_config(
-                "mlprogram.synthesizers.CommonBeamSearchSynthesizer.create."
-                "max_steps = "
-                "2")
+                "mlprogram.decoders.BeamSearch.max_step_size = 2")
             # Evaluate
             tools.launch.entrypoint()
 
