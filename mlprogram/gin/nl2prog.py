@@ -210,6 +210,7 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
         prepare_synthesizer(synthesizer_key)
         synthesizer = cast(Decoder,
                            workspace.get(synthesizer_key))
+        synthesizer.to(device)
         assert synthesizer is not None
 
         model_dir = os.path.join(input_dir, "model")

@@ -1,3 +1,4 @@
+import torch
 from typing import TypeVar, Generic, Generator, Dict, Any
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.decoders import Decoder, Result
@@ -38,3 +39,6 @@ class BeamSearch(Decoder[Input, Output], Generic[Input, Output, State]):
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         self.sampler.load_state_dict(state_dict)
+
+    def to(self, device: torch.device) -> None:
+        self.sampler.to(device)

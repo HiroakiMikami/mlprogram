@@ -224,3 +224,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         self.module.load_state_dict(state_dict)
+
+    def to(self, device: torch.device) -> None:
+        self.module.to(device)

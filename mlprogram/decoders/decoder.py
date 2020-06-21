@@ -1,5 +1,4 @@
-
-
+import torch
 from typing import Generic, TypeVar, Generator, Dict, Any
 from dataclasses import dataclass
 
@@ -20,4 +19,7 @@ class Decoder(Generic[Input, Output]):
         raise NotImplementedError
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        raise NotImplementedError
+
+    def to(self, device: torch.device) -> None:
         raise NotImplementedError
