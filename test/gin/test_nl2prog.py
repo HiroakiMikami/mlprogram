@@ -179,6 +179,10 @@ class TestEvaluate(unittest.TestCase):
             def __call__(self, query):
                 yield Result(Leaf("str", self.state_dict["name"]),
                              self.state_dict["score"])
+
+            def to(self, device):
+                pass
+
         workspace.put(synthesizer_path, MockSynthesizer())
 
     def test_happy_path(self):

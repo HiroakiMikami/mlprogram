@@ -61,7 +61,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
         # Add initial rule
         action_sequence.eval(ApplyRule(
-            ExpandTreeRule(NodeType(None, NodeConstraint.Token),
+            ExpandTreeRule(NodeType(None, NodeConstraint.Node),
                            [("root", NodeType(Root(), NodeConstraint.Node))])))
         state["action_sequence"] = action_sequence
         return state
@@ -71,7 +71,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         if state["action_sequence"].head is None:
             # complete
             ast = cast(Node, state["action_sequence"].generate())
-            return ast.fields[0].value
+            return cast(AST, ast.fields[0].value)
         return None
 
     def batch_infer(self,

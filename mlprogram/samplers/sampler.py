@@ -1,3 +1,4 @@
+import torch
 from typing import TypeVar, Generic, Optional, List, Generator, Any, Dict
 from dataclasses import dataclass
 
@@ -37,4 +38,7 @@ class Sampler(Generic[Input, Output, State]):
         raise NotImplementedError
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        raise NotImplementedError
+
+    def to(self, device: torch.device) -> None:
         raise NotImplementedError

@@ -88,7 +88,7 @@ class TestTreeGen(unittest.TestCase):
             ground_truth_actions=CollateOptions(True, 0, -1)
         )
         synthesizer = BeamSearch(
-            10, 20,
+            5, 20,
             ActionSequenceSampler(
                 aencoder, lambda x: None, is_subtype, transform_input,
                 transform_action_sequence, collate, model, options=options))
@@ -114,7 +114,7 @@ class TestTreeGen(unittest.TestCase):
                 lambda x: prepare_dataset(x, 1),
                 lambda key: self.prepare_synthesizer(key, options),
                 {"accuracy": Accuracy(lambda x: x, lambda x: x)},
-                (10, "accuracy"), top_n=[10]
+                (5, "accuracy"), top_n=[5]
             )
         results = torch.load(os.path.join(dir, "results.pt"))
         return results["valid"]
@@ -158,7 +158,7 @@ class TestTreeGen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.train(options, tokenize_token, tmpdir)
             results = self.evaluate(options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[10]["accuracy"])
+        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
 
     def test_split_nonterminals(self):
         torch.manual_seed(0)
@@ -166,15 +166,12 @@ class TestTreeGen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.train(options, tokenize_token, tmpdir)
             results = self.evaluate(options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[10]["accuracy"])
+        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
 
-        """
-        TODO
         with tempfile.TemporaryDirectory() as tmpdir:
             self.train(options, tokenize_token_2, tmpdir)
             results = self.evaluate(options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[10]["accuracy"])
-        """
+        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
 
     def test_retain_variadic_args(self):
         torch.manual_seed(0)
@@ -182,7 +179,7 @@ class TestTreeGen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.train(options, tokenize_token, tmpdir)
             results = self.evaluate(options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[10]["accuracy"])
+        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
 
 
 if __name__ == "__main__":
