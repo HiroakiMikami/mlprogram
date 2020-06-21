@@ -391,6 +391,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         random_results = list(sampler.random_samples(results[0], 1))
         self.assertEqual(1, len(random_results))
         self.assertEqual(3, random_results[0].state.state["length"].item())
+        print(random_results[0].state.action_sequence._action_sequence)
         self.assertAlmostEqual(log(0.2) + log(1.0),
                                random_results[0].score)
 
