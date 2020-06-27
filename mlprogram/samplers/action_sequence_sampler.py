@@ -18,7 +18,6 @@ from mlprogram.utils.data import Collate
 
 logger = logging.getLogger(__name__)
 
-Input = TypeVar("Input")
 V = TypeVar("V")
 
 
