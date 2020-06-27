@@ -24,13 +24,13 @@ mlprogram.gin.nl2code.prepare_encoder.word_threshold     = 3
 mlprogram.gin.nl2code.prepare_encoder.token_threshold    = 0
 mlprogram.gin.nl2code.prepare_encoder.parse              = @mlprogram.languages.python.parse
 mlprogram.gin.nl2code.prepare_encoder.to_action_sequence = @to_action_sequence/Compose()
-mlprogram.gin.nl2code.prepare_encoder.extract_query      = @mlprogram.utils.python.tokenize_query
+mlprogram.gin.nl2code.prepare_encoder.extract_query      = @mlprogram.datasets.hearthstone.tokenize_query
 mlprogram.gin.nl2code.prepare_encoder.tokenize_token     = @mlprogram.utils.python.tokenize_token
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-mlprogram.utils.transform.nl2code.TransformQuery.extract_query                    = @mlprogram.utils.python.tokenize_query
+mlprogram.utils.transform.nl2code.TransformQuery.extract_query                    = @mlprogram.datasets.hearthstone.tokenize_query
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                     = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.TransformCode.to_action_sequence                        = @to_action_sequence/Compose()
 mlprogram.utils.transform.nl2code.TransformActionSequence.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()

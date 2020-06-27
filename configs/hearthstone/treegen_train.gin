@@ -25,14 +25,14 @@ mlprogram.gin.treegen.prepare_encoder.char_threshold     = 0
 mlprogram.gin.treegen.prepare_encoder.token_threshold    = 0
 mlprogram.gin.treegen.prepare_encoder.parse              = @mlprogram.languages.python.parse
 mlprogram.gin.treegen.prepare_encoder.to_action_sequence = @to_action_sequence/Compose()
-mlprogram.gin.treegen.prepare_encoder.extract_query      = @mlprogram.utils.python.tokenize_query
+mlprogram.gin.treegen.prepare_encoder.extract_query      = @mlprogram.datasets.hearthstone.tokenize_query
 mlprogram.gin.treegen.prepare_encoder.tokenize_token     = @mlprogram.utils.python.tokenize_token
 word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 char_encoder/mlprogram.gin.workspace.get.key             = "char_encoder"
 action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-mlprogram.utils.transform.treegen.TransformQuery.extract_query                    = @mlprogram.utils.python.tokenize_query
+mlprogram.utils.transform.treegen.TransformQuery.extract_query                    = @mlprogram.datasets.hearthstone.tokenize_query
 mlprogram.utils.transform.treegen.TransformQuery.word_encoder                     = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.treegen.TransformQuery.char_encoder                     = @char_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.treegen.TransformQuery.max_word_length                  = 128

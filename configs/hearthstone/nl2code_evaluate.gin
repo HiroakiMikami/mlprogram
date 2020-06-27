@@ -15,7 +15,7 @@ word_encoder/mlprogram.gin.workspace.get.key             = "query_encoder"
 action_sequence_encoder/mlprogram.gin.workspace.get.key  = "action_sequence_encoder"
 
 # Transform
-mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.utils.python.tokenize_query
+mlprogram.utils.transform.nl2code.TransformQuery.extract_query               = @mlprogram.datasets.hearthstone.tokenize_query
 mlprogram.utils.transform.nl2code.TransformQuery.word_encoder                = @word_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.nl2code.TransformActionSequence.action_sequence_encoder = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.utils.transform.nl2code.TransformActionSequence.train                   = False

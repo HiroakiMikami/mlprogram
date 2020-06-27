@@ -61,6 +61,8 @@ gin.external_configurable(mlprogram.datasets.django.tokenize_query,
                           module="mlprogram.datasets.django")
 gin.external_configurable(mlprogram.datasets.hearthstone.download,
                           module="mlprogram.datasets.hearthstone")
+gin.external_configurable(mlprogram.datasets.hearthstone.tokenize_query,
+                          module="mlprogram.datasets.hearthstone")
 gin.external_configurable(mlprogram.datasets.nl2bash.download,
                           module="mlprogram.datasets.nl2bash")
 gin.external_configurable(mlprogram.datasets.nl2bash.tokenize_query,
@@ -112,8 +114,6 @@ gin.external_configurable(mlprogram.utils.transform.TransformCode,
 gin.external_configurable(mlprogram.utils.transform.TransformGroundTruth,
                           module="mlprogram.utils.transform")
 gin.external_configurable(mlprogram.utils.python.tokenize_token,
-                          module="mlprogram.utils.python")
-gin.external_configurable(mlprogram.utils.python.tokenize_query,
                           module="mlprogram.utils.python")
 
 gin.external_configurable(mlprogram.nn.nl2code.TrainModel,

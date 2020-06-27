@@ -7,10 +7,13 @@ import logging
 import sys
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
+logger = logging.getLogger(__name__)
 
 
 class ConfigTest(unittest.TestCase):
     def nl2prog(self, train_config, evaluate_config):
+        logger.info(f"Train: {train_config}")
+        logger.info(f"Evaluate: {evaluate_config}")
         with tempfile.TemporaryDirectory() as tmpdir:
             gin.clear_config()
             gin.parse_config_file(train_config)
