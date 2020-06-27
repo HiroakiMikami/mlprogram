@@ -6,7 +6,7 @@ from typing \
 import os
 import logging
 import shutil
-from math import ceil
+from math import ceil, isnan, isinf
 from mlprogram.gin import workspace
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
@@ -161,6 +161,10 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
             with open(log_path, "w") as file:
                 json.dump(logs, file)
             top_k_model.save(avg_score, f"{epoch}", model)
+
+            if isnan(avg_loss) or isinf(avg_loss):
+                logger.info("Stop training")
+                break
 
         logger.info("Save encoder to output_dir")
         os.makedirs(output_dir, exist_ok=True)
