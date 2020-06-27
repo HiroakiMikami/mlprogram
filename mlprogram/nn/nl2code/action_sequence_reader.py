@@ -39,7 +39,7 @@ class ActionSequenceReader(nn.Module):
         nn.init.normal_(self._token_embed.weight, std=0.01)
         nn.init.normal_(self._node_type_embed.weight, std=0.01)
 
-    def forward(self, **inputs: Any) -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

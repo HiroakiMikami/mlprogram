@@ -44,7 +44,7 @@ class TestTransformQuery(unittest.TestCase):
             return Query([Token(None, value)], [value + "dnn"])
 
         transform = TransformQuery(tokenize_query, LabelEncoder(["dnn"]))
-        result = transform(input="")
+        result = transform({"input": ""})
         self.assertEqual([Token(None, "")], result["reference"])
         self.assertEqual([1], result["word_nl_query"].numpy().tolist())
 
@@ -56,11 +56,13 @@ class TestTransformActionSequence(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
-        action_sequence = TransformCode(to_action_sequence)(
-            ground_truth="y = x + 1")["action_sequence"]
-        result = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "foo"), Token(None, "bar")])
+        action_sequence = TransformCode(to_action_sequence)({
+            "ground_truth": "y = x + 1"
+        })["action_sequence"]
+        result = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "foo"), Token(None, "bar")]
+        })
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
         self.assertTrue(np.array_equal(
@@ -86,12 +88,14 @@ class TestTransformActionSequence(unittest.TestCase):
         dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = TransformCode(to_action_sequence)(
-            ground_truth="y = x + 1")["action_sequence"]
+        action_sequence = TransformCode(to_action_sequence)({
+            "ground_truth": "y = x + 1"
+        })["action_sequence"]
         transform = TransformActionSequence(aencoder, train=False)
-        result = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "foo"), Token(None, "bar")])
+        result = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "foo"), Token(None, "bar")]
+        })
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
 
@@ -111,11 +115,13 @@ class TestTransformActionSequence(unittest.TestCase):
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
-        action_sequence = TransformCode(to_action_sequence)(
-            ground_truth="y = x + 1")["action_sequence"]
-        result = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "foo"), Token(None, "bar")])
+        action_sequence = TransformCode(to_action_sequence)({
+            "ground_truth": "y = x + 1"
+        })["action_sequence"]
+        result = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "foo"), Token(None, "bar")]
+        })
         self.assertEqual(None, result)
 
 

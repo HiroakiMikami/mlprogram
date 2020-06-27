@@ -55,21 +55,21 @@ collate = Collate(torch.device("cpu"),
 
 
 def create_transform_input(reference: List[Token[str]]):
-    def transform_input(**kwargs):
+    def transform_input(kwargs):
         kwargs["reference"] = reference
         kwargs["input"] = torch.zeros((1,))
         return kwargs
     return transform_input
 
 
-def transform_action_sequence(**kwargs):
+def transform_action_sequence(kwargs):
     kwargs["length"] = \
         torch.tensor(len(kwargs["action_sequence"]._action_sequence))
     return kwargs
 
 
 class EncoderModule(nn.Module):
-    def forward(self, **kwargs):
+    def forward(self, kwargs):
         return kwargs
 
 
@@ -83,7 +83,7 @@ class DecoderModule(nn.Module):
         self.token_prob = token_prob
         self.copy_prob = copy_prob
 
-    def forward(self, **kwargs):
+    def forward(self, kwargs):
         length = kwargs["length"][0] - 1
         kwargs["rule_probs"] = self.rule_prob[length]
         kwargs["token_probs"] = self.token_prob[length]

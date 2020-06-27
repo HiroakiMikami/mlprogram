@@ -112,8 +112,7 @@ class Decoder(nn.Module):
             max_depth, feature_size, feature_size
         )
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

@@ -27,7 +27,7 @@ class TestTrain(unittest.TestCase):
                 super().__init__()
                 self.m = nn.Linear(1, 1)
 
-            def forward(self, **kwargs):
+            def forward(self, kwargs):
                 kwargs["value"] = self.m(kwargs["value"])
                 return kwargs
 
@@ -51,10 +51,10 @@ class TestTrain(unittest.TestCase):
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
                   lambda: lambda x: x,
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
                   self.collate_fn, 1, 2)
             self.assertTrue(os.path.exists(os.path.join(ws,
                                                         "encoder.pt")))
@@ -96,10 +96,10 @@ class TestTrain(unittest.TestCase):
                   self.prepare_dataset, dummpy_prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
                   lambda: lambda x: x,
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
                   self.collate_fn, 1, 2)
             self.assertTrue(os.path.exists(os.path.join(ws,
                                                         "encoder.pt")))
@@ -115,10 +115,10 @@ class TestTrain(unittest.TestCase):
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
                   lambda: lambda x: x,
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
                   self.collate_fn, 1, 2,
                   num_checkpoints=1)
             self.assertFalse(os.path.exists(
@@ -135,10 +135,10 @@ class TestTrain(unittest.TestCase):
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
                   lambda: lambda x: x,
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
                   self.collate_fn, 1, 1)
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -148,10 +148,10 @@ class TestTrain(unittest.TestCase):
                   self.prepare_dataset, self.prepare_encoder,
                   self.prepare_model, self.prepare_optimizer,
                   lambda: lambda x: x,
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
-                  lambda **kwargs: nn.MSELoss()(kwargs["value"],
-                                                kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
+                  lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                              kwargs["target"]),
                   self.collate_fn, 1, 2)
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "checkpoint", "0.pt")))

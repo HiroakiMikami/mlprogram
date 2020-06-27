@@ -50,14 +50,15 @@ class TestTrain(unittest.TestCase):
         d = rnn.pad_sequence([d0, d1]).data.view(2, 2)
         m = torch.cat([m0.view(1, 2, 2), m1.view(1, 2, 2)], dim=0).float()
 
-        results = model(
-            word_nl_query=q,
-            char_nl_query=qc,
-            previous_actions=a,
-            previous_action_rules=at,
-            depthes=d,
-            adjacency_matrix=m,
-            action_queries=a)
+        results = model({
+            "word_nl_query": q,
+            "char_nl_query": qc,
+            "previous_actions": a,
+            "previous_action_rules": at,
+            "depthes": d,
+            "adjacency_matrix": m,
+            "action_queries": a
+        })
         rule_prob = results["rule_probs"]
         token_prob = results["token_probs"]
         copy_prob = results["copy_probs"]

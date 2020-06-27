@@ -45,8 +45,7 @@ class Predictor(nn.Module):
         nn.init.xavier_uniform_(self._l_generate.weight)
         nn.init.zeros_(self._l_generate.bias)
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

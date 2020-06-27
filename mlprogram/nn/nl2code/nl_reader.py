@@ -32,8 +32,7 @@ class NLReader(nn.Module):
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

@@ -28,7 +28,7 @@ class Sequence:
     def __call__(self, values: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         value_opt: Optional[Dict[str, Any]] = values
         for _, func in self.funcs:
-            value_opt = func(**value_opt)
+            value_opt = func(value_opt)
             if value_opt is None:
                 return None
         return value_opt

@@ -11,10 +11,10 @@ class DecoderModule(nn.Module):
         self.decoder = decoder
         self.predictor = predictor
 
-    def forward(self, **inputs: Any) -> Dict[str, Any]:
-        inputs = self.action_sequence_reader(**inputs)
-        inputs = self.decoder(**inputs)
-        return self.predictor(**inputs)
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        inputs = self.action_sequence_reader(inputs)
+        inputs = self.decoder(inputs)
+        return self.predictor(inputs)
 
 
 class TrainModel(nn.Module):
@@ -29,8 +29,7 @@ class TrainModel(nn.Module):
             predictor=predictor
         )
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------
@@ -45,5 +44,5 @@ class TrainModel(nn.Module):
         copy_pred: PaddedSequenceWithMask
             The probabilities of copy-token
         """
-        inputs = self.encoder(**inputs)
-        return self.decoder(**inputs)
+        inputs = self.encoder(inputs)
+        return self.decoder(inputs)

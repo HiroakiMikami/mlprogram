@@ -170,7 +170,7 @@ class Decoder(nn.Module):
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
 
-    def forward(self, **inputs: Any) \
+    def forward(self, inputs: Dict[str, Any]) \
             -> Dict[str, Any]:
         """
         Parameters

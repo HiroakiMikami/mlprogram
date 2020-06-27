@@ -15,7 +15,7 @@ class TransformCode(Generic[Code]):
                                               Optional[ActionSequence]]):
         self.to_action_sequence = to_action_sequence
 
-    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         code = cast(Code, entry["ground_truth"])
         seq = self.to_action_sequence(code)
         if seq is None:
@@ -30,7 +30,7 @@ class TransformGroundTruth:
 
         self.action_sequence_encoder = action_sequence_encoder
 
-    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
         reference = cast(List[Token[str]], entry["reference"])
         # TODO use type in encoding action sequence
@@ -51,7 +51,7 @@ class RandomChoice:
             rng = np.random
         self.rng = rng
 
-    def __call__(self, **entry: Any) -> Dict[str, Any]:
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         output = {}
         for key, value in entry.items():
             output[key] = self.rng.choice(value, size=()).item()

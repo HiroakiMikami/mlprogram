@@ -46,7 +46,7 @@ class TestTransformQuery(unittest.TestCase):
         qencoder = LabelEncoder(words, 0)
         cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
         transform = TransformQuery(tokenize_query, qencoder, cencoder, 3)
-        result = transform(input="ab test")
+        result = transform({"input": "ab test"})
         reference = result["reference"]
         word_query = result["word_nl_query"]
         char_query = result["char_nl_query"]
@@ -63,12 +63,14 @@ class TestTransformActionSequence(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
-            TransformCode(to_action_sequence)(
-                ground_truth="y = x + 1")["action_sequence"]
+            TransformCode(to_action_sequence)({
+                "ground_truth": "y = x + 1"
+            })["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3)
-        result = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "ab"), Token(None, "test")])
+        result = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "ab"), Token(None, "test")]
+        })
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
         depth = result["depthes"]
@@ -136,12 +138,14 @@ class TestTransformActionSequence(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
-            TransformCode(to_action_sequence)(
-                ground_truth="y = x + 1")["action_sequence"]
+            TransformCode(to_action_sequence)({
+                "ground_truth": "y = x + 1"
+            })["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3, train=False)
-        result = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "ab"), Token(None, "test")])
+        result = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "ab"), Token(None, "test")]
+        })
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
         depth = result["depthes"]
@@ -212,12 +216,14 @@ class TestTransformActionSequence(unittest.TestCase):
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
-            TransformCode(to_action_sequence)(
-                ground_truth="y = x + 1")["action_sequence"]
+            TransformCode(to_action_sequence)({
+                "ground_truth": "y = x + 1"
+            })["action_sequence"]
         transform = TransformActionSequence(aencoder, 3, 3)
-        result = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "ab"), Token(None, "test")])
+        result = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "ab"), Token(None, "test")]
+        })
         self.assertEqual(None, result)
 
 

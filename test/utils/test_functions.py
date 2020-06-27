@@ -18,11 +18,12 @@ class TestCompose(unittest.TestCase):
 
 class TestSequence(unittest.TestCase):
     def test_happy_path(self):
-        f = Sequence(f0=lambda x: {"x": x + 1}, f1=lambda x: {"x": x * 2})
+        f = Sequence(f0=lambda x: {"x": x["x"] + 1},
+                     f1=lambda x: {"x": x["x"] * 2})
         self.assertEqual({"x": 6}, f({"x": 2}))
 
     def test_f_return_none(self):
-        f = Sequence(f0=lambda x: None, f1=lambda x: {"x": x * 2})
+        f = Sequence(f0=lambda x: None, f1=lambda x: {"x": x["x"] * 2})
         self.assertEqual(None, f({"x": 2}))
 
 

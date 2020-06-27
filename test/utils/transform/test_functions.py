@@ -41,7 +41,7 @@ class TestTransformCode(unittest.TestCase):
     def test_simple_case(self):
         transform = TransformCode(to_action_sequence)
         action_sequence = \
-            transform(ground_truth="y = x + 1")["action_sequence"]
+            transform({"ground_truth": "y = x + 1"})["action_sequence"]
         self.assertEqual(None, action_sequence.head)
 
 
@@ -51,11 +51,12 @@ class TestTransformGroundTruth(unittest.TestCase):
         dataset = ListDataset(entries)
         d = get_samples(dataset, tokenize, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
-        input = TransformCode(to_action_sequence)(ground_truth="y = x + 1")
+        input = \
+            TransformCode(to_action_sequence)({"ground_truth": "y = x + 1"})
         transform = TransformGroundTruth(aencoder)
+        input["reference"] = [Token(None, "foo"), Token(None, "bar")]
         ground_truth = \
-            transform(reference=[Token(None, "foo"), Token(None, "bar")],
-                      **input)["ground_truth_actions"]
+            transform(input)["ground_truth_actions"]
         self.assertTrue(np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 2, -1], [-1, 1, -1],
@@ -72,19 +73,21 @@ class TestTransformGroundTruth(unittest.TestCase):
         d = get_samples(dataset, tokenize, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = TransformCode(to_action_sequence)(
-            ground_truth="y = x + 1")["action_sequence"]
+        action_sequence = TransformCode(to_action_sequence)({
+            "ground_truth": "y = x + 1"
+        })["action_sequence"]
         transform = TransformGroundTruth(aencoder)
-        ground_truth = transform(
-            action_sequence=action_sequence,
-            reference=[Token(None, "foo"), Token(None, "bar")])
+        ground_truth = transform({
+            "action_sequence": action_sequence,
+            "reference": [Token(None, "foo"), Token(None, "bar")]
+        })
         self.assertEqual(None, ground_truth)
 
 
 class TestRandomChoice(unittest.TestCase):
     def test_choice(self):
         transform = RandomChoice()
-        x = transform(x=[0, 1], y=[0, 1])
+        x = transform({"x": [0, 1], "y": [0, 1]})
         self.assertTrue(isinstance(x["x"], int))
         self.assertTrue(isinstance(x["y"], int))
 

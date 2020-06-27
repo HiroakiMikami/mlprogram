@@ -25,10 +25,11 @@ class TestPredictor(unittest.TestCase):
         query1 = torch.rand(1, 2)
         query = rnn.pad_sequence([query0, query1])
 
-        inputs = predictor(
-            nl_query_features=query,
-            action_features=feature,
-            action_contexts=context)
+        inputs = predictor({
+            "nl_query_features": query,
+            "action_features": feature,
+            "action_contexts": context
+        })
         rule_pred = inputs["rule_probs"]
         token_pred = inputs["token_probs"]
         copy_pred = inputs["copy_probs"]
@@ -56,10 +57,11 @@ class TestPredictor(unittest.TestCase):
         query = rnn.pad_sequence([query0, query1])
 
         predictor.eval()
-        inputs = predictor(
-            nl_query_features=query,
-            action_features=feature,
-            action_contexts=context)
+        inputs = predictor({
+            "nl_query_features": query,
+            "action_features": feature,
+            "action_contexts": context
+        })
         rule_pred = inputs["rule_probs"]
         token_pred = inputs["token_probs"]
         copy_pred = inputs["copy_probs"]
@@ -80,10 +82,11 @@ class TestPredictor(unittest.TestCase):
         query1 = torch.rand(1, 2)
         query = rnn.pad_sequence([query0, query1])
 
-        inputs = predictor(
-            nl_query_features=query,
-            action_features=feature,
-            action_contexts=context)
+        inputs = predictor({
+            "nl_query_features": query,
+            "action_features": feature,
+            "action_contexts": context
+        })
         rule_pred = inputs["rule_probs"]
         token_pred = inputs["token_probs"]
         copy_pred = inputs["copy_probs"]

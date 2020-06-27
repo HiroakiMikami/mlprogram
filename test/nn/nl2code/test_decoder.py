@@ -59,10 +59,14 @@ class TestDecoder(unittest.TestCase):
         h_0 = torch.rand(2, 5)
         c_0 = torch.rand(2, 5)
 
-        inputs = decoder(
-            nl_query_features=query, action_features=input,
-            parent_indexes=parent_index, history=history,
-            hidden_state=h_0, state=c_0)
+        inputs = decoder({
+            "nl_query_features": query,
+            "action_features": input,
+            "parent_indexes": parent_index,
+            "history": history,
+            "hidden_state": h_0,
+            "state": c_0
+        })
         output = inputs["action_features"]
         contexts = inputs["action_contexts"]
         history = inputs["history"]

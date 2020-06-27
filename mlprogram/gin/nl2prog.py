@@ -129,9 +129,9 @@ def train(dataset_key: str, model_key: str, optimizer_key: str,
                 output = cast(Tuple[PaddedSequenceWithMask,
                                     PaddedSequenceWithMask,
                                     PaddedSequenceWithMask],
-                              model(**batch))
-                loss = loss_fn(**output)
-                score = score_fn(**output)
+                              model(batch))
+                loss = loss_fn(output)
+                score = score_fn(output)
                 model.zero_grad()
                 loss.backward()
                 optimizer.step()

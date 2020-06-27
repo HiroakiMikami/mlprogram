@@ -15,8 +15,7 @@ class Predictor(nn.Module):
         self.token = nn.Linear(feature_size, token_size)
         self.copy = PointerNet(feature_size, nl_feature_size, hidden_size)
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

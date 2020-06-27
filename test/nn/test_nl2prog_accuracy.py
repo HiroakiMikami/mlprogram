@@ -23,10 +23,10 @@ class TestAccuracy(unittest.TestCase):
         copy_prob = rnn.pad_sequence([copy_prob0])
 
         acc = NL2ProgAccuracy()
-        a = acc(rule_probs=rule_prob,
-                token_probs=token_prob,
-                copy_probs=copy_prob,
-                ground_truth_actions=gt)
+        a = acc({"rule_probs": rule_prob,
+                 "token_probs": token_prob,
+                 "copy_probs": copy_prob,
+                 "ground_truth_actions": gt})
         self.assertEqual((), a.shape)
 
     def test_accuracy_if_match(self):
@@ -45,10 +45,10 @@ class TestAccuracy(unittest.TestCase):
         copy_prob = rnn.pad_sequence([copy_prob0])
 
         acc = NL2ProgAccuracy()
-        a = acc(rule_probs=rule_prob,
-                token_probs=token_prob,
-                copy_probs=copy_prob,
-                ground_truth_actions=gt)
+        a = acc({"rule_probs": rule_prob,
+                 "token_probs": token_prob,
+                 "copy_probs": copy_prob,
+                 "ground_truth_actions": gt})
         self.assertAlmostEqual(1.0, float(a.numpy()))
 
 

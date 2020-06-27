@@ -20,7 +20,7 @@ class TransformQuery(Generic[Input]):
         self.char_encoder = char_encoder
         self.max_word_length = max_word_length
 
-    def __call__(self, **entry: Any) -> Dict[str, Any]:
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         input = cast(Input, entry["input"])
         query = self.extract_query(input)
 
@@ -49,7 +49,7 @@ class TransformActionSequence:
         self.max_depth = max_depth
         self.train = train
 
-    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
         reference = cast(List[Token[str]], entry["reference"])
         refs = list(map(lambda x: x.value, reference))

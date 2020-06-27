@@ -31,8 +31,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                  get_token_type: Optional[Callable[[V], Optional[str]]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
-                 transform_input,
-                 transform_action_sequence,
+                 transform_input: Callable[[Dict[str, Any]], Dict[str, Any]],
+                 transform_action_sequence: Callable[[Dict[str, Any]],
+                                                     Dict[str, Any]],
                  collate: Collate,
                  module: torch.nn.Module,
                  options: ActionOptions = ActionOptions(True, True),
@@ -53,9 +54,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
     def initialize(self, input: Dict[str, Any]) \
             -> Dict[str, Any]:
         action_sequence = ActionSequence(self.options)
-        state_list = self.transform_input(**input)
+        state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
-        state_tensor = self.module.encoder(**state_tensor)
+        state_tensor = self.module.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
 
         # Add initial rule
@@ -79,7 +80,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
         state_list: List[Dict[str, Any]] = []
         for s in states:
-            tmp = self.transform_action_sequence(**s.state)
+            tmp = self.transform_action_sequence(s.state)
             if tmp is not None:
                 state = {}
                 for key, value in s.state.items():
@@ -93,7 +94,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         states_tensor = self.collate.collate(state_list)
 
         with torch.no_grad():
-            next_states = self.module.decoder(**states_tensor)
+            next_states = self.module.decoder(states_tensor)
 
         rule_pred = next_states.pop("rule_probs").data.cpu().reshape(N, -1)
         token_pred = next_states.pop("token_probs").data.cpu().reshape(N, -1)

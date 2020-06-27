@@ -116,8 +116,7 @@ class ActionSequenceReader(nn.Module):
                                      hidden_size),
             max_arity + 1, hidden_size, rule_embed_size)
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

@@ -98,8 +98,7 @@ class NLReader(nn.Module):
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
-    def forward(self, **inputs: Any) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------

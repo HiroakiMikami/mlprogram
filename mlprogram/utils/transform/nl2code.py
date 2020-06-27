@@ -15,7 +15,7 @@ class TransformQuery(Generic[Input]):
         self.extract_query = extract_query
         self.word_encoder = word_encoder
 
-    def __call__(self, **entry: Any) -> Dict[str, Any]:
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         input = cast(Input, entry["input"])
         query = self.extract_query(input)
 
@@ -33,7 +33,7 @@ class TransformActionSequence:
         self.action_sequence_encoder = action_sequence_encoder
         self.train = train
 
-    def __call__(self, **entry: Any) -> Optional[Dict[str, Any]]:
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
         reference = cast(List[Token[str]], entry["reference"])
         # TODO use type in encoding action sequence

@@ -36,13 +36,14 @@ class TestTrain(unittest.TestCase):
 
         action = rnn.pad_sequence([action0, action1], -1)
         prev_action = rnn.pad_sequence([prev_action0, prev_action1], -1)
-        results = model(
-            word_nl_query=query,
-            actions=action,
-            previous_actions=prev_action,
-            history=None,
-            hidden_state=None,
-            state=None)
+        results = model({
+            "word_nl_query": query,
+            "actions": action,
+            "previous_actions": prev_action,
+            "history": None,
+            "hidden_state": None,
+            "state": None
+        })
         rule_prob = results["rule_probs"]
         token_prob = results["token_probs"]
         copy_prob = results["copy_probs"]
