@@ -1,19 +1,11 @@
-import gin
 import argparse
-from typing import Callable
 
-import gin.torch.external_configurables  # noqa
-import mlprogram.gin.external_configurables  # noqa
+from mlprogram.entrypoint.parse import parse_config_file
 
 
-@gin.configurable
-def entrypoint(task: Callable[[], None]) -> None:
-    task()
-
-
-def launch(config_file: str) -> None:
-    gin.parse_config_file(config_file)
-    entrypoint()
+def launch(config_file: str):
+    configs = parse_config_file(config_file)
+    configs["/main"]
 
 
 def main() -> None:

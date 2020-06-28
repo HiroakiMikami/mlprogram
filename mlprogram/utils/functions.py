@@ -1,34 +1,51 @@
-from typing import TypeVar, Generic, Optional, Callable, Dict, Any
+import torch
+import logging
+import os
+from collections import OrderedDict
+from typing import TypeVar, Optional, Any
 
-V0 = TypeVar("V0")
-V1 = TypeVar("V1")
-V2 = TypeVar("V2")
+logger = logging.getLogger(__name__)
+
+V = TypeVar("V")
 
 
-class Compose(Generic[V0, V1, V2]):
-    def __init__(self, f: Callable[[V0], Optional[V1]],
-                 g: Callable[[V1], Optional[V2]]):
-        self.f = f
-        self.g = g
+class Compose:
+    def __init__(self, funcs: OrderedDict):
+        self.funcs = funcs
 
-    def __call__(self, value: Optional[V0]) -> Optional[V2]:
+    def __call__(self, value: Optional[Any]) -> Optional[Any]:
         if value is None:
             return None
-        v1 = self.f(value)
-        if v1 is None:
-            return None
-        return self.g(v1)
+        for f in self.funcs.values():
+            value = f(value)
+            if value is None:
+                return None
+        return value
 
 
 class Sequence:
-    def __init__(self, **funcs):
-        self.funcs = list(funcs.items())
-        self.funcs.sort(key=lambda x: x[0])
+    def __init__(self, funcs: OrderedDict):
+        self.funcs = funcs
 
-    def __call__(self, values: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        value_opt: Optional[Dict[str, Any]] = values
-        for _, func in self.funcs:
+    def __call__(self, values: Any) -> Optional[Any]:
+        value_opt: Optional[Any] = values
+        for func in self.funcs.values():
             value_opt = func(value_opt)
             if value_opt is None:
                 return None
         return value_opt
+
+
+def save(obj: V, file: str) -> V:
+    if os.path.exists(file):
+        logger.info(f"Reuse data from {file}")
+        return torch.load(file)
+
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    torch.save(obj, file)
+    return obj
+
+
+def load(file: str) -> Any:
+    logger.info(f"Load data from {file}")
+    return torch.load(file)

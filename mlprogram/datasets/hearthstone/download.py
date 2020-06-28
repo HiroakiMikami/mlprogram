@@ -1,7 +1,10 @@
 import requests
+import logging
 from typing import Callable, Dict
 
 from mlprogram.utils.data import ListDataset
+
+logger = logging.getLogger(__name__)
 
 BASE_PATH = "https://raw.githubusercontent.com/" + \
     "deepmind/card2code/master/third_party/hearthstone/"
@@ -14,6 +17,7 @@ def default_get(path: str) -> str:
 def download(base_path: str = BASE_PATH,
              get: Callable[[str], str] = default_get) \
         -> Dict[str, ListDataset]:
+    logger.info("Download hearthstone dataset")
     dataset = {}
     for name in ["train", "dev", "test"]:
         target = name

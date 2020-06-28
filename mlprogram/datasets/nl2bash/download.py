@@ -1,13 +1,17 @@
 import subprocess
 import tempfile
+import logging
 import os
 import json
 from typing import Dict, List, Any
 
 from mlprogram.utils.data import ListDataset
 
+logger = logging.getLogger(__name__)
+
 
 def download(bin_dir: str = "bin") -> Dict[str, ListDataset]:
+    logger.info("Download nl2bash dataset")
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
             [os.path.join(bin_dir, "download_nl2bash.bash"), tmpdir])

@@ -62,42 +62,43 @@ p_finally = re.compile(r'^finally\s?')
 p_decorator = re.compile(r'^@.*')
 
 
-def parse(code: str) -> Optional[AST]:
-    """
-    Return the AST of the code
+class Parse:
+    def __call__(self, code: str) -> Optional[AST]:
+        """
+        Return the AST of the code
 
-    Parameters
-    ----------
-    code: str
-        The code to be parsed
+        Parameters
+        ----------
+        code: str
+            The code to be parsed
 
-    Returns
-    -------
-    AST
-        The AST of the code
-    """
-    try:
-        code = code.strip()
-        if not code:
+        Returns
+        -------
+        AST
+            The AST of the code
+        """
+        try:
+            code = code.strip()
+            if not code:
+                return None
+
+            if p_elif.match(code):
+                code = 'if True: pass\n' + code
+            if p_else.match(code):
+                code = 'if True: pass\n' + code
+
+            if p_try.match(code):
+                code = code + 'pass\nexcept: pass'
+            elif p_except.match(code):
+                code = 'try: pass\n' + code
+            elif p_finally.match(code):
+                code = 'try: pass\n' + code
+
+            if p_decorator.match(code):
+                code = code + '\ndef dummy(): pass'
+            if code[-1] == ':':
+                code = code + 'pass'
+
+            return to_ast(ast.parse(code).body[0])
+        except:  # noqa
             return None
-
-        if p_elif.match(code):
-            code = 'if True: pass\n' + code
-        if p_else.match(code):
-            code = 'if True: pass\n' + code
-
-        if p_try.match(code):
-            code = code + 'pass\nexcept: pass'
-        elif p_except.match(code):
-            code = 'try: pass\n' + code
-        elif p_finally.match(code):
-            code = 'try: pass\n' + code
-
-        if p_decorator.match(code):
-            code = code + '\ndef dummy(): pass'
-        if code[-1] == ':':
-            code = code + 'pass'
-
-        return to_ast(ast.parse(code).body[0])
-    except:  # noqa
-        return None

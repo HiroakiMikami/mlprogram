@@ -1,5 +1,4 @@
-from typing import List, Union
-from mlprogram.gin import workspace
+from typing import List, Union, Dict
 from mlprogram.asts import AST, Node, Leaf, Field, Root
 from mlprogram.utils.data import ListDataset
 
@@ -70,12 +69,12 @@ test_dataset = ListDataset([
 ])
 
 
-def prepare_dataset(dataset_path: str, num_repeat: int) -> None:
+def prepare_dataset(num_repeat: int) -> Dict[str, ListDataset]:
     dataset = []
     for _ in range(num_repeat):
         dataset.extend(traindata)
-    workspace.put(dataset_path, {
+    return {
         "train": ListDataset(dataset),
         "test": test_dataset,
         "valid": test_dataset
-    })
+    }

@@ -1,16 +1,16 @@
 import unittest
 
-from mlprogram.languages.bash import is_subtype
+from mlprogram.languages.bash import IsSubtype
 
 
 class TestIsSubtype(unittest.TestCase):
     def test_ast(self):
-        self.assertTrue(is_subtype("Assign", "Node"))
-        self.assertFalse(is_subtype("str", "Node"))
+        self.assertTrue(IsSubtype()("Assign", "Node"))
+        self.assertFalse(IsSubtype()("str", "Node"))
 
     def test_builtin(self):
-        self.assertTrue(is_subtype("str", "str"))
-        self.assertFalse(is_subtype("Node", "str"))
+        self.assertTrue(IsSubtype()("str", "str"))
+        self.assertFalse(IsSubtype()("Node", "str"))
 
 
 if __name__ == "__main__":

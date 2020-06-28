@@ -2,7 +2,7 @@ import unittest
 import ast as python_ast
 
 from mlprogram.languages.python.utils import is_builtin_type
-from mlprogram.languages.python import is_subtype
+from mlprogram.languages.python import IsSubtype
 
 
 class TestIsBuiltinType(unittest.TestCase):
@@ -17,12 +17,12 @@ class TestIsBuiltinType(unittest.TestCase):
 
 class TestIsSubtype(unittest.TestCase):
     def test_ast(self):
-        self.assertTrue(is_subtype("Expr", "AST"))
-        self.assertFalse(is_subtype("Expr", "Name"))
+        self.assertTrue(IsSubtype()("Expr", "AST"))
+        self.assertFalse(IsSubtype()("Expr", "Name"))
 
     def test_builtin(self):
-        self.assertTrue(is_subtype("int", "int"))
-        self.assertFalse(is_subtype("str", "int"))
+        self.assertTrue(IsSubtype()("int", "int"))
+        self.assertFalse(IsSubtype()("str", "int"))
 
 
 if __name__ == "__main__":

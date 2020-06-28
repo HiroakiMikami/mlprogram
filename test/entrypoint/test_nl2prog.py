@@ -6,8 +6,7 @@ import torch
 from torch import nn
 from torch import optim
 
-from mlprogram.gin import workspace
-from mlprogram.gin.nl2prog import train, evaluate
+from mlprogram.entrypoint.nl2prog import train, evaluate
 from mlprogram.asts import Leaf
 from mlprogram.utils.data import ListDataset
 from mlprogram.synthesizers import Result
@@ -15,13 +14,10 @@ from mlprogram.metrics import Accuracy, Bleu
 
 
 class TestTrain(unittest.TestCase):
-    def prepare_dataset(self, dataset_path):
-        workspace.put(dataset_path, {"train": ListDataset([0, 1, 2])})
+    def prepare_dataset(self):
+        return ListDataset([0, 1, 2])
 
-    def prepare_encoder(self):
-        workspace.put("encoder", 0)
-
-    def prepare_model(self, model_path):
+    def prepare_model(self):
         class DummyModel(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -31,13 +27,12 @@ class TestTrain(unittest.TestCase):
                 kwargs["value"] = self.m(kwargs["value"])
                 return kwargs
 
-        workspace.put(model_path, DummyModel())
+        return DummyModel()
 
-    def prepare_optimizer(self, optimizer_path):
-        model = workspace.get("model")
-        workspace.put(optimizer_path, optim.SGD(model.parameters(), 0.1))
+    def prepare_optimizer(self, model):
+        return optim.SGD(model.parameters(), 0.1)
 
-    def collate_fn(self, elems):
+    def collate(self, elems):
         B = len(elems)
         tensor = torch.tensor(elems).reshape(B, 1).float()
         return {"value": tensor, "target": tensor}
@@ -46,20 +41,16 @@ class TestTrain(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train("dataset", "model", "optimizer", set(["encoder"]),
-                  ws, output,
-                  self.prepare_dataset, self.prepare_encoder,
-                  self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x,
+            model = self.prepare_model()
+            train(ws, output,
+                  self.prepare_dataset(),
+                  model,
+                  self.prepare_optimizer(model),
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
-                  self.collate_fn, 1, 2)
-            self.assertTrue(os.path.exists(os.path.join(ws,
-                                                        "encoder.pt")))
-            self.assertEqual({"encoder": 0}, torch.load(
-                os.path.join(ws, "encoder.pt")))
+                  self.collate, 1, 2)
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "checkpoint", "0.pt")))
             self.assertTrue(os.path.exists(
@@ -71,10 +62,6 @@ class TestTrain(unittest.TestCase):
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
 
-            self.assertTrue(os.path.exists(os.path.join(output,
-                                                        "encoder.pt")))
-            self.assertEqual({"encoder": 0}, torch.load(
-                os.path.join(output, "encoder.pt")))
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(ws, "log.json")) as file:
                 log = json.load(file)
@@ -82,44 +69,19 @@ class TestTrain(unittest.TestCase):
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
 
-    def test_reuse_encoder(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            def dummpy_prepare_encoder():
-                raise NotImplementedError
-
-            ws = os.path.join(tmpdir, "ws")
-            output = os.path.join(tmpdir, "out")
-            os.makedirs(ws)
-            torch.save({"encoder": 1}, os.path.join(ws, "encoder.pt"))
-            train("dataset", "model", "optimizer", set(["encoder"]),
-                  ws, output,
-                  self.prepare_dataset, dummpy_prepare_encoder,
-                  self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x,
-                  lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                              kwargs["target"]),
-                  lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                              kwargs["target"]),
-                  self.collate_fn, 1, 2)
-            self.assertTrue(os.path.exists(os.path.join(ws,
-                                                        "encoder.pt")))
-            self.assertEqual({"encoder": 1}, torch.load(
-                os.path.join(ws, "encoder.pt")))
-
     def test_remove_old_snapshots(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train("dataset", "model", "optimizer", set(["encoder"]),
-                  ws, output,
-                  self.prepare_dataset, self.prepare_encoder,
-                  self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x,
+            model = self.prepare_model()
+            train(ws, output,
+                  self.prepare_dataset(),
+                  model, self.prepare_optimizer(model),
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
-                  self.collate_fn, 1, 2,
+                  self.collate, 1, 2,
                   num_checkpoints=1)
             self.assertFalse(os.path.exists(
                 os.path.join(ws, "checkpoint", "0.pt")))
@@ -130,29 +92,27 @@ class TestTrain(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train("dataset", "model", "optimizer", set(["encoder"]),
-                  ws, output,
-                  self.prepare_dataset, self.prepare_encoder,
-                  self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x,
+            model = self.prepare_model()
+            optimizer = self.prepare_optimizer(model)
+            train(ws, output,
+                  self.prepare_dataset(),
+                  model, optimizer,
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
-                  self.collate_fn, 1, 1)
+                  self.collate, 1, 1)
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
 
-            train("dataset", "model", "optimizer", set(["encoder"]),
-                  ws, output,
-                  self.prepare_dataset, self.prepare_encoder,
-                  self.prepare_model, self.prepare_optimizer,
-                  lambda: lambda x: x,
+            train(ws, output,
+                  self.prepare_dataset(),
+                  model, optimizer,
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
                   lambda kwargs: nn.MSELoss()(kwargs["value"],
                                               kwargs["target"]),
-                  self.collate_fn, 1, 2)
+                  self.collate, 1, 2)
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "checkpoint", "0.pt")))
             self.assertTrue(os.path.exists(
@@ -164,14 +124,13 @@ class TestTrain(unittest.TestCase):
 
 
 class TestEvaluate(unittest.TestCase):
-    def prepare_dataset(self, dataset_path):
-        workspace.put(dataset_path,
-                      {"test": ListDataset([{"input": ["query"],
-                                             "ground_truth": ["name0"]}]),
-                       "valid": ListDataset([{"input": ["query"],
-                                              "ground_truth": ["name0"]}])})
+    def prepare_dataset(self):
+        return {"test": ListDataset([{"input": ["query"],
+                                      "ground_truth": ["name0"]}]),
+                "valid": ListDataset([{"input": ["query"],
+                                       "ground_truth": ["name0"]}])}
 
-    def prepare_synthesizer(self, synthesizer_path):
+    def prepare_synthesizer(self):
         class MockSynthesizer:
             def load_state_dict(self, state_dict):
                 self.state_dict = state_dict
@@ -183,7 +142,7 @@ class TestEvaluate(unittest.TestCase):
             def to(self, device):
                 pass
 
-        workspace.put(synthesizer_path, MockSynthesizer())
+        return MockSynthesizer()
 
     def test_happy_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -192,14 +151,13 @@ class TestEvaluate(unittest.TestCase):
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
-            torch.save({"encoder": 0}, os.path.join(input, "encoder.pt"))
             torch.save({"model": {"score": 0.5, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
             torch.save({"model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "1"))
-            evaluate("dataset", "synthesizer", set(["encoder"]),
-                     input, ws, output,
-                     self.prepare_dataset, self.prepare_synthesizer,
+            dataset = self.prepare_dataset()
+            evaluate(input, ws, output, dataset["test"], dataset["valid"],
+                     self.prepare_synthesizer(),
                      {
                 "accuracy": Accuracy(lambda x: Leaf("str", x),
                                      lambda x: x.value),
@@ -225,12 +183,11 @@ class TestEvaluate(unittest.TestCase):
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
-            torch.save({"encoder": 0}, os.path.join(input, "encoder.pt"))
             torch.save({"model": {"score": 0.5, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
-            evaluate("dataset", "synthesizer", set(["encoder"]),
-                     input, ws, output,
-                     self.prepare_dataset, self.prepare_synthesizer,
+            dataset = self.prepare_dataset()
+            evaluate(input, ws, output, dataset["test"], dataset["valid"],
+                     self.prepare_synthesizer(),
                      {
                 "accuracy": Accuracy(lambda x: Leaf("str", x),
                                      lambda x: x.value),
@@ -245,9 +202,9 @@ class TestEvaluate(unittest.TestCase):
 
             torch.save({"model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "1"))
-            evaluate("dataset", "synthesizer", set(["encoder"]),
-                     input, ws, output,
-                     self.prepare_dataset, self.prepare_synthesizer,
+            dataset = self.prepare_dataset()
+            evaluate(input, ws, output, dataset["test"], dataset["valid"],
+                     self.prepare_synthesizer(),
                      {
                 "accuracy": Accuracy(lambda x: Leaf("str", x),
                                      lambda x: x.value),

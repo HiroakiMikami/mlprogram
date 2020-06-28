@@ -13,21 +13,26 @@ class ParseMode(Enum):
     Exec = 3
 
 
-def parse(code: str, mode: ParseMode = ParseMode.Single) -> Optional[AST]:
-    try:
-        past = python_ast.parse(code)
-        if mode == ParseMode.Exec:
-            return to_ast(past)
-        else:
-            return to_ast(past.body[0])
-    except:  # noqa
-        return None
+class Parse:
+    def __init__(self, mode: ParseMode = ParseMode.Single):
+        self.mode = mode
+
+    def __call__(self, code: str) -> Optional[AST]:
+        try:
+            past = python_ast.parse(code)
+            if self.mode == ParseMode.Exec:
+                return to_ast(past)
+            else:
+                return to_ast(past.body[0])
+        except:  # noqa
+            return None
 
 
-def unparse(ast: AST) -> Optional[str]:
-    unparser = transpyle.python.unparser.NativePythonUnparser()
+class Unparse:
+    def __call__(self, ast: AST) -> Optional[str]:
+        unparser = transpyle.python.unparser.NativePythonUnparser()
 
-    try:
-        return unparser.unparse(to_python_ast(ast))
-    except:  # noqa
-        return None
+        try:
+            return unparser.unparse(to_python_ast(ast))
+        except:  # noqa
+            return None

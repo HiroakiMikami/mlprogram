@@ -1,10 +1,10 @@
 import unittest
 import tempfile
-import gin
 import os
-import tools.launch  # noqa
 import logging
+import yaml
 import sys
+from mlprogram.entrypoint.parse import parse_config
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 logger = logging.getLogger(__name__)
@@ -15,61 +15,48 @@ class ConfigTest(unittest.TestCase):
         logger.info(f"Train: {train_config}")
         logger.info(f"Evaluate: {evaluate_config}")
         with tempfile.TemporaryDirectory() as tmpdir:
-            gin.clear_config()
-            gin.parse_config_file(train_config)
+            with open(train_config) as file:
+                configs = yaml.load(file)
             # Modify configs for testing
-            gin.parse_config(
-                "mlprogram.gin.nl2prog.train.num_epochs = 0.001")
-            gin.parse_config("torch.device.type_str = \"cpu\"")
-            gin.parse_config(
-                "mlprogram.gin.nl2prog.train.workspace_dir = "
-                f"\"{tmpdir}/workspace\"")
-            gin.parse_config(
-                "mlprogram.gin.nl2prog.train.output_dir = "
-                f"\"{tmpdir}/output\"")
+            configs["main"]["num_epochs"] = 0.001
+            configs["device"]["type_str"] = "cpu"
+            configs["main"]["workspace_dir"] = f"{tmpdir}/workspace"
+            configs["output_dir"] = f"{tmpdir}/output"
             # Train
-            tools.launch.entrypoint()
+            parse_config(configs)["/main"]
 
-            gin.clear_config()
-            gin.parse_config_file(evaluate_config)
+            with open(evaluate_config) as file:
+                configs = yaml.load(file)
             # Modify configs for testing
-            gin.parse_config("torch.device.type_str = \"cpu\"")
-            gin.parse_config("mlprogram.gin.nl2prog.evaluate.n_samples = 1")
-            gin.parse_config(
-                "mlprogram.gin.nl2prog.evaluate.workspace_dir = "
-                f"\"{tmpdir}/workspace\"")
-            gin.parse_config(
-                "mlprogram.gin.nl2prog.evaluate.input_dir = "
-                f"\"{tmpdir}/output\"")
-            gin.parse_config(
-                "mlprogram.gin.nl2prog.evaluate.output_dir = "
-                f"\"{tmpdir}/output\"")
-            gin.parse_config(
-                "mlprogram.synthesizers.BeamSearch.max_step_size = 2")
+            configs["main"]["n_samples"] = 1
+            configs["device"]["type_str"] = "cpu"
+            configs["main"]["workspace_dir"] = f"{tmpdir}/workspace"
+            configs["output_dir"] = f"{tmpdir}/output"
+            configs["synthesizer"]["max_step_size"] = 2
             # Evaluate
-            tools.launch.entrypoint()
+            parse_config(configs)["/main"]
 
     def test_django_nl2code(self):
         self.nl2prog(
-            os.path.join("configs", "django", "nl2code_train.gin"),
-            os.path.join("configs", "django", "nl2code_evaluate.gin"))
+            os.path.join("configs", "django", "nl2code_train.yaml"),
+            os.path.join("configs", "django", "nl2code_evaluate.yaml"))
 
     def test_hearthstone_nl2code(self):
         self.nl2prog(
-            os.path.join("configs", "hearthstone", "nl2code_train.gin"),
-            os.path.join("configs", "hearthstone", "nl2code_evaluate.gin"))
+            os.path.join("configs", "hearthstone", "nl2code_train.yaml"),
+            os.path.join("configs", "hearthstone", "nl2code_evaluate.yaml"))
 
     def test_hearthstone_treegen(self):
         self.nl2prog(
-            os.path.join("configs", "hearthstone", "treegen_train.gin"),
-            os.path.join("configs", "hearthstone", "treegen_evaluate.gin"))
+            os.path.join("configs", "hearthstone", "treegen_train.yaml"),
+            os.path.join("configs", "hearthstone", "treegen_evaluate.yaml"))
 
     # TODO skip this dataset because nl2bash.download failed
     """
     def test_nl2bash_nl2code(self):
         self.mlprogram(
-            os.path.join("configs", "nl2bash", "nl2code_train.gin"),
-            os.path.join("configs", "nl2bash", "nl2code_evaluate.gin"))
+            os.path.join("configs", "nl2bash", "nl2code_train.yaml"),
+            os.path.join("configs", "nl2bash", "nl2code_evaluate.yaml"))
     """
 
 

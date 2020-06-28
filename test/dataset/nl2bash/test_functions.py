@@ -1,8 +1,9 @@
 import unittest
 
 from mlprogram.utils import Token
-from mlprogram.datasets.nl2bash import tokenize_query, \
-    tokenize_token, get_subtokens
+from mlprogram.datasets.nl2bash import TokenizeQuery, \
+    TokenizeToken
+from mlprogram.datasets.nl2bash.functions import get_subtokens
 
 
 class TestGetSubtokens(unittest.TestCase):
@@ -24,13 +25,13 @@ class TestGetSubtokens(unittest.TestCase):
 
 class TestTokenizeAnnotation(unittest.TestCase):
     def test_simple_case(self):
-        query = tokenize_query("foo bar")
+        query = TokenizeQuery()("foo bar")
         self.assertEqual(["foo", "bar"], query.query_for_dnn)
         self.assertEqual([Token(None, "foo"), Token(None, "bar")],
                          query.reference)
 
     def test_subtokens(self):
-        query = tokenize_query('foo.bar')
+        query = TokenizeQuery()('foo.bar')
         self.assertEqual(["SUB_START", "foo", ".", "bar", "SUB_END"],
                          query.query_for_dnn)
         self.assertEqual(
@@ -41,10 +42,10 @@ class TestTokenizeAnnotation(unittest.TestCase):
 
 class TestTokenizeToken(unittest.TestCase):
     def test_simple_case(self):
-        self.assertEqual(["test"], tokenize_token("test"))
+        self.assertEqual(["test"], TokenizeToken()("test"))
 
     def test_subtokens(self):
-        query = tokenize_token('foo.bar')
+        query = TokenizeToken()('foo.bar')
         self.assertEqual(["foo", ".", "bar"], query)
 
 

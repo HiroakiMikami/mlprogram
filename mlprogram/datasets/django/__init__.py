@@ -1,5 +1,3 @@
-from .parse import parse
-from .download import download
-from .functions import tokenize_query
-
-__all__ = ["parse", "download", "tokenize_query"]
+from .parse import Parse  # noqa
+from .download import download  # noqa
+from .functions import TokenizeQuery  # noqa

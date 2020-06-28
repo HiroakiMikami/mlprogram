@@ -1,2 +1,2 @@
 from .download import download  # noqa
-from .functions import tokenize_query  # noqa
+from .functions import TokenizeQuery  # noqa

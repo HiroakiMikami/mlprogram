@@ -92,7 +92,7 @@ class DecoderBlock(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self,
-                 rule_num: int, token_num: int, max_depth: int,
+                 rule_num: int, max_depth: int,
                  feature_size: int, hidden_size: int, out_size: int,
                  n_heads: int, dropout: float, n_blocks: int):
         super(Decoder, self).__init__()

@@ -1,0 +1,207 @@
+output_dir: "output/output"
+
+device:
+  type: torch.device
+  type_str: "cuda"
+  index: 0
+
+dataset:
+  type: mlprogram.datasets.nl2bash.download
+train_dataset: "@/dataset.train"
+
+options:
+  type: mlprogram.actions.ActionOptions
+  retain_variadic_fields: true
+  split_non_terminal: true
+
+to_action_sequence:
+  type: mlprogram.utils.Compose
+  funcs:
+    type: collections.OrderedDict
+    items:
+      - - "parse"
+        - type: mlprogram.languages.bash.Parse
+      - - "ast_to_action_sequence"
+        - type: mlprogram.utils.transform.AstToSingleActionSequence
+          tokenize:
+            type: mlprogram.languages.bash.TokenizeToken
+          options: "@/options"
+
+words:
+  type: mlprogram.utils.data.get_words
+  dataset: "@/train_dataset"
+  extract_query:
+    type: mlprogram.datasets.nl2bash.TokenizeQuery
+samples:
+  type: mlprogram.utils.data.get_samples
+  dataset: "@/train_dataset"
+  tokenize_token:
+    type: mlprogram.languages.bash.TokenizeToken
+  to_action_sequence: "@/to_action_sequence"
+
+encoder:
+  word_encoder:
+    type: mlprogram.utils.save
+    file:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "word_encoder.pt"
+    obj:
+      type: torchnlp.encoders.LabelEncoder
+      sample: "@/words"
+      min_occurrences: 3
+  action_sequence_encoder:
+    type: mlprogram.utils.save
+    file:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "action_sequence_encoder.pt"
+    obj:
+      type: mlprogram.encoders.ActionSequenceEncoder
+      samples: "@/samples"
+      token_threshold: 0
+
+transform:
+  type: mlprogram.utils.Sequence
+  funcs:
+    type: collections.OrderedDict
+    items:
+      - - "random choice"
+        - type: mlprogram.utils.transform.RandomChoice
+      - - "transform_input"
+        - type: mlprogram.utils.transform.nl2code.TransformQuery
+          extract_query:
+            type: mlprogram.datasets.nl2bash.TokenizeQuery
+          word_encoder: "@/encoder.word_encoder"
+      - - "transform_code"
+        - type: mlprogram.utils.transform.TransformCode
+          to_action_sequence: "@/to_action_sequence"
+      - - "transform_action_sequence"
+        - type: mlprogram.utils.transform.nl2code.TransformActionSequence
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+          train: true
+      - - "transform_ground_truth"
+        - type: mlprogram.utils.transform.TransformGroundTruth
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+
+action_sequence_reader:
+  type: mlprogram.nn.nl2code.ActionSequenceReader
+  num_rules: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+  num_tokens: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
+  num_node_types: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
+  node_type_embedding_size: 64
+  embedding_size: 128
+model:
+  type: torch.nn.Sequential
+  modules:
+    type: collections.OrderedDict
+    items:
+      - - "encoder"
+        - type: mlprogram.nn.nl2code.NLReader
+          num_words: "@/encoder.word_encoder.vocab_size"
+          embedding_dim: 128
+          hidden_size: 256
+          dropout: 0.2
+      - - "decoder"
+        - type: torch.nn.Sequential
+          modules:
+            type: collections.OrderedDict
+            items:
+              - - "action_sequence_reader"
+                - "@/action_sequence_reader"
+              - - "decoder"
+                - type: mlprogram.nn.nl2code.Decoder
+                  query_size: 256
+                  input_size:
+                    type: add
+                    x:
+                      type: mul
+                      x: 2
+                      y: 128
+                    y: 64
+                  hidden_size: 256
+                  att_hidden_size: 50
+                  dropout: 0.2
+              - - "predictor"
+                - type: mlprogram.nn.nl2code.Predictor
+                  reader: "@/action_sequence_reader"
+                  embedding_size: 128
+                  query_size: 256
+                  hidden_size: 256
+                  att_hidden_size: 50
+
+collate:
+  type: mlprogram.utils.data.Collate
+  device: "@/device"
+  word_nl_query:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+  nl_query_features:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+  actions:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+  previous_actions:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+  previous_action_rules:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+  history:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: false
+    dim: 1
+    padding_value: 0
+  hidden_state:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: false
+    dim: 0
+    padding_value: 0
+  state:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: false
+    dim: 0
+    padding_value: 0
+  ground_truth_actions:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+
+optimizer:
+  type: torch.optim.create_optimizer
+  optimizer_cls:
+    type: torch.optim.Adam
+  model: "@/model"
+
+main:
+  type: mlprogram.entrypoint.nl2prog.train
+  workspace_dir: "output/workspace"
+  output_dir: "@/output_dir"
+  dataset:
+    type: mlprogram.utils.data.DatasetWithTransform
+    dataset: "@/train_dataset"
+    transform: "@/transform"
+  model: "@/model"
+  optimizer: "@/optimizer"
+  loss:  
+    type: mlprogram.nn.NL2ProgLoss
+  score:
+    type: mlprogram.nn.NL2ProgAccuracy
+  collate: "@/collate"
+  batch_size: 1
+  num_epochs: 50
+  device: "@/device"

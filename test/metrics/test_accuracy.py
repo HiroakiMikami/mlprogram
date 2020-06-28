@@ -8,7 +8,7 @@ def parse(value):
 
 
 def unparse(value):
-    return "unparsed"
+    return "Unparsed"
 
 
 class TestAccuracy(unittest.TestCase):
@@ -19,9 +19,9 @@ class TestAccuracy(unittest.TestCase):
 
     def test_noramlize(self):
         metric = Accuracy(parse, unparse)
-        self.assertAlmostEqual(1.0, metric([Leaf("", "")], "unparsed"))
-        self.assertAlmostEqual(1.0, metric(["unparsed"], Leaf("", "")))
-        self.assertAlmostEqual(1.0, metric(["test"], "unparsed"))
+        self.assertAlmostEqual(1.0, metric([Leaf("", "")], "Unparsed"))
+        self.assertAlmostEqual(1.0, metric(["Unparsed"], Leaf("", "")))
+        self.assertAlmostEqual(1.0, metric(["test"], "Unparsed"))
         self.assertAlmostEqual(1.0, metric([Leaf("", "")], Leaf("", "")))
 
 
