@@ -116,6 +116,15 @@ class ApplyRule:
     def __str__(self) -> str:
         return f"Apply ({self.rule})"
 
+    def __hash__(self) -> int:
+        return hash(self.rule)
+
+    def __eq__(self, rhs: Any) -> bool:
+        if isinstance(rhs, ApplyRule):
+            return self.rule == rhs.rule
+        else:
+            return False
+
 
 class CloseNode:
     """
@@ -155,6 +164,15 @@ class GenerateToken(Generic[V]):
 
     def __str__(self) -> str:
         return f"Generate {self.token}"
+
+    def __hash__(self) -> int:
+        return hash(self.token)
+
+    def __eq__(self, rhs: Any) -> bool:
+        if isinstance(rhs, GenerateToken):
+            return self.token == rhs.token
+        else:
+            return False
 
 
 Action = Union[ApplyRule, GenerateToken]

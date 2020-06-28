@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Optional, List, cast
+from typing import Dict, Optional, List, cast, Any
 from copy import deepcopy
 import itertools
 
@@ -13,6 +13,16 @@ from mlprogram.asts import AST, Node, Leaf, Field, Root
 class ActionOptions:
     retain_variadic_fields: bool
     split_non_terminal: bool
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, ActionOptions):
+            return False
+        return \
+            self.retain_variadic_fields == other.retain_variadic_fields and \
+            self.split_non_terminal == other.split_non_terminal
+
+    def __hash__(self) -> int:
+        return hash((self.retain_variadic_fields, self.split_non_terminal))
 
 
 class InvalidActionException(Exception):
@@ -317,3 +327,18 @@ class ActionSequence:
     @property
     def action_sequence(self) -> List[Action]:
         return self._action_sequence
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, ActionSequence):
+            return False
+        return self._options == other._options and \
+            self.action_sequence == other.action_sequence
+
+    def __hash__(self) -> int:
+        return hash(self._options) ^ hash(tuple(self.action_sequence))
+
+    def __str__(self) -> str:
+        return f"{self.action_sequence}[{self._options}]"
+
+    def __repr__(self) -> str:
+        return str(self.action_sequence)
