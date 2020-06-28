@@ -1,6 +1,6 @@
 import unittest
 
-from mlprogram.utils.python import tokenize_token
+from mlprogram.languages.python import tokenize_token
 
 
 class TestTokenizeToken(unittest.TestCase):
