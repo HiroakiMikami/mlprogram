@@ -7,6 +7,9 @@ from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class TestNLReaderBlock(unittest.TestCase):
+    def setup(self):
+        torch.manual_seed(0)
+
     def test_parameters(self):
         block = NLReaderBlock(2, 3, 1, 0.0, 0)
         self.assertEqual(21, len(list(block.parameters())))

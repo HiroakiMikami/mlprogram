@@ -25,6 +25,7 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
         self.assertEqual((1, 5, 5), weight.shape)
 
     def test_dependency(self):
+        torch.manual_seed(0)
         block = ActionSequenceReaderBlock(2, 3, 1, 3, 0.0, 0)
         in0 = torch.rand(3, 3)
         depth = torch.randint(3, [3, 1])
@@ -42,6 +43,7 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
                                     weight1.detach().numpy()))
 
     def test_mask(self):
+        torch.manual_seed(0)
         block = ActionSequenceReaderBlock(2, 3, 1, 3, 0.0, 0)
         in00 = torch.rand(5, 3)
         in01 = torch.rand(7, 3)
@@ -83,6 +85,7 @@ class TestActionSequenceReader(unittest.TestCase):
         self.assertEqual((5, 1), out.mask.shape)
 
     def test_mask(self):
+        torch.manual_seed(0)
         reader = ActionSequenceReader(1, 1, 1, 3, 2, 3, 1, 3, 0.0, 5)
         in00 = torch.zeros(5, 3).long()
         in01 = torch.zeros(7, 3).long()

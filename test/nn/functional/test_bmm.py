@@ -7,6 +7,7 @@ from mlprogram.nn.functional import bmm
 
 class TestBmm(unittest.TestCase):
     def test_dense(self):
+        torch.manual_seed(0)
         input = torch.randn(2, 3, 5)
         output = torch.randn(2, 5, 7)
         self.assertTrue(np.allclose(
@@ -14,6 +15,7 @@ class TestBmm(unittest.TestCase):
             bmm(input, output).numpy()))
 
     def test_sparse(self):
+        torch.manual_seed(0)
         input = torch.randn(2, 3, 5)
         output = torch.randn(2, 5, 7)
         self.assertTrue(np.allclose(
