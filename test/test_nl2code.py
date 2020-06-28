@@ -10,7 +10,7 @@ import torch
 import torch.optim as optim
 from mlprogram.gin import nl2prog, nl2code, workspace, optimizer
 from mlprogram.utils import Query, Token
-from mlprogram.decoders import BeamSearch
+from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.actions import ActionOptions
 from mlprogram.utils import Sequence

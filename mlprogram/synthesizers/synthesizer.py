@@ -14,7 +14,7 @@ class Result(Generic[Output]):
     score: float
 
 
-class Decoder(Generic[Input, Output]):
+class Synthesizer(Generic[Input, Output]):
     def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
         raise NotImplementedError
 

@@ -1,6 +1,6 @@
 import unittest
 from mlprogram.samplers import Sampler, SamplerState
-from mlprogram.decoders import SMC
+from mlprogram.synthesizers import SMC
 from typing import Tuple, Optional
 import numpy as np
 

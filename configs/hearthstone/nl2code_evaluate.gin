@@ -51,9 +51,9 @@ mlprogram.utils.data.Collate.state                 = @state_option/mlprogram.uti
 mlprogram.utils.data.Collate.ground_truth_actions  = @sequence_option/mlprogram.utils.data.CollateOptions()
 
 # Synthesizer
-mlprogram.decoders.BeamSearch.beam_size                            = 15
-mlprogram.decoders.BeamSearch.max_step_size                        = 350
-mlprogram.decoders.BeamSearch.sampler                              = @mlprogram.samplers.ActionSequenceSampler()
+mlprogram.synthesizers.BeamSearch.beam_size                            = 15
+mlprogram.synthesizers.BeamSearch.max_step_size                        = 350
+mlprogram.synthesizers.BeamSearch.sampler                              = @mlprogram.samplers.ActionSequenceSampler()
 mlprogram.samplers.ActionSequenceSampler.encoder                   = @action_sequence_encoder/mlprogram.gin.workspace.get()
 mlprogram.samplers.ActionSequenceSampler.get_token_type            = None
 mlprogram.samplers.ActionSequenceSampler.is_subtype                = @mlprogram.languages.python.is_subtype
@@ -62,7 +62,7 @@ mlprogram.samplers.ActionSequenceSampler.transform_action_sequence = @mlprogram.
 mlprogram.samplers.ActionSequenceSampler.collate                   = @mlprogram.utils.data.Collate()
 mlprogram.samplers.ActionSequenceSampler.module                    = @mlprogram.nn.nl2code.TrainModel()
 mlprogram.samplers.ActionSequenceSampler.options                   = @mlprogram.actions.ActionOptions()
-synthesizer/mlprogram.gin.workspace.put.value                      = @mlprogram.decoders.BeamSearch()
+synthesizer/mlprogram.gin.workspace.put.value                      = @mlprogram.synthesizers.BeamSearch()
 
 # Metrics
 mlprogram.metrics.Accuracy.parse          = @mlprogram.languages.python.parse

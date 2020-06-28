@@ -1,7 +1,7 @@
 import torch
 from typing import TypeVar, Generic, Optional, Generator, Dict, Tuple, Any
 from mlprogram.samplers import Sampler, SamplerState
-from mlprogram.decoders import Result, Decoder
+from mlprogram.synthesizers import Result, Synthesizer
 import math
 import numpy as np
 
@@ -10,7 +10,7 @@ Output = TypeVar("Output")
 State = TypeVar("State")
 
 
-class SMC(Decoder[Input, Output], Generic[Input, Output, State]):
+class SMC(Synthesizer[Input, Output], Generic[Input, Output, State]):
     def __init__(self, max_step_size: int, max_retry_num: int,
                  initial_particle_size: int,
                  sampler: Sampler[Input, Output, State],

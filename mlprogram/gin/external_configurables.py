@@ -17,7 +17,7 @@ import mlprogram.metrics.python.bleu
 import mlprogram.languages.python
 import mlprogram.languages.bash
 import mlprogram.actions
-import mlprogram.decoders
+import mlprogram.synthesizers
 import mlprogram.utils
 import mlprogram.utils.data
 import mlprogram.utils.transform
@@ -95,9 +95,10 @@ gin.external_configurable(mlprogram.actions.ActionOptions,
 gin.external_configurable(mlprogram.utils.Compose, module="mlprogram.utils")
 gin.external_configurable(mlprogram.utils.Sequence, module="mlprogram.utils")
 
-gin.external_configurable(mlprogram.decoders.BeamSearch,
-                          module="mlprogram.decoders")
-gin.external_configurable(mlprogram.decoders.SMC, module="mlprogram.decoders")
+gin.external_configurable(mlprogram.synthesizers.BeamSearch,
+                          module="mlprogram.synthesizers")
+gin.external_configurable(mlprogram.synthesizers.SMC,
+                          module="mlprogram.synthesizers")
 gin.external_configurable(mlprogram.samplers.ActionSequenceSampler,
                           module="mlprogram.samplers")
 

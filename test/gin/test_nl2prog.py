@@ -10,7 +10,7 @@ from mlprogram.gin import workspace
 from mlprogram.gin.nl2prog import train, evaluate
 from mlprogram.asts import Leaf
 from mlprogram.utils.data import ListDataset
-from mlprogram.decoders import Result
+from mlprogram.synthesizers import Result
 from mlprogram.metrics import Accuracy, Bleu
 
 

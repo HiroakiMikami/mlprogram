@@ -3,7 +3,7 @@ from typing \
     import Callable, List, Dict, TypeVar, Generic, Mapping, Any
 from dataclasses import dataclass
 
-from mlprogram.decoders import Decoder
+from mlprogram.synthesizers import Synthesizer
 
 
 Code = TypeVar("Code")
@@ -29,7 +29,7 @@ Metric = Callable[[List[GroundTruth], Code], float]
 
 
 def evaluate(dataset: torch.utils.data.Dataset,
-             synthesizer: Decoder[Dict[str, Any], Code],
+             synthesizer: Synthesizer[Dict[str, Any], Code],
              metrics: Mapping[str, Metric],
              top_n: List[int] = [1, 3],
              ) -> EvaluationResult[Code, GroundTruth]:

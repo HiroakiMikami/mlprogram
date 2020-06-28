@@ -1,14 +1,14 @@
 import torch
 from typing import TypeVar, Generic, Generator, Dict, Any
 from mlprogram.samplers import Sampler, SamplerState
-from mlprogram.decoders import Decoder, Result
+from mlprogram.synthesizers import Synthesizer, Result
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
 State = TypeVar("State")
 
 
-class BeamSearch(Decoder[Input, Output], Generic[Input, Output, State]):
+class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
     def __init__(self,
                  beam_size: int, max_step_size: int,
                  sampler: Sampler[Input, Output, State]):

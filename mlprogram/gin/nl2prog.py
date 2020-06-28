@@ -10,7 +10,7 @@ from math import ceil, isnan, isinf
 from mlprogram.gin import workspace
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
-from mlprogram.decoders import Decoder
+from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import TopKModel
 from mlprogram.utils.data import ListDataset, DatasetWithTransform
 from mlprogram.utils.nl2prog import evaluate as eval, EvaluationResult
@@ -213,7 +213,7 @@ def evaluate(dataset_key: str, synthesizer_key: str, encoder_keys: Set[str],
 
         logger.info("Prepare synthesizer")
         prepare_synthesizer(synthesizer_key)
-        synthesizer = cast(Decoder,
+        synthesizer = cast(Synthesizer,
                            workspace.get(synthesizer_key))
         synthesizer.to(device)
         assert synthesizer is not None

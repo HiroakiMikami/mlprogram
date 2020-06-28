@@ -2,7 +2,7 @@ import unittest
 from mlprogram.metrics import Accuracy
 from mlprogram.utils.nl2prog import evaluate, Result
 from mlprogram.utils.data import ListDataset
-from mlprogram.decoders import Result as DecoderResult
+from mlprogram.synthesizers import Result as DecoderResult
 
 
 class TestEvaluate(unittest.TestCase):
