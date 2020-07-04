@@ -180,7 +180,7 @@ collate:
 synthesizer:
   type: mlprogram.synthesizers.BeamSearch
   beam_size: 15
-  max_step_size: 350
+  max_step_size: 250
   sampler:
     type: mlprogram.samplers.ActionSequenceSampler
     encoder: "@/encoder.action_sequence_encoder"
