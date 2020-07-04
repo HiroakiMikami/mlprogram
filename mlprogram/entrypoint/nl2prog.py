@@ -1,10 +1,11 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions
 from typing \
-    import Callable, Any, Optional, Tuple, cast, Iterable, List, Mapping, Dict
+    import Callable, Any, Optional, Tuple, cast, List, Mapping, Dict
 import os
 import logging
 import shutil
@@ -131,8 +132,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              main_metric: Tuple[int, str],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
-             n_samples: Optional[int] = None,
-             progress_bar: Optional[Callable[[Iterable], Iterable]] = None) \
+             n_samples: Optional[int] = None) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
 
@@ -159,9 +159,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         logger.info(f"Start evaluation (test dataset): {name}")
         synthesizer.load_state_dict(state_dict)
 
-        test_data = test_dataset
-        if progress_bar is not None:
-            test_data = progress_bar(test_data)
+        test_data = tqdm(test_dataset)
 
         result: EvaluationResult = eval(test_data,
                                         synthesizer,
@@ -186,9 +184,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
             torch.load(path, map_location=torch.device("cpu"))["model"]
         synthesizer.load_state_dict(state_dict)
 
-        test_data = valid_dataset
-        if progress_bar is not None:
-            test_data = progress_bar(test_data)
+        test_data = tqdm(valid_dataset)
 
         result = eval(test_data,
                       synthesizer,
