@@ -1,9 +1,10 @@
 import torch
 from torch import nn
-import json
 from torch.utils.data import DataLoader
+import pytorch_pfn_extras as ppe
+from pytorch_pfn_extras.training import extensions
 from typing \
-    import Callable, Any, Optional, Tuple, cast, Iterable, List, Mapping
+    import Callable, Any, Optional, Tuple, cast, Iterable, List, Mapping, Dict
 import os
 import logging
 import shutil
@@ -19,6 +20,16 @@ from mlprogram.utils.nl2prog import evaluate as eval, EvaluationResult
 logger = logging.getLogger(__name__)
 
 
+class Trigger:
+    def __init__(self, interval: int, n_iter: int):
+        self.interval = interval
+        self.n_iter = n_iter
+
+    def __call__(self, manager):
+        return (manager.updater.iteration == self.n_iter) or \
+            (manager.updater.iteration % self.interval == 0)
+
+
 def train(workspace_dir: str, output_dir: str,
           dataset: torch.utils.data.Dataset,
           model: nn.Module,
@@ -28,8 +39,7 @@ def train(workspace_dir: str, output_dir: str,
           collate: Callable[[Any], Any],
           batch_size: int, num_epochs: int,
           num_checkpoints: int = 2, num_models: int = 3,
-          device: torch.device = torch.device("cpu"),
-          progress_bar: Optional[Callable[[Iterable], Iterable]] = None) \
+          device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
 
@@ -37,103 +47,74 @@ def train(workspace_dir: str, output_dir: str,
     model.to(device)
     model.train()
 
-    # Load checkpoint
-    checkpoint_dir = os.path.join(workspace_dir, "checkpoint")
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    checkpoints = [(os.path.join(checkpoint_dir, checkpoint),
-                    int(checkpoint.replace(".pt", "")))
-                   for checkpoint in os.listdir(checkpoint_dir)]
-    checkpoints.sort(key=lambda x: x[1])
-    if len(checkpoints) != 0:
-        checkpoint_path = os.path.join(checkpoint_dir, checkpoints[-1][0])
-        logger.info(f"Load checkpoint from {checkpoint_path}")
-        ckpt = \
-            torch.load(checkpoint_path, map_location=torch.device("cpu"))
-        start_epoch = ckpt["epoch"]
-        model.load_state_dict(ckpt["model"])
-        optimizer.load_state_dict(ckpt["optimizer"])
-    else:
-        start_epoch = 0
-
-    # Load log
-    log_path = os.path.join(workspace_dir, "log.json")
-    if os.path.exists(log_path):
-        logger.info(f"Load log {log_path}")
-        with open(log_path, "r") as file:
-            logs = json.load(file)
-    else:
-        logs = []
+    # Initialize extensions manager
+    iter_per_epoch = len(dataset) // batch_size
+    n_iter = max(1, (len(dataset) * num_epochs) // batch_size)
+    manager = ppe.training.ExtensionsManager(
+        model, optimizer, num_epochs,
+        out_dir=workspace_dir,
+        extensions=[
+            extensions.LogReport(trigger=Trigger(iter_per_epoch, n_iter)),
+            extensions.ProgressBar(),
+            extensions.PrintReport(),
+        ],
+        iters_per_epoch=iter_per_epoch,
+    )
+    snapshot = extensions.snapshot(autoload=True, n_retains=1)
+    manager.extend(snapshot, trigger=Trigger(iter_per_epoch, n_iter))
 
     # Prepare TopKModel
     model_dir = os.path.join(workspace_dir, "model")
     os.makedirs(model_dir, exist_ok=True)
     top_k_model = TopKModel(num_models, model_dir)
 
-    logger.info(f"Strat training from {start_epoch} epoch")
-    for epoch in range(start_epoch, ceil(num_epochs)):
+    for epoch in range(ceil(num_epochs)):
         # TODO num_workers > 0 causes the RuntimeError
         loader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=True, num_workers=0,
                             collate_fn=collate)
-        if progress_bar is not None:
-            loader = progress_bar(loader)
-        if num_epochs - epoch < 1:
-            n_iter = max(1, int(len(loader) * (num_epochs - epoch)))
-        else:
-            n_iter = -1
-
-        avg_loss = 0.0
-        avg_score = 0.0
         model.train()
+        score_reporter = ppe.reporting.Reporter()
+        score_dict: Dict[str, float] = {}
         for i, batch in enumerate(loader):
             if len(batch) == 0:
                 logger.info(f"Skip {i} th batch")
                 continue
-            if i == n_iter:
+            with manager.run_iteration():
+                if manager.updater.iteration == n_iter:
+                    break
+                output = cast(Tuple[PaddedSequenceWithMask,
+                                    PaddedSequenceWithMask,
+                                    PaddedSequenceWithMask],
+                              model(batch))
+                bloss = loss(output)
+                s = score(output)
+                model.zero_grad()
+                bloss.backward()
+                optimizer.step()
+
+                ppe.reporting.report({
+                    "loss": bloss.item(),
+                    "score": s.item()
+                })
+                with score_reporter.scope(score_dict):
+                    score_reporter.report({
+                        "loss": bloss.item(),
+                        "score": s.item()
+                    })
+
+        if "score" in score_dict:
+            top_k_model.save(score_dict["score"], f"{epoch}", model)
+
+        if "loss" in score_dict:
+            if isnan(score_dict["loss"]) or isinf(score_dict["loss"]):
+                logger.info("Stop training")
                 break
-            output = cast(Tuple[PaddedSequenceWithMask,
-                                PaddedSequenceWithMask,
-                                PaddedSequenceWithMask],
-                          model(batch))
-            bloss = loss(output)
-            s = score(output)
-            model.zero_grad()
-            bloss.backward()
-            optimizer.step()
-
-            avg_loss += bloss.item() / len(loader)
-            avg_score += s.item() / len(loader)
-
-        logger.info(
-            f"Epoch {epoch} : Loss = {avg_loss} Score = {avg_score}")
-        logger.info("Save checkpoint")
-        checkpoint = {
-            "epoch": epoch + 1,
-            "model": model.state_dict(),
-            "optimizer": optimizer.state_dict()
-        }
-        checkpoint_path = os.path.join(checkpoint_dir, f"{epoch}.pt")
-        torch.save(checkpoint, checkpoint_path)
-        checkpoints.append((checkpoint_path, epoch))
-        while len(checkpoints) > num_checkpoints:
-            path, _ = checkpoints.pop(0)
-            logger.info(f"Remove {path}")
-            os.remove(path)
-        logger.info("Save log")
-        logs.append({
-            "epoch": epoch, "loss": avg_loss, "score": avg_score
-        })
-        with open(log_path, "w") as file:
-            json.dump(logs, file)
-        top_k_model.save(avg_score, f"{epoch}", model)
-
-        if isnan(avg_loss) or isinf(avg_loss):
-            logger.info("Stop training")
-            break
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
-    shutil.copyfile(log_path, os.path.join(output_dir, "log.json"))
+    shutil.copyfile(os.path.join(workspace_dir, "log"),
+                    os.path.join(output_dir, "log.json"))
 
     logger.info("Copy models to output_dir")
     out_model_dir = os.path.join(output_dir, "model")

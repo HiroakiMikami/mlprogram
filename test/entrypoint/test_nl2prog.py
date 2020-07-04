@@ -52,18 +52,16 @@ class TestTrain(unittest.TestCase):
                                               kwargs["target"]),
                   self.collate, 1, 2)
             self.assertTrue(os.path.exists(
-                os.path.join(ws, "checkpoint", "0.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "checkpoint", "1.pt")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log.json")))
-            with open(os.path.join(ws, "log.json")) as file:
+                os.path.join(ws, "snapshot_iter_6")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
-            with open(os.path.join(ws, "log.json")) as file:
+            with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
@@ -83,10 +81,8 @@ class TestTrain(unittest.TestCase):
                                               kwargs["target"]),
                   self.collate, 1, 2,
                   num_checkpoints=1)
-            self.assertFalse(os.path.exists(
-                os.path.join(ws, "checkpoint", "0.pt")))
             self.assertTrue(os.path.exists(
-                os.path.join(ws, "checkpoint", "1.pt")))
+                os.path.join(ws, "snapshot_iter_6")))
 
     def test_resume_from_checkpoint(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -114,9 +110,7 @@ class TestTrain(unittest.TestCase):
                                               kwargs["target"]),
                   self.collate, 1, 2)
             self.assertTrue(os.path.exists(
-                os.path.join(ws, "checkpoint", "0.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "checkpoint", "1.pt")))
+                os.path.join(ws, "snapshot_iter_6")))
             with open(os.path.join(output, "log.json")) as file:
                 log2 = json.load(file)
             self.assertEqual(log[0], log2[0])
