@@ -62,7 +62,7 @@ types = {
 
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
-    "mlprogram.metrics.python.bleu.Bleu": mlprogram.metrics.python.bleu.Bleu,
+    "mlprogram.metrics.python.Bleu": mlprogram.metrics.python.Bleu,
 
     "mlprogram.languages.python.Parse": mlprogram.languages.python.Parse,
     "mlprogram.languages.python.Unparse": mlprogram.languages.python.Unparse,

@@ -174,7 +174,7 @@ metrics:
     unparse:
       type: mlprogram.languages.python.Unparse
   bleu:
-    type: mlprogram.metrics.Bleu
+    type: mlprogram.metrics.python.Bleu
     parse:
       type: mlprogram.languages.python.Parse
     unparse:

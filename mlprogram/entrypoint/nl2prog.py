@@ -5,7 +5,7 @@ from tqdm import tqdm
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions
 from typing \
-    import Callable, Any, Optional, Tuple, cast, List, Mapping, Dict
+    import Callable, Any, Optional, Tuple, cast, List, Mapping
 import os
 import logging
 import shutil
@@ -51,11 +51,13 @@ def train(workspace_dir: str, output_dir: str,
     # Initialize extensions manager
     iter_per_epoch = len(dataset) // batch_size
     n_iter = max(1, (len(dataset) * num_epochs) // batch_size)
+    log_reporter = \
+        extensions.LogReport(trigger=Trigger(iter_per_epoch, n_iter))
     manager = ppe.training.ExtensionsManager(
         model, optimizer, num_epochs,
         out_dir=workspace_dir,
         extensions=[
-            extensions.LogReport(trigger=Trigger(iter_per_epoch, n_iter)),
+            log_reporter,
             extensions.ProgressBar(),
             extensions.PrintReport(),
         ],
@@ -75,8 +77,6 @@ def train(workspace_dir: str, output_dir: str,
                             shuffle=True, num_workers=0,
                             collate_fn=collate)
         model.train()
-        score_reporter = ppe.reporting.Reporter()
-        score_dict: Dict[str, float] = {}
         for i, batch in enumerate(loader):
             if len(batch) == 0:
                 logger.info(f"Skip {i} th batch")
@@ -98,19 +98,14 @@ def train(workspace_dir: str, output_dir: str,
                     "loss": bloss.item(),
                     "score": s.item()
                 })
-                with score_reporter.scope(score_dict):
-                    score_reporter.report({
-                        "loss": bloss.item(),
-                        "score": s.item()
-                    })
+        epoch_loss = log_reporter.log[-1]["loss"]
+        epoch_score = log_reporter.log[-1]["score"]
 
-        if "score" in score_dict:
-            top_k_model.save(score_dict["score"], f"{epoch}", model)
+        top_k_model.save(epoch_score, f"{epoch}", model)
 
-        if "loss" in score_dict:
-            if isnan(score_dict["loss"]) or isinf(score_dict["loss"]):
-                logger.info("Stop training")
-                break
+        if isnan(epoch_loss) or isinf(epoch_loss):
+            logger.info("Stop training")
+            break
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
