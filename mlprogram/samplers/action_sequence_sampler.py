@@ -53,6 +53,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
     def initialize(self, input: Dict[str, Any]) \
             -> Dict[str, Any]:
+        self.module.encoder.eval()
         action_sequence = ActionSequence(self.options)
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
