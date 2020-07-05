@@ -9,7 +9,7 @@ from typing \
 import os
 import logging
 import shutil
-from math import ceil, isnan, isinf
+from math import isnan, isinf
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
@@ -71,7 +71,8 @@ def train(workspace_dir: str, output_dir: str,
     os.makedirs(model_dir, exist_ok=True)
     top_k_model = TopKModel(num_models, model_dir)
 
-    for epoch in range(ceil(num_epochs)):
+    while True:
+        epoch = manager.updater.iteration // iter_per_epoch
         # TODO num_workers > 0 causes the RuntimeError
         loader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=True, num_workers=0,
@@ -81,9 +82,9 @@ def train(workspace_dir: str, output_dir: str,
             if len(batch) == 0:
                 logger.info(f"Skip {i} th batch")
                 continue
+            if manager.updater.iteration >= n_iter:
+                break
             with manager.run_iteration():
-                if manager.updater.iteration == n_iter:
-                    break
                 output = cast(Tuple[PaddedSequenceWithMask,
                                     PaddedSequenceWithMask,
                                     PaddedSequenceWithMask],
@@ -105,6 +106,8 @@ def train(workspace_dir: str, output_dir: str,
 
         if isnan(epoch_loss) or isinf(epoch_loss):
             logger.info("Stop training")
+            break
+        if manager.updater.iteration >= n_iter:
             break
 
     logger.info("Copy log to output_dir")
