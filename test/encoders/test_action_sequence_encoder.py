@@ -27,23 +27,25 @@ class TestEncoder(unittest.TestCase):
         self.assertEqual(1, len(encoder._token_encoder.vocab))
 
     def test_encode_action(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, True)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, True)],
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
@@ -68,23 +70,25 @@ class TestEncoder(unittest.TestCase):
         ))
 
     def test_encode_parent(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, True)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, False)],
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
@@ -109,23 +113,25 @@ class TestEncoder(unittest.TestCase):
         ))
 
     def test_encode_tree(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, True)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, False)],
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
@@ -144,23 +150,25 @@ class TestEncoder(unittest.TestCase):
         ))
 
     def test_encode_empty_sequence(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, False)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, False))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, False),
+                     NodeType("expr", NodeConstraint.Node, False)],
                     ["f"],
                     ActionOptions(True, True)),
             0)
@@ -185,23 +193,25 @@ class TestEncoder(unittest.TestCase):
         self.assertTrue(np.array_equal(np.zeros((0, 0)), m.numpy()))
 
     def test_encode_invalid_sequence(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, False)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, True)],
                     ["f"],
                     ActionOptions(True, True)),
             0)
@@ -214,11 +224,11 @@ class TestEncoder(unittest.TestCase):
         self.assertEqual(None, encoder.encode_action(action_sequence, ["2"]))
 
     def test_encode_completed_sequence(self):
-        none = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
+        none = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
                               [])
         encoder = ActionSequenceEncoder(
             Samples([none],
-                    [NodeType("value", NodeConstraint.Node)],
+                    [NodeType("value", NodeConstraint.Node, False)],
                     ["f"],
                     ActionOptions(True, True)),
             0)
@@ -243,23 +253,25 @@ class TestEncoder(unittest.TestCase):
         ))
 
     def test_decode(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, True)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, False)],
                     ["f"],
                     ActionOptions(True, True)),
             0)
@@ -275,23 +287,25 @@ class TestEncoder(unittest.TestCase):
                          result.action_sequence)
 
     def test_decode_invalid_tensor(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, False)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, False))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, False),
+                     NodeType("expr", NodeConstraint.Node, False)],
                     ["f"],
                     ActionOptions(True, True)),
             0)
@@ -301,20 +315,23 @@ class TestEncoder(unittest.TestCase):
                          encoder.decode(torch.LongTensor([[-1, -1, 1]]), []))
 
     def test_encode_each_action(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("constant",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("constant",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, False),
+                     NodeType("expr", NodeConstraint.Node, True)],
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
@@ -346,20 +363,22 @@ class TestEncoder(unittest.TestCase):
         ))
 
     def test_encode_path(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("constant",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("constant",
+              NodeType("value", NodeConstraint.Token, True))])
 
         encoder = ActionSequenceEncoder(
             Samples([funcdef, expr],
-                    [NodeType("def", NodeConstraint.Node),
-                     NodeType("value", NodeConstraint.Token),
-                     NodeType("expr", NodeConstraint.Node)],
+                    [NodeType("def", NodeConstraint.Node, False),
+                     NodeType("value", NodeConstraint.Token, True),
+                     NodeType("expr", NodeConstraint.Node, True)],
                     ["f", "2"],
                     ActionOptions(True, True)),
             0)
@@ -404,27 +423,6 @@ class TestEncoder(unittest.TestCase):
             ], dtype=np.long),
             path.numpy()
         ))
-
-    def test_remove_variadic_node_types(self):
-        self.assertEqual(
-            [NodeType("t1", NodeConstraint.Node),
-             NodeType("t2", NodeConstraint.Token)],
-            ActionSequenceEncoder.remove_variadic_node_types(
-                [NodeType("t1", NodeConstraint.Node),
-                 NodeType("t2", NodeConstraint.Token)]))
-        self.assertEqual(
-            [NodeType("t1", NodeConstraint.Node),
-             NodeType("t2", NodeConstraint.Token)],
-            ActionSequenceEncoder.remove_variadic_node_types(
-                [NodeType("t1", NodeConstraint.Variadic),
-                 NodeType("t2", NodeConstraint.Token)]))
-        self.assertEqual(
-            [NodeType("t1", NodeConstraint.Node),
-             NodeType("t2", NodeConstraint.Token)],
-            ActionSequenceEncoder.remove_variadic_node_types(
-                [NodeType("t1", NodeConstraint.Variadic),
-                 NodeType("t2", NodeConstraint.Token),
-                 NodeType("t1", NodeConstraint.Node)]))
 
 
 if __name__ == "__main__":

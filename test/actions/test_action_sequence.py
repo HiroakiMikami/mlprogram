@@ -20,11 +20,11 @@ class Testaction_sequence(unittest.TestCase):
             action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         action_sequence = ActionSequence()
-        rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
+        rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node, False),
                               [("name",
-                                NodeType("value", NodeConstraint.Node)),
+                                NodeType("value", NodeConstraint.Node, False)),
                                ("value",
-                                NodeType("args", NodeConstraint.Variadic))])
+                                NodeType("args", NodeConstraint.Node, True))])
         action_sequence.eval(ApplyRule(rule))
         self.assertEqual(0, action_sequence.head.action)
         self.assertEqual(0, action_sequence.head.field)
@@ -34,11 +34,12 @@ class Testaction_sequence(unittest.TestCase):
 
     def test_generate_token(self):
         action_sequence = ActionSequence()
-        rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                              [("name",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("value",
-                                NodeType("args", NodeConstraint.Variadic))])
+        rule = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("value",
+              NodeType("args", NodeConstraint.Node, True))])
         action_sequence.eval(ApplyRule(rule))
         action_sequence.eval(GenerateToken("foo"))
         self.assertEqual(0, action_sequence.head.action)
@@ -71,11 +72,12 @@ class Testaction_sequence(unittest.TestCase):
 
     def test_generate_token_with_split_non_terminal_False(self):
         action_sequence = ActionSequence(ActionOptions(True, False))
-        rule = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                              [("name",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("value",
-                                NodeType("args", NodeConstraint.Variadic))])
+        rule = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("value",
+              NodeType("args", NodeConstraint.Node, True))])
         action_sequence.eval(ApplyRule(rule))
         action_sequence.eval(GenerateToken("foo"))
         self.assertEqual(0, action_sequence.head.action)
@@ -96,10 +98,10 @@ class Testaction_sequence(unittest.TestCase):
 
     def test_variadic_field(self):
         action_sequence = ActionSequence()
-        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node, False),
                               [("elems",
-                                NodeType("value", NodeConstraint.Variadic))])
-        rule0 = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
+                                NodeType("value", NodeConstraint.Node, True))])
+        rule0 = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
                                [])
         action_sequence.eval(ApplyRule(rule))
         action_sequence.eval(ApplyRule(rule0))
@@ -122,12 +124,13 @@ class Testaction_sequence(unittest.TestCase):
         self.assertEqual(None, action_sequence.head)
 
         action_sequence = ActionSequence()
-        rule1 = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                               [("elems",
-                                 NodeType("value", NodeConstraint.Variadic)),
-                                ("name",
-                                 NodeType("value", NodeConstraint.Node))])
-        rule0 = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
+        rule1 = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("elems",
+              NodeType("value", NodeConstraint.Node, True)),
+             ("name",
+              NodeType("value", NodeConstraint.Node, False))])
+        rule0 = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
                                [])
         action_sequence.eval(ApplyRule(rule1))
         action_sequence.eval(ApplyRule(rule0))
@@ -137,13 +140,14 @@ class Testaction_sequence(unittest.TestCase):
 
     def test_variadic_field_retain_variadic_fields_False(self):
         action_sequence = ActionSequence(ActionOptions(False, True))
-        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node, False),
                               [("elems",
-                                NodeType("value", NodeConstraint.Variadic))])
-        rule0 = ExpandTreeRule(NodeType("value", NodeConstraint.Variadic),
-                               [("0", NodeType("value", NodeConstraint.Node)),
-                                ("1", NodeType("value", NodeConstraint.Node))])
-        rule1 = ExpandTreeRule(NodeType("value", NodeConstraint.Node),
+                                NodeType("value", NodeConstraint.Node, True))])
+        rule0 = ExpandTreeRule(
+            NodeType("value", NodeConstraint.Node, True),
+            [("0", NodeType("value", NodeConstraint.Node, False)),
+             ("1", NodeType("value", NodeConstraint.Node, False))])
+        rule1 = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
                                [])
         action_sequence.eval(ApplyRule(rule))
         self.assertEqual(0, action_sequence.head.action)
@@ -176,11 +180,12 @@ class Testaction_sequence(unittest.TestCase):
                          action_sequence.action_sequence)
 
         action_sequence = ActionSequence(ActionOptions(False, True))
-        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("elems",
-                                NodeType("value", NodeConstraint.Variadic)),
-                               ("name",
-                                NodeType("value", NodeConstraint.Node))])
+        rule = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("elems",
+              NodeType("value", NodeConstraint.Node, True)),
+             ("name",
+              NodeType("value", NodeConstraint.Node, False))])
         action_sequence.eval(ApplyRule(rule))
         action_sequence.eval(ApplyRule(rule0))
         action_sequence.eval(ApplyRule(rule1))
@@ -193,20 +198,23 @@ class Testaction_sequence(unittest.TestCase):
             action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
     def test_generate(self):
-        funcdef = ExpandTreeRule(NodeType("def", NodeConstraint.Node),
-                                 [("name",
-                                   NodeType("value", NodeConstraint.Token)),
-                                  ("body",
-                                   NodeType("expr", NodeConstraint.Variadic))])
-        expr_expand = ExpandTreeRule(NodeType("expr", NodeConstraint.Variadic),
-                                     [("0",
-                                       NodeType("expr", NodeConstraint.Node))])
-        expr = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
-                              [("op", NodeType("value", NodeConstraint.Token)),
-                               ("arg0",
-                                NodeType("value", NodeConstraint.Token)),
-                               ("arg1",
-                                NodeType("value", NodeConstraint.Token))])
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr_expand = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, True),
+            [("0",
+              NodeType("expr", NodeConstraint.Node, False))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, True)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, True)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, True))])
 
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
@@ -264,6 +272,23 @@ class Testaction_sequence(unittest.TestCase):
             action_sequence.generate()
         )
 
+        funcdef = ExpandTreeRule(
+            NodeType("def", NodeConstraint.Node, False),
+            [("name",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("body",
+              NodeType("expr", NodeConstraint.Node, True))])
+        expr_expand = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, True),
+            [("0",
+              NodeType("expr", NodeConstraint.Node, False))])
+        expr = ExpandTreeRule(
+            NodeType("expr", NodeConstraint.Node, False),
+            [("op", NodeType("value", NodeConstraint.Token, False)),
+             ("arg0",
+              NodeType("value", NodeConstraint.Token, False)),
+             ("arg1",
+              NodeType("value", NodeConstraint.Token, False))])
         action_sequence = ActionSequence(ActionOptions(True, False))
         action_sequence.eval(ApplyRule(funcdef))
         action_sequence.eval(GenerateToken("f_0"))
@@ -313,18 +338,18 @@ class Testaction_sequence(unittest.TestCase):
     def test_generate_ignore_root_type(self):
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(ExpandTreeRule(
-            NodeType(Root(), NodeConstraint.Node),
-            [("root", NodeType(Root(), NodeConstraint.Node))])))
+            NodeType(Root(), NodeConstraint.Node, False),
+            [("root", NodeType(Root(), NodeConstraint.Node, False))])))
         action_sequence.eval(ApplyRule(ExpandTreeRule(
-            NodeType("op", NodeConstraint.Node), []
+            NodeType("op", NodeConstraint.Node, False), []
         )))
         self.assertEqual(Node("op", []), action_sequence.generate())
 
     def test_clone(self):
         action_sequence = ActionSequence()
-        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node),
+        rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node, False),
                               [("elems",
-                                NodeType("expr", NodeConstraint.Variadic))])
+                                NodeType("expr", NodeConstraint.Node, True))])
         action_sequence.eval(ApplyRule(rule))
 
         action_sequence2 = action_sequence.clone()

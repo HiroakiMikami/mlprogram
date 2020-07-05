@@ -61,8 +61,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
         # Add initial rule
         action_sequence.eval(ApplyRule(
-            ExpandTreeRule(NodeType(None, NodeConstraint.Node),
-                           [("root", NodeType(Root(), NodeConstraint.Node))])))
+            ExpandTreeRule(NodeType(None, NodeConstraint.Node, False),
+                           [("root",
+                             NodeType(Root(), NodeConstraint.Node, False))])))
         state["action_sequence"] = action_sequence
         return state
 
@@ -208,9 +209,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 else:
                     # CloseVariadicFieldRule
                     if self.options.retain_variadic_fields and \
-                        head_field is not None and \
-                        head_field.constraint == \
-                            NodeConstraint.Variadic:
+                            head_field is not None and \
+                            head_field.is_variadic:
                         n_rule += 1
                         yield (state.score + lp, state, next_state,
                                ApplyRule(rule))

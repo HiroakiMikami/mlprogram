@@ -132,8 +132,7 @@ class ActionSequence:
 
             if not self._options.retain_variadic_fields or \
                close_variadic_field or \
-               head_rule.children[head.field][1].constraint != \
-                    NodeConstraint.Variadic:
+               not head_rule.children[head.field][1].is_variadic:
                 self._head_children_index[head.action] += 1
 
             if self._head_children_index[head.action] < n_fields:
@@ -187,9 +186,9 @@ class ActionSequence:
                     raise InvalidActionException(
                         "Applying ExpandTreeRule", action)
                 assert head_field is not None
-                if head_field.constraint == NodeConstraint.Node:
+                if not head_field.is_variadic:
                     raise InvalidActionException(
-                        "Applying ExpandTreeRule", action)
+                        "Variadic Fields", action)
                 if head_field.constraint == NodeConstraint.Token and \
                         not self._options.split_non_terminal:
                     raise InvalidActionException("GenerateToken", action)
@@ -247,31 +246,34 @@ class ActionSequence:
                     self._tree.children[head]):
                 assert node_type.type_name is not None
                 if node_type.constraint == NodeConstraint.Node:
-                    # ApplyRule
-                    ast.fields.append(
-                        Field(name, node_type.type_name,
-                              generate(actions[0])))
-                elif node_type.constraint == NodeConstraint.Variadic:
-                    # Variadic
-                    if self._options.retain_variadic_fields:
-                        ast.fields.append(Field(name, node_type.type_name, []))
-                        for act in actions:
-                            a = cast(ApplyRule, self._action_sequence[act])
-                            if isinstance(a.rule, CloseVariadicFieldRule):
-                                break
-                            assert isinstance(ast.fields[-1].value, list)
-                            ast.fields[-1].value.append(generate(act))
-                    else:
-                        childrens = cast(Node, generate(actions[0]))
-                        ast.fields.append(Field(
-                            name, node_type.type_name,
-                            list(itertools.chain.from_iterable(
-                                [field.value if isinstance(field.value, list)
-                                 else [field.value]
-                                 for field in childrens.fields
-                                 ]
+                    if node_type.is_variadic:
+                        # Variadic
+                        if self._options.retain_variadic_fields:
+                            ast.fields.append(
+                                Field(name, node_type.type_name, []))
+                            for act in actions:
+                                a = cast(ApplyRule, self._action_sequence[act])
+                                if isinstance(a.rule, CloseVariadicFieldRule):
+                                    break
+                                assert isinstance(ast.fields[-1].value, list)
+                                ast.fields[-1].value.append(generate(act))
+                        else:
+                            childrens = cast(Node, generate(actions[0]))
+                            ast.fields.append(Field(
+                                name, node_type.type_name,
+                                list(itertools.chain.from_iterable(
+                                    [field.value
+                                     if isinstance(field.value, list)
+                                     else [field.value]
+                                     for field in childrens.fields
+                                     ]
+                                ))
                             ))
-                        ))
+                    else:
+                        # ApplyRule
+                        ast.fields.append(
+                            Field(name, node_type.type_name,
+                                  generate(actions[0])))
                 else:
                     # GenerateToken
                     value = ""

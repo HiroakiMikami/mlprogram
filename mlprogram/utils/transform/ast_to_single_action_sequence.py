@@ -53,29 +53,31 @@ class AstToSingleActionSequence:
                 def to_node_type(field: Field) -> NodeType:
                     if isinstance(field.value, list):
                         return NodeType(field.type_name,
-                                        NodeConstraint.Variadic)
+                                        NodeConstraint.Node, True)
                     else:
                         if isinstance(field.value, Leaf):
                             return NodeType(field.type_name,
-                                            NodeConstraint.Token)
+                                            NodeConstraint.Token,
+                                            self.options.split_non_terminal)
                         else:
                             return NodeType(field.type_name,
-                                            NodeConstraint.Node)
+                                            NodeConstraint.Node, False)
                 children = list(
                     map(lambda f: (f.name, to_node_type(f)), node.fields))
 
                 seq: List[Action] = [ApplyRule(ExpandTreeRule(
-                    NodeType(node.type_name, NodeConstraint.Node),
+                    NodeType(node.type_name, NodeConstraint.Node, False),
                     children))]
                 for field in node.fields:
                     if isinstance(field.value, list):
                         if not self.options.retain_variadic_fields:
                             elem_type_name = to_node_type(field).type_name
                             elem = NodeType(elem_type_name,
-                                            NodeConstraint.Node)
+                                            NodeConstraint.Node,
+                                            False)
                             seq.append(ApplyRule(ExpandTreeRule(
                                 NodeType(elem_type_name,
-                                         NodeConstraint.Variadic),
+                                         NodeConstraint.Node, True),
                                 [(str(i), elem)
                                  for i in range(len(field.value))]
                             )))

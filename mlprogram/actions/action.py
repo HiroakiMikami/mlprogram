@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 class NodeConstraint(Enum):
     Token = 1
     Node = 2
-    Variadic = 3
 
 
 @dataclass
@@ -28,24 +27,28 @@ class NodeType:
     """
     type_name: Optional[Union[str, Root]]
     constraint: NodeConstraint
+    is_variadic: bool
 
     def __hash__(self) -> int:
-        return hash(self.type_name) ^ hash(self.constraint)
+        return hash(self.type_name) ^ hash(self.constraint) \
+            ^ hash(self.is_variadic)
 
     def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, NodeType):
             return self.type_name == rhs.type_name and \
-                self.constraint == rhs.constraint
+                self.constraint == rhs.constraint and \
+                self.is_variadic == rhs.is_variadic
         else:
             return False
 
     def __str__(self) -> str:
-        if self.constraint == NodeConstraint.Variadic:
-            return f"{self.type_name}*"
+        if self.constraint == NodeConstraint.Node:
+            value = str(self.type_name)
         elif self.constraint == NodeConstraint.Token:
-            return f"{self.type_name}(token)"
-        else:
-            return str(self.type_name)
+            value = f"{self.type_name}(token)"
+        if self.is_variadic:
+            value = f"{value}*"
+        return value
 
 
 @dataclass

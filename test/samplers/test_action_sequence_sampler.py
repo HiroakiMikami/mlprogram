@@ -12,17 +12,19 @@ from mlprogram.utils import Token
 from mlprogram.utils.data import Collate, CollateOptions
 from math import log
 
-R = NodeType(Root(), NodeConstraint.Node)
-X = NodeType("X", NodeConstraint.Node)
-Y = NodeType("Y", NodeConstraint.Node)
-Y_list = NodeType("Y", NodeConstraint.Variadic)
-Ysub = NodeType("Ysub", NodeConstraint.Node)
-Str = NodeType("Str", NodeConstraint.Token)
+R = NodeType(Root(), NodeConstraint.Node, False)
+X = NodeType("X", NodeConstraint.Node, False)
+Y = NodeType("Y", NodeConstraint.Node, False)
+Y_list = NodeType("Y", NodeConstraint.Node, True)
+Ysub = NodeType("Ysub", NodeConstraint.Node, False)
+StrVariadic = NodeType("Str", NodeConstraint.Token, True)
+Str = NodeType("Str", NodeConstraint.Token, True)
 
 Root2X = ExpandTreeRule(R, [("x", X)])
 Root2Y = ExpandTreeRule(R, [("y", Y)])
 X2Y_list = ExpandTreeRule(X, [("y", Y_list)])
 Ysub2Str = ExpandTreeRule(Ysub, [("str", Str)])
+Ysub2StrVariadic = ExpandTreeRule(Ysub, [("str", StrVariadic)])
 
 
 def is_subtype(arg0, arg1):
@@ -42,9 +44,16 @@ def get_token_type(token):
 
 
 def create_encoder(options: ActionOptions):
-    return ActionSequenceEncoder(Samples([Root2X, Root2Y, X2Y_list, Ysub2Str],
-                                         [R, X, Y, Ysub, Y_list, Str],
-                                         ["x", "1"], options), 0)
+    if options.split_non_terminal:
+        return ActionSequenceEncoder(Samples(
+            [Root2X, Root2Y, X2Y_list, Ysub2StrVariadic],
+            [R, X, Y, Ysub, Y_list, Str],
+            ["x", "1"], options), 0)
+    else:
+        return ActionSequenceEncoder(Samples(
+            [Root2X, Root2Y, X2Y_list, Ysub2Str],
+            [R, X, Y, Ysub, Y_list, Str],
+            ["x", "1"], options), 0)
 
 
 collate = Collate(torch.device("cpu"),

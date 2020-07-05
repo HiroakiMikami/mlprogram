@@ -3,19 +3,12 @@ from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Optional, Union, cast
 from dataclasses import dataclass
 
-from mlprogram.actions import NodeType, NodeConstraint
+from mlprogram.actions import NodeType
 from mlprogram.actions import ActionOptions
 from mlprogram.actions import ApplyRule, GenerateToken
 from mlprogram.actions import Rule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
-
-
-def convert_node_type_to_key(node_type: NodeType) -> NodeType:
-    if node_type.constraint == NodeConstraint.Variadic:
-        return NodeType(node_type.type_name, NodeConstraint.Node)
-    else:
-        return node_type
 
 
 @dataclass
@@ -60,8 +53,7 @@ class ActionSequenceEncoder:
         self._rule_encoder = LabelEncoder(samples.rules,
                                           reserved_labels=reserved_labels,
                                           unknown_index=0)
-        self._node_type_encoder = LabelEncoder(list(
-            map(convert_node_type_to_key, samples.node_types)))
+        self._node_type_encoder = LabelEncoder(samples.node_types)
         reserved_labels = [Unknown()]
         self._token_encoder = LabelEncoder(samples.tokens,
                                            min_occurrences=token_threshold,
@@ -138,7 +130,6 @@ class ActionSequenceEncoder:
         action = \
             torch.ones(len(action_sequence.action_sequence) + 1, 4).long() \
             * -1
-
         for i in range(len(action_sequence.action_sequence)):
             a = action_sequence.action_sequence[i]
             parent = action_sequence.parent(i)
@@ -148,8 +139,7 @@ class ActionSequenceEncoder:
                          action_sequence.action_sequence[parent.action])
                 parent_rule = cast(ExpandTreeRule, parent_action.rule)
                 action[i, 0] = self._node_type_encoder.encode(
-                    convert_node_type_to_key(
-                        parent_rule.children[parent.field][1]))
+                    parent_rule.children[parent.field][1])
 
             if isinstance(a, ApplyRule):
                 rule = a.rule
@@ -176,7 +166,7 @@ class ActionSequenceEncoder:
                      action_sequence.action_sequence[head.action])
             head_rule = cast(ExpandTreeRule, head_action.rule)
             action[length, 0] = self._node_type_encoder.encode(
-                convert_node_type_to_key(head_rule.children[head.field][1]))
+                head_rule.children[head.field][1])
 
         return action
 
@@ -210,8 +200,8 @@ class ActionSequenceEncoder:
                     cast(ApplyRule,
                          action_sequence.action_sequence[parent.action])
                 parent_rule = cast(ExpandTreeRule, parent_action.rule)
-                parent_tensor[i, 0] = self._node_type_encoder.encode(
-                    convert_node_type_to_key(parent_rule.parent))
+                parent_tensor[i, 0] = \
+                    self._node_type_encoder.encode(parent_rule.parent)
                 parent_tensor[i, 1] = self._rule_encoder.encode(parent_rule)
                 parent_tensor[i, 2] = parent.action
                 parent_tensor[i, 3] = parent.field
@@ -223,8 +213,8 @@ class ActionSequenceEncoder:
                 cast(ApplyRule,
                      action_sequence.action_sequence[head.action])
             head_rule = cast(ExpandTreeRule, head_action.rule)
-            parent_tensor[length, 0] = self._node_type_encoder.encode(
-                convert_node_type_to_key(head_rule.parent))
+            parent_tensor[length, 0] = \
+                self._node_type_encoder.encode(head_rule.parent)
             parent_tensor[length, 1] = self._rule_encoder.encode(head_rule)
             parent_tensor[length, 2] = head.action
             parent_tensor[length, 3] = head.field
@@ -344,15 +334,4 @@ class ActionSequenceEncoder:
                     retval[i, 0] = self._rule_encoder.encode(p.rule)
                 retval[i, 1:] = retval[parent_opt.action, :max_depth - 1]
 
-        return retval
-
-    @staticmethod
-    def remove_variadic_node_types(node_types: List[NodeType]) \
-            -> List[NodeType]:
-        types = set([])
-        retval = []
-        for node_type in map(convert_node_type_to_key, node_types):
-            if node_type not in types:
-                retval.append(node_type)
-                types.add(node_type)
         return retval
