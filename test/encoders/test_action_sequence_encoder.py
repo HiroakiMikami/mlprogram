@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from mlprogram.actions \
-    import ExpandTreeRule, NodeType, NodeConstraint, CloseNode, \
+    import ExpandTreeRule, NodeType, NodeConstraint, \
     ApplyRule, GenerateToken, ActionOptions, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples, ActionSequenceEncoder
@@ -14,12 +14,12 @@ class TestEncoder(unittest.TestCase):
         encoder = ActionSequenceEncoder(
             Samples([], [], [], ActionOptions(True, True)), 0)
         self.assertEqual(2, len(encoder._rule_encoder.vocab))
-        self.assertEqual(2, len(encoder._token_encoder.vocab))
+        self.assertEqual(1, len(encoder._token_encoder.vocab))
 
         encoder = ActionSequenceEncoder(
             Samples([], [], [], ActionOptions(False, True)), 0)
-        self.assertEqual(1, len(encoder._rule_encoder.vocab))
-        self.assertEqual(2, len(encoder._token_encoder.vocab))
+        self.assertEqual(2, len(encoder._rule_encoder.vocab))
+        self.assertEqual(1, len(encoder._token_encoder.vocab))
 
         encoder = ActionSequenceEncoder(
             Samples([], [], [], ActionOptions(True, False)), 0)
@@ -52,16 +52,16 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("1"))
         action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action = encoder.encode_action(action_sequence, ["1", "2"])
 
         self.assertTrue(np.array_equal(
             [
                 [-1, 2, -1, -1],
-                [2, -1, 2, -1],
-                [2, -1, -1, 0],
-                [2, -1, 3, 1],
                 [2, -1, 1, -1],
+                [2, -1, -1, 0],
+                [2, -1, 2, 1],
+                [2, 1, -1, -1],
                 [3, -1, -1, -1]
             ],
             action.numpy()
@@ -93,7 +93,7 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("1"))
         action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         parent = encoder.encode_parent(action_sequence)
 
         self.assertTrue(np.array_equal(
@@ -209,7 +209,7 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(ApplyRule(funcdef))
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         self.assertEqual(None, encoder.encode_action(action_sequence, ["2"]))
 
@@ -267,7 +267,7 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(ApplyRule(funcdef))
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         result = encoder.decode(encoder.encode_action(
             action_sequence, ["1"])[:-1, 1:], ["1"])
@@ -323,23 +323,23 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("1"))
         action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr))
         action_sequence.eval(GenerateToken("f"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action = encoder.encode_each_action(action_sequence, ["1", "2"], 1)
 
         self.assertTrue(np.array_equal(
             np.array([
                 [[1, -1, -1], [2, -1, -1]],   # funcdef
-                [[-1, -1, -1], [-1, 2, -1]],  # f
+                [[-1, -1, -1], [-1, 1, -1]],  # f
                 [[-1, -1, -1], [-1, -1, 0]],  # 1
-                [[-1, -1, -1], [-1, 3, 1]],   # 2
-                [[-1, -1, -1], [-1, 1, -1]],  # CloseNode
+                [[-1, -1, -1], [-1, 2, 1]],   # 2
+                [[-1, -1, -1], [-1, -1, -1]],  # CloseVariadicField
                 [[3, -1, -1], [2, -1, -1]],   # expr
-                [[-1, -1, -1], [-1, 2, -1]],  # f
-                [[-1, -1, -1], [-1, 1, -1]],  # CloseNode
+                [[-1, -1, -1], [-1, 1, -1]],  # f
+                [[-1, -1, -1], [-1, -1, -1]],  # CloseVariadicField
                 [[-1, -1, -1], [-1, -1, -1]]  # CloseVariadicField
             ], dtype=np.long),
             action.numpy()
@@ -368,10 +368,10 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("1"))
         action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr))
         action_sequence.eval(GenerateToken("f"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         path = encoder.encode_path(action_sequence, 2)
 
@@ -381,10 +381,10 @@ class TestEncoder(unittest.TestCase):
                 [2, -1],  # f
                 [2, -1],  # 1
                 [2, -1],  # 2
-                [2, -1],  # CloseNode
+                [2, -1],  # CloseVariadicField
                 [2, -1],  # expr
                 [3, 2],  # f
-                [3, 2],  # CloseNode
+                [3, 2],  # CloseVariadicField
                 [2, -1],  # CloseVariadicField
             ], dtype=np.long),
             path.numpy()
@@ -396,10 +396,10 @@ class TestEncoder(unittest.TestCase):
                 [2],  # f
                 [2],  # 1
                 [2],  # 2
-                [2],  # CloseNode
+                [2],  # CloseVariadicField
                 [2],  # expr
                 [3],  # f
-                [3],  # CloseNode
+                [3],  # CloseVariadicField
                 [2],  # CloseVariadicField
             ], dtype=np.long),
             path.numpy()

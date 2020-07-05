@@ -7,7 +7,7 @@ from mlprogram.actions import NodeType, NodeConstraint
 from mlprogram.actions import ActionOptions
 from mlprogram.actions import ApplyRule, GenerateToken
 from mlprogram.actions import Rule, ExpandTreeRule
-from mlprogram.actions import CloseNode, CloseVariadicFieldRule
+from mlprogram.actions import CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 
 
@@ -46,16 +46,16 @@ class Unknown:
 class Samples:
     rules: List[Rule]
     node_types: List[NodeType]
-    tokens: List[Union[str, CloseNode]]
+    tokens: List[str]  # TODO V
     options: ActionOptions
 
 
 class ActionSequenceEncoder:
     def __init__(self, samples: Samples, token_threshold: int):
         reserved_labels: List[Union[Unknown,
-                                    CloseVariadicFieldRule,
-                                    CloseNode]] = [Unknown()]
-        if samples.options.retain_variadic_fields:
+                                    CloseVariadicFieldRule]] = [Unknown()]
+        if samples.options.retain_variadic_fields or \
+                samples.options.split_non_terminal:
             reserved_labels.append(CloseVariadicFieldRule())
         self._rule_encoder = LabelEncoder(samples.rules,
                                           reserved_labels=reserved_labels,
@@ -63,8 +63,6 @@ class ActionSequenceEncoder:
         self._node_type_encoder = LabelEncoder(list(
             map(convert_node_type_to_key, samples.node_types)))
         reserved_labels = [Unknown()]
-        if samples.options.split_non_terminal:
-            reserved_labels.append(CloseNode())
         self._token_encoder = LabelEncoder(samples.tokens,
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,

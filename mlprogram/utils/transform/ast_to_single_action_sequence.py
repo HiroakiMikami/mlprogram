@@ -5,7 +5,7 @@ from mlprogram.actions import ActionOptions
 from mlprogram.actions import Action, NodeType, NodeConstraint
 from mlprogram.actions import ApplyRule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
-from mlprogram.actions import GenerateToken, CloseNode
+from mlprogram.actions import GenerateToken
 from mlprogram.actions import ActionSequence
 
 
@@ -95,7 +95,7 @@ class AstToSingleActionSequence:
                             gen_tokens.append(GenerateToken[str](token))
                     else:
                         gen_tokens.append(GenerateToken(node.value))
-                    gen_tokens.append(GenerateToken(CloseNode()))
+                    gen_tokens.append(ApplyRule(CloseVariadicFieldRule()))
                     return gen_tokens
                 else:
                     return [GenerateToken(node.value)]
@@ -103,7 +103,7 @@ class AstToSingleActionSequence:
                 logger.warn(f"Invalid type of node: {type(node)}")
                 return []
         action_sequence = ActionSequence(self.options)
-        for action in to_sequence(Node(None,
-                                       [Field("root", Root(), node)])):
+        node = Node(None, [Field("root", Root(), node)])
+        for action in to_sequence(node):
             action_sequence.eval(action)
         return action_sequence

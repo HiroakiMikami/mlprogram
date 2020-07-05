@@ -126,27 +126,6 @@ class ApplyRule:
             return False
 
 
-class CloseNode:
-    """
-    The value to stop generating tokens
-    """
-    _instance = None
-
-    def __hash__(self) -> int:
-        return hash(str(self))
-
-    def __eq__(self, rhs: Any) -> bool:
-        return isinstance(rhs, CloseNode)
-
-    def __str__(self) -> str:
-        return "<CLOSE_NODE>"
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-
 V = TypeVar("V")
 
 
@@ -157,7 +136,7 @@ class GenerateToken(Generic[V]):
 
     Attributes
     ----------
-    token: Union[CloseNode, str]
+    token:
         The value (token) to be generated
     """
     token: V

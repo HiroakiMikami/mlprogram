@@ -1,7 +1,7 @@
 import unittest
 from mlprogram.actions \
     import ActionOptions, ApplyRule, ExpandTreeRule, NodeType, \
-    NodeConstraint, GenerateToken, CloseNode, CloseVariadicFieldRule
+    NodeConstraint, GenerateToken, CloseVariadicFieldRule
 from mlprogram import asts
 from mlprogram.asts import Root
 from mlprogram.utils.transform import AstToSingleActionSequence
@@ -21,8 +21,8 @@ class TestAstToActionSequence(unittest.TestCase):
                                       [("root", NodeType(Root(),
                                                          NodeConstraint.Token))
                                        ])),
-                GenerateToken("t0"), GenerateToken(
-                "t1"), GenerateToken(CloseNode())],
+                GenerateToken("t0"), GenerateToken("t1"),
+                ApplyRule(CloseVariadicFieldRule())],
             seq.action_sequence
         )
         self.assertEqual(ActionOptions(True, True), seq._options)
@@ -56,7 +56,7 @@ class TestAstToActionSequence(unittest.TestCase):
                  [("name",
                    NodeType("literal", NodeConstraint.Token))])),
              GenerateToken("foo"),
-             GenerateToken(CloseNode())],
+             ApplyRule(CloseVariadicFieldRule())],
             seq.action_sequence
         )
         self.assertEqual(ActionOptions(True, True), seq._options)

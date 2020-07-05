@@ -35,7 +35,7 @@ class Predictor(nn.Module):
             EmbeddingInverse(self._reader._token_embed.num_embeddings)
         self._l_rule = nn.Linear(hidden_size, embedding_size)
         self._l_token = nn.Linear(hidden_size + query_size, embedding_size)
-        self._l_generate = nn.Linear(hidden_size, 2)
+        self._l_generate = nn.Linear(hidden_size, 3)
         self._pointer_net = PointerNet(
             hidden_size + query_size, query_size, att_hidden_size)
         nn.init.xavier_uniform_(self._l_rule.weight)
@@ -106,8 +106,9 @@ class Predictor(nn.Module):
 
         generate_pred = torch.softmax(
             self._l_generate(action_features.data), dim=2)  # (L_a, B, 2)
-        token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
+        rule, token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
 
+        rule_pred = rule * rule_pred
         token_pred = token * token_pred  # (L_a, B, num_tokens)
         copy_pred = copy * copy_pred  # (L_a, B, query_length)
 

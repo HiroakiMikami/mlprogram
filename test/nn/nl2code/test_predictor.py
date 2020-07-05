@@ -87,16 +87,13 @@ class TestPredictor(unittest.TestCase):
             "action_features": feature,
             "action_contexts": context
         })
-        rule_pred = inputs["rule_probs"]
-        token_pred = inputs["token_probs"]
-        copy_pred = inputs["copy_probs"]
-        self.assertTrue(np.allclose([[1, 1], [1, 1]], np.sum(
-            rule_pred.data.detach().numpy(), axis=2)))
-        self.assertTrue(np.allclose([[1, 1], [1, 1]],
-                                    np.sum(token_pred.data.detach().numpy(),
-                                           axis=2) +
-                                    np.sum(copy_pred.data.detach().numpy(),
-                                           axis=2)))
+        rule_pred = inputs["rule_probs"].data
+        token_pred = inputs["token_probs"].data
+        copy_pred = inputs["copy_probs"].data
+        probs = \
+            torch.sum(rule_pred, dim=2) + torch.sum(token_pred, dim=2) + \
+            torch.sum(copy_pred, dim=2)
+        self.assertTrue(np.allclose([[1, 1], [1, 1]], probs.detach().numpy()))
 
 
 if __name__ == "__main__":

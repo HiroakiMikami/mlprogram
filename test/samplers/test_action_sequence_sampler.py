@@ -7,7 +7,7 @@ from mlprogram.samplers \
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
-    import NodeConstraint, NodeType, ActionOptions, ExpandTreeRule, CloseNode
+    import NodeConstraint, NodeType, ActionOptions, ExpandTreeRule
 from mlprogram.utils import Token
 from mlprogram.utils.data import Collate, CollateOptions
 from math import log
@@ -34,8 +34,6 @@ def is_subtype(arg0, arg1):
 
 
 def get_token_type(token):
-    if token == CloseNode():
-        return None
     try:
         int(token)
         return "Int"
@@ -230,7 +228,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 1.0,  # Ysub2Str
             ]],
             [[
-                1.0,  # unknownx
+                1.0,  # unknown
                 1.0,  # Root2X
                 1.0,  # Root2Y
                 1.0,  # X2Y_list
@@ -239,7 +237,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         token_prob = torch.tensor([[[]], [[]], [[]]])
         copy_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(False, True)),
+            create_encoder(ActionOptions(False, False)),
             get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
@@ -278,13 +276,14 @@ class TestActionSequenceSampler(unittest.TestCase):
                 1.0,  # X2Y_list
                 1.0,  # Ysub2Str
             ]],
-            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]])
+            [[0.0,
+              0.8,  # CloseVariadicField
+              0.0, 0.0, 0.0, 0.0]]])
         token_prob = torch.tensor([
-            [[0.0, 0.0, 0.0, 0.0]],
-            [[0.0, 0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0]],
             [[
                 1.0,  # Unknown
-                0.8,  # CloseNode
                 0.2,  # x
                 0.8,  # 1
             ]]])

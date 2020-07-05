@@ -2,7 +2,7 @@ import unittest
 
 from mlprogram.actions \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
-    NodeConstraint, CloseNode, CloseVariadicFieldRule
+    NodeConstraint, CloseVariadicFieldRule
 
 
 class TestNodeType(unittest.TestCase):
@@ -68,8 +68,6 @@ class TestAction(unittest.TestCase):
                                              ("elem1", t2)]))))
 
         self.assertEqual("Generate foo", str(GenerateToken("foo")))
-        self.assertEqual("Generate <CLOSE_NODE>", str(
-            GenerateToken(CloseNode())))
 
 
 if __name__ == "__main__":

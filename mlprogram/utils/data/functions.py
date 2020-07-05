@@ -3,7 +3,7 @@ from torch.nn import functional as F
 from dataclasses import dataclass
 from typing import Callable, Sequence, Any, Optional, Union, Dict, List
 from mlprogram.actions \
-    import Rule, CloseNode, ApplyRule, CloseVariadicFieldRule
+    import Rule, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
 from mlprogram.utils import Query
@@ -45,7 +45,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
                 ) -> Samples:
     rules: List[Rule] = []
     node_types = []
-    tokens: List[Union[str, CloseNode]] = []
+    tokens: List[str] = []  # TODO V
     options = None
 
     for group in dataset:
@@ -66,9 +66,8 @@ def get_samples(dataset: torch.utils.data.Dataset,
                             node_types.append(child)
                 else:
                     token = action.token
-                    if not isinstance(token, CloseNode):
-                        ts = tokenize_token(token)
-                        tokens.extend(ts)
+                    ts = tokenize_token(token)
+                    tokens.extend(ts)
 
     assert options is not None
     return Samples(rules, node_types, tokens, options)

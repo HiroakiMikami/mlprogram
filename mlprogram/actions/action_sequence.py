@@ -5,7 +5,7 @@ import itertools
 
 from .action \
     import Action, ApplyRule, Rule, ExpandTreeRule, NodeConstraint, NodeType, \
-    CloseNode, GenerateToken, CloseVariadicFieldRule
+    GenerateToken, CloseVariadicFieldRule
 from mlprogram.asts import AST, Node, Leaf, Field, Root
 
 
@@ -190,13 +190,15 @@ class ActionSequence:
                 if head_field.constraint == NodeConstraint.Node:
                     raise InvalidActionException(
                         "Applying ExpandTreeRule", action)
-                if head_field.constraint == NodeConstraint.Token:
-                    raise InvalidActionException(
-                        "GenerateToken", action)
-                if not self._options.retain_variadic_fields:
+                if head_field.constraint == NodeConstraint.Token and \
+                        not self._options.split_non_terminal:
+                    raise InvalidActionException("GenerateToken", action)
+                if not self._options.retain_variadic_fields and \
+                        not self._options.split_non_terminal:
                     raise InvalidActionException(
                         "CloseVariadicField is invalid "
-                        "(retain_variadic_fields=False)", action)
+                        "(retain_variadic_fields=False, "
+                        "split_non_terminal=False)", action)
 
                 append_action()
                 # 2. Append the action to the head
@@ -207,7 +209,6 @@ class ActionSequence:
                 update_head(close_variadic_field=True)
         else:
             # GenerateToken
-            token = action.token
             if head is None:
                 raise InvalidActionException(
                     "Applying ExpandTreeRule", action)
@@ -215,9 +216,6 @@ class ActionSequence:
             if head_field.constraint != NodeConstraint.Token:
                 raise InvalidActionException(
                     "ApplyRule", action)
-            if not self._options.split_non_terminal and token == CloseNode():
-                raise InvalidActionException(
-                    "GenerateToken", action)
 
             append_action()
             # 1. Append the action to the head
@@ -225,7 +223,7 @@ class ActionSequence:
             self._tree.parent[index] = head
 
             # 2. Update head if the token is closed.
-            if token == CloseNode() or not self._options.split_non_terminal:
+            if not self._options.split_non_terminal:
                 update_head()
 
     def generate(self) -> AST:
@@ -278,10 +276,13 @@ class ActionSequence:
                     # GenerateToken
                     value = ""
                     for action_idx in actions:
-                        token = cast(GenerateToken,
-                                     self._action_sequence[action_idx]).token
-                        if isinstance(token, str):
-                            value += token
+                        x = self._action_sequence[action_idx]
+                        if isinstance(x, ApplyRule):
+                            assert isinstance(x.rule,
+                                              CloseVariadicFieldRule)
+                            break
+                        elif isinstance(x, GenerateToken):
+                            value += x.token
                     ast.fields.append(Field(name, node_type.type_name,
                                             Leaf(node_type.type_name, value)
                                             ))

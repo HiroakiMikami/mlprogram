@@ -4,7 +4,7 @@ from mlprogram.actions.action_sequence import Parent
 from mlprogram.actions import ActionSequence, InvalidActionException
 from mlprogram.actions \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
-    GenerateToken, CloseVariadicFieldRule, CloseNode, ActionOptions
+    GenerateToken, CloseVariadicFieldRule, ActionOptions
 from mlprogram.asts import Node, Leaf, Field, Root
 
 
@@ -57,13 +57,13 @@ class Testaction_sequence(unittest.TestCase):
                           GenerateToken("foo"), GenerateToken("bar")],
                          action_sequence.action_sequence)
 
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         self.assertEqual(0, action_sequence.head.action)
         self.assertEqual(1, action_sequence.head.field)
         self.assertEqual([1, 2, 3], action_sequence._tree.children[0][0])
         self.assertEqual([ApplyRule(rule),
                           GenerateToken("foo"), GenerateToken("bar"),
-                          GenerateToken(CloseNode())],
+                          ApplyRule(CloseVariadicFieldRule())],
                          action_sequence.action_sequence)
 
         with self.assertRaises(InvalidActionException):
@@ -92,7 +92,7 @@ class Testaction_sequence(unittest.TestCase):
         action_sequence = ActionSequence(ActionOptions(True, False))
         action_sequence.eval(ApplyRule(rule))
         with self.assertRaises(InvalidActionException):
-            action_sequence.eval(GenerateToken(CloseNode()))
+            action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
     def test_variadic_field(self):
         action_sequence = ActionSequence()
@@ -213,14 +213,14 @@ class Testaction_sequence(unittest.TestCase):
         action_sequence.eval(GenerateToken("f"))
         action_sequence.eval(GenerateToken("_"))
         action_sequence.eval(GenerateToken("0"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr))
         action_sequence.eval(GenerateToken("+"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         self.assertEqual(None, action_sequence.head)
         self.assertEqual(
@@ -240,15 +240,15 @@ class Testaction_sequence(unittest.TestCase):
         action_sequence = ActionSequence(ActionOptions(False, True))
         action_sequence.eval(ApplyRule(funcdef))
         action_sequence.eval(GenerateToken("f_0"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr_expand))
         action_sequence.eval(ApplyRule(expr))
         action_sequence.eval(GenerateToken("+"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(GenerateToken(CloseNode()))
+        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         self.assertEqual(None, action_sequence.head)
         self.assertEqual(
             Node("def",

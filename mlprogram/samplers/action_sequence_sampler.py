@@ -8,7 +8,7 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
     import ExpandTreeRule, ApplyRule, NodeConstraint, ActionOptions, \
-    GenerateToken, Action, NodeType
+    GenerateToken, Action, NodeType, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.asts import AST, Node
 from mlprogram.samplers import SamplerState, Sampler
@@ -89,8 +89,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     state[key] = value
                 state_list.append(state)
             else:
-                logger.warn(
-                    "Invalid action_sequence is in the set of hypothesis")
+                logger.warning(
+                    "Invalid action_sequence is in the set of hypothesis" +
+                    str(s.state["action_sequence"]))
         states_tensor = self.collate.collate(state_list)
 
         with torch.no_grad():
@@ -139,35 +140,45 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             copy_pred[ref_ids != 0] = 0.0
             pred = torch.cat([token_pred, copy_pred], dim=0)
 
-            n_token = 0
+            # CloseVariadicFieldRule is a candidate if split_non_terminals=True
+            if self.options.split_non_terminal:
+                close_rule_idx = \
+                    self.encoder._rule_encoder.encode(CloseVariadicFieldRule())
+                p = rule_pred[close_rule_idx].item()
+                tokens.append(ApplyRule(CloseVariadicFieldRule()))
+                pred = torch.cat([pred, torch.tensor([p])], dim=0)
+            n_action = 0
             # 0 is unknown token
             _, indices = torch.sort(pred[1:], descending=True)
             for j in range(len(indices)):
                 # Finish enumeration
-                if n_token == k:
+                if n_action == k:
                     return
 
                 x = indices[j] + 1
                 p = pred[x].item()
                 token = tokens[x]
 
-                if isinstance(token, Token):
-                    t = token.type_name
-                    token = token.value
+                if isinstance(token, ApplyRule):
+                    action: Action = token
                 else:
-                    t = self.get_token_type(token)
-                if t is not None and \
-                        not self.is_subtype(t, head_field.type_name):
-                    continue
+                    if isinstance(token, Token):
+                        t = token.type_name
+                        token = token.value
+                    else:
+                        t = self.get_token_type(token)
+                    if t is not None and \
+                            not self.is_subtype(t, head_field.type_name):
+                        continue
+                    action = GenerateToken(token)
 
                 if p < self.eps:
                     lp = np.log(self.eps)
                 else:
                     lp = np.log(p)
-                n_token += 1
+                n_action += 1
                 yield (state.score + lp, state, next_state,
-                       GenerateToken(token))
-
+                       action)
         else:
             # Apply rule
             # 0 is unknown rule
