@@ -1,7 +1,7 @@
 import unittest
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import SMC
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 import numpy as np
 
 
@@ -19,18 +19,19 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
         else:
             return x
 
-    def k_samples(self, state: SamplerState[Tuple[str, str]],
-                       k: int):
-        elems = len(state.state[1])
-        if len(state.state[0]) < elems:
-            gt: Optional[str] = state.state[0][elems]
-        else:
-            gt = None
-        for _ in range(k):
-            x = self.rng.choice(['x', 'y', '0', '1'])
-            score = 0.0 if gt == x else -1.0
-            yield SamplerState(state.score + score,
-                               (state.state[0], state.state[1] + x))
+    def k_samples(self, states: List[SamplerState[Tuple[str, str]]],
+                  k: int):
+        for state in states:
+            elems = len(state.state[1])
+            if len(state.state[0]) < elems:
+                gt: Optional[str] = state.state[0][elems]
+            else:
+                gt = None
+            for _ in range(k // len(states)):
+                x = self.rng.choice(['x', 'y', '0', '1'])
+                score = 0.0 if gt == x else -1.0
+                yield SamplerState(state.score + score,
+                                   (state.state[0], state.state[1] + x))
 
 
 class MockSMC(SMC[str, str, Tuple[str, str]]):

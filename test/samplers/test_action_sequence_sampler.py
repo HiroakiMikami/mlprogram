@@ -155,7 +155,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         self.assertEqual(1, len(topk_results))
         self.assertEqual(1, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2), topk_results[0].score)
-        random_results = list(sampler.k_samples(s, 1))
+        random_results = list(sampler.k_samples([s], 1))
         self.assertEqual(1, len(random_results))
         self.assertEqual(1, random_results[0].state["length"].item())
         self.assertTrue(
@@ -212,7 +212,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                                log(0.8), topk_results[0].score)
         self.assertAlmostEqual(log(0.2) + log(0.5) +
                                log(0.2), topk_results[1].score)
-        random_results = list(sampler.k_samples(results[0], 1))
+        random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
         self.assertEqual(3, random_results[0].state["length"].item())
         self.assertTrue(
@@ -262,7 +262,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         self.assertEqual(3, topk_results.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5) + log(0.2),
                                topk_results.score)
-        random_results = list(sampler.k_samples(results[0], 1))[0]
+        random_results = list(sampler.k_samples(results[:1], 1))[0]
         self.assertEqual(3, random_results.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5) + log(0.2),
                                random_results.score)
@@ -316,7 +316,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                                topk_results[0].score)
         self.assertAlmostEqual(log(0.2) + log(0.2),
                                topk_results[1].score)
-        random_results = list(sampler.k_samples(results[0], 1))
+        random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
         self.assertEqual(3, random_results[0].state["length"].item())
         self.assertTrue(
@@ -370,7 +370,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         self.assertEqual(3, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.2),
                                topk_results[0].score)
-        random_results = list(sampler.k_samples(results[0], 1))
+        random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
         self.assertEqual(3, random_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.2), random_results[0].score)
@@ -422,7 +422,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         self.assertEqual(3, topk_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(1.),
                                topk_results[0].score)
-        random_results = list(sampler.k_samples(results[0], 1))
+        random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
         self.assertEqual(3, random_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(1.0),

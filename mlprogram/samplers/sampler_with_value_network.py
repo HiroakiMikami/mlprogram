@@ -1,7 +1,7 @@
 import torch
 import logging
 from typing \
-    import TypeVar, Generic, Generator, Optional, Dict, Any
+    import TypeVar, Generic, Generator, Optional, Dict, Any, List
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.utils.torch import StateDict
 
@@ -27,11 +27,11 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
             -> Optional[Output]:
         return self.sampler.create_output(state)
 
-    def k_samples(self, state: SamplerState[State], n: int) \
+    def k_samples(self, states: List[SamplerState[State]], n: int) \
             -> Generator[SamplerState[State],
                          None, None]:
         self.value_network.eval()
-        for state in self.sampler.k_samples(state, n):
+        for state in self.sampler.k_samples(states, n):
             # TODO batch computation
             value = self.value_network(state.state)
             yield SamplerState(value.item(), state.state)

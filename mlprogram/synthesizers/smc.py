@@ -34,7 +34,7 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State]):
                 # Generate particles
                 samples: Dict[State, Tuple[float, int]] = {}
                 for state, n in particles:
-                    for sample in self.sampler.k_samples(state, n):
+                    for sample in self.sampler.k_samples([state], n):
                         if sample.state in samples:
                             samples[sample.state] = \
                                 (samples[sample.state][0],

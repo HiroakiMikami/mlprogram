@@ -240,18 +240,18 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             yield SamplerState[Dict[str, Any]](score, s)
 
     def k_samples(
-        self, state: SamplerState[Dict[str, Any]], n: int) \
+        self, states: List[SamplerState[Dict[str, Any]]], n: int) \
             -> Generator[SamplerState[Dict[str, Any]],
                          None, None]:
         self.module.eval()
 
         rule_pred, token_pred, copy_pred, next_states = \
-            self.batch_infer([state])
-        actions = list(self.enumerate_samples_per_state(rule_pred[0],
-                                                        token_pred[0],
-                                                        copy_pred[0],
-                                                        next_states[0],
-                                                        state))
+            self.batch_infer(states)
+        actions = []
+        for r, t, c, ns, s in zip(rule_pred, token_pred, copy_pred,
+                                  next_states, states):
+            actions.extend(
+                list(self.enumerate_samples_per_state(r, t, c, ns, s)))
         # log_prob -> prob
         probs = [np.exp(score) for score, _, _, _ in actions]
         # normalize
@@ -261,9 +261,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             for _ in range(m):
                 action_sequence = state.state["action_sequence"].clone()
                 action_sequence.eval(action)
-                s = {key: value for key, value in new_state.items()}
-                s["action_sequence"] = action_sequence
-                yield SamplerState[Dict[str, Any]](score, s)
+                x = {key: value for key, value in new_state.items()}
+                x["action_sequence"] = action_sequence
+                yield SamplerState[Dict[str, Any]](score, x)
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         self.module.load_state_dict(state_dict)
