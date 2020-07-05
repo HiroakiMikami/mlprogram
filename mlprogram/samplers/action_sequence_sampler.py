@@ -239,7 +239,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             s["action_sequence"] = action_sequence
             yield SamplerState[Dict[str, Any]](score, s)
 
-    def random_samples(
+    def k_samples(
         self, state: SamplerState[Dict[str, Any]], n: int) \
             -> Generator[SamplerState[Dict[str, Any]],
                          None, None]:

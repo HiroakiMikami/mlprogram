@@ -33,7 +33,7 @@ class Sampler(Generic[Input, Output, State]):
             -> Generator[SamplerState[State], None, None]:
         raise NotImplementedError
 
-    def random_samples(self, state: SamplerState[State], n: int) \
+    def k_samples(self, state: SamplerState[State], n: int) \
             -> Generator[SamplerState[State], None, None]:
         raise NotImplementedError
 

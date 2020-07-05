@@ -19,7 +19,7 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
         else:
             return x
 
-    def random_samples(self, state: SamplerState[Tuple[str, str]],
+    def k_samples(self, state: SamplerState[Tuple[str, str]],
                        k: int):
         elems = len(state.state[1])
         if len(state.state[0]) < elems:
