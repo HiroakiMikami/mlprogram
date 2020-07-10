@@ -138,7 +138,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             tokens = list(self.encoder._token_encoder.vocab) + \
                 state.state["reference"]
             # the score will be merged into predefined token
-            token_pred[ref_ids] += copy_pred  # merge token and copy pred
+            for i, ref_id in enumerate(ref_ids):
+                # merge token and copy pred
+                token_pred[ref_id] += copy_pred[i]
             copy_pred[ref_ids != 0] = 0.0
             pred = torch.cat([token_pred, copy_pred], dim=0)
 

@@ -402,12 +402,12 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.2,  # x
                 0.8,  # 1
             ]]])
-        copy_prob = torch.tensor([[[0.0]], [[0.0]], [[0.8]]])
+        copy_prob = torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.4, 0.4]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, False)),
             get_token_type,
             is_subtype,
-            create_transform_input([Token("Str", "x")]),
+            create_transform_input([Token("Str", "x"), Token("Str", "x")]),
             transform_action_sequence,
             collate,
             Module(encoder_module,
