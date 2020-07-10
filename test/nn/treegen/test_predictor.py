@@ -17,12 +17,12 @@ class TestPredictor(unittest.TestCase):
         self.assertEqual((5,), pshape["rule.bias"])
         self.assertEqual((7, 2), pshape["token.weight"])
         self.assertEqual((7,), pshape["token.bias"])
-        self.assertEqual((11, 2), pshape["copy.w1.weight"])
-        self.assertEqual((11,), pshape["copy.w1.bias"])
-        self.assertEqual((11, 3), pshape["copy.w2.weight"])
-        self.assertEqual((11,), pshape["copy.w2.bias"])
-        self.assertEqual((1, 11), pshape["copy.v.weight"])
-        self.assertEqual((1,), pshape["copy.v.bias"])
+        self.assertEqual((11, 2), pshape["reference.w1.weight"])
+        self.assertEqual((11,), pshape["reference.w1.bias"])
+        self.assertEqual((11, 3), pshape["reference.w2.weight"])
+        self.assertEqual((11,), pshape["reference.w2.bias"])
+        self.assertEqual((1, 11), pshape["reference.v.weight"])
+        self.assertEqual((1,), pshape["reference.v.bias"])
 
     def test_shape(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -32,13 +32,13 @@ class TestPredictor(unittest.TestCase):
                             "action_features": pad_sequence([f])})
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
-        copy = inputs["copy_probs"]
+        reference = inputs["reference_probs"]
         self.assertEqual((11, 1, 5), rule.data.shape)
         self.assertEqual((11, 1), rule.mask.shape)
         self.assertEqual((11, 1, 7), token.data.shape)
         self.assertEqual((11, 1), token.mask.shape)
-        self.assertEqual((11, 1, 13), copy.data.shape)
-        self.assertEqual((11, 1), copy.mask.shape)
+        self.assertEqual((11, 1, 13), reference.data.shape)
+        self.assertEqual((11, 1), reference.mask.shape)
 
     def test_shape_eval(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -49,10 +49,10 @@ class TestPredictor(unittest.TestCase):
                             "action_features": pad_sequence([f])})
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
-        copy = inputs["copy_probs"]
+        reference = inputs["reference_probs"]
         self.assertEqual((1, 5), rule.shape)
         self.assertEqual((1, 7), token.shape)
-        self.assertEqual((1, 13), copy.shape)
+        self.assertEqual((1, 13), reference.shape)
 
     def test_prog(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -62,8 +62,8 @@ class TestPredictor(unittest.TestCase):
                             "action_features": pad_sequence([f])})
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
-        copy = inputs["copy_probs"]
-        prob = torch.cat([rule.data, token.data, copy.data], dim=2)
+        reference = inputs["reference_probs"]
+        prob = torch.cat([rule.data, token.data, reference.data], dim=2)
         prob = prob.detach().numpy()
         self.assertTrue(np.all(prob >= 0.0))
         self.assertTrue(np.all(prob <= 1.0))
@@ -80,21 +80,21 @@ class TestPredictor(unittest.TestCase):
                              "action_features": pad_sequence([f0])})
         rule0 = inputs0["rule_probs"]
         token0 = inputs0["token_probs"]
-        copy0 = inputs0["copy_probs"]
+        ref0 = inputs0["reference_probs"]
         inputs1 = predictor({"nl_query_features": pad_sequence([nl0, nl1]),
                              "action_features": pad_sequence([f0, f1])})
         rule1 = inputs1["rule_probs"]
         token1 = inputs1["token_probs"]
-        copy1 = inputs1["copy_probs"]
+        ref1 = inputs1["reference_probs"]
         rule1 = rule1.data[:11, :1, :]
         token1 = token1.data[:11, :1, :]
-        copy1 = copy1.data[:11, :1, :13]
+        ref1 = ref1.data[:11, :1, :13]
         self.assertTrue(np.allclose(rule0.data.detach().numpy(),
                                     rule1.detach().numpy()))
         self.assertTrue(np.allclose(token0.data.detach().numpy(),
                                     token1.detach().numpy()))
-        self.assertTrue(np.allclose(copy0.data.detach().numpy(),
-                                    copy1.detach().numpy()))
+        self.assertTrue(np.allclose(ref0.data.detach().numpy(),
+                                    ref1.detach().numpy()))
 
 
 if __name__ == "__main__":

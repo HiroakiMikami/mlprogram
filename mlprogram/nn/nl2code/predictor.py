@@ -65,7 +65,7 @@ class Predictor(nn.Module):
         token_probs: PaddedSequenceWithMask
            (L_ast, N, token_size) where L_ast is the sequence length,
             N is the batch_size.
-        copy_probs: PaddedSequenceWithMask
+        reference_probs: PaddedSequenceWithMask
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
@@ -98,29 +98,30 @@ class Predictor(nn.Module):
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
         # (L_a, B, query_length)
-        copy_pred = self._pointer_net(dc, nl_query_features)
-        copy_pred = torch.exp(copy_pred)
-        copy_pred = copy_pred * \
+        reference_pred = self._pointer_net(dc, nl_query_features)
+        reference_pred = torch.exp(reference_pred)
+        reference_pred = reference_pred * \
             nl_query_features.mask.permute(1, 0).view(1, B, L_q)\
-            .to(copy_pred.dtype)
+            .to(reference_pred.dtype)
 
         generate_pred = torch.softmax(
             self._l_generate(action_features.data), dim=2)  # (L_a, B, 2)
-        rule, token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
+        rule, token, reference = \
+            torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
 
         rule_pred = rule * rule_pred
         token_pred = token * token_pred  # (L_a, B, num_tokens)
-        copy_pred = copy * copy_pred  # (L_a, B, query_length)
+        reference_pred = reference * reference_pred  # (L_a, B, query_length)
 
         if self.training:
             inputs["rule_probs"] = \
                 PaddedSequenceWithMask(rule_pred, action_features.mask)
             inputs["token_probs"] = \
                 PaddedSequenceWithMask(token_pred, action_features.mask)
-            inputs["copy_probs"] = \
-                PaddedSequenceWithMask(copy_pred, action_features.mask)
+            inputs["reference_probs"] = \
+                PaddedSequenceWithMask(reference_pred, action_features.mask)
         else:
             inputs["rule_probs"] = rule_pred[-1, :, :]
             inputs["token_probs"] = token_pred[-1, :, :]
-            inputs["copy_probs"] = copy_pred[-1, :, :]
+            inputs["reference_probs"] = reference_pred[-1, :, :]
         return inputs

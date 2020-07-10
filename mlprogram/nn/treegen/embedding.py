@@ -53,9 +53,9 @@ class ActionEmbedding(nn.Module):
         rule_seq = rule_seq + (rule_seq == -1) * (self.rule_num + 1)
 
         token_seq = sequence[:, :, 1]
-        copy_seq = (token_seq == -1) * (sequence[:, :, 2] != -1)
-        # copy_seq => self.token_num
-        token_seq = token_seq + copy_seq * (self.token_num + 1)
+        reference_seq = (token_seq == -1) * (sequence[:, :, 2] != -1)
+        # reference_seq => self.token_num
+        token_seq = token_seq + reference_seq * (self.token_num + 1)
         token_seq = token_seq + (token_seq == -1) * (self.token_num + 2)
 
         return self.rule_embed(rule_seq) + self.token_embed(token_seq)
@@ -95,8 +95,8 @@ class ActionSignatureEmbedding(nn.Module):
         node_type_seq = node_type_seq + \
             (node_type_seq == -1) * (self.node_type_num + 1)
         token_seq = signature[:, 1]
-        copy_seq = (token_seq == -1) * (signature[:, 2] != -1)
-        token_seq = token_seq + copy_seq * (self.token_num + 2)
+        reference_seq = (token_seq == -1) * (signature[:, 2] != -1)
+        token_seq = token_seq + reference_seq * (self.token_num + 2)
         token_seq = token_seq + \
             (token_seq == -1) * (self.token_num + 2)
 

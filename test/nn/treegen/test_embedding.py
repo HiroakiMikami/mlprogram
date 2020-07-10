@@ -61,13 +61,13 @@ class TestActionEmbedding(unittest.TestCase):
         input[:, :, 1] = -1
         e(input)
 
-    def test_copy_mask(self):
+    def test_reference_mask(self):
         e = ActionEmbedding(1, 2, 3)
         input = torch.zeros(13, 1, 3, dtype=torch.long)
         input[:, :, 2] = -1
         e(input)
 
-    def test_copy_embed(self):
+    def test_reference_embed(self):
         e = ActionEmbedding(1, 2, 3)
         input = torch.zeros(13, 1, 3, dtype=torch.long)
         input[0, :, 2] = 0
@@ -107,13 +107,13 @@ class TestActionSignatureEmbedding(unittest.TestCase):
         input[:, :, 0] = -1
         e(input)
 
-    def test_copy_mask(self):
+    def test_reference_mask(self):
         e = ActionSignatureEmbedding(2, 3, 11)
         input = torch.zeros(13, 1, 6, 3, dtype=torch.long)
         input[:, :, 2] = -1
         e(input)
 
-    def test_copy_embed(self):
+    def test_reference_embed(self):
         e = ActionSignatureEmbedding(2, 3, 11)
         input = torch.ones(2, 1, 6, 3, dtype=torch.long) * -1
         input[0, :, :, 2] = 0

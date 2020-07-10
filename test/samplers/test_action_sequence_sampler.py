@@ -84,17 +84,17 @@ encoder_module = EncoderModule()
 
 
 class DecoderModule(nn.Module):
-    def __init__(self, rule_prob, token_prob, copy_prob):
+    def __init__(self, rule_prob, token_prob, reference_prob):
         super().__init__()
         self.rule_prob = rule_prob
         self.token_prob = token_prob
-        self.copy_prob = copy_prob
+        self.reference_prob = reference_prob
 
     def forward(self, kwargs):
         length = kwargs["length"][0] - 1
         kwargs["rule_probs"] = self.rule_prob[length]
         kwargs["token_probs"] = self.token_prob[length]
-        kwargs["copy_probs"] = self.copy_prob[length]
+        kwargs["reference_probs"] = self.reference_prob[length]
         return kwargs
 
 
@@ -140,7 +140,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 1.0,  # Ysub2Str
             ]]])
         token_prob = torch.tensor([[[]], [[]]])
-        copy_prob = torch.tensor([[[]], [[]]])
+        reference_prob = torch.tensor([[[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, True)),
             get_token_type,
@@ -148,7 +148,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_transform_input([]), transform_action_sequence,
             collate,
             Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, copy_prob))
+                   DecoderModule(rule_prob, token_prob, reference_prob))
         )
         s = SamplerState(0.0, sampler.initialize({}))
         topk_results = list(sampler.top_k_samples([s], 1))
@@ -192,7 +192,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.2,  # Ysub2Str
             ]]])
         token_prob = torch.tensor([[[]], [[]], [[]]])
-        copy_prob = torch.tensor([[[]], [[]], [[]]])
+        reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, True)),
             get_token_type,
@@ -200,7 +200,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_transform_input([]), transform_action_sequence,
             collate,
             Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, copy_prob))
+                   DecoderModule(rule_prob, token_prob, reference_prob))
         )
         s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
@@ -244,7 +244,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.2,  # Ysub2Str
             ]]])
         token_prob = torch.tensor([[[]], [[]], [[]]])
-        copy_prob = torch.tensor([[[]], [[]], [[]]])
+        reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(False, False)),
             get_token_type,
@@ -252,7 +252,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_transform_input([]), transform_action_sequence,
             collate,
             Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, copy_prob)),
+                   DecoderModule(rule_prob, token_prob, reference_prob)),
             options=ActionOptions(False, True)
         )
         s = SamplerState(0.0, sampler.initialize({}))
@@ -296,7 +296,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.2,  # x
                 0.8,  # 1
             ]]])
-        copy_prob = torch.tensor([[[]], [[]], [[]]])
+        reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, True)),
             get_token_type,
@@ -304,7 +304,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_transform_input([]), transform_action_sequence,
             collate,
             Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, copy_prob))
+                   DecoderModule(rule_prob, token_prob, reference_prob))
         )
         s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
@@ -351,7 +351,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.2,  # x
                 0.8,  # 1
             ]]])
-        copy_prob = torch.tensor([[[]], [[]], [[]]])
+        reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, False)),
             get_token_type,
@@ -359,7 +359,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             create_transform_input([]), transform_action_sequence,
             collate,
             Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, copy_prob)),
+                   DecoderModule(rule_prob, token_prob, reference_prob)),
             options=ActionOptions(True, False)
         )
         s = SamplerState(0.0, sampler.initialize({}))
@@ -375,7 +375,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         self.assertEqual(3, random_results[0].state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.2), random_results[0].score)
 
-    def test_copy(self):
+    def test_reference(self):
         rule_prob = torch.tensor([
             [[
                 1.0,  # unknown
@@ -402,7 +402,8 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.2,  # x
                 0.8,  # 1
             ]]])
-        copy_prob = torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.4, 0.4]]])
+        reference_prob = \
+            torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.4, 0.4]]])
         sampler = ActionSequenceSampler(
             create_encoder(ActionOptions(True, False)),
             get_token_type,
@@ -411,7 +412,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             transform_action_sequence,
             collate,
             Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, copy_prob)),
+                   DecoderModule(rule_prob, token_prob, reference_prob)),
             options=ActionOptions(True, False)
         )
         s = SamplerState(0.0, sampler.initialize({}))

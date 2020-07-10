@@ -13,7 +13,7 @@ class Predictor(nn.Module):
         self.select = nn.Linear(feature_size, 3)
         self.rule = nn.Linear(feature_size, rule_size)
         self.token = nn.Linear(feature_size, token_size)
-        self.copy = PointerNet(feature_size, nl_feature_size, hidden_size)
+        self.reference = PointerNet(feature_size, nl_feature_size, hidden_size)
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -34,7 +34,7 @@ class Predictor(nn.Module):
         token_probs: PaddedSequenceWithMask
            (L_ast, N, token_size) where L_ast is the sequence length,
             N is the batch_size.
-        copy_probs: PaddedSequenceWithMask
+        reference_probs: PaddedSequenceWithMask
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
@@ -51,22 +51,24 @@ class Predictor(nn.Module):
         select = self.select(action_features.data)
         select_prob = torch.softmax(select, dim=2)
 
-        copy_log_prob = self.copy(action_features.data, nl_query_features)
-        copy_prob = torch.exp(copy_log_prob)
+        reference_log_prob = \
+            self.reference(action_features.data, nl_query_features)
+        reference_prob = torch.exp(reference_log_prob)
 
         rule_log_prob = select_prob[:, :, 0:1] * rule_prob
         token_log_prob = select_prob[:, :, 1:2] * token_prob
-        copy_log_prob = select_prob[:, :, 2:3] * copy_prob
+        reference_log_prob = select_prob[:, :, 2:3] * reference_prob
         if self.training:
             inputs["rule_probs"] = \
                 PaddedSequenceWithMask(rule_log_prob, action_features.mask)
             inputs["token_probs"] = \
                 PaddedSequenceWithMask(token_log_prob, action_features.mask)
-            inputs["copy_probs"] = \
-                PaddedSequenceWithMask(copy_log_prob, action_features.mask)
+            inputs["reference_probs"] = \
+                PaddedSequenceWithMask(reference_log_prob,
+                                       action_features.mask)
         else:
             inputs["rule_probs"] = rule_log_prob[-1, :, :]
             inputs["token_probs"] = token_log_prob[-1, :, :]
-            inputs["copy_probs"] = copy_log_prob[-1, :, :]
+            inputs["reference_probs"] = reference_log_prob[-1, :, :]
 
         return inputs

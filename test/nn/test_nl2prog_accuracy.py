@@ -18,14 +18,14 @@ class TestAccuracy(unittest.TestCase):
         token_prob0 = torch.FloatTensor(
             [[0.1, 0.4, 0.5], [0.1, 0.2, 0.8], [0.5, 0.4, 0.1]])
         token_prob = rnn.pad_sequence([token_prob0])
-        copy_prob0 = torch.FloatTensor(
+        reference_prob0 = torch.FloatTensor(
             [[0.1, 0.4, 0.5, 0.0], [0.0, 0.5, 0.4, 0.1], [0.0, 0.0, 0.0, 1.0]])
-        copy_prob = rnn.pad_sequence([copy_prob0])
+        reference_prob = rnn.pad_sequence([reference_prob0])
 
         acc = NL2ProgAccuracy()
         a = acc({"rule_probs": rule_prob,
                  "token_probs": token_prob,
-                 "copy_probs": copy_prob,
+                 "reference_probs": reference_prob,
                  "ground_truth_actions": gt})
         self.assertEqual((), a.shape)
 
@@ -39,15 +39,15 @@ class TestAccuracy(unittest.TestCase):
         token_prob0 = torch.FloatTensor(
             [[0.1, 0.4, 0.5], [0.1, 0.2, 0.8], [0.5, 0.4, 0.1], [1.0, 0, 0]])
         token_prob = rnn.pad_sequence([token_prob0])
-        copy_prob0 = torch.FloatTensor(
+        reference_prob0 = torch.FloatTensor(
             [[0.1, 0.4, 0.5, 0.0], [0.0, 0.5, 0.4, 0.1], [0.0, 0.0, 0.0, 1.0],
              [1.0, 0.0, 0.0, 0.0]])
-        copy_prob = rnn.pad_sequence([copy_prob0])
+        reference_prob = rnn.pad_sequence([reference_prob0])
 
         acc = NL2ProgAccuracy()
         a = acc({"rule_probs": rule_prob,
                  "token_probs": token_prob,
-                 "copy_probs": copy_prob,
+                 "reference_probs": reference_prob,
                  "ground_truth_actions": gt})
         self.assertAlmostEqual(1.0, float(a.numpy()))
 

@@ -101,14 +101,15 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
         rule_pred = next_states.pop("rule_probs").data.cpu().reshape(N, -1)
         token_pred = next_states.pop("token_probs").data.cpu().reshape(N, -1)
-        copy_pred = next_states.pop("copy_probs").data.cpu().reshape(N, -1)
+        reference_pred = \
+            next_states.pop("reference_probs").data.cpu().reshape(N, -1)
         next_state_list = self.collate.split(next_states)
-        return rule_pred, token_pred, copy_pred, next_state_list
+        return rule_pred, token_pred, reference_pred, next_state_list
 
     def enumerate_samples_per_state(self,
                                     rule_pred: torch.Tensor,
                                     token_pred: torch.Tensor,
-                                    copy_pred: torch.Tensor,
+                                    reference_pred: torch.Tensor,
                                     next_state: Dict[str, Any],
                                     state: SamplerState[Dict[str, Any]],
                                     k: Optional[int] = None) \
@@ -139,10 +140,10 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 state.state["reference"]
             # the score will be merged into predefined token
             for i, ref_id in enumerate(ref_ids):
-                # merge token and copy pred
-                token_pred[ref_id] += copy_pred[i]
-            copy_pred[ref_ids != 0] = 0.0
-            pred = torch.cat([token_pred, copy_pred], dim=0)
+                # merge token and reference pred
+                token_pred[ref_id] += reference_pred[i]
+            reference_pred[ref_ids != 0] = 0.0
+            pred = torch.cat([token_pred, reference_pred], dim=0)
 
             # CloseVariadicFieldRule is a candidate if split_non_terminals=True
             if self.options.split_non_terminal:
@@ -222,13 +223,13 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
             -> Generator[SamplerState[Dict[str, Any]], None, None]:
         self.module.eval()
-        rule_pred, token_pred, copy_pred, next_states = \
+        rule_pred, token_pred, reference_pred, next_states = \
             self.batch_infer(states)
         topk = TopKElement(k)
         for i, state in enumerate(states):
             for elem in self.enumerate_samples_per_state(rule_pred[i],
                                                          token_pred[i],
-                                                         copy_pred[i],
+                                                         reference_pred[i],
                                                          next_states[i],
                                                          state,
                                                          k=k):
@@ -248,10 +249,10 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                          None, None]:
         self.module.eval()
 
-        rule_pred, token_pred, copy_pred, next_states = \
+        rule_pred, token_pred, reference_pred, next_states = \
             self.batch_infer(states)
         actions = []
-        for r, t, c, ns, s in zip(rule_pred, token_pred, copy_pred,
+        for r, t, c, ns, s in zip(rule_pred, token_pred, reference_pred,
                                   next_states, states):
             actions.extend(
                 list(self.enumerate_samples_per_state(r, t, c, ns, s)))

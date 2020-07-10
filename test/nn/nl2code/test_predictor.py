@@ -32,16 +32,16 @@ class TestPredictor(unittest.TestCase):
         })
         rule_pred = inputs["rule_probs"]
         token_pred = inputs["token_probs"]
-        copy_pred = inputs["copy_probs"]
+        reference_pred = inputs["reference_probs"]
         self.assertTrue(np.array_equal(
             [[1, 1], [1, 0]], rule_pred.mask.numpy()))
         self.assertEqual((2, 2, 1), rule_pred.data.shape)
         self.assertEqual((2, 2, 1), token_pred.data.shape)
         self.assertTrue(np.array_equal(
             [[1, 1], [1, 0]], token_pred.mask.numpy()))
-        self.assertEqual((2, 2, 3), copy_pred.data.shape)
+        self.assertEqual((2, 2, 3), reference_pred.data.shape)
         self.assertTrue(np.array_equal(
-            [[1, 1], [1, 0]], copy_pred.mask.numpy()))
+            [[1, 1], [1, 0]], reference_pred.mask.numpy()))
 
     def test_shape_eval(self):
         reader = ActionSequenceReader(1, 1, 1, 1, 1)
@@ -64,10 +64,10 @@ class TestPredictor(unittest.TestCase):
         })
         rule_pred = inputs["rule_probs"]
         token_pred = inputs["token_probs"]
-        copy_pred = inputs["copy_probs"]
+        reference_pred = inputs["reference_probs"]
         self.assertEqual((2, 1), rule_pred.shape)
         self.assertEqual((2, 1), token_pred.shape)
-        self.assertEqual((2, 3), copy_pred.shape)
+        self.assertEqual((2, 3), reference_pred.shape)
 
     def test_probs(self):
         reader = ActionSequenceReader(1, 1, 1, 1, 1)
@@ -89,10 +89,10 @@ class TestPredictor(unittest.TestCase):
         })
         rule_pred = inputs["rule_probs"].data
         token_pred = inputs["token_probs"].data
-        copy_pred = inputs["copy_probs"].data
+        reference_pred = inputs["reference_probs"].data
         probs = \
             torch.sum(rule_pred, dim=2) + torch.sum(token_pred, dim=2) + \
-            torch.sum(copy_pred, dim=2)
+            torch.sum(reference_pred, dim=2)
         self.assertTrue(np.allclose([[1, 1], [1, 1]], probs.detach().numpy()))
 
 
