@@ -71,8 +71,8 @@ def train(workspace_dir: str, output_dir: str,
     os.makedirs(model_dir, exist_ok=True)
     top_k_model = TopKModel(num_models, model_dir)
 
+    epoch = manager.updater.iteration // iter_per_epoch
     while True:
-        epoch = manager.updater.iteration // iter_per_epoch
         # TODO num_workers > 0 causes the RuntimeError
         loader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=True, num_workers=0,
@@ -81,12 +81,12 @@ def train(workspace_dir: str, output_dir: str,
         epoch_loss = 0.0
         epoch_score = 0.0
         for i, batch in enumerate(loader):
-            if len(batch) == 0:
-                logger.info(f"Skip {i} th batch")
-                continue
             if manager.updater.iteration >= n_iter:
                 break
             with manager.run_iteration():
+                if len(batch) == 0:
+                    logger.info(f"Skip {i} th batch")
+                    continue
                 output = cast(Tuple[PaddedSequenceWithMask,
                                     PaddedSequenceWithMask,
                                     PaddedSequenceWithMask],
@@ -112,6 +112,7 @@ def train(workspace_dir: str, output_dir: str,
             break
         if manager.updater.iteration >= n_iter:
             break
+        epoch += 1
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
