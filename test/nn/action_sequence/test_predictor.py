@@ -2,7 +2,7 @@ import unittest
 import torch
 import numpy as np
 
-from mlprogram.nn.treegen import Predictor
+from mlprogram.nn.action_sequence import Predictor
 from mlprogram.nn.utils.rnn import pad_sequence
 
 

@@ -121,6 +121,8 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
+    "mlprogram.nn.action_sequence.Predictor":
+        mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
     "mlprogram.nn.action_sequence.Accuracy":
         mlprogram.nn.action_sequence.Accuracy,
@@ -133,7 +135,6 @@ types = {
     "mlprogram.nn.treegen.ActionSequenceReader":
         mlprogram.nn.treegen.ActionSequenceReader,
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
-    "mlprogram.nn.treegen.Predictor": mlprogram.nn.treegen.Predictor,
 }
 
 types.update(torch_types)

@@ -26,7 +26,7 @@ from mlprogram.utils.transform \
     import RandomChoice, TransformGroundTruth, TransformCode
 from mlprogram.utils.transform.treegen \
     import TransformQuery, TransformActionSequence
-from mlprogram.nn.action_sequence import Loss
+from mlprogram.nn.action_sequence import Loss, Predictor
 from mlprogram.nn import treegen
 from mlprogram.metrics import Accuracy
 
@@ -80,7 +80,7 @@ class TestTreeGen(unittest.TestCase):
                 ("decoder", treegen.Decoder(
                     rule_num, 4, 256, 1024, 256, 1, 0.0, 5
                 )),
-                ("predictor", treegen.Predictor(
+                ("predictor", Predictor(
                     256, 256, rule_num, token_num, 256
                 ))
             ])))

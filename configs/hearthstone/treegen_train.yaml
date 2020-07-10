@@ -149,7 +149,7 @@ model:
                   dropout: 0.15
                   n_blocks: 6
               - - "predictor"
-                - type: mlprogram.nn.treegen.Predictor
+                - type: mlprogram.nn.action_sequence.Predictor
                   feature_size: 256
                   nl_feature_size: 256
                   rule_size: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
