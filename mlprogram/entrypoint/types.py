@@ -6,6 +6,7 @@ import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
 import mlprogram.nn
+import mlprogram.nn.action_sequence
 import mlprogram.metrics
 import mlprogram.metrics.python
 import mlprogram.metrics.accuracy
@@ -120,8 +121,9 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
-    "mlprogram.nn.NL2ProgLoss": mlprogram.nn.NL2ProgLoss,
-    "mlprogram.nn.NL2ProgAccuracy": mlprogram.nn.NL2ProgAccuracy,
+    "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
+    "mlprogram.nn.action_sequence.Accuracy":
+        mlprogram.nn.action_sequence.Accuracy,
     "mlprogram.nn.nl2code.NLReader": mlprogram.nn.nl2code.NLReader,
     "mlprogram.nn.nl2code.ActionSequenceReader":
         mlprogram.nn.nl2code.ActionSequenceReader,

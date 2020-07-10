@@ -5,9 +5,9 @@ from typing import Any, cast, Dict
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
-class NL2ProgLoss(nn.Module):
+class Loss(nn.Module):
     def __init__(self):
-        super(NL2ProgLoss, self).__init__()
+        super(Loss, self).__init__()
 
     def forward(self, inputs: Dict[str, Any]) -> torch.Tensor:
         """

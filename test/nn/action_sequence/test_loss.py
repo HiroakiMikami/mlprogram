@@ -1,13 +1,13 @@
 import unittest
 import torch
 
-from mlprogram.nn import NL2ProgLoss
+from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn.utils import rnn
 
 
 class TestLoss(unittest.TestCase):
     def test_parameters(self):
-        loss = NL2ProgLoss()
+        loss = Loss()
         self.assertEqual(0, len(dict(loss.named_parameters())))
 
     def test_shape(self):
@@ -22,7 +22,7 @@ class TestLoss(unittest.TestCase):
             [[0.1, 0.4, 0.5, 0.0], [0.0, 0.5, 0.4, 0.1], [0.0, 0.0, 0.0, 1.0]])
         reference_prob = rnn.pad_sequence([reference_prob0])
 
-        loss = NL2ProgLoss()
+        loss = Loss()
         objective = loss({"rule_probs": rule_prob,
                           "token_probs": token_prob,
                           "reference_probs": reference_prob,

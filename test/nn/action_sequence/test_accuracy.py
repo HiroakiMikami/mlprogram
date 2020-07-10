@@ -1,13 +1,13 @@
 import unittest
 import torch
 
-from mlprogram.nn import NL2ProgAccuracy
+from mlprogram.nn.action_sequence import Accuracy
 from mlprogram.nn.utils import rnn
 
 
 class TestAccuracy(unittest.TestCase):
     def test_parameters(self):
-        acc = NL2ProgAccuracy()
+        acc = Accuracy()
         self.assertEqual(0, len(dict(acc.named_parameters())))
 
     def test_shape(self):
@@ -22,7 +22,7 @@ class TestAccuracy(unittest.TestCase):
             [[0.1, 0.4, 0.5, 0.0], [0.0, 0.5, 0.4, 0.1], [0.0, 0.0, 0.0, 1.0]])
         reference_prob = rnn.pad_sequence([reference_prob0])
 
-        acc = NL2ProgAccuracy()
+        acc = Accuracy()
         a = acc({"rule_probs": rule_prob,
                  "token_probs": token_prob,
                  "reference_probs": reference_prob,
@@ -44,7 +44,7 @@ class TestAccuracy(unittest.TestCase):
              [1.0, 0.0, 0.0, 0.0]])
         reference_prob = rnn.pad_sequence([reference_prob0])
 
-        acc = NL2ProgAccuracy()
+        acc = Accuracy()
         a = acc({"rule_probs": rule_prob,
                  "token_probs": token_prob,
                  "reference_probs": reference_prob,

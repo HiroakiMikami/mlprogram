@@ -25,7 +25,7 @@ from mlprogram.utils.transform \
     import RandomChoice, TransformCode, TransformGroundTruth
 from mlprogram.utils.transform.nl2code \
     import TransformQuery, TransformActionSequence
-from mlprogram.nn import NL2ProgLoss
+from mlprogram.nn.action_sequence import Loss
 import mlprogram.nn.nl2code as nl2code
 from mlprogram.metrics import Accuracy
 
@@ -158,7 +158,7 @@ class TestNL2Code(unittest.TestCase):
             nl2prog.train(
                 tmpdir, output_dir,
                 dataset, model, optimizer,
-                NL2ProgLoss(), lambda args: -NL2ProgLoss()(args),
+                Loss(), lambda args: -Loss()(args),
                 collate,
                 1, 10,
                 num_models=1
