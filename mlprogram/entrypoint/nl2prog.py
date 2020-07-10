@@ -78,6 +78,8 @@ def train(workspace_dir: str, output_dir: str,
                             shuffle=True, num_workers=0,
                             collate_fn=collate)
         model.train()
+        epoch_loss = 0.0
+        epoch_score = 0.0
         for i, batch in enumerate(loader):
             if len(batch) == 0:
                 logger.info(f"Skip {i} th batch")
@@ -99,8 +101,9 @@ def train(workspace_dir: str, output_dir: str,
                     "loss": bloss.item(),
                     "score": s.item()
                 })
-        epoch_loss = log_reporter.log[-1]["loss"]
-        epoch_score = log_reporter.log[-1]["score"]
+            if len(log_reporter.log) != 0:
+                epoch_loss = log_reporter.log[-1]["loss"]
+                epoch_score = log_reporter.log[-1]["score"]
 
         top_k_model.save(epoch_score, f"{epoch}", model)
 
