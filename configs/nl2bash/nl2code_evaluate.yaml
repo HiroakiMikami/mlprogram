@@ -113,6 +113,11 @@ collate:
     use_pad_sequence: true
     dim: 0
     padding_value: -1
+  reference_features:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
   actions:
     type: mlprogram.utils.data.CollateOptions
     use_pad_sequence: true

@@ -128,4 +128,5 @@ class NLReader(nn.Module):
         for block in self.blocks:
             block_input, _ = block(block_input, e_char_query)
         inputs["nl_query_features"] = block_input
+        inputs["reference_features"] = block_input
         return inputs

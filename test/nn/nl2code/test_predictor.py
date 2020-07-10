@@ -26,7 +26,7 @@ class TestPredictor(unittest.TestCase):
         query = rnn.pad_sequence([query0, query1])
 
         inputs = predictor({
-            "nl_query_features": query,
+            "reference_features": query,
             "action_features": feature,
             "action_contexts": context
         })
@@ -58,7 +58,7 @@ class TestPredictor(unittest.TestCase):
 
         predictor.eval()
         inputs = predictor({
-            "nl_query_features": query,
+            "reference_features": query,
             "action_features": feature,
             "action_contexts": context
         })
@@ -83,7 +83,7 @@ class TestPredictor(unittest.TestCase):
         query = rnn.pad_sequence([query0, query1])
 
         inputs = predictor({
-            "nl_query_features": query,
+            "reference_features": query,
             "action_features": feature,
             "action_contexts": context
         })

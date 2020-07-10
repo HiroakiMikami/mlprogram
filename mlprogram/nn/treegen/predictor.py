@@ -19,7 +19,7 @@ class Predictor(nn.Module):
         """
         Parameters
         ----------
-        nl_query_features: PaddedSequenceWithMask
+        reference_features: PaddedSequenceWithMask
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
         action_features: PaddedSequenceWithMask
@@ -38,8 +38,8 @@ class Predictor(nn.Module):
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
-        nl_query_features = cast(PaddedSequenceWithMask,
-                                 inputs["nl_query_features"])
+        reference_features = cast(PaddedSequenceWithMask,
+                                  inputs["reference_features"])
         action_features = cast(PaddedSequenceWithMask,
                                inputs["action_features"])
         rule_pred = self.rule(action_features.data)
@@ -52,7 +52,7 @@ class Predictor(nn.Module):
         select_prob = torch.softmax(select, dim=2)
 
         reference_log_prob = \
-            self.reference(action_features.data, nl_query_features)
+            self.reference(action_features.data, reference_features)
         reference_prob = torch.exp(reference_log_prob)
 
         rule_log_prob = select_prob[:, :, 0:1] * rule_prob

@@ -28,7 +28,7 @@ class TestPredictor(unittest.TestCase):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
-        inputs = predictor({"nl_query_features": pad_sequence([nl]),
+        inputs = predictor({"reference_features": pad_sequence([nl]),
                             "action_features": pad_sequence([f])})
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
@@ -45,7 +45,7 @@ class TestPredictor(unittest.TestCase):
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
         predictor.eval()
-        inputs = predictor({"nl_query_features": pad_sequence([nl]),
+        inputs = predictor({"reference_features": pad_sequence([nl]),
                             "action_features": pad_sequence([f])})
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
@@ -58,7 +58,7 @@ class TestPredictor(unittest.TestCase):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.rand(11, 2)
         nl = torch.rand(13, 3)
-        inputs = predictor({"nl_query_features": pad_sequence([nl]),
+        inputs = predictor({"reference_features": pad_sequence([nl]),
                             "action_features": pad_sequence([f])})
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
@@ -76,12 +76,12 @@ class TestPredictor(unittest.TestCase):
         f1 = torch.rand(13, 2)
         nl0 = torch.rand(13, 3)
         nl1 = torch.rand(15, 3)
-        inputs0 = predictor({"nl_query_features": pad_sequence([nl0]),
+        inputs0 = predictor({"reference_features": pad_sequence([nl0]),
                              "action_features": pad_sequence([f0])})
         rule0 = inputs0["rule_probs"]
         token0 = inputs0["token_probs"]
         ref0 = inputs0["reference_probs"]
-        inputs1 = predictor({"nl_query_features": pad_sequence([nl0, nl1]),
+        inputs1 = predictor({"reference_features": pad_sequence([nl0, nl1]),
                              "action_features": pad_sequence([f0, f1])})
         rule1 = inputs1["rule_probs"]
         token1 = inputs1["token_probs"]

@@ -81,6 +81,7 @@ class NLReader(nn.Module):
                 .view(1, B, -1)  # (1, B, hidden_size)
 
         output = torch.cat(output, dim=0)  # (L, B, hidden_size)
-        inputs["nl_query_features"] = \
-            rnn.PaddedSequenceWithMask(output, nl_query.mask)
+        features = rnn.PaddedSequenceWithMask(output, nl_query.mask)
+        inputs["nl_query_features"] = features
+        inputs["reference_features"] = features
         return inputs

@@ -49,7 +49,7 @@ class Predictor(nn.Module):
         """
         Parameters
         ----------
-        nl_query_features: PaddedSequenceWithMask
+        reference_features: PaddedSequenceWithMask
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
         action_features: PaddedSequenceWithMask
@@ -69,13 +69,13 @@ class Predictor(nn.Module):
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
-        nl_query_features = cast(PaddedSequenceWithMask,
-                                 inputs["nl_query_features"])
+        reference_features = cast(PaddedSequenceWithMask,
+                                  inputs["reference_features"])
         action_features = cast(PaddedSequenceWithMask,
                                inputs["action_features"])
         action_contexts = cast(PaddedSequenceWithMask,
                                inputs["action_contexts"])
-        L_q, B, _ = nl_query_features.data.shape
+        L_q, B, _ = reference_features.data.shape
 
         # Decode embeddings
         # (L_a, B, hidden_size + query_size)
@@ -98,10 +98,10 @@ class Predictor(nn.Module):
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
         # (L_a, B, query_length)
-        reference_pred = self._pointer_net(dc, nl_query_features)
+        reference_pred = self._pointer_net(dc, reference_features)
         reference_pred = torch.exp(reference_pred)
         reference_pred = reference_pred * \
-            nl_query_features.mask.permute(1, 0).view(1, B, L_q)\
+            reference_features.mask.permute(1, 0).view(1, B, L_q)\
             .to(reference_pred.dtype)
 
         generate_pred = torch.softmax(
