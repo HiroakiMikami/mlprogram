@@ -11,8 +11,8 @@ valid_dataset: "@/dataset.valid"
 
 options:
   type: mlprogram.actions.ActionOptions
-  retain_variadic_fields: true
-  split_non_terminal: true
+  retain_variadic_fields: false
+  split_non_terminal: false
 
 to_action_sequence:
   type: mlprogram.utils.Compose
