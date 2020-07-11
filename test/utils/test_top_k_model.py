@@ -16,13 +16,13 @@ class TestTopKModel(unittest.TestCase):
             self.assertEqual(["model_1.pt"], os.listdir(tmpdir))
             topk.save(2.0, "2", model)
             self.assertEqual(["model_1.pt", "model_2.pt"],
-                             os.listdir(tmpdir))
+                             sorted(os.listdir(tmpdir)))
             topk.save(3.0, "3", model)
             self.assertEqual(["model_2.pt", "model_3.pt"],
-                             os.listdir(tmpdir))
+                             sorted(os.listdir(tmpdir)))
             topk.save(0.0, "0", model)
             self.assertEqual(["model_2.pt", "model_3.pt"],
-                             os.listdir(tmpdir))
+                             sorted(os.listdir(tmpdir)))
 
             result = torch.load(os.path.join(tmpdir, "model_3.pt"))
             self.assertEqual(3.0, result["score"])
@@ -37,10 +37,10 @@ class TestTopKModel(unittest.TestCase):
             topk = TopKModel(2, tmpdir)
             topk.save(3.0, "3", model)
             self.assertEqual(["model_2.pt", "model_3.pt"],
-                             os.listdir(tmpdir))
+                             sorted(os.listdir(tmpdir)))
             topk.save(0.0, "0", model)
             self.assertEqual(["model_2.pt", "model_3.pt"],
-                             os.listdir(tmpdir))
+                             sorted(os.listdir(tmpdir)))
 
 
 if __name__ == "__main__":
