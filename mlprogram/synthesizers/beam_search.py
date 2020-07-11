@@ -1,5 +1,4 @@
-import torch
-from typing import TypeVar, Generic, Generator, Dict, Any
+from typing import TypeVar, Generic, Generator
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Synthesizer, Result
 
@@ -36,9 +35,3 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
                     next_states.append(next_state)
             states = next_states
             steps += 1
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.sampler.load_state_dict(state_dict)
-
-    def to(self, device: torch.device) -> None:
-        self.sampler.to(device)

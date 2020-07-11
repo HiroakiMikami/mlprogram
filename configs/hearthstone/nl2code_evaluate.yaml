@@ -192,6 +192,7 @@ main:
   output_dir: "@/output_dir"
   test_dataset: "@/test_dataset"
   valid_dataset: "@/valid_dataset"
+  model: "@/model"
   synthesizer: "@/synthesizer"
   metrics: "@/metrics"
   main_metric:

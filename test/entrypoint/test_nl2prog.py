@@ -124,19 +124,26 @@ class TestEvaluate(unittest.TestCase):
                 "valid": ListDataset([{"input": ["query"],
                                        "ground_truth": ["name0"]}])}
 
-    def prepare_synthesizer(self):
-        class MockSynthesizer:
+    def prepare_model(self):
+        class MockModel:
             def load_state_dict(self, state_dict):
                 self.state_dict = state_dict
 
-            def __call__(self, query):
-                yield Result(Leaf("str", self.state_dict["name"]),
-                             self.state_dict["score"])
-
-            def to(self, device):
+            def to(self, *args, **kwargs):
                 pass
 
-        return MockSynthesizer()
+        return MockModel()
+
+    def prepare_synthesizer(self, model):
+        class MockSynthesizer:
+            def __init__(self, model):
+                self.model = model
+
+            def __call__(self, query):
+                yield Result(Leaf("str", self.model.state_dict["name"]),
+                             self.model.state_dict["score"])
+
+        return MockSynthesizer(model)
 
     def test_happy_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -150,8 +157,9 @@ class TestEvaluate(unittest.TestCase):
             torch.save({"model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "1"))
             dataset = self.prepare_dataset()
+            model = self.prepare_model()
             evaluate(input, ws, output, dataset["test"], dataset["valid"],
-                     self.prepare_synthesizer(),
+                     model, self.prepare_synthesizer(model),
                      {
                 "accuracy": Accuracy(lambda x: Leaf("str", x),
                                      lambda x: x.value),
@@ -180,8 +188,9 @@ class TestEvaluate(unittest.TestCase):
             torch.save({"model": {"score": 0.5, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
             dataset = self.prepare_dataset()
+            model = self.prepare_model()
             evaluate(input, ws, output, dataset["test"], dataset["valid"],
-                     self.prepare_synthesizer(),
+                     model, self.prepare_synthesizer(model),
                      {
                 "accuracy": Accuracy(lambda x: Leaf("str", x),
                                      lambda x: x.value),
@@ -198,7 +207,7 @@ class TestEvaluate(unittest.TestCase):
                        os.path.join(input, "model", "1"))
             dataset = self.prepare_dataset()
             evaluate(input, ws, output, dataset["test"], dataset["valid"],
-                     self.prepare_synthesizer(),
+                     model, self.prepare_synthesizer(model),
                      {
                 "accuracy": Accuracy(lambda x: Leaf("str", x),
                                      lambda x: x.value),

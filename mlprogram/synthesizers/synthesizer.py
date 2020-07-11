@@ -1,5 +1,4 @@
-import torch
-from typing import Generic, TypeVar, Generator, Dict, Any
+from typing import Generic, TypeVar, Generator
 from dataclasses import dataclass
 
 
@@ -16,10 +15,4 @@ class Result(Generic[Output]):
 
 class Synthesizer(Generic[Input, Output]):
     def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
-        raise NotImplementedError
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        raise NotImplementedError
-
-    def to(self, device: torch.device) -> None:
         raise NotImplementedError

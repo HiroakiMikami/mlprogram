@@ -62,7 +62,6 @@ class TestTreeGen(unittest.TestCase):
         return qencoder, cencoder, aencoder
 
     def prepare_model(self, qencoder, cencoder, aencoder):
-
         rule_num = aencoder._rule_encoder.vocab_size
         token_num = aencoder._token_encoder.vocab_size
         node_type_num = aencoder._node_type_encoder.vocab_size
@@ -90,9 +89,8 @@ class TestTreeGen(unittest.TestCase):
         return create_optimizer(optim.adafactor.Adafactor,
                                 model)
 
-    def prepare_synthesizer(self, qencoder, cencoder, aencoder, options):
-        model = self.prepare_model(qencoder, cencoder, aencoder)
-
+    def prepare_synthesizer(self, model, qencoder, cencoder, aencoder,
+                            options):
         transform_input = TransformQuery(tokenize_query, qencoder,
                                          cencoder, 10)
         transform_action_sequence = TransformActionSequence(aencoder, 4, 4,
@@ -135,11 +133,13 @@ class TestTreeGen(unittest.TestCase):
     def evaluate(self, qencoder, cencoder, aencoder, options, dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             dataset = prepare_dataset(1)
+            model = self.prepare_model(qencoder, cencoder, aencoder)
             nl2prog.evaluate(
                 dir, tmpdir, dir,
                 dataset["test"], dataset["valid"],
+                model,
                 self.prepare_synthesizer(
-                    qencoder, cencoder, aencoder, options),
+                    model, qencoder, cencoder, aencoder, options),
                 {"accuracy": Accuracy(lambda x: x, lambda x: x)},
                 (5, "accuracy"), top_n=[5]
             )

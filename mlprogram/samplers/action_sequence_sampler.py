@@ -268,9 +268,3 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 x = {key: value for key, value in new_state.items()}
                 x["action_sequence"] = action_sequence
                 yield SamplerState[Dict[str, Any]](score, x)
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.module.load_state_dict(state_dict)
-
-    def to(self, device: torch.device) -> None:
-        self.module.to(device)

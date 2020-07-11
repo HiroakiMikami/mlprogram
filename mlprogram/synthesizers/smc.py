@@ -1,5 +1,4 @@
-import torch
-from typing import TypeVar, Generic, Optional, Generator, Dict, Tuple, Any
+from typing import TypeVar, Generic, Optional, Generator, Dict, Tuple
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 import math
@@ -63,9 +62,3 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State]):
                 step += 1
 
             num_particle *= self.factor
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.sampler.load_state_dict(state_dict)
-
-    def to(self, device: torch.device) -> None:
-        self.sampler.to(device)

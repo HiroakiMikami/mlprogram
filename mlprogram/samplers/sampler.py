@@ -1,5 +1,4 @@
-import torch
-from typing import TypeVar, Generic, Optional, List, Generator, Any, Dict
+from typing import TypeVar, Generic, Optional, List, Generator, Any
 from dataclasses import dataclass
 
 
@@ -35,10 +34,4 @@ class Sampler(Generic[Input, Output, State]):
 
     def k_samples(self, states: List[SamplerState[State]], n: int) \
             -> Generator[SamplerState[State], None, None]:
-        raise NotImplementedError
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        raise NotImplementedError
-
-    def to(self, device: torch.device) -> None:
         raise NotImplementedError

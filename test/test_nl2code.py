@@ -77,7 +77,7 @@ class TestNL2Code(unittest.TestCase):
     def prepare_optimizer(self, model):
         return create_optimizer(optim.Adam, model)
 
-    def prepare_synthesizer(self, qencoder, aencoder, model, options):
+    def prepare_synthesizer(self, model, qencoder, aencoder, options):
         transform_input = TransformQuery(tokenize_query, qencoder)
         transform_action_sequence = TransformActionSequence(aencoder,
                                                             train=False)
@@ -122,7 +122,8 @@ class TestNL2Code(unittest.TestCase):
             nl2prog.evaluate(
                 dir, tmpdir, dir,
                 dataset["test"], dataset["valid"],
-                self.prepare_synthesizer(qencoder, aencoder, model, options),
+                model,
+                self.prepare_synthesizer(model, qencoder, aencoder, options),
                 {"accuracy": Accuracy(lambda x: x, lambda x: x)},
                 (5, "accuracy"), top_n=[5]
             )

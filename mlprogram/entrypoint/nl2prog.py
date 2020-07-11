@@ -128,6 +128,7 @@ def train(workspace_dir: str, output_dir: str,
 def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              test_dataset: torch.utils.data.Dataset,
              valid_dataset: torch.utils.data.Dataset,
+             model: nn.Module,
              synthesizer: Synthesizer,
              metrics: Mapping[str, Metric],
              main_metric: Tuple[int, str],
@@ -141,8 +142,8 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         test_dataset = ListDataset(test_dataset[:n_samples])
         valid_dataset = ListDataset(valid_dataset[:n_samples])
 
-    logger.info("Prepare synthesizer")
-    synthesizer.to(device)
+    logger.info("Prepare model")
+    model.to(device)
 
     model_dir = os.path.join(input_dir, "model")
     results_path = os.path.join(workspace_dir, "results.pt")
@@ -158,7 +159,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         state_dict = \
             torch.load(path, map_location=torch.device("cpu"))["model"]
         logger.info(f"Start evaluation (test dataset): {name}")
-        synthesizer.load_state_dict(state_dict)
+        model.load_state_dict(state_dict)
 
         test_data = tqdm(test_dataset)
 
@@ -183,7 +184,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         path = os.path.join(model_dir, best_model)
         state_dict = \
             torch.load(path, map_location=torch.device("cpu"))["model"]
-        synthesizer.load_state_dict(state_dict)
+        model.load_state_dict(state_dict)
 
         test_data = tqdm(valid_dataset)
 

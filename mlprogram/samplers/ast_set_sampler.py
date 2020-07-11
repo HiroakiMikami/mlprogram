@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from torch import nn
 import logging
 from typing \
@@ -9,7 +8,6 @@ from mlprogram.asts import AST, Node, Leaf
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import Token
-from mlprogram.utils.torch import StateDict
 from mlprogram.utils.data import Collate
 from dataclasses import dataclass
 
@@ -121,12 +119,3 @@ class AstSetSampler(Sampler[Input, Dict[Reference, AST], Dict[str, Any]],
             for s, m in zip(sampler_states, resamples):
                 for _ in range(m):
                     yield s
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        s = StateDict(state_dict)
-        self.synthesizer.load_state_dict(s["synthesizer"])
-        self.encoder.load_state_dict(s["encoder"])
-
-    def to(self, device: torch.device) -> None:
-        self.synthesizer.to(device)
-        self.encoder.to(device)

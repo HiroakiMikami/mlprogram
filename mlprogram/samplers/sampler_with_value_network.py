@@ -1,9 +1,8 @@
 import torch
 import logging
 from typing \
-    import TypeVar, Generic, Generator, Optional, Dict, Any, List
+    import TypeVar, Generic, Generator, Optional, List
 from mlprogram.samplers import SamplerState, Sampler
-from mlprogram.utils.torch import StateDict
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +34,3 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
             # TODO batch computation
             value = self.value_network(state.state)
             yield SamplerState(value.item(), state.state)
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        s = StateDict(state_dict)
-        self.sampler.load_state_dict(s["sampler"])
-        self.value_network.load_state_dict(s["value_network"])
-
-    def to(self, device: torch.device) -> None:
-        self.sampler.to(device)
-        self.value_network.to(device)
