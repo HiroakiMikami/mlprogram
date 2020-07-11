@@ -2,8 +2,9 @@ import numpy as np
 from mlprogram.interpreters import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference
-from typing import Callable, Dict
+from typing import Callable
 import math
+from functools import lru_cache
 
 
 class Canvas:
@@ -45,31 +46,32 @@ class InvalidNodeTypeException(BaseException):
         super().__init__(f"Invalid node type: {type_name}")
 
 
-class Interpreter(BaseInterpreter[AST, AST, Shape]):
-    def eval(self, env: Dict[AST, Shape], code: AST) -> Dict[AST, Shape]:
-        if code in env:
-            return env
+class Interpreter(BaseInterpreter[AST, Shape]):
+    def eval(self, code: AST) -> Shape:
+        return self._cached_eval(code)
 
+    @lru_cache(maxsize=100)
+    def _cached_eval(self, code: AST) -> Shape:
         if isinstance(code, Circle):
             def circle(x, y):
                 return x * x + y * y <= code.r * code.r
-            env[code] = Shape(circle)
+            return Shape(circle)
         elif isinstance(code, Rectangle):
             def rectangle(x, y):
                 x = abs(x)
                 y = abs(y)
                 return x <= code.w / 2 and y <= code.h / 2
-            env[code] = Shape(rectangle)
+            return Shape(rectangle)
         elif isinstance(code, Translation):
-            env = self.eval(env, code.child)
+            child = self.eval(code.child)
 
             def translate(x, y):
                 x = x - code.x
                 y = y - code.y
-                return env[code.child](x, y)
-            env[code] = Shape(translate)
+                return child(x, y)
+            return Shape(translate)
         elif isinstance(code, Rotation):
-            env = self.eval(env, code.child)
+            child = self.eval(code.child)
 
             def rotate(x, y):
                 theta = math.radians(code.theta_degree)
@@ -78,22 +80,20 @@ class Interpreter(BaseInterpreter[AST, AST, Shape]):
                 x_ = cos * x - sin * y
                 y_ = sin * x + cos * y
                 x, y = x_, y_
-                return env[code.child](x, y)
-            env[code] = Shape(rotate)
+                return child(x, y)
+            return Shape(rotate)
         elif isinstance(code, Union):
-            env = self.eval(env, code.a)
-            env = self.eval(env, code.b)
+            a = self.eval(code.a)
+            b = self.eval(code.b)
 
             def union(x, y):
-                return env[code.a](x, y) or env[code.b](x, y)
-            env[code] = Shape(union)
+                return a(x, y) or b(x, y)
+            return Shape(union)
         elif isinstance(code, Difference):
-            env = self.eval(env, code.a)
-            env = self.eval(env, code.b)
+            a = self.eval(code.a)
+            b = self.eval(code.b)
 
             def difference(x, y):
-                return not env[code.a](x, y) and env[code.b](x, y)
-            env[code] = Shape(difference)
-        else:
-            raise InvalidNodeTypeException(code.type_name())
-        return env
+                return not a(x, y) and b(x, y)
+            return Shape(difference)
+        raise InvalidNodeTypeException(code.type_name())

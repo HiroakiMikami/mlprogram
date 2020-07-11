@@ -82,7 +82,7 @@ class Dataset(IterableDataset):
                 depth = np.random.randint(1, self.parent.depth + 1)
                 size = self.parent.canvas_size
                 ast = self.parent.sample_ast(rng, depth)
-                canvas = self.interpreter.eval({}, ast)[ast].render(size, size)
+                canvas = self.interpreter.eval(ast).render(size, size)
                 retval = (ast, canvas)
                 if self.parent.transform is not None:
                     retval = self.parent.transform(retval)

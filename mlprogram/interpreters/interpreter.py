@@ -1,11 +1,10 @@
-from typing import Dict, Generic, TypeVar
+from typing import Generic, TypeVar
 
 
 Code = TypeVar("Code")
-Id = TypeVar("Id")
 Value = TypeVar("Value")
 
 
-class Interpreter(Generic[Code, Id, Value]):
-    def eval(self, env: Dict[Id, Value], code: Code) -> Dict[Id, Value]:
+class Interpreter(Generic[Code, Value]):
+    def eval(self, code: Code) -> Value:
         raise NotImplementedError
