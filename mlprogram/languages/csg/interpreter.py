@@ -23,12 +23,13 @@ class Shape:
     def __call__(self, x: float, y: float) -> bool:
         return self.is_filled(x, y)
 
-    def render(self, width: int, height: int) -> np.array:
-        canvas = np.zeros((height, width), dtype=np.bool)
-        for y in range(height):
-            for x in range(width):
-                x_ = x - (width - 1) / 2
-                y_ = y - (height - 1) / 2
+    def render(self, width: int, height: int, resolution: int = 1) -> np.array:
+        canvas = np.zeros((height * resolution, width * resolution),
+                          dtype=np.bool)
+        for y in range(height * resolution):
+            for x in range(width * resolution):
+                x_ = (x - (width * resolution - 1) / 2) / resolution
+                y_ = (y - (height * resolution - 1) / 2) / resolution
                 y_ *= -1
                 if self(x_, y_):
                     canvas[y, x] = True

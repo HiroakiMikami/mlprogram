@@ -19,6 +19,14 @@ class TestShape(unittest.TestCase):
         self.assertEqual(" # \n###\n # \n", show(shape.render(3, 3)))
         self.assertEqual("  \n  \n", show(shape.render(2, 2)))
 
+    def test_render_with_resolution(self):
+        shape = Shape(lambda x, y: abs(x * y) < 0.5)
+        self.assertEqual(" # \n###\n # \n", show(shape.render(3, 3, 1)))
+        self.assertEqual("  ##  \n  ##  \n######\n######\n  ##  \n  ##  \n",
+                         show(shape.render(3, 3, 2)))
+        self.assertEqual("      \n      \n  ##  \n  ##  \n      \n      \n",
+                         show(shape.render(6, 6, 1)))
+
 
 class TestInterpreter(unittest.TestCase):
     def test_circle(self):
