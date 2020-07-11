@@ -13,10 +13,12 @@ from mlprogram.languages.csg import Union, Difference
 
 class Dataset(IterableDataset):
     def __init__(
-            self, canvas_size: int, depth: int, length_stride: int,
+            self, canvas_size: int, canvas_resolution: int,
+            depth: int, length_stride: int,
             degree_stride: int, seed: Optional[int] = None,
             transform: Optional[Callable[[Tuple[AST, np.array]], Any]] = None):
         self.canvas_size = canvas_size
+        self.canvas_resolution = canvas_resolution
         self.depth = depth
         s = self.canvas_size // 2
         self.length_candidates = list(range(-s, s + 1))[::length_stride]
@@ -76,13 +78,15 @@ class Dataset(IterableDataset):
         class InternalIterator:
             def __init__(self, parent: Dataset):
                 self.parent = parent
-                self.interpreter = Interpreter()
+                self.interpreter = Interpreter(
+                    self.parent.canvas_size,
+                    self.parent.canvas_size,
+                    self.parent.canvas_resolution)
 
             def __next__(self) -> Any:
                 depth = np.random.randint(1, self.parent.depth + 1)
-                size = self.parent.canvas_size
                 ast = self.parent.sample_ast(rng, depth)
-                canvas = self.interpreter.eval(ast).render(size, size)
+                canvas = self.interpreter.eval(ast)
                 retval = (ast, canvas)
                 if self.parent.transform is not None:
                     retval = self.parent.transform(retval)

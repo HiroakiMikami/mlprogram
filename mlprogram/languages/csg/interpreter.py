@@ -42,8 +42,14 @@ class InvalidNodeTypeException(BaseException):
 
 
 class Interpreter(BaseInterpreter[AST, Shape]):
-    def eval(self, code: AST) -> Shape:
-        return self._cached_eval(code)
+    def __init__(self, width: int, height: int, resolution: int):
+        self.width = width
+        self.height = height
+        self.resolution = resolution
+
+    def eval(self, code: AST) -> np.array:
+        return self._cached_eval(code).render(
+            self.width, self.height, self.resolution)
 
     @lru_cache(maxsize=100)
     def _cached_eval(self, code: AST) -> Shape:
@@ -58,7 +64,7 @@ class Interpreter(BaseInterpreter[AST, Shape]):
                 return x <= code.w / 2 and y <= code.h / 2
             return Shape(rectangle)
         elif isinstance(code, Translation):
-            child = self.eval(code.child)
+            child = self._cached_eval(code.child)
 
             def translate(x, y):
                 x = x - code.x
@@ -66,7 +72,7 @@ class Interpreter(BaseInterpreter[AST, Shape]):
                 return child(x, y)
             return Shape(translate)
         elif isinstance(code, Rotation):
-            child = self.eval(code.child)
+            child = self._cached_eval(code.child)
 
             def rotate(x, y):
                 theta = math.radians(code.theta_degree)
@@ -78,15 +84,15 @@ class Interpreter(BaseInterpreter[AST, Shape]):
                 return child(x, y)
             return Shape(rotate)
         elif isinstance(code, Union):
-            a = self.eval(code.a)
-            b = self.eval(code.b)
+            a = self._cached_eval(code.a)
+            b = self._cached_eval(code.b)
 
             def union(x, y):
                 return a(x, y) or b(x, y)
             return Shape(union)
         elif isinstance(code, Difference):
-            a = self.eval(code.a)
-            b = self.eval(code.b)
+            a = self._cached_eval(code.a)
+            b = self._cached_eval(code.b)
 
             def difference(x, y):
                 return not a(x, y) and b(x, y)

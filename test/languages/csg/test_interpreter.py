@@ -32,37 +32,37 @@ class TestInterpreter(unittest.TestCase):
     def test_circle(self):
         self.assertEqual(
             "#\n",
-            show(Interpreter().eval(Circle(1)).render(1, 1)))
+            show(Interpreter(1, 1, 1).eval(Circle(1))))
 
     def test_rectangle(self):
         code = Rectangle(1, 3)
         self.assertEqual(
             " # \n # \n # \n",
-            show(Interpreter().eval(code).render(3, 3)))
+            show(Interpreter(3, 3, 1).eval(code)))
 
     def test_translation(self):
         code = Translation(2, 1, Rectangle(1, 3))
         self.assertEqual(
             "    #\n    #\n    #\n     \n     \n",
-            show(Interpreter().eval(code).render(5, 5)))
+            show(Interpreter(5, 5, 1).eval(code)))
 
     def test_rotation(self):
         code = Rotation(45, Rectangle(4, 1))
         self.assertEqual(
             "  #\n # \n#  \n",
-            show(Interpreter().eval(code).render(3, 3)))
+            show(Interpreter(3, 3, 1).eval(code)))
 
     def test_union(self):
         code = Union(Rectangle(3, 1), Rectangle(1, 3))
         self.assertEqual(
             " # \n###\n # \n",
-            show(Interpreter().eval(code).render(3, 3)))
+            show(Interpreter(3, 3, 1).eval(code)))
 
     def test_difference(self):
         code = Difference(Rectangle(1, 1), Rectangle(3, 1))
         self.assertEqual(
             "   \n# #\n   \n",
-            show(Interpreter().eval(code).render(3, 3)))
+            show(Interpreter(3, 3, 1).eval(code)))
 
 
 if __name__ == "__main__":
