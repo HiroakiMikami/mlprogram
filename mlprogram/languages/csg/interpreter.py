@@ -7,19 +7,13 @@ import math
 from functools import lru_cache
 
 
-class Canvas:
-    def __init__(self, width, height: int):
-        self.width = width
-        self.height = height
-        self.canvas = np.zeros((height, width), dtype=np.bool)
-
-    def __str__(self) -> str:
-        retval = ""
-        for y in range(self.canvas.shape[0]):
-            for x in range(self.canvas.shape[1]):
-                retval += "#" if self.canvas[y, x] else " "
-            retval += "\n"
-        return retval
+def show(canvas: np.array) -> str:
+    retval = ""
+    for y in range(canvas.shape[0]):
+        for x in range(canvas.shape[1]):
+            retval += "#" if canvas[y, x] else " "
+        retval += "\n"
+    return retval
 
 
 class Shape:
@@ -29,15 +23,15 @@ class Shape:
     def __call__(self, x: float, y: float) -> bool:
         return self.is_filled(x, y)
 
-    def render(self, width: int, height: int) -> Canvas:
-        canvas = Canvas(width, height)
+    def render(self, width: int, height: int) -> np.array:
+        canvas = np.zeros((height, width), dtype=np.bool)
         for y in range(height):
             for x in range(width):
                 x_ = x - (width - 1) / 2
                 y_ = y - (height - 1) / 2
                 y_ *= -1
                 if self(x_, y_):
-                    canvas.canvas[y, x] = True
+                    canvas[y, x] = True
         return canvas
 
 

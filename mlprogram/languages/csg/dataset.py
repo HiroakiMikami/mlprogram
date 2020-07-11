@@ -5,7 +5,7 @@ from torch.utils.data import IterableDataset
 
 from typing import Optional, Any, Callable, Tuple
 
-from mlprogram.languages.csg import AST, Canvas, Interpreter
+from mlprogram.languages.csg import AST, Interpreter
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
 from mlprogram.languages.csg import Union, Difference
@@ -15,7 +15,7 @@ class Dataset(IterableDataset):
     def __init__(
             self, canvas_size: int, depth: int, length_stride: int,
             degree_stride: int, seed: Optional[int] = None,
-            transform: Optional[Callable[[Tuple[AST, Canvas]], Any]] = None):
+            transform: Optional[Callable[[Tuple[AST, np.array]], Any]] = None):
         self.canvas_size = canvas_size
         self.depth = depth
         s = self.canvas_size // 2
