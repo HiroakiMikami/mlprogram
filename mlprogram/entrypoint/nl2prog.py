@@ -13,9 +13,8 @@ from math import isnan, isinf
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils import TopKModel
+from mlprogram.utils import TopKModel, evaluate as eval, EvaluationResult
 from mlprogram.utils.data import ListDataset
-from mlprogram.utils.nl2prog import evaluate as eval, EvaluationResult
 
 
 logger = logging.getLogger(__name__)
