@@ -14,15 +14,18 @@ def unparse(value):
 class TestAccuracy(unittest.TestCase):
     def test_simple_case(self):
         acc = Accuracy(parse, unparse)
-        self.assertAlmostEqual(1.0, acc(["str"], "str"))
-        self.assertAlmostEqual(0.0, acc(["str"], ""))
+        self.assertAlmostEqual(1.0, acc({"ground_truth": ["str"]}, "str"))
 
     def test_noramlize(self):
         metric = Accuracy(parse, unparse)
-        self.assertAlmostEqual(1.0, metric([Leaf("", "")], "Unparsed"))
-        self.assertAlmostEqual(1.0, metric(["Unparsed"], Leaf("", "")))
-        self.assertAlmostEqual(1.0, metric(["test"], "Unparsed"))
-        self.assertAlmostEqual(1.0, metric([Leaf("", "")], Leaf("", "")))
+        self.assertAlmostEqual(1.0, metric(
+            {"ground_truth": [Leaf("", "")]}, "Unparsed"))
+        self.assertAlmostEqual(1.0, metric(
+            {"ground_truth": ["Unparsed"]}, Leaf("", "")))
+        self.assertAlmostEqual(1.0, metric(
+            {"ground_truth": ["test"]}, "Unparsed"))
+        self.assertAlmostEqual(1.0, metric(
+            {"ground_truth": [Leaf("", "")]}, Leaf("", "")))
 
 
 if __name__ == "__main__":

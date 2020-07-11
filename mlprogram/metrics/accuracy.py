@@ -1,13 +1,14 @@
-from typing import Callable
-from mlprogram.asts import AST
+from typing import Callable, TypeVar, Generic
+from .metric_using_ground_truth import MetricUsingGroundTruth
 
-from .metric import Metric
+Code = TypeVar("Code")
+Value = TypeVar("Value")
 
 
-class Accuracy(Metric):
-    def __init__(self, parse: Callable[[str], AST],
-                 unparse: Callable[[AST], str]):
-        super(Accuracy, self).__init__(
-            parse, unparse,
-            lambda gts, value: 1.0 if value in gts else 0.0
-        )
+class Accuracy(MetricUsingGroundTruth[Code, Value], Generic[Code, Value]):
+    def __init__(self, parse: Callable[[Code], Value],
+                 unparse: Callable[[Value], Code]):
+        super().__init__(parse, unparse)
+
+    def metric(self, gts, value) -> float:
+        return 1.0 if value in gts else 0.0
