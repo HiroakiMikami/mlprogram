@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Any, Generic, TypeVar
+from typing import Callable, List, Dict, Any, Generic, TypeVar, Optional, cast
 from mlprogram.metrics import Metric
 
 
@@ -7,13 +7,17 @@ Value = TypeVar("Value")
 
 
 class MetricUsingGroundTruth(Metric[Value], Generic[Code, Value]):
-    def __init__(self, parse: Callable[[Code], Value],
-                 unparse: Callable[[Value], Code]):
+    def __init__(self, parse: Optional[Callable[[Code], Value]],
+                 unparse: Optional[Callable[[Value], Code]]):
         self.parse = parse
         self.unparse = unparse
 
     def __call__(self, input: Dict[str, Any], value: Value) -> float:
         ground_truth = input["ground_truth"]
+        if self.parse is None or self.unparse is None:
+            gts = set(ground_truth)
+            return self.metric(list(gts), cast(Code, value))
+
         # normalize ground truths
         gts = set()
         for gt in ground_truth:

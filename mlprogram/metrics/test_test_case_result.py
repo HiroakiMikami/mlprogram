@@ -1,5 +1,5 @@
 from typing import Callable, Dict, Any, Generic, TypeVar
-from mlprogram.metrics import Metric
+from mlprogram.metrics import Metric, Accuracy
 from mlprogram.interpreters import Interpreter
 
 
@@ -8,11 +8,13 @@ Value = TypeVar("Value")
 Result = TypeVar("Result")
 
 
-class TestPassRate(Metric[Value], Generic[Code, Value]):
+class TestCaseResult(Metric[Value], Generic[Code, Value]):
     def __init__(self, unparse: Callable[[Value], Code],
-                 interpreter: Interpreter[Code, Result]):
+                 interpreter: Interpreter[Code, Result],
+                 metric: Metric[Result] = Accuracy(None, None)):
         self.unparse = unparse
         self.interpreter = interpreter
+        self.metric = metric
 
     def __call__(self, input: Dict[str, Any], value: Value) -> float:
         ground_truth = input["ground_truth"]
@@ -28,4 +30,4 @@ class TestPassRate(Metric[Value], Generic[Code, Value]):
 
         # calc. metric
         actual = self.interpreter.eval(code)
-        return 1.0 if actual in outputs else 0.0
+        return self.metric({"ground_truth": outputs}, actual)
