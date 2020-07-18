@@ -4,7 +4,6 @@ from typing import Any, List, Optional, Union, cast
 from dataclasses import dataclass
 
 from mlprogram.actions import NodeType
-from mlprogram.actions import ActionOptions
 from mlprogram.actions import ApplyRule, GenerateToken
 from mlprogram.actions import Rule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
@@ -40,16 +39,13 @@ class Samples:
     rules: List[Rule]
     node_types: List[NodeType]
     tokens: List[str]  # TODO V
-    options: ActionOptions
 
 
 class ActionSequenceEncoder:
     def __init__(self, samples: Samples, token_threshold: int):
         reserved_labels: List[Union[Unknown,
                                     CloseVariadicFieldRule]] = [Unknown()]
-        if samples.options.retain_variadic_fields or \
-                samples.options.split_non_terminal:
-            reserved_labels.append(CloseVariadicFieldRule())
+        reserved_labels.append(CloseVariadicFieldRule())
         self._rule_encoder = LabelEncoder(samples.rules,
                                           reserved_labels=reserved_labels,
                                           unknown_index=0)
@@ -59,7 +55,6 @@ class ActionSequenceEncoder:
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,
                                            unknown_index=0)
-        self._options = samples.options
 
     def decode(self, tensor: torch.LongTensor, query: List[str]) \
             -> Optional[ActionSequence]:
@@ -83,7 +78,7 @@ class ActionSequenceEncoder:
             None if the action sequence cannot be generated.
         """
 
-        retval = ActionSequence(self._options)
+        retval = ActionSequence()
         for i in range(tensor.shape[0]):
             if tensor[i, 0] > 0:
                 # ApplyRule

@@ -9,11 +9,6 @@ dataset:
   type: mlprogram.datasets.hearthstone.download
 train_dataset: "@/dataset.train"
 
-options:
-  type: mlprogram.actions.ActionOptions
-  retain_variadic_fields: false
-  split_non_terminal: false
-
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
@@ -23,9 +18,6 @@ to_action_sequence:
         - type: mlprogram.languages.python.Parse
       - - "ast_to_action_sequence"
         - type: mlprogram.utils.transform.AstToSingleActionSequence
-          tokenize:
-            type: mlprogram.languages.python.TokenizeToken
-          options: "@/options"
 
 words:
   type: mlprogram.utils.data.get_words
@@ -40,8 +32,6 @@ chars:
 samples:
   type: mlprogram.utils.data.get_samples
   dataset: "@/train_dataset"
-  tokenize_token:
-    type: mlprogram.languages.python.TokenizeToken
   to_action_sequence: "@/to_action_sequence"
 
 encoder:

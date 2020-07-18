@@ -9,11 +9,6 @@ dataset:
 test_dataset: "@/dataset.test"
 valid_dataset: "@/dataset.valid"
 
-options:
-  type: mlprogram.actions.ActionOptions
-  retain_variadic_fields: false
-  split_non_terminal: false
-
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
@@ -23,9 +18,6 @@ to_action_sequence:
         - type: mlprogram.languages.python.Parse
       - - "ast_to_action_sequence"
         - type: mlprogram.utils.transform.AstToSingleActionSequence
-          tokenize:
-            type: mlprogram.languages.python.TokenizeToken
-          options: "@/options"
 
 encoder:
   word_encoder:
@@ -196,7 +188,6 @@ synthesizer:
     transform_action_sequence: "@/transform.transform_action_sequence"
     collate: "@/collate"
     module: "@/model"
-    options: "@/options"
 
 # Metrics
 metrics:

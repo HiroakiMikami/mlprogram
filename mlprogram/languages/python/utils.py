@@ -37,6 +37,9 @@ class IsSubtype:
         if subtype.endswith("__list") or \
                 basetype.endswith("__list"):
             return subtype == basetype
+        if subtype.endswith("__proxy") or \
+                basetype.endswith("__proxy"):
+            return subtype == basetype
         try:
             sub = eval(f"python_ast.{subtype}()")
         except:  # noqa

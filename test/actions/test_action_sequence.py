@@ -4,7 +4,7 @@ from mlprogram.actions.action_sequence import Parent
 from mlprogram.actions import ActionSequence, InvalidActionException
 from mlprogram.actions \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
-    GenerateToken, CloseVariadicFieldRule, ActionOptions
+    GenerateToken, CloseVariadicFieldRule
 from mlprogram.asts import Node, Leaf, Field, Root
 
 
@@ -32,7 +32,7 @@ class Testaction_sequence(unittest.TestCase):
         self.assertEqual(None, action_sequence.parent(0))
         self.assertEqual([[], []], action_sequence._tree.children[0])
 
-    def test_generate_token(self):
+    def test_generate_variadic_token(self):
         action_sequence = ActionSequence()
         rule = ExpandTreeRule(
             NodeType("def", NodeConstraint.Node, False),
@@ -70,8 +70,8 @@ class Testaction_sequence(unittest.TestCase):
         with self.assertRaises(InvalidActionException):
             action_sequence.eval(GenerateToken("foo"))
 
-    def test_generate_token_with_split_non_terminal_False(self):
-        action_sequence = ActionSequence(ActionOptions(True, False))
+    def test_generate_token(self):
+        action_sequence = ActionSequence()
         rule = ExpandTreeRule(
             NodeType("def", NodeConstraint.Node, False),
             [("name",
@@ -91,7 +91,7 @@ class Testaction_sequence(unittest.TestCase):
         with self.assertRaises(InvalidActionException):
             action_sequence.eval(GenerateToken("bar"))
 
-        action_sequence = ActionSequence(ActionOptions(True, False))
+        action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(rule))
         with self.assertRaises(InvalidActionException):
             action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
@@ -138,62 +138,14 @@ class Testaction_sequence(unittest.TestCase):
         self.assertEqual(0, action_sequence.head.action)
         self.assertEqual(1, action_sequence.head.field)
 
-    def test_variadic_field_retain_variadic_fields_False(self):
-        action_sequence = ActionSequence(ActionOptions(False, True))
+    def test_invalid_close_variadic_field_rule(self):
         rule = ExpandTreeRule(NodeType("expr", NodeConstraint.Node, False),
                               [("elems",
-                                NodeType("value", NodeConstraint.Node, True))])
-        rule0 = ExpandTreeRule(
-            NodeType("value", NodeConstraint.Node, True),
-            [("0", NodeType("value", NodeConstraint.Node, False)),
-             ("1", NodeType("value", NodeConstraint.Node, False))])
-        rule1 = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
-                               [])
-        action_sequence.eval(ApplyRule(rule))
-        self.assertEqual(0, action_sequence.head.action)
-        self.assertEqual(0, action_sequence.head.field)
-        self.assertEqual([], action_sequence._tree.children[0][0])
-        self.assertEqual([ApplyRule(rule)],
-                         action_sequence.action_sequence)
-        action_sequence.eval(ApplyRule(rule0))
-        self.assertEqual(1, action_sequence.head.action)
-        self.assertEqual(0, action_sequence.head.field)
-        self.assertEqual([1], action_sequence._tree.children[0][0])
-        self.assertEqual(Parent(0, 0), action_sequence.parent(1))
-        self.assertEqual([ApplyRule(rule), ApplyRule(rule0)],
-                         action_sequence.action_sequence)
-        action_sequence.eval(ApplyRule(rule1))
-        self.assertEqual(1, action_sequence.head.action)
-        self.assertEqual(1, action_sequence.head.field)
-        self.assertEqual([2], action_sequence._tree.children[1][0])
-        self.assertEqual([], action_sequence._tree.children[2])
-        self.assertEqual(Parent(1, 0), action_sequence.parent(2))
-        self.assertEqual([ApplyRule(rule), ApplyRule(rule0), ApplyRule(rule1)],
-                         action_sequence.action_sequence)
-        action_sequence.eval(ApplyRule(rule1))
-        self.assertEqual(None, action_sequence.head)
-        self.assertEqual([3], action_sequence._tree.children[1][1])
-        self.assertEqual([], action_sequence._tree.children[3])
-        self.assertEqual(Parent(1, 1), action_sequence.parent(3))
-        self.assertEqual([ApplyRule(rule), ApplyRule(rule0), ApplyRule(rule1),
-                          ApplyRule(rule1)],
-                         action_sequence.action_sequence)
+                                NodeType("value", NodeConstraint.Node, False))]
+                              )
 
-        action_sequence = ActionSequence(ActionOptions(False, True))
-        rule = ExpandTreeRule(
-            NodeType("expr", NodeConstraint.Node, False),
-            [("elems",
-              NodeType("value", NodeConstraint.Node, True)),
-             ("name",
-              NodeType("value", NodeConstraint.Node, False))])
+        action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(rule))
-        action_sequence.eval(ApplyRule(rule0))
-        action_sequence.eval(ApplyRule(rule1))
-        action_sequence.eval(ApplyRule(rule1))
-        self.assertEqual(0, action_sequence.head.action)
-        self.assertEqual(1, action_sequence.head.field)
-
-        action_sequence = ActionSequence(ActionOptions(False, True))
         with self.assertRaises(InvalidActionException):
             action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
@@ -204,17 +156,13 @@ class Testaction_sequence(unittest.TestCase):
               NodeType("value", NodeConstraint.Token, True)),
              ("body",
               NodeType("expr", NodeConstraint.Node, True))])
-        expr_expand = ExpandTreeRule(
-            NodeType("expr", NodeConstraint.Node, True),
-            [("0",
-              NodeType("expr", NodeConstraint.Node, False))])
         expr = ExpandTreeRule(
             NodeType("expr", NodeConstraint.Node, False),
-            [("op", NodeType("value", NodeConstraint.Token, True)),
+            [("op", NodeType("value", NodeConstraint.Token, False)),
              ("arg0",
-              NodeType("value", NodeConstraint.Token, True)),
+              NodeType("value", NodeConstraint.Token, False)),
              ("arg1",
-              NodeType("value", NodeConstraint.Token, True))])
+              NodeType("value", NodeConstraint.Token, False))])
 
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
@@ -224,106 +172,15 @@ class Testaction_sequence(unittest.TestCase):
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr))
         action_sequence.eval(GenerateToken("+"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        self.assertEqual(None, action_sequence.head)
-        self.assertEqual(
-            Node("def",
-                 [Field("name", "value", Leaf("value", "f_0")),
-                  Field("body", "expr", [
-                      Node("expr",
-                           [
-                               Field("op", "value", Leaf("value", "+")),
-                               Field("arg0", "value", Leaf("value", "1")),
-                               Field("arg1", "value", Leaf("value", "2"))
-                           ])
-                  ])]),
-            action_sequence.generate()
-        )
-
-        action_sequence = ActionSequence(ActionOptions(False, True))
-        action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken("f_0"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action_sequence.eval(ApplyRule(expr_expand))
-        action_sequence.eval(ApplyRule(expr))
-        action_sequence.eval(GenerateToken("+"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action_sequence.eval(GenerateToken("2"))
-        action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        self.assertEqual(None, action_sequence.head)
-        self.assertEqual(
-            Node("def",
-                 [Field("name", "value", Leaf("value", "f_0")),
-                  Field("body", "expr", [
-                      Node("expr",
-                           [
-                               Field("op", "value", Leaf("value", "+")),
-                               Field("arg0", "value", Leaf("value", "1")),
-                               Field("arg1", "value", Leaf("value", "2"))
-                           ])
-                  ])]),
-            action_sequence.generate()
-        )
-
-        funcdef = ExpandTreeRule(
-            NodeType("def", NodeConstraint.Node, False),
-            [("name",
-              NodeType("value", NodeConstraint.Token, False)),
-             ("body",
-              NodeType("expr", NodeConstraint.Node, True))])
-        expr_expand = ExpandTreeRule(
-            NodeType("expr", NodeConstraint.Node, True),
-            [("0",
-              NodeType("expr", NodeConstraint.Node, False))])
-        expr = ExpandTreeRule(
-            NodeType("expr", NodeConstraint.Node, False),
-            [("op", NodeType("value", NodeConstraint.Token, False)),
-             ("arg0",
-              NodeType("value", NodeConstraint.Token, False)),
-             ("arg1",
-              NodeType("value", NodeConstraint.Token, False))])
-        action_sequence = ActionSequence(ActionOptions(True, False))
-        action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken("f_0"))
-        action_sequence.eval(ApplyRule(expr))
-        action_sequence.eval(GenerateToken("+"))
         action_sequence.eval(GenerateToken("1"))
         action_sequence.eval(GenerateToken("2"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         self.assertEqual(None, action_sequence.head)
         self.assertEqual(
             Node("def",
-                 [Field("name", "value", Leaf("value", "f_0")),
-                  Field("body", "expr", [
-                      Node("expr",
-                           [
-                               Field("op", "value", Leaf("value", "+")),
-                               Field("arg0", "value", Leaf("value", "1")),
-                               Field("arg1", "value", Leaf("value", "2"))
-                           ])
-                  ])]),
-            action_sequence.generate()
-        )
-
-        action_sequence = ActionSequence(ActionOptions(False, False))
-        action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken("f_0"))
-        action_sequence.eval(ApplyRule(expr_expand))
-        action_sequence.eval(ApplyRule(expr))
-        action_sequence.eval(GenerateToken("+"))
-        action_sequence.eval(GenerateToken("1"))
-        action_sequence.eval(GenerateToken("2"))
-        self.assertEqual(None, action_sequence.head)
-        self.assertEqual(
-            Node("def",
-                 [Field("name", "value", Leaf("value", "f_0")),
+                 [Field("name", "value", [Leaf("value", "f"),
+                                          Leaf("value", "_"),
+                                          Leaf("value", "0")]),
                   Field("body", "expr", [
                       Node("expr",
                            [

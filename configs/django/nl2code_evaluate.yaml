@@ -9,10 +9,10 @@ dataset:
 test_dataset: "@/dataset.test"
 valid_dataset: "@/dataset.valid"
 
-options:
-  type: mlprogram.actions.ActionOptions
-  retain_variadic_fields: true
-  split_non_terminal: true
+parse:
+  type: mlprogram.datasets.django.Parse
+  tokenize:
+    type: mlprogram.languages.python.TokenizeToken
 
 to_action_sequence:
   type: mlprogram.utils.Compose
@@ -20,12 +20,9 @@ to_action_sequence:
     type: collections.OrderedDict
     items:
       - - "parse"
-        - type: mlprogram.datasets.django.Parse
+        - "@/parse"
       - - "ast_to_action_sequence"
         - type: mlprogram.utils.transform.AstToSingleActionSequence
-          tokenize:
-            type: mlprogram.languages.python.TokenizeToken
-          options: "@/options"
 
 encoder:
   word_encoder:
@@ -168,20 +165,17 @@ synthesizer:
     transform_action_sequence: "@/transform.transform_action_sequence"
     collate: "@/collate"
     module: "@/model"
-    options: "@/options"
 
 # Metrics
 metrics:
   accuracy:
     type: mlprogram.metrics.Accuracy
-    parse:
-      type: mlprogram.datasets.django.Parse
+    parse: "@/parse"
     unparse:
       type: mlprogram.languages.python.Unparse
   bleu:
     type: mlprogram.metrics.python.Bleu
-    parse:
-      type: mlprogram.datasets.django.Parse
+    parse: "@/parse"
     unparse:
       type: mlprogram.languages.python.Unparse
 

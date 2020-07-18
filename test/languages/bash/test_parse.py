@@ -12,18 +12,19 @@ class TestParse(unittest.TestCase):
                      Node("Assign", [Field("value", "Node",
                                            [Node("Literal", [
                                                Field("value", "str",
-                                                     Leaf("str", "x=10"))])])])
+                                                     [Leaf("str", "x=10")])])]
+                                           )])
                  ])]),
-            Parse()("x=10")
+            Parse(lambda x: [x])("x=10")
         )
 
     def test_invalid_case(self):
-        self.assertEqual(None, Parse()("foobar`"))
+        self.assertEqual(None, Parse(lambda x: [x])("foobar`"))
 
 
 class TestUnparse(unittest.TestCase):
     def test_simple_case(self):
-        self.assertEqual("x=10", Unparse()(Parse()("x=10")))
+        self.assertEqual("x=10", Unparse()(Parse(lambda x: [x])("x=10")))
 
 
 if __name__ == "__main__":

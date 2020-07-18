@@ -32,8 +32,12 @@ def number(value: int):
     return Leaf("number", str(value))
 
 
-def Name(value: str):
-    return Node("Name", [Field("value", "string", string(value))])
+def Name(value: Union[str, List[str]]):
+    if isinstance(value, list):
+        return Node("Name", [Field("value", "string",
+                                   list(map(string, value)))])
+    else:
+        return Node("Name", [Field("value", "string", string(value))])
 
 
 def Number(value: int):
@@ -55,17 +59,17 @@ traindata = [
     {"input": ["x is assigned the value of 0"],
      "ground_truth": [Assign("x", Number(0))]},
     {"input": ["dump the value of xy"],
-     "ground_truth": [FunctionCall("print", [Name("xy")])]},
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"])])]},
     {"input": ["dump the value of xy and x"],
-     "ground_truth": [FunctionCall("print", [Name("xy"), Name("x")])]}
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"]), Name("x")])]}
 ]
 test_dataset = ListDataset([
     {"input": ["x is assigned the value of 4"],
      "ground_truth": [Assign("x", Number(4))]},
     {"input": ["dump the value of xy"],
-     "ground_truth": [FunctionCall("print", [Name("xy")])]},
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"])])]},
     {"input": ["dump the value of xy and x"],
-     "ground_truth": [FunctionCall("print", [Name("xy"), Name("x")])]}
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"]), Name("x")])]}
 ])
 
 

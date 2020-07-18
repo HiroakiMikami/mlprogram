@@ -7,7 +7,7 @@ from mlprogram.samplers \
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
-    import NodeConstraint, NodeType, ActionOptions, ExpandTreeRule
+    import NodeConstraint, NodeType, ExpandTreeRule
 from mlprogram.utils import Token
 from mlprogram.utils.data import Collate, CollateOptions
 from math import log
@@ -17,14 +17,12 @@ X = NodeType("X", NodeConstraint.Node, False)
 Y = NodeType("Y", NodeConstraint.Node, False)
 Y_list = NodeType("Y", NodeConstraint.Node, True)
 Ysub = NodeType("Ysub", NodeConstraint.Node, False)
-StrVariadic = NodeType("Str", NodeConstraint.Token, True)
 Str = NodeType("Str", NodeConstraint.Token, True)
 
 Root2X = ExpandTreeRule(R, [("x", X)])
 Root2Y = ExpandTreeRule(R, [("y", Y)])
 X2Y_list = ExpandTreeRule(X, [("y", Y_list)])
 Ysub2Str = ExpandTreeRule(Ysub, [("str", Str)])
-Ysub2StrVariadic = ExpandTreeRule(Ysub, [("str", StrVariadic)])
 
 
 def is_subtype(arg0, arg1):
@@ -43,17 +41,11 @@ def get_token_type(token):
         return "Str"
 
 
-def create_encoder(options: ActionOptions):
-    if options.split_non_terminal:
-        return ActionSequenceEncoder(Samples(
-            [Root2X, Root2Y, X2Y_list, Ysub2StrVariadic],
-            [R, X, Y, Ysub, Y_list, Str],
-            ["x", "1"], options), 0)
-    else:
-        return ActionSequenceEncoder(Samples(
-            [Root2X, Root2Y, X2Y_list, Ysub2Str],
-            [R, X, Y, Ysub, Y_list, Str],
-            ["x", "1"], options), 0)
+def create_encoder():
+    return ActionSequenceEncoder(Samples(
+        [Root2X, Root2Y, X2Y_list, Ysub2Str],
+        [R, X, Y, Ysub, Y_list, Str],
+        ["x", "1"]), 0)
 
 
 collate = Collate(torch.device("cpu"),
@@ -108,7 +100,7 @@ class Module(nn.Module):
 class TestActionSequenceSampler(unittest.TestCase):
     def test_initialize(self):
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, True)),
+            create_encoder(),
             get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
@@ -142,7 +134,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         token_prob = torch.tensor([[[]], [[]]])
         reference_prob = torch.tensor([[[]], [[]]])
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, True)),
+            create_encoder(),
             get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
@@ -194,7 +186,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         token_prob = torch.tensor([[[]], [[]], [[]]])
         reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, True)),
+            create_encoder(),
             get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
@@ -219,53 +211,6 @@ class TestActionSequenceSampler(unittest.TestCase):
             (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
                 random_results[0].score <=
                 log(0.2) + log(0.5) + log(0.8) + 1e-5))
-
-    def test_variadic_rule_not_retain_variadic_fields(self):
-        rule_prob = torch.tensor([
-            [[
-                1.0,  # unknown
-                0.2,  # Root2X
-                0.1,  # Root2Y
-                1.0,  # X2Y_list
-                1.0,  # Ysub2Str
-            ]],
-            [[
-                1.0,  # unknown
-                1.0,  # Root2X
-                1.0,  # Root2Y
-                0.5,  # X2Y_list
-                1.0,  # Ysub2Str
-            ]],
-            [[
-                1.0,  # unknown
-                1.0,  # Root2X
-                1.0,  # Root2Y
-                1.0,  # X2Y_list
-                0.2,  # Ysub2Str
-            ]]])
-        token_prob = torch.tensor([[[]], [[]], [[]]])
-        reference_prob = torch.tensor([[[]], [[]], [[]]])
-        sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(False, False)),
-            get_token_type,
-            is_subtype,
-            create_transform_input([]), transform_action_sequence,
-            collate,
-            Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, reference_prob)),
-            options=ActionOptions(False, True)
-        )
-        s = SamplerState(0.0, sampler.initialize({}))
-        results = list(sampler.top_k_samples([s], 1))
-        results = list(sampler.top_k_samples(results, 1))
-        topk_results = list(sampler.top_k_samples(results, 1))[0]
-        self.assertEqual(3, topk_results.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.5) + log(0.2),
-                               topk_results.score)
-        random_results = list(sampler.k_samples(results[:1], 1))[0]
-        self.assertEqual(3, random_results.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.5) + log(0.2),
-                               random_results.score)
 
     def test_token(self):
         rule_prob = torch.tensor([
@@ -298,7 +243,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             ]]])
         reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, True)),
+            create_encoder(),
             get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
@@ -323,57 +268,6 @@ class TestActionSequenceSampler(unittest.TestCase):
             (log(0.2) + log(0.2) - 1e-5 <=
                 random_results[0].score <=
                 log(0.2) + log(0.8) + 1e-5))
-
-    def test_notsplittedd_token(self):
-        rule_prob = torch.tensor([
-            [[
-                1.0,  # unknown
-                1.0,  # close variadic field
-                0.1,  # Root2X
-                0.2,  # Root2Y
-                1.0,  # X2Y_list
-                1.0,  # Ysub2Str
-            ]],
-            [[
-                1.0,  # unknown
-                1.0,  # close variadic field
-                1.0,  # Root2X
-                1.0,  # Root2Y
-                1.0,  # X2Y_list
-                1.0,  # Ysub2Str
-            ]],
-            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]])
-        token_prob = torch.tensor([
-            [[0.0, 0.0, 0.0]],
-            [[0.0, 0.0, 0.0]],
-            [[
-                1.0,  # Unknown
-                0.2,  # x
-                0.8,  # 1
-            ]]])
-        reference_prob = torch.tensor([[[]], [[]], [[]]])
-        sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, False)),
-            get_token_type,
-            is_subtype,
-            create_transform_input([]), transform_action_sequence,
-            collate,
-            Module(encoder_module,
-                   DecoderModule(rule_prob, token_prob, reference_prob)),
-            options=ActionOptions(True, False)
-        )
-        s = SamplerState(0.0, sampler.initialize({}))
-        results = list(sampler.top_k_samples([s], 1))
-        results = list(sampler.top_k_samples(results, 1))
-        topk_results = list(sampler.top_k_samples(results, 2))
-        self.assertEqual(1, len(topk_results))
-        self.assertEqual(3, topk_results[0].state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.2),
-                               topk_results[0].score)
-        random_results = list(sampler.k_samples(results[:1], 1))
-        self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.2), random_results[0].score)
 
     def test_reference(self):
         rule_prob = torch.tensor([
@@ -405,7 +299,7 @@ class TestActionSequenceSampler(unittest.TestCase):
         reference_prob = \
             torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.4, 0.4]]])
         sampler = ActionSequenceSampler(
-            create_encoder(ActionOptions(True, False)),
+            create_encoder(),
             get_token_type,
             is_subtype,
             create_transform_input([Token("Str", "x"), Token("Str", "x")]),
@@ -413,7 +307,6 @@ class TestActionSequenceSampler(unittest.TestCase):
             collate,
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob)),
-            options=ActionOptions(True, False)
         )
         s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))

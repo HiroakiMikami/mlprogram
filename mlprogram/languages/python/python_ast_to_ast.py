@@ -1,5 +1,5 @@
 import ast as python_ast
-from typing import List, Type, Union
+from typing import List, Type, Union, Callable, Optional
 
 import mlprogram.asts as ast
 from mlprogram.languages.python import PythonAST
@@ -25,7 +25,9 @@ def base_ast_type(node: PythonAST) \
     return type(node)
 
 
-def to_ast(target: PythonAST) -> ast.AST:
+def to_ast(target: PythonAST,
+           tokenize: Optional[Callable[[str], List[str]]] = None,
+           retain_variadic_fields: bool = True) -> ast.AST:
     """
     Return the AST corresponding to the Python AST
 
@@ -39,49 +41,71 @@ def to_ast(target: PythonAST) -> ast.AST:
     ast.AST
         The corresponding AST
     """
-    type_name = type(target).__name__
-    fields: List[ast.Field] = []
-
-    if is_builtin_type(target):
-        # Builtin-type
-        if isinstance(target, bytes):
-            return ast.Leaf(type(target).__name__, target.decode())
-        else:
-            return ast.Leaf(type(target).__name__, str(target))
-
-    assert isinstance(target, python_ast.AST)
-    for chname, chval in python_ast.iter_fields(target):
-        if chname == "ctx":
-            # ctx is omitted
-            continue
-
-        is_list = isinstance(chval, list)
-        if chval is None:
-            continue
-
-        if is_list:
-            if len(chval) == 0:
-                base_type = python_ast.AST.__name__
-                is_leaf = False
+    def to_value(target: PythonAST) -> Union[ast.AST, List[ast.AST]]:
+        if is_builtin_type(target):
+            # Builtin-type
+            if isinstance(target, bytes):
+                value = target.decode()
             else:
-                base_type = base_ast_type(chval[0]).__name__
-                is_leaf = is_builtin_type(chval[0])
-
-            if is_leaf:
-                parent_type = f"{base_type}__list"
+                value = str(target)
+            if tokenize is not None:
+                tokens = tokenize(value)
+                return list(map(
+                    lambda token: ast.Leaf(type(target).__name__, token),
+                    tokens))
             else:
-                parent_type = base_type
+                return ast.Leaf(type(target).__name__, value)
+        assert isinstance(target, python_ast.AST)
+        type_name = type(target).__name__
+        fields: List[ast.Field] = []
 
-            elements: List[ast.AST] = []
-            for i, elem in enumerate(chval):
-                c = to_ast(elem)
-                if isinstance(c, ast.Leaf):
-                    c = ast.Node(
-                        parent_type, [ast.Field("token", base_type, c)])
-                elements.append(c)
-            fields.append(ast.Field(chname, parent_type, elements))
-        else:
-            base_type = base_ast_type(chval).__name__
-            fields.append(ast.Field(chname, base_type,
-                                    to_ast(chval)))
-    return ast.Node(type_name, fields)
+        for chname, chval in python_ast.iter_fields(target):
+            if chname == "ctx":
+                # ctx is omitted
+                continue
+
+            is_list = isinstance(chval, list)
+            if chval is None:
+                continue
+
+            if is_list:
+                if len(chval) == 0:
+                    base_type = python_ast.AST.__name__
+                    is_leaf = False
+                else:
+                    base_type = base_ast_type(chval[0]).__name__
+                    is_leaf = is_builtin_type(chval[0])
+
+                if is_leaf:
+                    parent_type = f"{base_type}__proxy"
+                else:
+                    parent_type = base_type
+
+                elements: List[ast.AST] = []
+                for i, elem in enumerate(chval):
+                    c = to_value(elem)
+                    if is_leaf:
+                        c = ast.Node(
+                            parent_type, [ast.Field("token", base_type, c)])
+                    assert isinstance(c, ast.AST)
+                    elements.append(c)
+                if retain_variadic_fields:
+                    fields.append(ast.Field(chname, parent_type, elements))
+                else:
+                    fields.append(ast.Field(
+                        chname, f"{parent_type}__list",
+                        ast.Node(
+                            f"{parent_type}__list",
+                            [ast.Field(str(i), parent_type, elem)
+                             for i, elem in enumerate(elements)]
+                        )
+                    ))
+            else:
+                base_type = base_ast_type(chval).__name__
+                fields.append(ast.Field(chname, base_type,
+                                        to_value(chval)))
+        return ast.Node(type_name, fields)
+
+    value = to_value(target)
+    assert isinstance(value, ast.AST)
+    return value

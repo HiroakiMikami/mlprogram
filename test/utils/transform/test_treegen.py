@@ -4,16 +4,11 @@ from torchnlp.encoders import LabelEncoder
 from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Field, Leaf
-from mlprogram.actions import ActionOptions
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform import TransformCode
 from mlprogram.utils.transform.treegen \
     import TransformQuery, TransformActionSequence
-
-
-def tokenize(query: str):
-    return query.split(" ")
 
 
 def tokenize_query(str: str) -> Query:
@@ -36,8 +31,7 @@ def to_action_sequence(code: str):
                                  Node("Number", [Field("value", "number",
                                                        Leaf("number", "1"))]))]
                            ))])
-    return \
-        AstToSingleActionSequence(ActionOptions(False, False), tokenize)(ast)
+    return AstToSingleActionSequence()(ast)
 
 
 class TestTransformQuery(unittest.TestCase):
@@ -60,7 +54,7 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_simple_case(self):
         entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
             TransformCode(to_action_sequence)({
@@ -78,9 +72,9 @@ class TestTransformActionSequence(unittest.TestCase):
         query = result["action_queries"]
         self.assertTrue(np.array_equal(
             [
-                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
-                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
-                [5, -1, -1]
+                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
+                [5, -1, -1], [-1, 2, -1], [4, -1, -1], [-1, 3, -1],
+                [6, -1, -1]
             ],
             prev_action.numpy()
         ))
@@ -125,9 +119,9 @@ class TestTransformActionSequence(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1], [1, -1, -1], [2, 1, -1], [3, 2, 1],
-                [2, 1, -1], [4, 2, 1], [4, 2, 1], [3, 4, 2],
-                [4, 2, 1]
+                [-1, -1, -1], [2, -1, -1], [3, 2, -1], [4, 3, 2],
+                [3, 2, -1], [5, 3, 2], [5, 3, 2], [4, 5, 3],
+                [5, 3, 2]
             ],
             query.numpy()
         ))
@@ -135,7 +129,7 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_eval(self):
         entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
             TransformCode(to_action_sequence)({
@@ -153,9 +147,9 @@ class TestTransformActionSequence(unittest.TestCase):
         query = result["action_queries"]
         self.assertTrue(np.array_equal(
             [
-                [1, -1, -1], [2, -1, -1], [3, -1, -1], [-1, 1, -1],
-                [4, -1, -1], [-1, 2, -1], [3, -1, -1], [-1, 3, -1],
-                [5, -1, -1], [-1, 4, -1]
+                [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
+                [5, -1, -1], [-1, 2, -1], [4, -1, -1], [-1, 3, -1],
+                [6, -1, -1], [-1, 4, -1]
             ],
             prev_action.numpy()
         ))
@@ -202,9 +196,9 @@ class TestTransformActionSequence(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             [
-                [-1, -1, -1], [1, -1, -1], [2, 1, -1], [3, 2, 1],
-                [2, 1, -1], [4, 2, 1], [4, 2, 1], [3, 4, 2],
-                [4, 2, 1], [5, 4, 2]
+                [-1, -1, -1], [2, -1, -1], [3, 2, -1], [4, 3, 2],
+                [3, 2, -1], [5, 3, 2], [5, 3, 2], [4, 5, 3],
+                [5, 3, 2], [6, 5, 3]
             ],
             query.numpy()
         ))
@@ -212,7 +206,7 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \

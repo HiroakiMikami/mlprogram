@@ -18,7 +18,8 @@ class TestParse(unittest.TestCase):
     def test_mode(self):
         self.assertEqual(
             to_ast(ast.parse("xs = input().split()\nprint(','.join(xs))")),
-            Parse(ParseMode.Exec)("xs = input().split()\nprint(','.join(xs))")
+            Parse(mode=ParseMode.Exec)(
+                "xs = input().split()\nprint(','.join(xs))")
         )
 
 
@@ -34,7 +35,7 @@ class TestUnparse(unittest.TestCase):
     def test_mode(self):
         self.assertEqual(
             "\nxs = input().split()\nprint(','.join(xs))\n",
-            Unparse()(Parse(ParseMode.Exec)(
+            Unparse()(Parse(mode=ParseMode.Exec)(
                 "xs = input().split()\nprint(','.join(xs))"))
         )
 

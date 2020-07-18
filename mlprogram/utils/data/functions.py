@@ -39,23 +39,18 @@ def get_characters(dataset: torch.utils.data.Dataset,
 
 
 def get_samples(dataset: torch.utils.data.Dataset,
-                tokenize_token: Callable[[str], Sequence[str]],
                 to_action_sequence: Callable[[Any],
                                              Optional[ActionSequence]]
                 ) -> Samples:
     rules: List[Rule] = []
     node_types = []
     tokens: List[str] = []  # TODO V
-    options = None
 
     for group in dataset:
         for gt in group["ground_truth"]:
             action_sequence = to_action_sequence(gt)
             if action_sequence is None:
                 continue
-            if options is not None:
-                assert(options == action_sequence._options)
-            options = action_sequence._options
             for action in action_sequence.action_sequence:
                 if isinstance(action, ApplyRule):
                     rule = action.rule
@@ -66,11 +61,9 @@ def get_samples(dataset: torch.utils.data.Dataset,
                             node_types.append(child)
                 else:
                     token = action.token
-                    ts = tokenize_token(token)
-                    tokens.extend(ts)
+                    tokens.append(token)
 
-    assert options is not None
-    return Samples(rules, node_types, tokens, options)
+    return Samples(rules, node_types, tokens)
 
 
 @dataclass

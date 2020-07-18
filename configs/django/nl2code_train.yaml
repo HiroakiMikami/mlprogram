@@ -9,11 +9,6 @@ dataset:
   type: mlprogram.datasets.django.download
 train_dataset: "@/dataset.train"
 
-options:
-  type: mlprogram.actions.ActionOptions
-  retain_variadic_fields: true
-  split_non_terminal: true
-
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
@@ -21,11 +16,10 @@ to_action_sequence:
     items:
       - - "parse"
         - type: mlprogram.datasets.django.Parse
-      - - "ast_to_action_sequence"
-        - type: mlprogram.utils.transform.AstToSingleActionSequence
           tokenize:
             type: mlprogram.languages.python.TokenizeToken
-          options: "@/options"
+      - - "ast_to_action_sequence"
+        - type: mlprogram.utils.transform.AstToSingleActionSequence
 
 words:
   type: mlprogram.utils.data.get_words
@@ -35,8 +29,6 @@ words:
 samples:
   type: mlprogram.utils.data.get_samples
   dataset: "@/train_dataset"
-  tokenize_token:
-    type: mlprogram.languages.python.TokenizeToken
   to_action_sequence: "@/to_action_sequence"
 
 encoder:

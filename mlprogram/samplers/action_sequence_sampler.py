@@ -7,7 +7,7 @@ from typing \
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
-    import ExpandTreeRule, ApplyRule, NodeConstraint, ActionOptions, \
+    import ExpandTreeRule, ApplyRule, NodeConstraint, \
     GenerateToken, Action, NodeType, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.asts import AST, Node
@@ -36,7 +36,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                                      Dict[str, Any]],
                  collate: Collate,
                  module: torch.nn.Module,
-                 options: ActionOptions = ActionOptions(True, True),
                  eps: float = 1e-8,
                  rng: np.random.RandomState = np.random
                  ):
@@ -47,14 +46,13 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self.transform_action_sequence = transform_action_sequence
         self.collate = collate
         self.module = module
-        self.options = options
         self.eps = eps
         self.rng = rng
 
     def initialize(self, input: Dict[str, Any]) \
             -> Dict[str, Any]:
         self.module.encoder.eval()
-        action_sequence = ActionSequence(self.options)
+        action_sequence = ActionSequence()
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
         state_tensor = self.module.encoder(state_tensor)
@@ -118,7 +116,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                Dict[str, Any], Action],
                          None, None]:
         head = state.state["action_sequence"].head
-        is_token = False
         if head is None:
             return
         head_field = \
@@ -127,8 +124,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 state.state["action_sequence"].action_sequence[head.action]
             ).rule).children[head.field][1]
         if head_field.constraint == NodeConstraint.Token:
-            is_token = True
-        if is_token:
             # Generate token
             if len(state.state["reference"]) == 0:
                 ref_ids = torch.tensor([]).long()
@@ -145,8 +140,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             reference_pred[ref_ids != 0] = 0.0
             pred = torch.cat([token_pred, reference_pred], dim=0)
 
-            # CloseVariadicFieldRule is a candidate if split_non_terminals=True
-            if self.options.split_non_terminal:
+            # CloseVariadicFieldRule is a candidate if variadic fields
+            if head_field.is_variadic:
                 close_rule_idx = \
                     self.encoder._rule_encoder.encode(CloseVariadicFieldRule())
                 p = rule_pred[close_rule_idx].item()
@@ -212,8 +207,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                next_state, ApplyRule(rule))
                 else:
                     # CloseVariadicFieldRule
-                    if self.options.retain_variadic_fields and \
-                            head_field is not None and \
+                    if head_field is not None and \
                             head_field.is_variadic:
                         n_rule += 1
                         yield (state.score + lp, state, next_state,

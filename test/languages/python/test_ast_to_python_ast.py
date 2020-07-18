@@ -35,6 +35,15 @@ class TestToPythonAST(unittest.TestCase):
 
     def test_builtin_type(self):
         self.assertEqual(10, to_python_ast(ast.Leaf("int", "10")))
+        node = python_ast.List()
+        ten = python_ast.Constant()
+        setattr(ten, "value", 10)
+        setattr(ten, "kind", None)
+        setattr(node, "elts", [ten])
+        setattr(node, "ctx", None)
+        self.assertEqual(python_ast.dump(node),
+                         python_ast.dump(to_python_ast(to_ast(node,
+                                                              tokenize=list))))
         self.assertEqual(True, to_python_ast(ast.Leaf("bool", "True")))
 
     def test_variadic_args(self):
@@ -50,6 +59,11 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(
             python_ast.dump(node),
             python_ast.dump(to_python_ast(to_ast(node))))
+        self.assertEqual(
+            python_ast.dump(node),
+            python_ast.dump(to_python_ast(to_ast(node,
+                                                 retain_variadic_fields=False))
+                            ))
 
     def test_optional_arg(self):
         node = python_ast.Yield()
@@ -71,6 +85,12 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(
             python_ast.dump(node),
             python_ast.dump(to_python_ast(to_ast(node))))
+        self.assertEqual(
+            python_ast.dump(node),
+            python_ast.dump(to_python_ast(to_ast(node,
+                                                 retain_variadic_fields=False)
+                                          ))
+        )
 
 
 if __name__ == "__main__":

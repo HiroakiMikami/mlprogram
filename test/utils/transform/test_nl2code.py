@@ -11,10 +11,6 @@ from mlprogram.utils.transform.nl2code \
     import TransformQuery, TransformActionSequence
 
 
-def tokenize(query: str):
-    return query.split(" ")
-
-
 def tokenize_query(str: str) -> Query:
     return Query(
         list(map(lambda x: Token(None, x), str.split(" "))),
@@ -24,18 +20,19 @@ def tokenize_query(str: str) -> Query:
 def to_action_sequence(code: str):
     ast = Node("Assign",
                [Field("name", "Name",
-                      Node("Name", [Field("id", "str", Leaf("str", "x"))])),
+                      Node("Name", [Field("id", "str", [Leaf("str", "x")])])),
                 Field("value", "expr",
                       Node("Op", [
-                           Field("op", "str", Leaf("str", "+")),
+                           Field("op", "str", [Leaf("str", "+")]),
                            Field("arg0", "expr",
                                  Node("Name", [Field("id", "str",
-                                                     Leaf("str", "y"))])),
+                                                     [Leaf("str", "y")])])),
                            Field("arg1", "expr",
                                  Node("Number", [Field("value", "number",
-                                                       Leaf("number", "1"))]))]
+                                                       [Leaf("number", "1")])
+                                                 ]))]
                            ))])
-    return AstToSingleActionSequence(tokenize=tokenize)(ast)
+    return AstToSingleActionSequence()(ast)
 
 
 class TestTransformQuery(unittest.TestCase):
@@ -53,7 +50,7 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_simple_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
         action_sequence = TransformCode(to_action_sequence)({
@@ -86,7 +83,7 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_eval(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = TransformCode(to_action_sequence)({
             "ground_truth": "y = x + 1"
@@ -111,7 +108,7 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         d.tokens = ["y", "1"]
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)

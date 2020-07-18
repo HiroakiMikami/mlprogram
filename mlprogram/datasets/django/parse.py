@@ -50,7 +50,7 @@ SOFTWARE.
 
 import ast
 import re
-from typing import Optional
+from typing import Optional, Callable, List
 from mlprogram.asts import AST
 from mlprogram.languages.python import to_ast
 
@@ -63,6 +63,11 @@ p_decorator = re.compile(r'^@.*')
 
 
 class Parse:
+    def __init__(self, tokenize: Optional[Callable[[str], List[str]]] = None,
+                 retain_variadic_fields: bool = True):
+        self.tokenize = tokenize
+        self.retain_variadic_fields = retain_variadic_fields
+
     def __call__(self, code: str) -> Optional[AST]:
         """
         Return the AST of the code
@@ -99,6 +104,9 @@ class Parse:
             if code[-1] == ':':
                 code = code + 'pass'
 
-            return to_ast(ast.parse(code).body[0])
+            return to_ast(
+                ast.parse(code).body[0],
+                tokenize=self.tokenize,
+                retain_variadic_fields=self.retain_variadic_fields)
         except:  # noqa
             return None

@@ -4,15 +4,10 @@ import numpy as np
 import ast
 from mlprogram.utils import Query, Token
 from mlprogram.languages.python import to_ast
-from mlprogram.actions import ActionOptions
 from mlprogram.utils.data \
     import ListDataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions
 from mlprogram.utils.transform import AstToSingleActionSequence
-
-
-def tokenize(query: str):
-    return query.split(" ")
 
 
 def tokenize_query(str: str) -> Query:
@@ -22,7 +17,7 @@ def tokenize_query(str: str) -> Query:
 
 
 def to_action_sequence(code: str):
-    return AstToSingleActionSequence(tokenize=tokenize)(
+    return AstToSingleActionSequence()(
         to_ast(ast.parse(code).body[0]))
 
 
@@ -53,11 +48,10 @@ class TestGetSamples(unittest.TestCase):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, tokenize, to_action_sequence)
+        d = get_samples(dataset, to_action_sequence)
         self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
         self.assertEqual(12, len(d.rules))
         self.assertEqual(28, len(d.node_types))
-        self.assertEqual(ActionOptions(True, True), d.options)
 
 
 class TestCollate(unittest.TestCase):

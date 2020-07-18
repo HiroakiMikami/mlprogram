@@ -1,7 +1,7 @@
 import ast as python_ast
 import transpyle
 from enum import Enum
-from typing import Optional
+from typing import Optional, Callable, List
 from mlprogram.asts import AST
 from .python_ast_to_ast import to_ast
 from .ast_to_python_ast import to_python_ast
@@ -14,16 +14,27 @@ class ParseMode(Enum):
 
 
 class Parse:
-    def __init__(self, mode: ParseMode = ParseMode.Single):
+    def __init__(self, tokenize: Optional[Callable[[str], List[str]]] = None,
+                 retain_variadic_fields: bool = True,
+                 mode: ParseMode = ParseMode.Single):
         self.mode = mode
+        self.tokenize = tokenize
+        self.retain_variadic_fields = retain_variadic_fields
 
     def __call__(self, code: str) -> Optional[AST]:
         try:
             past = python_ast.parse(code)
             if self.mode == ParseMode.Exec:
-                return to_ast(past)
+                print("test", code)
+                return to_ast(
+                    past,
+                    tokenize=self.tokenize,
+                    retain_variadic_fields=self.retain_variadic_fields)
             else:
-                return to_ast(past.body[0])
+                return to_ast(
+                    past.body[0],
+                    tokenize=self.tokenize,
+                    retain_variadic_fields=self.retain_variadic_fields)
         except:  # noqa
             return None
 

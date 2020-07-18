@@ -3,7 +3,6 @@ from collections import OrderedDict
 import sys
 import logging
 from dummy_dataset import is_subtype, prepare_dataset
-from typing import List
 import tempfile
 import os
 
@@ -16,7 +15,6 @@ from mlprogram.entrypoint.torch import create_optimizer
 from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
-from mlprogram.actions import ActionOptions
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence
 from mlprogram.utils.data import Collate, CollateOptions, DatasetWithTransform
@@ -39,22 +37,11 @@ def tokenize_query(str: str) -> Query:
         str.split(" "))
 
 
-def tokenize_token(token: str) -> List[str]:
-    return [token]
-
-
-def tokenize_token_2(token: str) -> List[str]:
-    if token == "print":
-        return [token]
-    return list(token)
-
-
 class TestTreeGen(unittest.TestCase):
     def prepare_encoder(self, dataset, to_action_sequence):
         words = get_words(dataset, tokenize_query)
         chars = get_characters(dataset, tokenize_query)
-        samples = get_samples(dataset, tokenize_token,
-                              to_action_sequence)
+        samples = get_samples(dataset, to_action_sequence)
 
         qencoder = LabelEncoder(words, 20)
         cencoder = LabelEncoder(chars, 0)
@@ -89,8 +76,7 @@ class TestTreeGen(unittest.TestCase):
         return create_optimizer(optim.adafactor.Adafactor,
                                 model)
 
-    def prepare_synthesizer(self, model, qencoder, cencoder, aencoder,
-                            options):
+    def prepare_synthesizer(self, model, qencoder, cencoder, aencoder):
         transform_input = TransformQuery(tokenize_query, qencoder,
                                          cencoder, 10)
         transform_action_sequence = TransformActionSequence(aencoder, 4, 4,
@@ -113,7 +99,7 @@ class TestTreeGen(unittest.TestCase):
             5, 20,
             ActionSequenceSampler(
                 aencoder, lambda x: None, is_subtype, transform_input,
-                transform_action_sequence, collate, model, options=options))
+                transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, cencoder, aencoder, to_action_sequence):
         tquery = TransformQuery(tokenize_query, qencoder, cencoder, 10)
@@ -130,7 +116,7 @@ class TestTreeGen(unittest.TestCase):
             ])
         )
 
-    def evaluate(self, qencoder, cencoder, aencoder, options, dir):
+    def evaluate(self, qencoder, cencoder, aencoder, dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             dataset = prepare_dataset(1)
             model = self.prepare_model(qencoder, cencoder, aencoder)
@@ -139,17 +125,16 @@ class TestTreeGen(unittest.TestCase):
                 dataset["test"], dataset["valid"],
                 model,
                 self.prepare_synthesizer(
-                    model, qencoder, cencoder, aencoder, options),
+                    model, qencoder, cencoder, aencoder),
                 {"accuracy": Accuracy(lambda x: x, lambda x: x)},
                 (5, "accuracy"), top_n=[5]
             )
         results = torch.load(os.path.join(dir, "results.pt"))
         return results["valid"]
 
-    def train(self, options, tokenize_token, output_dir):
+    def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = \
-                AstToSingleActionSequence(options, tokenize_token)
+            to_action_sequence = AstToSingleActionSequence()
 
             collate = Collate(
                 torch.device("cpu"),
@@ -182,33 +167,11 @@ class TestTreeGen(unittest.TestCase):
             )
         return encoder
 
-    def test_default_settings(self):
+    def test(self):
         torch.manual_seed(0)
-        options = ActionOptions(False, False)
         with tempfile.TemporaryDirectory() as tmpdir:
-            encoder = self.train(options, tokenize_token, tmpdir)
-            results = self.evaluate(*encoder, options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
-
-    def test_split_nonterminals(self):
-        torch.manual_seed(0)
-        options = ActionOptions(False, True)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            encoder = self.train(options, tokenize_token, tmpdir)
-            results = self.evaluate(*encoder, options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            encoder = self.train(options, tokenize_token_2, tmpdir)
-            results = self.evaluate(*encoder, options, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
-
-    def test_retain_variadic_args(self):
-        torch.manual_seed(0)
-        options = ActionOptions(True, False)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            encoder = self.train(options, tokenize_token, tmpdir)
-            results = self.evaluate(*encoder, options, tmpdir)
+            encoder = self.train(tmpdir)
+            results = self.evaluate(*encoder, tmpdir)
         self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
 
 

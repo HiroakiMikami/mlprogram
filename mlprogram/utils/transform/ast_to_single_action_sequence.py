@@ -1,7 +1,6 @@
-from typing import Callable, Sequence, Optional, List
+from typing import List
 import logging
 from mlprogram.asts import AST, Node, Leaf, Field, Root
-from mlprogram.actions import ActionOptions
 from mlprogram.actions import Action, NodeType, NodeConstraint
 from mlprogram.actions import ApplyRule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
@@ -13,24 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class AstToSingleActionSequence:
-    def __init__(self, options: ActionOptions = ActionOptions(True, True),
-                 tokenize: Optional[Callable[[str], Sequence[str]]] = None):
-        """
-        Return the action sequence corresponding to this AST
-
-        Parameters
-        ----------
-        options:
-        tokenize:
-            function to tokenize a string.
-            This is required if the options.split_non_terminal is True.
-        """
-        if options.split_non_terminal:
-            assert tokenize is not None
-
-        self.options = options
-        self.tokenize = tokenize
-
     def __call__(self, node: AST) -> ActionSequence:
         """
         Return the action sequence corresponding to this AST
@@ -38,10 +19,6 @@ class AstToSingleActionSequence:
         Parameters
         ----------
         node: AST
-        options: ActionOptions
-        tokenizer: Optional[Tokenizer]
-            function to tokenize a string.
-            This is required if the options.split_non_terminal is True.
 
         Returns
         -------
@@ -52,13 +29,18 @@ class AstToSingleActionSequence:
             if isinstance(node, Node):
                 def to_node_type(field: Field) -> NodeType:
                     if isinstance(field.value, list):
-                        return NodeType(field.type_name,
-                                        NodeConstraint.Node, True)
+                        if len(field.value) > 0 and \
+                                isinstance(field.value[0], Leaf):
+                            return NodeType(field.type_name,
+                                            NodeConstraint.Token, True)
+                        else:
+                            return NodeType(field.type_name,
+                                            NodeConstraint.Node, True)
                     else:
                         if isinstance(field.value, Leaf):
                             return NodeType(field.type_name,
                                             NodeConstraint.Token,
-                                            self.options.split_non_terminal)
+                                            False)
                         else:
                             return NodeType(field.type_name,
                                             NodeConstraint.Node, False)
@@ -70,41 +52,18 @@ class AstToSingleActionSequence:
                     children))]
                 for field in node.fields:
                     if isinstance(field.value, list):
-                        if not self.options.retain_variadic_fields:
-                            elem_type_name = to_node_type(field).type_name
-                            elem = NodeType(elem_type_name,
-                                            NodeConstraint.Node,
-                                            False)
-                            seq.append(ApplyRule(ExpandTreeRule(
-                                NodeType(elem_type_name,
-                                         NodeConstraint.Node, True),
-                                [(str(i), elem)
-                                 for i in range(len(field.value))]
-                            )))
                         for v in field.value:
                             seq.extend(to_sequence(v))
-                        if self.options.retain_variadic_fields:
-                            seq.append(ApplyRule(CloseVariadicFieldRule()))
+                        seq.append(ApplyRule(CloseVariadicFieldRule()))
                     else:
                         seq.extend(to_sequence(field.value))
                 return seq
             elif isinstance(node, Leaf):
-                if self.options.split_non_terminal:
-                    gen_tokens: List[Action] = []
-                    if isinstance(node.value, str):
-                        assert self.tokenize is not None
-                        for token in self.tokenize(node.value):
-                            gen_tokens.append(GenerateToken[str](token))
-                    else:
-                        gen_tokens.append(GenerateToken(node.value))
-                    gen_tokens.append(ApplyRule(CloseVariadicFieldRule()))
-                    return gen_tokens
-                else:
-                    return [GenerateToken(node.value)]
+                return [GenerateToken(node.value)]
             else:
                 logger.warn(f"Invalid type of node: {type(node)}")
                 return []
-        action_sequence = ActionSequence(self.options)
+        action_sequence = ActionSequence()
         node = Node(None, [Field("root", Root(), node)])
         for action in to_sequence(node):
             action_sequence.eval(action)

@@ -9,23 +9,19 @@ dataset:
 test_dataset: "@/dataset.test"
 valid_dataset: "@/dataset.valid"
 
-options:
-  type: mlprogram.actions.ActionOptions
-  retain_variadic_fields: true
-  split_non_terminal: true
-
+parse:
+  type: mlprogram.languages.bash.Parse
+  tokenize:
+    type: mlprogram.languages.bash.TokenizeToken
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
     type: collections.OrderedDict
     items:
       - - "parse"
-        - type: mlprogram.languages.bash.Parse
+        - "@/parse"
       - - "ast_to_action_sequence"
         - type: mlprogram.utils.transform.AstToSingleActionSequence
-          tokenize:
-            type: mlprogram.languages.bash.TokenizeToken
-          options: "@/options"
 
 encoder:
   word_encoder:
@@ -168,20 +164,17 @@ synthesizer:
     transform_action_sequence: "@/transform.transform_action_sequence"
     collate: "@/collate"
     module: "@/model"
-    options: "@/options"
 
 # Metrics
 metrics:
   accuracy:
     type: mlprogram.metrics.Accuracy
-    parse:
-      type: mlprogram.languages.bash.Parse
+    parse: "@/parse"
     unparse:
       type: mlprogram.languages.bash.Unparse
   bleu:
     type: mlprogram.metrics.Bleu
-    parse:
-      type: mlprogram.languages.bash.Parse
+    parse: "@/parse"
     unparse:
       type: mlprogram.languages.bash.Unparse
 

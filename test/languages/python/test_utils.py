@@ -24,6 +24,12 @@ class TestIsSubtype(unittest.TestCase):
         self.assertTrue(IsSubtype()("int", "int"))
         self.assertFalse(IsSubtype()("str", "int"))
 
+    def test_special_type(self):
+        self.assertTrue(IsSubtype()("Expr__list", "Expr__list"))
+        self.assertFalse(IsSubtype()("Expr__list", "Expr"))
+        self.assertTrue(IsSubtype()("str__proxy", "str__proxy"))
+        self.assertFalse(IsSubtype()("str__proxy", "str"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,6 +22,10 @@ def to_builtin_type(value: str, type_name: str) -> BuiltinType:
 
 def to_python_ast(target: ast.AST) -> PythonAST:
     if isinstance(target, ast.Node):
+        if str(target.type_name).endswith("__proxy"):
+            assert isinstance(target.fields[0].value, ast.AST)
+            return to_python_ast(target.fields[0].value)
+
         # Node
         type_name = target.type_name
         node = eval(f"python_ast.{type_name}()")
@@ -35,20 +39,32 @@ def to_python_ast(target: ast.AST) -> PythonAST:
             if isinstance(field.value, list):
                 # List
                 elems = []
-                for child in field.value:
-                    assert isinstance(child, ast.Node)
-                    assert isinstance(field.type_name, str)
-                    if field.type_name.endswith("__list"):
-                        if isinstance(child.fields[0].value, list):
-                            for ch in child.fields[0].value:
-                                elems.append(to_python_ast(ch))
-                        else:
-                            elems.append(to_python_ast(child.fields[0].value))
-                    else:
+                if len(field.value) > 0 and \
+                        isinstance(field.value[0], ast.Leaf):
+                    # Leaf
+                    value = ""
+                    for child in field.value:
+                        assert isinstance(child, ast.Leaf)
+                        value += child.value
+                    setattr(node, name,
+                            to_builtin_type(value, str(field.type_name)))
+                else:
+                    # Node
+                    for child in field.value:
+                        assert isinstance(child, ast.Node)
+                        assert isinstance(field.type_name, str)
                         elems.append(to_python_ast(child))
-                setattr(node, name, elems)
+                    setattr(node, name, elems)
             else:
-                setattr(node, name, to_python_ast(field.value))
+                if str(field.type_name).endswith("__list"):
+                    assert isinstance(field.value, ast.Node)
+                    elems = []
+                    for f in field.value.fields:
+                        assert isinstance(f.value, ast.AST)
+                        elems.append(to_python_ast(f.value))
+                    setattr(node, name, elems)
+                else:
+                    setattr(node, name, to_python_ast(field.value))
 
         return node
     elif isinstance(target, ast.Leaf):

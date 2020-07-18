@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, List, cast, Any
 from copy import deepcopy
-import itertools
+import logging
 
 from .action \
     import Action, ApplyRule, Rule, ExpandTreeRule, NodeConstraint, NodeType, \
@@ -9,20 +9,7 @@ from .action \
 from mlprogram.asts import AST, Node, Leaf, Field, Root
 
 
-@dataclass
-class ActionOptions:
-    retain_variadic_fields: bool
-    split_non_terminal: bool
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ActionOptions):
-            return False
-        return \
-            self.retain_variadic_fields == other.retain_variadic_fields and \
-            self.split_non_terminal == other.split_non_terminal
-
-    def __hash__(self) -> int:
-        return hash((self.retain_variadic_fields, self.split_non_terminal))
+logger = logging.getLogger(__name__)
 
 
 class InvalidActionException(Exception):
@@ -81,16 +68,13 @@ class ActionSequence:
         The index of the head AST node.
     _head_children_index: Dict[Int, Int]
         The relation between actions and their head indexes of fields.
-    _options: ActionOptions
-        The action sequence options.
     """
 
-    def __init__(self, options: ActionOptions = ActionOptions(True, True)):
+    def __init__(self):
         self._tree = Tree(dict(), dict())
         self._action_sequence: List[Action] = []
         self._head_action_index: Optional[int] = None
         self._head_children_index: Dict[int, int] = dict()
-        self._options = options
 
     @property
     def head(self) -> Optional[Parent]:
@@ -130,8 +114,7 @@ class ActionSequence:
                 update_head()
                 return
 
-            if not self._options.retain_variadic_fields or \
-               close_variadic_field or \
+            if close_variadic_field or \
                not head_rule.children[head.field][1].is_variadic:
                 self._head_children_index[head.action] += 1
 
@@ -189,15 +172,6 @@ class ActionSequence:
                 if not head_field.is_variadic:
                     raise InvalidActionException(
                         "Variadic Fields", action)
-                if head_field.constraint == NodeConstraint.Token and \
-                        not self._options.split_non_terminal:
-                    raise InvalidActionException("GenerateToken", action)
-                if not self._options.retain_variadic_fields and \
-                        not self._options.split_non_terminal:
-                    raise InvalidActionException(
-                        "CloseVariadicField is invalid "
-                        "(retain_variadic_fields=False, "
-                        "split_non_terminal=False)", action)
 
                 append_action()
                 # 2. Append the action to the head
@@ -222,7 +196,7 @@ class ActionSequence:
             self._tree.parent[index] = head
 
             # 2. Update head if the token is closed.
-            if not self._options.split_non_terminal:
+            if not head_rule.children[head.field][1].is_variadic:
                 update_head()
 
     def generate(self) -> AST:
@@ -234,62 +208,43 @@ class ActionSequence:
         AST
             The AST corresponding to the action sequence
         """
-        def generate(head: int) -> AST:
-            # The head action should be ApplyRule
-            action = cast(ApplyRule, self._action_sequence[head])
-            # The head action should apply ExpandTreeRule
-            rule = cast(ExpandTreeRule, action.rule)
-
-            ast = Node(rule.parent.type_name, [])
-            for (name, node_type), actions in zip(
-                    rule.children,
-                    self._tree.children[head]):
+        def generate(head: int, node_type: Optional[NodeType] = None) -> AST:
+            action = self._action_sequence[head]
+            if isinstance(action, GenerateToken):
+                assert node_type is not None
                 assert node_type.type_name is not None
-                if node_type.constraint == NodeConstraint.Node:
+                return Leaf(node_type.type_name, action.token)
+            elif isinstance(action, ApplyRule):
+                # The head action should apply ExpandTreeRule
+                rule = cast(ExpandTreeRule, action.rule)
+
+                ast = Node(rule.parent.type_name, [])
+                for (name, node_type), actions in zip(
+                        rule.children,
+                        self._tree.children[head]):
+                    assert node_type.type_name is not None
                     if node_type.is_variadic:
-                        # Variadic
-                        if self._options.retain_variadic_fields:
-                            ast.fields.append(
-                                Field(name, node_type.type_name, []))
-                            for act in actions:
+                        # Variadic field
+                        ast.fields.append(
+                            Field(name, node_type.type_name, []))
+                        for act in actions:
+                            if isinstance(self._action_sequence[act],
+                                          ApplyRule):
                                 a = cast(ApplyRule, self._action_sequence[act])
                                 if isinstance(a.rule, CloseVariadicFieldRule):
                                     break
-                                assert isinstance(ast.fields[-1].value, list)
-                                ast.fields[-1].value.append(generate(act))
-                        else:
-                            childrens = cast(Node, generate(actions[0]))
-                            ast.fields.append(Field(
-                                name, node_type.type_name,
-                                list(itertools.chain.from_iterable(
-                                    [field.value
-                                     if isinstance(field.value, list)
-                                     else [field.value]
-                                     for field in childrens.fields
-                                     ]
-                                ))
-                            ))
+                            assert isinstance(ast.fields[-1].value, list)
+                            ast.fields[-1].value.append(
+                                generate(act, node_type))
                     else:
-                        # ApplyRule
                         ast.fields.append(
                             Field(name, node_type.type_name,
-                                  generate(actions[0])))
-                else:
-                    # GenerateToken
-                    value = ""
-                    for action_idx in actions:
-                        x = self._action_sequence[action_idx]
-                        if isinstance(x, ApplyRule):
-                            assert isinstance(x.rule,
-                                              CloseVariadicFieldRule)
-                            break
-                        elif isinstance(x, GenerateToken):
-                            value += x.token
-                    ast.fields.append(Field(name, node_type.type_name,
-                                            Leaf(node_type.type_name, value)
-                                            ))
+                                  generate(actions[0], node_type)))
+                return ast
+            else:
+                logger.warn(f"Invalid type of action: {type(action)}")
+                raise InvalidActionException("Action", action)
 
-            return ast
         if len(self.action_sequence) == 0:
             return generate(0)
         begin = self.action_sequence[0]
@@ -310,7 +265,7 @@ class ActionSequence:
         action_sequence
             The cloned action_sequence
         """
-        action_sequence = ActionSequence(self._options)
+        action_sequence = ActionSequence()
         for key, value in self._tree.children.items():
             v = []
             for src in value:
@@ -334,14 +289,13 @@ class ActionSequence:
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, ActionSequence):
             return False
-        return self._options == other._options and \
-            self.action_sequence == other.action_sequence
+        return self.action_sequence == other.action_sequence
 
     def __hash__(self) -> int:
-        return hash(self._options) ^ hash(tuple(self.action_sequence))
+        return hash(tuple(self.action_sequence))
 
     def __str__(self) -> str:
-        return f"{self.action_sequence}[{self._options}]"
+        return f"{self.action_sequence}"
 
     def __repr__(self) -> str:
         return str(self.action_sequence)

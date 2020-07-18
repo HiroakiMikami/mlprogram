@@ -81,8 +81,6 @@ types = {
     "mlprogram.languages.bash.Unparse": mlprogram.languages.bash.Unparse,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
-    "mlprogram.actions.ActionOptions": mlprogram.actions.ActionOptions,
-
     "mlprogram.utils.Compose": mlprogram.utils.Compose,
     "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
     "mlprogram.utils.save": mlprogram.utils.save,
