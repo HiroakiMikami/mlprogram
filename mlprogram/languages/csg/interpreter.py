@@ -1,8 +1,10 @@
 import numpy as np
+from mlprogram.utils import Reference as R
 from mlprogram.interpreters import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
-    import AST, Circle, Rectangle, Rotation, Translation, Union, Difference
-from typing import Callable
+    import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
+    Reference
+from typing import Callable, Dict
 import math
 from functools import lru_cache
 
@@ -50,6 +52,41 @@ class Interpreter(BaseInterpreter[AST, Shape]):
     def eval(self, code: AST) -> np.array:
         return self._cached_eval(code).render(
             self.width, self.height, self.resolution)
+
+    def eval_references(self, code: Dict[R, AST]) -> Dict[R, np.array]:
+        unref_code = {r: value for r, value in code.items()}
+        values = {}
+        for ref, ast in code.items():
+            unref_code[ref] = self._unreference(ast, unref_code)
+            values[ref] = self.eval(unref_code[ref])
+        return values
+
+    def _unreference(self, code: AST, refs: Dict[R, AST]) -> AST:
+        if isinstance(code, Circle):
+            return code
+        elif isinstance(code, Rectangle):
+            return code
+        elif isinstance(code, Translation):
+            return Translation(code.x, code.y,
+                               self._unreference(code.child, refs))
+        elif isinstance(code, Rotation):
+            return Rotation(code.theta_degree,
+                            self._unreference(code.child, refs))
+        elif isinstance(code, Union):
+            return Union(self._unreference(code.a, refs),
+                         self._unreference(code.b, refs))
+        elif isinstance(code, Difference):
+            return Difference(self._unreference(code.a, refs),
+                              self._unreference(code.b, refs))
+            a = self._cached_eval(code.a)
+            b = self._cached_eval(code.b)
+
+            def difference(x, y):
+                return not a(x, y) and b(x, y)
+            return Shape(difference)
+        elif isinstance(code, Reference):
+            return self._unreference(refs[code.ref], refs)
+        raise InvalidNodeTypeException(code.type_name())
 
     @lru_cache(maxsize=100)
     def _cached_eval(self, code: AST) -> Shape:

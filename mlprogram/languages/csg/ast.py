@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from mlprogram.utils import Reference as R
 
 
 class AST:
@@ -88,3 +89,14 @@ class Difference(AST):
 
     def state_dict(self) -> Dict[str, Any]:
         return {"a": self.a, "b": self.b}
+
+
+class Reference(AST):
+    def __init__(self, ref: R):
+        self.ref = ref
+
+    def type_name(self) -> str:
+        return "Reference"
+
+    def state_dict(self) -> Dict[str, Any]:
+        return {"ref": self.ref}

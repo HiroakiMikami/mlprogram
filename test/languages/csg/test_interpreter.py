@@ -1,8 +1,10 @@
 import unittest
 import numpy as np
+from mlprogram.utils import Reference as R
 from mlprogram.languages.csg import show, Shape, Interpreter
 from mlprogram.languages.csg \
-    import Circle, Rectangle, Translation, Rotation, Union, Difference
+    import Circle, Rectangle, Translation, Rotation, Union, Difference, \
+    Reference
 
 
 class TestShow(unittest.TestCase):
@@ -63,6 +65,28 @@ class TestInterpreter(unittest.TestCase):
         self.assertEqual(
             "   \n# #\n   \n",
             show(Interpreter(3, 3, 1).eval(code)))
+
+    def test_reference(self):
+        ref0 = Rectangle(1, 1)
+        ref1 = Rectangle(3, 1)
+        ref2 = Difference(Reference(R(0)), Reference(R(1)))
+        ref3 = Union(Rectangle(1, 1), Reference(R(2)))
+        code = {
+            R(0): ref0, R(1): ref1, R(2): ref2, R(3): ref3
+        }
+        result = Interpreter(3, 3, 1).eval_references(code)
+        self.assertEqual(
+            "   \n # \n   \n",
+            show(result[R(0)]))
+        self.assertEqual(
+            "   \n###\n   \n",
+            show(result[R(1)]))
+        self.assertEqual(
+            "   \n# #\n   \n",
+            show(result[R(2)]))
+        self.assertEqual(
+            "   \n###\n   \n",
+            show(result[R(3)]))
 
 
 if __name__ == "__main__":
