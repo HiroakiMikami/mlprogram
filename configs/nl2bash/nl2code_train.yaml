@@ -68,14 +68,14 @@ transform:
             type: mlprogram.datasets.nl2bash.TokenizeQuery
           word_encoder: "@/encoder.word_encoder"
       - - "transform_code"
-        - type: mlprogram.utils.transform.TransformCode
+        - type: mlprogram.utils.transform.action_sequence.TransformCode
           to_action_sequence: "@/to_action_sequence"
       - - "transform_action_sequence"
         - type: mlprogram.utils.transform.nl2code.TransformActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
           train: true
       - - "transform_ground_truth"
-        - type: mlprogram.utils.transform.TransformGroundTruth
+        - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
 
 action_sequence_reader:

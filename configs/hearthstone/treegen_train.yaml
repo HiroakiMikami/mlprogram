@@ -84,7 +84,7 @@ transform:
           char_encoder: "@/encoder.char_encoder"
           max_word_length: 128
       - - "transform_code"
-        - type: mlprogram.utils.transform.TransformCode
+        - type: mlprogram.utils.transform.action_sequence.TransformCode
           to_action_sequence: "@/to_action_sequence"
       - - "transform_action_sequence"
         - type: mlprogram.utils.transform.treegen.TransformActionSequence
@@ -93,7 +93,7 @@ transform:
           max_depth: 128
           train: true
       - - "transform_ground_truth"
-        - type: mlprogram.utils.transform.TransformGroundTruth
+        - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
 
 model:

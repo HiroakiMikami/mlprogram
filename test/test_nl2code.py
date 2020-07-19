@@ -19,8 +19,9 @@ from mlprogram.utils import Sequence, Map
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_samples
 from mlprogram.utils.transform import AstToSingleActionSequence
-from mlprogram.utils.transform \
-    import RandomChoice, TransformCode, TransformGroundTruth
+from mlprogram.utils.transform import RandomChoice
+from mlprogram.utils.transform.action_sequence \
+    import TransformCode, TransformGroundTruth
 from mlprogram.utils.transform.nl2code \
     import TransformQuery, TransformActionSequence
 from mlprogram.nn.action_sequence import Loss

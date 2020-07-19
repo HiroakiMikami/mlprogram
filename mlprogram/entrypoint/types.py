@@ -18,6 +18,7 @@ import mlprogram.synthesizers
 import mlprogram.utils
 import mlprogram.utils.data
 import mlprogram.utils.transform
+import mlprogram.utils.transform.action_sequence
 import mlprogram.encoders
 
 import mlprogram.nn.nl2code
@@ -25,6 +26,8 @@ import mlprogram.utils.transform.nl2code
 
 import mlprogram.nn.treegen
 import mlprogram.utils.transform.treegen
+
+import mlprogram.utils.transform.csg
 
 from mlprogram.entrypoint.torch import types as torch_types
 from mlprogram.entrypoint.torchnlp import types as torchnlp_types
@@ -103,10 +106,10 @@ types = {
         mlprogram.utils.transform.AstToSingleActionSequence,
     "mlprogram.utils.transform.RandomChoice":
         mlprogram.utils.transform.RandomChoice,
-    "mlprogram.utils.transform.TransformCode":
-        mlprogram.utils.transform.TransformCode,
-    "mlprogram.utils.transform.TransformGroundTruth":
-        mlprogram.utils.transform.TransformGroundTruth,
+    "mlprogram.utils.transform.action_sequence.TransformCode":
+        mlprogram.utils.transform.action_sequence.TransformCode,
+    "mlprogram.utils.transform.action_sequence.TransformGroundTruth":
+        mlprogram.utils.transform.action_sequence.TransformGroundTruth,
     "mlprogram.utils.transform.nl2code.TransformQuery":
         mlprogram.utils.transform.nl2code.TransformQuery,
     "mlprogram.utils.transform.nl2code.TransformActionSequence":
@@ -133,6 +136,9 @@ types = {
     "mlprogram.nn.treegen.ActionSequenceReader":
         mlprogram.nn.treegen.ActionSequenceReader,
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
+
+    "mlprogram.utils.transform.csg.TransformCanvas":
+        mlprogram.utils.transform.csg.TransformCanvas
 }
 
 types.update(torch_types)

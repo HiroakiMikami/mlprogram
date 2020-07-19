@@ -6,7 +6,7 @@ from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Field, Leaf
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
-from mlprogram.utils.transform import TransformCode
+from mlprogram.utils.transform.action_sequence import TransformCode
 from mlprogram.utils.transform.treegen \
     import TransformQuery, TransformActionSequence
 
