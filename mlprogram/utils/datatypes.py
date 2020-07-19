@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Generic, TypeVar, Optional
+from typing import List, Generic, TypeVar, Optional, Any
 
 
 V = TypeVar("V")
@@ -25,3 +25,17 @@ class Token(Generic[V]):
 class Query:
     reference: List[Token[str]]
     query_for_dnn: List[str]
+
+
+@dataclass
+class Reference:
+    name: str
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Reference):
+            return self.name == other.name
+        else:
+            return False

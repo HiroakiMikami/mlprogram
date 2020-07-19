@@ -7,29 +7,12 @@ from typing \
 from mlprogram.asts import AST, Node, Leaf
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils import Token
+from mlprogram.utils import Token, Reference
 from mlprogram.utils.data import Collate
-from dataclasses import dataclass
-
 
 logger = logging.getLogger(__name__)
 
 Input = TypeVar("Input")
-
-
-# TODO move to other file
-@dataclass
-class Reference:
-    name: str
-
-    def __hash__(self) -> int:
-        return hash(self.name)
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, Reference):
-            return self.name == other.name
-        else:
-            return False
 
 
 class AstSetSampler(Sampler[Input, Dict[Reference, AST], Dict[str, Any]],
