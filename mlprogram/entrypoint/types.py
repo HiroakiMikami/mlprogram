@@ -82,6 +82,7 @@ types = {
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
     "mlprogram.utils.Compose": mlprogram.utils.Compose,
+    "mlprogram.utils.Map": mlprogram.utils.Map,
     "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
@@ -96,8 +97,6 @@ types = {
     "mlprogram.utils.data.get_words": mlprogram.utils.data.get_words,
     "mlprogram.utils.data.get_characters": mlprogram.utils.data.get_characters,
     "mlprogram.utils.data.get_samples": mlprogram.utils.data.get_samples,
-    "mlprogram.utils.data.DatasetWithTransform":
-        mlprogram.utils.data.DatasetWithTransform,
 
     "mlprogram.utils.transform.AstToSingleActionSequence":
         mlprogram.utils.transform.AstToSingleActionSequence,

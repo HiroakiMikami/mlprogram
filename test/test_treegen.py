@@ -16,8 +16,8 @@ from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence
-from mlprogram.utils.data import Collate, CollateOptions, DatasetWithTransform
+from mlprogram.utils import Sequence, Map
+from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_characters, get_samples
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
@@ -153,15 +153,12 @@ class TestTreeGen(unittest.TestCase):
             dataset = prepare_dataset(10)["train"]
             encoder = self.prepare_encoder(dataset, to_action_sequence)
             model = self.prepare_model(*encoder)
-            lambda: self.transform_cls(to_action_sequence)
+            transform = Map(self.transform_cls(*encoder, to_action_sequence))
             nl2prog.train(
-                tmpdir, output_dir,
-                DatasetWithTransform(
-                    dataset,
-                    self.transform_cls(*encoder, to_action_sequence)),
+                tmpdir, output_dir, dataset,
                 model, self.prepare_optimizer(model),
                 Loss(), lambda args: -Loss()(args),
-                collate,
+                lambda x: collate(transform(x)),
                 1, 10,
                 num_models=1
             )

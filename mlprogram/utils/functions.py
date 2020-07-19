@@ -2,11 +2,13 @@ import torch
 import logging
 import os
 from collections import OrderedDict
-from typing import TypeVar, Optional, Any
+from typing import Generic, TypeVar, Optional, Any, List, Callable
 
 logger = logging.getLogger(__name__)
 
 V = TypeVar("V")
+V0 = TypeVar("V0")
+V1 = TypeVar("V1")
 
 
 class Compose:
@@ -34,6 +36,14 @@ class Sequence:
             if value_opt is None:
                 return None
         return value_opt
+
+
+class Map(Generic[V0, V1]):
+    def __init__(self, func: Callable[[V0], V1]):
+        self.func = func
+
+    def __call__(self, values: List[V0]) -> List[V1]:
+        return [self.func(v0) for v0 in values]
 
 
 def save(obj: V, file: str) -> V:

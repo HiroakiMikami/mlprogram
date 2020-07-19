@@ -15,8 +15,8 @@ from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence
-from mlprogram.utils.data import Collate, CollateOptions, DatasetWithTransform
+from mlprogram.utils import Sequence, Map
+from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_samples
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
@@ -137,16 +137,15 @@ class TestNL2Code(unittest.TestCase):
             raw_dataset = prepare_dataset(10)["train"]
             qencoder, aencoder = \
                 self.prepare_encoder(raw_dataset, to_action_sequence)
-            dataset = DatasetWithTransform(
-                raw_dataset,
-                self.transform_cls(qencoder, aencoder, to_action_sequence))
+            transform = Map(self.transform_cls(qencoder, aencoder,
+                                               to_action_sequence))
             model = self.prepare_model(qencoder, aencoder)
             optimizer = self.prepare_optimizer(model)
             nl2prog.train(
                 tmpdir, output_dir,
-                dataset, model, optimizer,
+                raw_dataset, model, optimizer,
                 Loss(), lambda args: -Loss()(args),
-                collate,
+                lambda x: collate(transform(x)),
                 1, 10,
                 num_models=1
             )

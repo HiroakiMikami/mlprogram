@@ -188,17 +188,23 @@ main:
   type: mlprogram.entrypoint.nl2prog.train
   workspace_dir: "output/workspace"
   output_dir: "@/output_dir"
-  dataset:
-    type: mlprogram.utils.data.DatasetWithTransform
-    dataset: "@/train_dataset"
-    transform: "@/transform"
+  dataset: "@/train_dataset"
   model: "@/model"
   optimizer: "@/optimizer"
   loss:  
     type: mlprogram.nn.action_sequence.Loss
   score:
     type: mlprogram.nn.action_sequence.Accuracy
-  collate: "@/collate"
+  collate:
+    type: mlprogram.utils.Compose
+    funcs:
+      type: collections.OrderedDict
+      items:
+        - - "transform"
+          - type: mlprogram.utils.Map
+            func: "@/transform"
+        - - "collate"
+          - "@/collate"
   batch_size: 10
   num_epochs: 50
   device: "@/device"

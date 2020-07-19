@@ -2,7 +2,7 @@ import unittest
 import tempfile
 import os
 from collections import OrderedDict
-from mlprogram.utils import Compose, Sequence, save, load
+from mlprogram.utils import Compose, Sequence, Map, save, load
 
 
 class TestCompose(unittest.TestCase):
@@ -20,6 +20,12 @@ class TestCompose(unittest.TestCase):
         f = Compose(OrderedDict([("f", lambda x: None),
                                  ("g", lambda y: y * 2)]))
         self.assertEqual(None, f(2))
+
+
+class TestMap(unittest.TestCase):
+    def test_happy_path(self):
+        f = Map(lambda x: x + 1)
+        self.assertEqual([3], f([2]))
 
 
 class TestSequence(unittest.TestCase):
