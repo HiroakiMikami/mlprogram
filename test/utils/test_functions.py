@@ -2,7 +2,7 @@ import unittest
 import tempfile
 import os
 from collections import OrderedDict
-from mlprogram.utils import Compose, Sequence, Map, save, load
+from mlprogram.utils import Compose, Sequence, Map, Flatten, save, load
 
 
 class TestCompose(unittest.TestCase):
@@ -26,6 +26,12 @@ class TestMap(unittest.TestCase):
     def test_happy_path(self):
         f = Map(lambda x: x + 1)
         self.assertEqual([3], f([2]))
+
+
+class TestFlatten(unittest.TestCase):
+    def test_happy_path(self):
+        f = Flatten()
+        self.assertEqual([2, 1, 2], f([[2], [1, 2]]))
 
 
 class TestSequence(unittest.TestCase):

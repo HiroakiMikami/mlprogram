@@ -46,6 +46,14 @@ class Map(Generic[V0, V1]):
         return [self.func(v0) for v0 in values]
 
 
+class Flatten(Generic[V]):
+    def __call__(self, values: List[List[V]]) -> List[V]:
+        retval = []
+        for v in values:
+            retval.extend(v)
+        return retval
+
+
 def save(obj: V, file: str) -> V:
     if os.path.exists(file):
         logger.info(f"Reuse data from {file}")

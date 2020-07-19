@@ -83,6 +83,7 @@ types = {
 
     "mlprogram.utils.Compose": mlprogram.utils.Compose,
     "mlprogram.utils.Map": mlprogram.utils.Map,
+    "mlprogram.utils.Flatten": mlprogram.utils.Flatten,
     "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
