@@ -18,6 +18,12 @@ class AST:
     def state_dict(self) -> Dict[str, Any]:
         raise NotImplementedError
 
+    def __str__(self) -> str:
+        raise NotImplementedError
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class Rectangle(AST):
     def __init__(self, w: int, h: int):
@@ -30,6 +36,9 @@ class Rectangle(AST):
     def state_dict(self) -> Dict[str, Any]:
         return {"w": self.w, "h": self.h}
 
+    def __str__(self) -> str:
+        return f"Rectangle(w={self.w},h={self.h})"
+
 
 class Circle(AST):
     def __init__(self, r: int):
@@ -40,6 +49,9 @@ class Circle(AST):
 
     def state_dict(self) -> Dict[str, Any]:
         return {"r": self.r}
+
+    def __str__(self) -> str:
+        return f"Circle(r={self.r})"
 
 
 class Translation(AST):
@@ -54,6 +66,9 @@ class Translation(AST):
     def state_dict(self) -> Dict[str, Any]:
         return {"x": self.x, "y": self.y, "child": self.child}
 
+    def __str__(self) -> str:
+        return f"Translation(x={self.x},y={self.y},child={self.child})"
+
 
 class Rotation(AST):
     def __init__(self, theta_degree: int, child: AST):
@@ -65,6 +80,9 @@ class Rotation(AST):
 
     def state_dict(self) -> Dict[str, Any]:
         return {"theta_degree": self.theta_degree, "child": self.child}
+
+    def __str__(self) -> str:
+        return f"Rotation(theta={self.theta_degree},child={self.child})"
 
 
 class Union(AST):
@@ -78,6 +96,9 @@ class Union(AST):
     def state_dict(self) -> Dict[str, Any]:
         return {"a": self.a, "b": self.b}
 
+    def __str__(self) -> str:
+        return f"Union(a={self.a},b={self.b})"
+
 
 class Difference(AST):
     def __init__(self, a: AST, b: AST):
@@ -90,6 +111,9 @@ class Difference(AST):
     def state_dict(self) -> Dict[str, Any]:
         return {"a": self.a, "b": self.b}
 
+    def __str__(self) -> str:
+        return f"Difference(a={self.a},b={self.b})"
+
 
 class Reference(AST):
     def __init__(self, ref: R):
@@ -100,3 +124,6 @@ class Reference(AST):
 
     def state_dict(self) -> Dict[str, Any]:
         return {"ref": self.ref}
+
+    def __str__(self) -> str:
+        return f"Reference(ref={self.ref})"
