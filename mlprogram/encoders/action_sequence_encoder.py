@@ -1,6 +1,6 @@
 import torch
 from torchnlp.encoders import LabelEncoder
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Optional, Union, cast, Generic, TypeVar
 from dataclasses import dataclass
 
 from mlprogram.actions import NodeType
@@ -8,6 +8,8 @@ from mlprogram.actions import ApplyRule, GenerateToken
 from mlprogram.actions import Rule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
+
+V = TypeVar("V")
 
 
 @dataclass
@@ -35,10 +37,10 @@ class Unknown:
 
 
 @dataclass
-class Samples:
+class Samples(Generic[V]):
     rules: List[Rule]
     node_types: List[NodeType]
-    tokens: List[str]  # TODO V
+    tokens: List[V]
 
 
 class ActionSequenceEncoder:
