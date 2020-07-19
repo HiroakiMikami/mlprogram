@@ -195,7 +195,6 @@ class Unparse:
                     elif n == "None":
                         return ""
                     else:
-                        print(n)
                         assert(False)
                 elif isinstance(ast, A.Leaf):
                     # Token

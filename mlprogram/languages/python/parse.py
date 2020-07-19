@@ -25,7 +25,6 @@ class Parse:
         try:
             past = python_ast.parse(code)
             if self.mode == ParseMode.Exec:
-                print("test", code)
                 return to_ast(
                     past,
                     tokenize=self.tokenize,
