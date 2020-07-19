@@ -19,9 +19,7 @@ class RnnDecoder(nn.Module):
         """
         Parameters
         ----------
-        input_feature: rnn.PackedSequenceWithMask
-            The query embedding vector
-            The shape of the query embedding vector is (L_q, B, query_size).
+        input_feature: torch.Tensor
         action_features: rnn.PackedSequenceWithMask
             The input sequence of feature vectors.
             The shape of input is (L_a, B, input_size)

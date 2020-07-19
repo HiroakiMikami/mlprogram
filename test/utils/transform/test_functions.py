@@ -1,13 +1,15 @@
 import unittest
 import numpy as np
 
-from mlprogram.utils import Query, Token
+from mlprogram.utils import Query, Token, Reference
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Leaf, Field
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform \
-    import TransformCode, TransformGroundTruth, RandomChoice
+    import TransformCode, TransformGroundTruth, RandomChoice, \
+    EvaluateGroundTruth
+from mlprogram.interpreters import Interpreter
 
 
 def tokenize_query(query: str):
@@ -87,6 +89,33 @@ class TestRandomChoice(unittest.TestCase):
         x = transform({"x": [0, 1], "y": [0, 1]})
         self.assertTrue(isinstance(x["x"], int))
         self.assertTrue(isinstance(x["y"], int))
+
+
+class MockInterpreter(Interpreter):
+    def eval(self, code):
+        return int(code)
+
+    def eval_references(self, code):
+        return {ref: int(code) for ref, code in code.items()}
+
+
+class TestEvaluateGroundTruth(unittest.TestCase):
+    def test_non_reference(self):
+        f = EvaluateGroundTruth(MockInterpreter())
+        self.assertTrue(1, f({"ground_truth": "1"})["test_case"])
+
+    def test_reference(self):
+        f = EvaluateGroundTruth(MockInterpreter())
+        result = f({
+            "ground_truth": {
+                Reference(0): "1",
+                Reference(1): "2"
+            },
+            "output_reference": Reference(1)
+        })
+        self.assertTrue(2, result["test_case"])
+        self.assertTrue({Reference(0): 1, Reference(1): 2},
+                        result["variables"])
 
 
 if __name__ == "__main__":

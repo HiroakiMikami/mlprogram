@@ -3,6 +3,7 @@ import numpy as np
 from mlprogram.utils import Token
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
+from mlprogram.interpreters import Interpreter
 from typing import List, Callable, Any, Optional, Dict, cast, Generic, TypeVar
 
 
@@ -42,6 +43,24 @@ class TransformGroundTruth:
             return None
         ground_truth = a[1:-1, 1:]
         entry["ground_truth_actions"] = ground_truth
+        return entry
+
+
+class EvaluateGroundTruth:
+    def __init__(self, interpreter: Interpreter):
+        self.interpreter = interpreter
+
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        gt = entry["ground_truth"]
+        if isinstance(gt, dict):
+            if "output_reference" not in entry:
+                return None
+            output_reference = entry["output_reference"]
+            results = self.interpreter.eval_references(gt)
+            entry["variables"] = results
+            entry["test_case"] = results[output_reference]
+        else:
+            entry["test_case"] = self.interpreter.eval(gt)
         return entry
 
 
