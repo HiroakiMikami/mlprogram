@@ -10,7 +10,7 @@ class TransformCanvas:
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         if "test_case" in entry:
-            entry["input_feature"] = self.per_canvas(entry["test_case"])
+            entry["input"] = self.per_canvas(entry["test_case"])
         if "variables" in entry:
             entry["variables"] = {
                 ref: self.per_canvas(canvas)

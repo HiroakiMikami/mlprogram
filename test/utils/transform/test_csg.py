@@ -12,7 +12,7 @@ class TestEvaluateGroundTruth(unittest.TestCase):
             torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 2, 2),
             f({
                 "test_case": np.array([[True, False], [False, True]])
-            })["input_feature"]
+            })["input"]
         ))
 
     def test_variables(self):
