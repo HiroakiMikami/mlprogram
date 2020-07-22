@@ -3,15 +3,29 @@ from torch import nn
 from torch.utils.data import DataLoader
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions
-from typing import Callable, Any, Tuple, cast
+from typing import Callable, Any, Tuple, cast, Union
 import os
 import logging
 import shutil
 from math import isnan, isinf
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKModel
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Epoch:
+    n: int
+
+
+@dataclass
+class Iteration:
+    n: int
+
+
+Length = Union[Epoch, Iteration]
 
 
 class Trigger:
@@ -31,7 +45,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      loss,
                      score,
                      collate: Callable[[Any], Any],
-                     batch_size: int, num_epochs: int,
+                     batch_size: int,
+                     length: Length,
                      num_checkpoints: int = 2, num_models: int = 3,
                      device: torch.device = torch.device("cpu")) \
         -> None:
@@ -43,11 +58,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
 
     # Initialize extensions manager
     iter_per_epoch = len(dataset) // batch_size
-    n_iter = max(1, (len(dataset) * num_epochs) // batch_size)
+    if isinstance(length, Epoch):
+        n_iter = length.n * iter_per_epoch
+    else:
+        n_iter = length.n
     log_reporter = \
         extensions.LogReport(trigger=Trigger(iter_per_epoch, n_iter))
     manager = ppe.training.ExtensionsManager(
-        model, optimizer, num_epochs,
+        model, optimizer, n_iter / iter_per_epoch,
         out_dir=workspace_dir,
         extensions=[
             log_reporter,

@@ -46,6 +46,10 @@ types = {
     "collections.OrderedDict": lambda items: collections.OrderedDict(items),
     "os.path.join": lambda args: os.path.join(*args),
 
+    "mlprogram.entrypoint.train.Epoch":
+        mlprogram.entrypoint.train.Epoch,
+    "mlprogram.entrypoint.train.Iteration":
+        mlprogram.entrypoint.train.Iteration,
     "mlprogram.entrypoint.train_supervised":
         mlprogram.entrypoint.train_supervised,
     "mlprogram.entrypoint.evaluate": mlprogram.entrypoint.evaluate,

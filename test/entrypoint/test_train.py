@@ -6,6 +6,7 @@ import torch
 from torch import nn
 from torch import optim
 
+from mlprogram.entrypoint.train import Epoch, Iteration
 from mlprogram.entrypoint import train_supervised
 from mlprogram.utils.data import ListDataset
 
@@ -47,7 +48,7 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             self.collate, 1, 2)
+                             self.collate, 1, Epoch(2))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
             self.assertTrue(os.path.exists(os.path.join(ws, "log")))
@@ -76,7 +77,7 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             self.collate, 1, 2,
+                             self.collate, 1, Epoch(2),
                              num_checkpoints=1)
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
@@ -94,7 +95,7 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             self.collate, 1, 1)
+                             self.collate, 1, Epoch(1))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
 
@@ -105,13 +106,43 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             self.collate, 1, 2)
+                             self.collate, 1, Epoch(2))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
             with open(os.path.join(output, "log.json")) as file:
                 log2 = json.load(file)
             self.assertEqual(log[0], log2[0])
             self.assertEqual(2, len(log2))
+
+    def test_finish_by_iteration(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_supervised(ws, output,
+                             self.prepare_dataset(),
+                             model,
+                             self.prepare_optimizer(model),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             self.collate, 1, Iteration(2))
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_2")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,10 @@ class ConfigTest(unittest.TestCase):
             with open(train_config) as file:
                 configs = yaml.load(file)
             # Modify configs for testing
-            configs["main"]["num_epochs"] = 0.001
+            configs["main"]["length"] = {
+                "type": "mlprogram.entrypoint.train.Iteration",
+                "n": 3
+            }
             configs["device"]["type_str"] = "cpu"
             configs["main"]["workspace_dir"] = f"{tmpdir}/workspace"
             configs["output_dir"] = f"{tmpdir}/output"

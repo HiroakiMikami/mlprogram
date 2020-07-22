@@ -10,6 +10,7 @@ import torch
 import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
 from mlprogram.entrypoint import evaluate as eval, train_supervised
+from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import create_optimizer
 from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
@@ -147,7 +148,7 @@ class TestNL2Code(unittest.TestCase):
                 raw_dataset, model, optimizer,
                 Loss(), lambda args: -Loss()(args),
                 lambda x: collate(transform(x)),
-                1, 10,
+                1, Epoch(10),
                 num_models=1
             )
         return qencoder, aencoder

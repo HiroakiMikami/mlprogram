@@ -204,5 +204,7 @@ main:
         - - "collate"
           - "@/collate"
   batch_size: 1
-  num_epochs: 50
+  length:
+    type: mlprogram.entrypoint.train.Epoch
+    n: 50
   device: "@/device"
