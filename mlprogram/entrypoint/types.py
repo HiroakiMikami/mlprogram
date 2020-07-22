@@ -1,7 +1,7 @@
 import os
 import collections
 
-import mlprogram.entrypoint.nl2prog
+import mlprogram.entrypoint
 import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
@@ -46,9 +46,9 @@ types = {
     "collections.OrderedDict": lambda items: collections.OrderedDict(items),
     "os.path.join": lambda args: os.path.join(*args),
 
-    "mlprogram.entrypoint.nl2prog.train": mlprogram.entrypoint.nl2prog.train,
-    "mlprogram.entrypoint.nl2prog.evaluate":
-        mlprogram.entrypoint.nl2prog.evaluate,
+    "mlprogram.entrypoint.train_supervised":
+        mlprogram.entrypoint.train_supervised,
+    "mlprogram.entrypoint.evaluate": mlprogram.entrypoint.evaluate,
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,
     "mlprogram.datasets.django.Parse": mlprogram.datasets.django.Parse,

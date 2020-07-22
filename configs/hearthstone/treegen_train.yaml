@@ -212,7 +212,7 @@ optimizer:
   model: "@/model"
 
 main:
-  type: mlprogram.entrypoint.nl2prog.train
+  type: mlprogram.entrypoint.train_supervised
   workspace_dir: "output/workspace"
   output_dir: "@/output_dir"
   dataset: "@/train_dataset"

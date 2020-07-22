@@ -9,7 +9,7 @@ import os
 import torch
 import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
-from mlprogram.entrypoint import nl2prog
+from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint.torch import create_optimizer
 from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
@@ -107,7 +107,7 @@ class TestNL2Code(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             dataset = prepare_dataset(1)
             model = self.prepare_model(qencoder, aencoder)
-            nl2prog.evaluate(
+            eval(
                 dir, tmpdir, dir,
                 dataset["test"], dataset["valid"],
                 model,
@@ -142,7 +142,7 @@ class TestNL2Code(unittest.TestCase):
                                                to_action_sequence))
             model = self.prepare_model(qencoder, aencoder)
             optimizer = self.prepare_optimizer(model)
-            nl2prog.train(
+            train_supervised(
                 tmpdir, output_dir,
                 raw_dataset, model, optimizer,
                 Loss(), lambda args: -Loss()(args),
