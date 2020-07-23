@@ -7,7 +7,7 @@ from torch.utils.data import IterableDataset
 from typing import Optional, Any, Callable, Tuple, Dict
 
 from mlprogram.utils import Reference as R, Token
-from mlprogram.languages.csg import AST, Interpreter, Reference
+from mlprogram.languages.csg import AST, Reference
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
 from mlprogram.languages.csg import Union, Difference
@@ -18,14 +18,13 @@ logger = logging.getLogger(__name__)
 
 class Dataset(IterableDataset):
     def __init__(
-            self, canvas_size: int, canvas_resolution: int,
+            self, canvas_size: int,
             depth: int, length_stride: int,
             degree_stride: int,
             reference: bool = False,
             seed: Optional[int] = None,
             transform: Optional[Callable[[Dict[str, Any]], Any]] = None):
         self.canvas_size = canvas_size
-        self.canvas_resolution = canvas_resolution
         self.depth = depth
         s = self.canvas_size // 2
         self.reference = reference
@@ -123,15 +122,10 @@ class Dataset(IterableDataset):
         class InternalIterator:
             def __init__(self, parent: Dataset):
                 self.parent = parent
-                self.interpreter = Interpreter(
-                    self.parent.canvas_size,
-                    self.parent.canvas_size,
-                    self.parent.canvas_resolution)
 
             def __next__(self) -> Any:
                 depth = np.random.randint(1, self.parent.depth + 1)
                 ast = self.parent.sample_ast(rng, depth)
-                canvas = self.interpreter.eval(ast)
                 if self.parent.reference:
                     refs, output = self.parent.to_reference(ast)
                     references = [Token(None, ref) for ref in refs.keys()]
@@ -139,13 +133,11 @@ class Dataset(IterableDataset):
                     retval = {
                         "ground_truth": refs,
                         "references": references,
-                        "output_reference": R(str(output)),
-                        "test_case": canvas
+                        "output_reference": R(str(output))
                     }
                 else:
                     retval = {
-                        "ground_truth": ast,
-                        "test_case": canvas
+                        "ground_truth": ast
                     }
                 if self.parent.transform is not None:
                     retval = self.parent.transform(retval)

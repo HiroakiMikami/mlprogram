@@ -6,13 +6,13 @@ from mlprogram.languages.csg import Dataset
 
 class TestDataset(unittest.TestCase):
     def test_iterator(self):
-        dataset = Dataset(2, 2, 1, 1, 45)
+        dataset = Dataset(2, 1, 1, 45)
         for x in dataset:
             break
 
     def test_multiprocess_loader(self):
         torch.manual_seed(0)
-        dataset = Dataset(2, 2, 1, 1, 45)
+        dataset = Dataset(2, 1, 1, 45)
         loader = torch.utils.data.DataLoader(dataset, 2, num_workers=2,
                                              collate_fn=lambda x: x)
         samples = []
@@ -24,14 +24,14 @@ class TestDataset(unittest.TestCase):
                             samples[1][0]["ground_truth"])
 
     def test_transform(self):
-        dataset = Dataset(2, 2, 1, 1, 45, transform=lambda x: 0)
+        dataset = Dataset(2, 1, 1, 45, transform=lambda x: 0)
         for x in dataset:
             self.assertEqual(0, x)
             break
 
     def test_reference(self):
         torch.manual_seed(0)
-        dataset = Dataset(2, 2, 3, 1, 45, reference=True)
+        dataset = Dataset(2, 3, 1, 45, reference=True)
         cnt = 0
         for x in dataset:
             cnt += 1
