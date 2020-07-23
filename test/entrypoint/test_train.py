@@ -127,21 +127,22 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             self.collate, 1, Iteration(2))
+                             self.collate, 1, Iteration(2),
+                             interval=Iteration(1))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_2")))
             self.assertTrue(os.path.exists(os.path.join(ws, "log")))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
 
 

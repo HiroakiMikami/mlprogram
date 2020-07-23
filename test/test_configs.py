@@ -22,6 +22,10 @@ class ConfigTest(unittest.TestCase):
                 "type": "mlprogram.entrypoint.train.Iteration",
                 "n": 3
             }
+            configs["main"]["interval"] = {
+                "type": "mlprogram.entrypoint.train.Iteration",
+                "n": 3
+            }
             configs["device"]["type_str"] = "cpu"
             configs["main"]["workspace_dir"] = f"{tmpdir}/workspace"
             configs["output_dir"] = f"{tmpdir}/output"
