@@ -16,3 +16,13 @@ class ListDataset(torch.utils.data.Dataset):
         if self.transform is not None:
             return self.transform(item)
         return item
+
+
+def to_map_style_dataset(dataset: torch.utils.data.IterableDataset, n: int) \
+        -> ListDataset:
+    elems = []
+    for i, x in enumerate(dataset):
+        if i == n:
+            break
+        elems.append(x)
+    return ListDataset(elems)

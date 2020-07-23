@@ -105,6 +105,8 @@ types = {
     "mlprogram.utils.data.get_words": mlprogram.utils.data.get_words,
     "mlprogram.utils.data.get_characters": mlprogram.utils.data.get_characters,
     "mlprogram.utils.data.get_samples": mlprogram.utils.data.get_samples,
+    "mlprogram.utils.data.to_map_style_dataset":
+        mlprogram.utils.data.to_map_style_dataset,
 
     "mlprogram.utils.transform.AstToSingleActionSequence":
         mlprogram.utils.transform.AstToSingleActionSequence,
