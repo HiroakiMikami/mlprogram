@@ -7,7 +7,6 @@ from torch.utils.data import IterableDataset
 from typing import Optional, Any, Callable, Tuple, Dict
 
 from mlprogram.utils import Reference as R, Token
-from mlprogram.encoders import Samples
 from mlprogram.languages.csg import AST, Interpreter, Reference
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
@@ -153,10 +152,3 @@ class Dataset(IterableDataset):
                 return retval
 
         return InternalIterator(self)
-
-    @property
-    def samples(self) -> Samples:
-        # rules: List[Rule]
-        # node_types: List[NodeType]
-        # tokens: List[str]  # TODO V
-        pass
