@@ -15,6 +15,19 @@ class TestTrainSupervised(unittest.TestCase):
     def prepare_dataset(self):
         return ListDataset([0, 1, 2])
 
+    def prepare_iterable_dataset(self):
+        class MockDataset(torch.utils.data.IterableDataset):
+            def __iter__(self):
+                class InternalIterator:
+                    def __init__(self):
+                        self.n = 0
+
+                    def __next__(self) -> int:
+                        self.n += 1
+                        return self.n
+                return InternalIterator()
+        return MockDataset()
+
     def prepare_model(self):
         class DummyModel(nn.Module):
             def __init__(self):
@@ -135,14 +148,45 @@ class TestTrainSupervised(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
+            self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
+            self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+
+    def test_iterable_dataset(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_supervised(ws, output,
+                             self.prepare_iterable_dataset(),
+                             model,
+                             self.prepare_optimizer(model),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             self.collate, 1, Iteration(2),
+                             interval=Iteration(1))
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_2")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
 
 

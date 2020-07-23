@@ -57,7 +57,12 @@ def train_supervised(workspace_dir: str, output_dir: str,
     model.to(device)
     model.train()
 
-    iter_per_epoch = len(dataset) // batch_size
+    if hasattr(dataset, "__len__"):
+        is_iterable = False
+        iter_per_epoch = len(dataset) // batch_size
+    else:
+        is_iterable = True
+        iter_per_epoch = 1
     if isinstance(length, Epoch):
         n_iter = length.n * iter_per_epoch
     else:
@@ -96,9 +101,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
     log_score = 0.0
     while manager.updater.iteration < n_iter:
         # TODO num_workers > 0 causes the RuntimeError
-        loader = DataLoader(dataset, batch_size=batch_size,
-                            shuffle=True, num_workers=0,
-                            collate_fn=collate)
+        if is_iterable:
+            loader = DataLoader(dataset, batch_size=batch_size,
+                                shuffle=False, num_workers=0,
+                                collate_fn=collate)
+        else:
+            loader = DataLoader(dataset, batch_size=batch_size,
+                                shuffle=True, num_workers=0,
+                                collate_fn=collate)
         model.train()
         for i, batch in enumerate(loader):
             if manager.updater.iteration >= n_iter:
