@@ -2,7 +2,7 @@ import unittest
 from collections import OrderedDict
 import sys
 import logging
-from dummy_dataset import is_subtype, prepare_dataset
+from dummy_dataset import is_subtype, train_dataset, test_dataset
 import tempfile
 import os
 
@@ -45,9 +45,9 @@ class TestTreeGen(unittest.TestCase):
         chars = get_characters(dataset, tokenize_query)
         samples = get_samples(dataset, to_action_sequence)
 
-        qencoder = LabelEncoder(words, 20)
+        qencoder = LabelEncoder(words, 2)
         cencoder = LabelEncoder(chars, 0)
-        aencoder = ActionSequenceEncoder(samples, 20)
+        aencoder = ActionSequenceEncoder(samples, 2)
         return qencoder, cencoder, aencoder
 
     def prepare_model(self, qencoder, cencoder, aencoder):
@@ -120,11 +120,10 @@ class TestTreeGen(unittest.TestCase):
 
     def evaluate(self, qencoder, cencoder, aencoder, dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            dataset = prepare_dataset(1)
             model = self.prepare_model(qencoder, cencoder, aencoder)
             eval(
                 dir, tmpdir, dir,
-                dataset["test"], dataset["valid"],
+                test_dataset, test_dataset,
                 model,
                 self.prepare_synthesizer(
                     model, qencoder, cencoder, aencoder),
@@ -152,16 +151,15 @@ class TestTreeGen(unittest.TestCase):
                 ground_truth_actions=CollateOptions(True, 0, -1)
             ).collate
 
-            dataset = prepare_dataset(10)["train"]
-            encoder = self.prepare_encoder(dataset, to_action_sequence)
+            encoder = self.prepare_encoder(train_dataset, to_action_sequence)
             model = self.prepare_model(*encoder)
             transform = Map(self.transform_cls(*encoder, to_action_sequence))
             train_supervised(
-                tmpdir, output_dir, dataset,
+                tmpdir, output_dir, train_dataset,
                 model, self.prepare_optimizer(model),
                 Loss(), lambda args: -Loss()(args),
                 lambda x: collate(transform(x)),
-                1, Epoch(10),
+                1, Epoch(100), interval=Epoch(10),
                 num_models=1
             )
         return encoder

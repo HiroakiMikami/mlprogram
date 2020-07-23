@@ -72,17 +72,18 @@ def train_supervised(workspace_dir: str, output_dir: str,
 
     # Initialize extensions manager
     log_reporter = \
-        extensions.LogReport(trigger=Trigger(iter_per_epoch, n_iter))
+        extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
     manager = ppe.training.ExtensionsManager(
         model, optimizer, n_iter / iter_per_epoch,
         out_dir=workspace_dir,
         extensions=[
             log_reporter,
             extensions.ProgressBar(),
-            extensions.PrintReport(),
         ],
         iters_per_epoch=iter_per_epoch,
     )
+    manager.extend(extensions.PrintReport(),
+                   trigger=Trigger(interval_iter, n_iter))
     snapshot = extensions.snapshot(autoload=True, n_retains=1)
     manager.extend(snapshot, trigger=Trigger(interval_iter, n_iter))
 

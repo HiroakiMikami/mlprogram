@@ -1,6 +1,6 @@
 import unittest
 from collections import OrderedDict
-from dummy_dataset import is_subtype, prepare_dataset
+from dummy_dataset import is_subtype, train_dataset, test_dataset
 import logging
 import sys
 import tempfile
@@ -42,8 +42,8 @@ class TestNL2Code(unittest.TestCase):
     def prepare_encoder(self, dataset, to_action_sequence):
         words = get_words(dataset, tokenize_query)
         samples = get_samples(dataset, to_action_sequence)
-        qencoder = LabelEncoder(words, 20)
-        aencoder = ActionSequenceEncoder(samples, 20)
+        qencoder = LabelEncoder(words, 2)
+        aencoder = ActionSequenceEncoder(samples, 2)
         return qencoder, aencoder
 
     def prepare_model(self, qencoder, aencoder):
@@ -106,11 +106,10 @@ class TestNL2Code(unittest.TestCase):
 
     def evaluate(self, qencoder, aencoder, dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            dataset = prepare_dataset(1)
             model = self.prepare_model(qencoder, aencoder)
             eval(
                 dir, tmpdir, dir,
-                dataset["test"], dataset["valid"],
+                test_dataset, test_dataset,
                 model,
                 self.prepare_synthesizer(model, qencoder, aencoder),
                 {"accuracy": Accuracy(lambda x: x, lambda x: x)},
@@ -136,19 +135,18 @@ class TestNL2Code(unittest.TestCase):
                 ground_truth_actions=CollateOptions(True, 0, -1)
             ).collate
 
-            raw_dataset = prepare_dataset(10)["train"]
             qencoder, aencoder = \
-                self.prepare_encoder(raw_dataset, to_action_sequence)
+                self.prepare_encoder(train_dataset, to_action_sequence)
             transform = Map(self.transform_cls(qencoder, aencoder,
                                                to_action_sequence))
             model = self.prepare_model(qencoder, aencoder)
             optimizer = self.prepare_optimizer(model)
             train_supervised(
                 tmpdir, output_dir,
-                raw_dataset, model, optimizer,
+                train_dataset, model, optimizer,
                 Loss(), lambda args: -Loss()(args),
                 lambda x: collate(transform(x)),
-                1, Epoch(10),
+                1, Epoch(100), interval=Epoch(10),
                 num_models=1
             )
         return qencoder, aencoder

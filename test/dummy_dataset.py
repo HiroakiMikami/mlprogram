@@ -1,4 +1,4 @@
-from typing import List, Union, Dict
+from typing import List, Union
 from mlprogram.asts import AST, Node, Leaf, Field, Root
 from mlprogram.utils.data import ListDataset
 
@@ -55,14 +55,14 @@ def FunctionCall(name: str, args: List[AST]):
 
 
 # Dataset
-traindata = [
+train_dataset = ListDataset([
     {"input": ["x is assigned the value of 0"],
      "ground_truth": [Assign("x", Number(0))]},
     {"input": ["dump the value of xy"],
      "ground_truth": [FunctionCall("print", [Name(["x", "y"])])]},
     {"input": ["dump the value of xy and x"],
      "ground_truth": [FunctionCall("print", [Name(["x", "y"]), Name("x")])]}
-]
+])
 test_dataset = ListDataset([
     {"input": ["x is assigned the value of 4"],
      "ground_truth": [Assign("x", Number(4))]},
@@ -71,14 +71,3 @@ test_dataset = ListDataset([
     {"input": ["dump the value of xy and x"],
      "ground_truth": [FunctionCall("print", [Name(["x", "y"]), Name("x")])]}
 ])
-
-
-def prepare_dataset(num_repeat: int) -> Dict[str, ListDataset]:
-    dataset = []
-    for _ in range(num_repeat):
-        dataset.extend(traindata)
-    return {
-        "train": ListDataset(dataset),
-        "test": test_dataset,
-        "valid": test_dataset
-    }
