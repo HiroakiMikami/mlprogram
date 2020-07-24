@@ -77,6 +77,7 @@ class TestTrainSupervised(unittest.TestCase):
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
 
     def test_remove_old_snapshots(self):
         with tempfile.TemporaryDirectory() as tmpdir:

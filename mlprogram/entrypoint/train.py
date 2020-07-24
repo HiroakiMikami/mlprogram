@@ -153,3 +153,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
     if os.path.exists(out_model_dir):
         shutil.rmtree(out_model_dir)
     shutil.copytree(model_dir, out_model_dir)
+
+    logger.info("Dump the last model")
+    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
