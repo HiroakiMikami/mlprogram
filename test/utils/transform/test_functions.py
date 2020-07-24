@@ -17,7 +17,7 @@ class MockInterpreter(Interpreter):
         return int(code)
 
     def eval_references(self, code):
-        return {ref: int(code) for ref, code in code.items()}
+        return {ref: int(code) for ref, code in code}
 
 
 class TestEvaluateGroundTruth(unittest.TestCase):
@@ -28,11 +28,10 @@ class TestEvaluateGroundTruth(unittest.TestCase):
     def test_reference(self):
         f = EvaluateGroundTruth(MockInterpreter())
         result = f({
-            "ground_truth": {
-                Reference(0): "1",
-                Reference(1): "2"
-            },
-            "output_reference": Reference(1)
+            "ground_truth": [
+                (Reference(0), "1"),
+                (Reference(1), "2")
+            ]
         })
         self.assertEqual(2, result["test_case"])
         self.assertEqual({Reference(0): 1, Reference(1): 2},

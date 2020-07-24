@@ -10,13 +10,10 @@ class EvaluateGroundTruth:
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         gt = entry["ground_truth"]
-        if isinstance(gt, dict):
-            if "output_reference" not in entry:
-                return None
-            output_reference = entry["output_reference"]
+        if isinstance(gt, list):
             results = self.interpreter.eval_references(gt)
             entry["variables"] = results
-            entry["test_case"] = results[output_reference]
+            entry["test_case"] = results[gt[-1][0]]
         else:
             entry["test_case"] = self.interpreter.eval(gt)
         return entry

@@ -1,6 +1,6 @@
 import unittest
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode
-from mlprogram.utils import Reference
+from mlprogram.utils import Reference, Token
 from mlprogram.asts import Leaf
 
 
@@ -9,11 +9,10 @@ class TestPbeWithRepl(unittest.TestCase):
         f = ToEpisode(remove_used_reference=False)
         retval = f({
             "input": 0,
-            "ground_truth": {
-                Reference(0): 0,
-                Reference(1): 1
-            },
-            "references": [Reference(0), Reference(1)],
+            "ground_truth": [
+                (Reference(0), 0),
+                (Reference(1), 1)
+            ],
             "variables": {
                 Reference(0): 0,
                 Reference(1): 1
@@ -24,7 +23,7 @@ class TestPbeWithRepl(unittest.TestCase):
             {
                 "input": 0,
                 "ground_truth": 0,
-                "references": [],
+                "reference": [],
                 "variables": []
             },
             retval[0]
@@ -33,7 +32,7 @@ class TestPbeWithRepl(unittest.TestCase):
             {
                 "input": 0,
                 "ground_truth": 1,
-                "references": [Reference(0)],
+                "reference": [Token(None, Reference(0))],
                 "variables": [0]
             },
             retval[1]
@@ -44,12 +43,11 @@ class TestPbeWithRepl(unittest.TestCase):
                       remove_used_reference=True)
         retval = f({
             "input": 0,
-            "ground_truth": {
-                Reference(0): 0,
-                Reference(1): 1,
-                Reference(2): 2
-            },
-            "references": [Reference(0), Reference(1), Reference(2)],
+            "ground_truth": [
+                (Reference(0), 0),
+                (Reference(1), 1),
+                (Reference(2), 2)
+            ],
             "variables": {
                 Reference(0): 0,
                 Reference(1): 1,
@@ -61,7 +59,7 @@ class TestPbeWithRepl(unittest.TestCase):
             {
                 "input": 0,
                 "ground_truth": 0,
-                "references": [],
+                "reference": [],
                 "variables": []
             },
             retval[0]
@@ -70,7 +68,7 @@ class TestPbeWithRepl(unittest.TestCase):
             {
                 "input": 0,
                 "ground_truth": 1,
-                "references": [],
+                "reference": [],
                 "variables": []
             },
             retval[1]
@@ -79,7 +77,7 @@ class TestPbeWithRepl(unittest.TestCase):
             {
                 "input": 0,
                 "ground_truth": 2,
-                "references": [Reference(1)],
+                "reference": [Token(None, Reference(1))],
                 "variables": [1]
             },
             retval[2]

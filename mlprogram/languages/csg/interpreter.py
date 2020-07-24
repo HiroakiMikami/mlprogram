@@ -4,7 +4,7 @@ from mlprogram.interpreters import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
     Reference
-from typing import Callable, Dict
+from typing import Callable, Dict, Tuple, List
 import math
 from functools import lru_cache
 
@@ -53,10 +53,10 @@ class Interpreter(BaseInterpreter[AST, Shape]):
         return self._cached_eval(code).render(
             self.width, self.height, self.resolution)
 
-    def eval_references(self, code: Dict[R, AST]) -> Dict[R, np.array]:
-        unref_code = {r: value for r, value in code.items()}
+    def eval_references(self, code: List[Tuple[R, AST]]) -> Dict[R, np.array]:
+        unref_code: Dict[R, AST] = {}
         values = {}
-        for ref, ast in code.items():
+        for ref, ast in code:
             unref_code[ref] = self._unreference(ast, unref_code)
             values[ref] = self.eval(unref_code[ref])
         return values

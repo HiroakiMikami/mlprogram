@@ -71,9 +71,9 @@ class TestInterpreter(unittest.TestCase):
         ref1 = Rectangle(3, 1)
         ref2 = Difference(Reference(R(0)), Reference(R(1)))
         ref3 = Union(Rectangle(1, 1), Reference(R(2)))
-        code = {
-            R(0): ref0, R(1): ref1, R(2): ref2, R(3): ref3
-        }
+        code = [
+            (R(0), ref0), (R(1), ref1), (R(2), ref2), (R(3), ref3)
+        ]
         result = Interpreter(3, 3, 1).eval_references(code)
         self.assertEqual(
             "   \n # \n   \n",

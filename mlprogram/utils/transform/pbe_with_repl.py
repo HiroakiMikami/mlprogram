@@ -1,5 +1,5 @@
-from typing import List, Dict, Any, cast, Callable, Optional, Set
-from mlprogram.utils import Reference
+from typing import List, Dict, Any, cast, Callable, Optional, Set, Tuple
+from mlprogram.utils import Reference, Token
 from mlprogram.asts import AST, Node, Leaf
 
 
@@ -11,8 +11,9 @@ class ToEpisode:
 
     def __call__(self, entry: Dict[str, Any]) -> List[Dict[str, Any]]:
         input = entry["input"]
-        references = cast(List[Reference], entry["references"])
-        ground_truth = cast(Dict[Reference, Any], entry["ground_truth"])
+        ground_truth = cast(List[Tuple[Reference, Any]], entry["ground_truth"])
+        gt_refs = {ref: value for ref, value in ground_truth}
+        references = [ref for ref, _ in ground_truth]
         variables = cast(Dict[Reference, Any], entry["variables"])
 
         def find_refs(ast: AST) -> List[Reference]:
@@ -36,14 +37,14 @@ class ToEpisode:
             rs = list(refs)
             retval.append({
                 "input": input,
-                "ground_truth": ground_truth[ref],
-                "references": rs,
+                "ground_truth": gt_refs[ref],
+                "reference": [Token(None, r) for r in rs],
                 "variables": [variables[r] for r in rs]
             })
             refs.add(ref)
             if self.remove_used_reference:
                 assert self.to_ast is not None
-                used = find_refs(self.to_ast(ground_truth[ref]))
+                used = find_refs(self.to_ast(gt_refs[ref]))
                 for r in used:
                     if r in refs:
                         refs.remove(r)

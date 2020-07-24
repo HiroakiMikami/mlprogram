@@ -3,7 +3,7 @@ from torch import nn
 import logging
 from typing \
     import TypeVar, Generic, Generator, Optional, Dict, Any, Callable, \
-    List, Set
+    List, Set, Tuple
 from mlprogram.asts import AST, Node, Leaf
 from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.synthesizers import Synthesizer
@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 Input = TypeVar("Input")
 
 
-class AstSetSampler(Sampler[Input, Dict[Reference, AST], Dict[str, Any]],
+class AstSetSampler(Sampler[Input, List[Tuple[Reference, AST]],
+                            Dict[str, Any]],
                     Generic[Input]):
     def __init__(self,
                  synthesizer: Synthesizer[Dict[str, Any], AST],
@@ -41,11 +42,11 @@ class AstSetSampler(Sampler[Input, Dict[Reference, AST], Dict[str, Any]],
         state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
         state["reference"] = []
-        state["mapping"] = {}
+        state["mapping"] = []
         return state
 
     def create_output(self, state: Dict[str, Any]) \
-            -> Optional[Dict[Reference, AST]]:
+            -> Optional[List[Tuple[Reference, AST]]]:
         return state["mapping"]
 
     def k_samples(self, states: List[SamplerState[Dict[str, Any]]], n: int) \
@@ -71,7 +72,7 @@ class AstSetSampler(Sampler[Input, Dict[Reference, AST], Dict[str, Any]],
                 new_state = {key: value for key, value in state.state.items()}
                 # Copy reference
                 new_state["reference"] = list(new_state["reference"])
-                new_state["mapping"] = dict(new_state["mapping"].items())
+                new_state["mapping"] = list(new_state["mapping"])
                 n_var = len(new_state["mapping"])
                 ref = Reference(f"v{n_var}")
                 type_name = result.output.get_type_name()
@@ -84,7 +85,7 @@ class AstSetSampler(Sampler[Input, Dict[Reference, AST], Dict[str, Any]],
                          if token.value not in vars]
                 new_state["reference"].append(
                     Token(type_name, ref))
-                new_state["mapping"][ref] = result.output
+                new_state["mapping"].append((ref, result.output))
                 sampler_states.append(SamplerState(state.score + result.score,
                                                    new_state))
                 if i == n:
