@@ -128,6 +128,7 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
+    "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
