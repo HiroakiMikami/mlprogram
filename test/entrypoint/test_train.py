@@ -1,3 +1,4 @@
+import numpy as np
 import unittest
 import tempfile
 import os
@@ -7,8 +8,9 @@ from torch import nn
 from torch import optim
 
 from mlprogram.entrypoint.train import Epoch, Iteration
-from mlprogram.entrypoint import train_supervised
+from mlprogram.entrypoint import train_supervised, train_REINFORCE
 from mlprogram.utils.data import ListDataset
+from mlprogram.synthesizers import Result
 
 
 class TestTrainSupervised(unittest.TestCase):
@@ -91,8 +93,7 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             self.collate, 1, Epoch(2),
-                             num_checkpoints=1)
+                             self.collate, 1, Epoch(2))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
 
@@ -189,6 +190,123 @@ class TestTrainSupervised(unittest.TestCase):
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+
+
+class TestTrainREINFORCE(unittest.TestCase):
+    def prepare_dataset(self):
+        return ListDataset([
+            {"value": 0},
+            {"value": 1},
+            {"value": 2}
+        ])
+
+    def prepare_model(self):
+        class DummyModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.m = nn.Linear(1, 1)
+
+            def forward(self, kwargs):
+                kwargs["value"] = self.m(kwargs["value"])
+                return kwargs
+
+        return DummyModel()
+
+    def prepare_optimizer(self, model):
+        return optim.SGD(model.parameters(), 0.1)
+
+    def collate(self, elems):
+        B = len(elems)
+        output = [elem["ground_truth"]["output"] for elem in elems]
+        tensor = torch.tensor(output).reshape(B, 1).float()
+        return {"value": tensor, "target": tensor}
+
+    def prepare_synthesizer(self, model):
+        class MockSynthesizer:
+            def __init__(self, model):
+                self.model = model
+
+            def __call__(self, query):
+                yield Result({"output": query["value"]}, 0)
+
+        return MockSynthesizer(model)
+
+    def test_happy_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_REINFORCE(output, ws, output,
+                            self.prepare_dataset(),
+                            self.prepare_synthesizer(model),
+                            model,
+                            self.prepare_optimizer(model),
+                            lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                        kwargs["target"]
+                                                        ) * kwargs["reward"],
+                            lambda sample, output:
+                                sample["value"] == output["output"],
+                            lambda score: score > 0.5,
+                            self.collate,
+                            1, 1, Epoch(2))
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_6")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+
+    def test_pretrained_model(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            input = os.path.join(tmpdir, "in")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            model2 = self.prepare_model()
+            model2.m.bias[:] = np.nan
+            os.makedirs(input)
+            torch.save(model2.state_dict(), os.path.join(input, "model.pt"))
+
+            train_REINFORCE(input, ws, output,
+                            self.prepare_dataset(),
+                            self.prepare_synthesizer(model),
+                            model,
+                            self.prepare_optimizer(model),
+                            lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                        kwargs["target"]
+                                                        ) * kwargs["reward"],
+                            lambda sample, output:
+                                sample["value"] == output["output"],
+                            lambda score: score > 0.5,
+                            self.collate,
+                            1, 1, Epoch(2),
+                            use_pretrained_model=True)
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_3")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
 
 
 if __name__ == "__main__":

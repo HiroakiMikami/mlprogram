@@ -58,6 +58,8 @@ types = {
         mlprogram.entrypoint.train.Iteration,
     "mlprogram.entrypoint.train_supervised":
         mlprogram.entrypoint.train_supervised,
+    "mlprogram.entrypoint.train_REINFORCE":
+        mlprogram.entrypoint.train_REINFORCE,
     "mlprogram.entrypoint.evaluate": mlprogram.entrypoint.evaluate,
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,

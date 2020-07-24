@@ -1,15 +1,17 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions
-from typing import Callable, Any, Tuple, cast, Union, Optional
+from typing import Callable, Any, Union, Optional, List
 import os
 import logging
 import shutil
 from math import isnan, isinf
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKModel
+from mlprogram.metrics import Metric
+from mlprogram.synthesizers import Synthesizer
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -38,35 +40,15 @@ class Trigger:
             (manager.updater.iteration % self.interval == 0)
 
 
-def train_supervised(workspace_dir: str, output_dir: str,
-                     dataset: torch.utils.data.Dataset,
-                     model: nn.Module,
-                     optimizer: torch.optim.Optimizer,
-                     loss,
-                     score,
-                     collate: Callable[[Any], Any],
-                     batch_size: int,
-                     length: Length,
-                     interval: Optional[Length] = None,
-                     num_checkpoints: int = 2, num_models: int = 3,
-                     device: torch.device = torch.device("cpu")) \
-        -> None:
-    os.makedirs(workspace_dir, exist_ok=True)
-
-    logger.info("Prepare model")
-    model.to(device)
-    model.train()
-
-    if hasattr(dataset, "__len__"):
-        is_iterable = False
-        iter_per_epoch = len(dataset) // batch_size
-    else:
-        is_iterable = True
-        iter_per_epoch = 1
+def calc_n_iter(length: Length, iter_per_epoch: int) -> int:
     if isinstance(length, Epoch):
         n_iter = length.n * iter_per_epoch
     else:
         n_iter = length.n
+    return n_iter
+
+
+def calc_interval_iter(interval: Optional[Length], iter_per_epoch: int) -> int:
     if interval is None:
         interval_iter = iter_per_epoch
     else:
@@ -74,8 +56,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
             interval_iter = interval.n * iter_per_epoch
         else:
             interval_iter = interval.n
+    return interval_iter
 
-    # Initialize extensions manager
+
+def create_extensions_manager(n_iter: int, interval_iter: int,
+                              iter_per_epoch: int,
+                              model: nn.Module,
+                              optimizer: torch.optim.Optimizer,
+                              workspace_dir: str):
     log_reporter = \
         extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
     manager = ppe.training.ExtensionsManager(
@@ -91,6 +79,41 @@ def train_supervised(workspace_dir: str, output_dir: str,
                    trigger=Trigger(interval_iter, n_iter))
     snapshot = extensions.snapshot(autoload=True, n_retains=1)
     manager.extend(snapshot, trigger=Trigger(interval_iter, n_iter))
+    return log_reporter, manager
+
+
+def train_supervised(workspace_dir: str, output_dir: str,
+                     dataset: torch.utils.data.Dataset,
+                     model: nn.Module,
+                     optimizer: torch.optim.Optimizer,
+                     loss: Callable[[Any], torch.Tensor],
+                     score: Callable[[Any], torch.Tensor],
+                     collate: Callable[[List[Any]], Any],
+                     batch_size: int,
+                     length: Length,
+                     interval: Optional[Length] = None,
+                     num_models: int = 3,
+                     device: torch.device = torch.device("cpu")) \
+        -> None:
+    os.makedirs(workspace_dir, exist_ok=True)
+
+    logger.info("Prepare model")
+    model.to(device)
+    model.train()
+
+    if hasattr(dataset, "__len__"):
+        is_iterable = False
+        iter_per_epoch = len(dataset) // batch_size
+    else:
+        is_iterable = True
+        iter_per_epoch = 1
+    n_iter = calc_n_iter(length, iter_per_epoch)
+    interval_iter = calc_interval_iter(interval, iter_per_epoch)
+
+    # Initialize extensions manager
+    log_reporter, manager = \
+        create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
+                                  model, optimizer, workspace_dir)
 
     # Prepare TopKModel
     model_dir = os.path.join(workspace_dir, "model")
@@ -110,17 +133,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
                                 shuffle=True, num_workers=0,
                                 collate_fn=collate)
         model.train()
-        for i, batch in enumerate(loader):
+        for batch in loader:
             if manager.updater.iteration >= n_iter:
                 break
             with manager.run_iteration():
                 if len(batch) == 0:
-                    logger.info(f"Skip {i} th batch")
+                    logger.info(f"Skip {manager.updater.iteration} th batch")
                     continue
-                output = cast(Tuple[PaddedSequenceWithMask,
-                                    PaddedSequenceWithMask,
-                                    PaddedSequenceWithMask],
-                              model(batch))
+                output = model(batch)
                 bloss = loss(output)
                 s = score(output)
                 model.zero_grad()
@@ -142,6 +162,140 @@ def train_supervised(workspace_dir: str, output_dir: str,
             if isnan(log_loss) or isinf(log_loss):
                 logger.info("Stop training")
                 break
+        if isnan(log_loss) or isinf(log_loss):
+            logger.info("Stop training")
+            break
+
+    logger.info("Copy log to output_dir")
+    os.makedirs(output_dir, exist_ok=True)
+    shutil.copyfile(os.path.join(workspace_dir, "log"),
+                    os.path.join(output_dir, "log.json"))
+
+    logger.info("Copy models to output_dir")
+    out_model_dir = os.path.join(output_dir, "model")
+    if os.path.exists(out_model_dir):
+        shutil.rmtree(out_model_dir)
+    shutil.copytree(model_dir, out_model_dir)
+
+    logger.info("Dump the last model")
+    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+
+
+def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
+                    dataset: torch.utils.data.Dataset,
+                    synthesizer: Synthesizer,
+                    model: nn.Module,
+                    optimizer: torch.optim.Optimizer,
+                    loss: Callable[[Any], torch.Tensor],
+                    score: Metric,
+                    reward: Callable[[float], float],
+                    collate: Callable[[List[Any]], Any],
+                    batch_size: int,
+                    n_rollout: int,
+                    length: Length,
+                    interval: Optional[Length] = None,
+                    num_models: int = 3,
+                    use_pretrained_model: bool = False,
+                    device: torch.device = torch.device("cpu")) \
+        -> None:
+    os.makedirs(workspace_dir, exist_ok=True)
+
+    logger.info("Prepare model")
+    model.to(device)
+    model.train()
+
+    if hasattr(dataset, "__len__"):
+        is_iterable = False
+        iter_per_epoch = len(dataset) // batch_size
+    else:
+        is_iterable = True
+        iter_per_epoch = 1
+    n_iter = calc_n_iter(length, iter_per_epoch)
+    interval_iter = calc_interval_iter(interval, iter_per_epoch)
+
+    if use_pretrained_model:
+        logger.info("Load pretrained model")
+        pretrained_model = os.path.join(input_dir, "model.pt")
+        state_dict = torch.load(pretrained_model,
+                                map_location=torch.device("cpu"))
+        model.load_state_dict(state_dict)
+
+    # Initialize extensions manager
+    log_reporter, manager = \
+        create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
+                                  model, optimizer, workspace_dir)
+
+    # Prepare TopKModel
+    model_dir = os.path.join(workspace_dir, "model")
+    os.makedirs(model_dir, exist_ok=True)
+    top_k_model = TopKModel(num_models, model_dir)
+
+    log_loss = 0.0
+    log_score = 0.0
+    while manager.updater.iteration < n_iter:
+        # TODO num_workers > 0 causes the RuntimeError
+        if is_iterable:
+            loader = DataLoader(dataset, batch_size=batch_size,
+                                shuffle=False, num_workers=0,
+                                collate_fn=lambda x: x)
+        else:
+            loader = DataLoader(dataset, batch_size=batch_size,
+                                shuffle=True, num_workers=0,
+                                collate_fn=lambda x: x)
+        model.train()
+        for samples in loader:
+            if manager.updater.iteration >= n_iter:
+                break
+            with manager.run_iteration():
+                # Rolleout
+                rollouts = []
+                scores = []
+                for sample in samples:
+                    for j in range(n_rollout):
+                        max_score = 0.0
+                        rollout = None
+                        for x in synthesizer(sample):
+                            s = score(sample, x.output)
+                            if rollout is None or max_score < s:
+                                max_score = s
+                                rollout = x.output
+                        if rollout is not None:
+                            output = \
+                                {key: value for key, value in sample.items()}
+                            output["ground_truth"] = rollout
+                            rollouts.append(output)
+                            scores.append(max_score)
+                if len(rollouts) == 0:
+                    logger.warning("No rollout")
+                    continue
+
+                batch2 = collate(rollouts)
+                batch2["reward"] = torch.tensor([reward(score)
+                                                 for score in scores])
+                output = model(batch2)
+                bloss = loss(output)
+                model.zero_grad()
+                bloss.backward()
+                optimizer.step()
+
+                ppe.reporting.report({
+                    "loss": bloss.item(),
+                    "score": np.mean(scores)
+                })
+            if len(log_reporter.log) != 0:
+                log_loss = log_reporter.log[-1]["loss"]
+                log_score = log_reporter.log[-1]["score"]
+
+            if manager.updater.iteration % interval_iter == 0:
+                top_k_model.save(log_score,
+                                 f"{manager.updater.iteration}", model)
+
+            if isnan(log_loss) or isinf(log_loss):
+                logger.info("Stop training")
+                break
+        if isnan(log_loss) or isinf(log_loss):
+            logger.info("Stop training")
+            break
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
