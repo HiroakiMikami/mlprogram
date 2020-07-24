@@ -42,6 +42,12 @@ types = {
     "sub": lambda x, y: x - y,
     "mul": lambda x, y: x * y,
     "div": lambda x, y: x / y,
+    "gt": lambda x, y: x > y,
+    "ge": lambda x, y: x >= y,
+    "lt": lambda x, y: x < y,
+    "le": lambda x, y: x <= y,
+    "eq": lambda x, y: x == y,
+    "ne": lambda x, y: x != y,
 
     "collections.OrderedDict": lambda items: collections.OrderedDict(items),
     "os.path.join": lambda args: os.path.join(*args),
