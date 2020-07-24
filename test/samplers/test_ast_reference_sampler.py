@@ -6,7 +6,7 @@ from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.asts import AST, Node, Leaf, Field
 from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
-from mlprogram.samplers import AstSetSampler, SamplerState, Reference
+from mlprogram.samplers import AstReferenceSampler, SamplerState, Reference
 
 
 class MockSynthesizer(Synthesizer[Dict[str, Any], AST]):
@@ -23,14 +23,14 @@ class MockEncoder(nn.Module):
         return x
 
 
-class TestAstSetSampler(unittest.TestCase):
+class TestAstReferenceSampler(unittest.TestCase):
     def test_ast_set_sample(self):
         asts = [
             Node("def", [Field("name", "str", Leaf("str", "f"))]),
             Node("int", [Field("value", "int", Leaf("int", "10"))]),
             Node("float", [Field("value", "float", Leaf("float", "10.0"))]),
         ]
-        sampler = AstSetSampler(
+        sampler = AstReferenceSampler(
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),
@@ -43,7 +43,7 @@ class TestAstSetSampler(unittest.TestCase):
             SamplerState(1, {
                 "x": 0,
                 "reference": [Token("def", Reference("v0"))],
-                "mapping": [(Reference("v0"), asts[0])]
+                "code": [(Reference("v0"), asts[0])]
             }),
             samples[0]
         )
@@ -51,7 +51,7 @@ class TestAstSetSampler(unittest.TestCase):
             SamplerState(0.5, {
                 "x": 0,
                 "reference": [Token("int", Reference("v0"))],
-                "mapping": [(Reference("v0"), asts[1])]
+                "code": [(Reference("v0"), asts[1])]
             }),
             samples[1]
         )
@@ -59,7 +59,7 @@ class TestAstSetSampler(unittest.TestCase):
             SamplerState(1.0 / 3, {
                 "x": 0,
                 "reference": [Token("float", Reference("v0"))],
-                "mapping": [(Reference("v0"), asts[2])]
+                "code": [(Reference("v0"), asts[2])]
             }),
             samples[2]
         )
@@ -70,14 +70,14 @@ class TestAstSetSampler(unittest.TestCase):
             Node("def",
                  [Field("name", "str", Leaf("String", Reference("v0")))]),
         ]
-        sampler = AstSetSampler(
+        sampler = AstReferenceSampler(
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),
             MockEncoder())
         zero = SamplerState(0, sampler.initialize(0))
         zero.state["reference"] = [Token("str", Reference("v0"))]
-        zero.state["mapping"] = [(Reference("v0"), ast)]
+        zero.state["code"] = [(Reference("v0"), ast)]
         samples = list(sampler.k_samples([zero], 1))
         samples.sort(key=lambda x: -x.score)
         self.assertEqual(1, len(samples))
@@ -85,7 +85,7 @@ class TestAstSetSampler(unittest.TestCase):
             SamplerState(1, {
                 "x": 0,
                 "reference": [Token("def", Reference("v1"))],
-                "mapping": [(Reference("v0"), ast), (Reference("v1"), asts[0])]
+                "code": [(Reference("v0"), ast), (Reference("v1"), asts[0])]
             }),
             samples[0]
         )
