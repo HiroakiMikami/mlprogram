@@ -2,7 +2,8 @@ import numpy as np
 import torch
 from torch import nn
 import unittest
-from mlprogram.nn import Apply
+from mlprogram.nn import Apply, ApplyOptions
+from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class MockModule(nn.Module):
@@ -29,7 +30,8 @@ class TestApply(unittest.TestCase):
         ))
 
     def test_sequence(self):
-        apply = Apply("in", "out", MockModule(1), is_sequence=True)
+        apply = Apply("in", "out", MockModule(1),
+                      options=ApplyOptions.Sequence)
 
         output = apply({"in": [torch.arange(2).reshape(-1, 1),
                                torch.arange(1).reshape(-1, 1) * 10,
@@ -45,12 +47,39 @@ class TestApply(unittest.TestCase):
         ))
 
     def test_empty_sequence(self):
-        apply = Apply("in", "out", MockModule(1), is_sequence=True)
+        apply = Apply("in", "out", MockModule(1),
+                      options=ApplyOptions.Sequence)
 
         output = apply({"in": []})
         self.assertEqual([], output["out"])
         output = apply({"in": [torch.zeros((0,))]})
         self.assertEqual([[]], output["out"])
+
+    def test_padded_sequence(self):
+        apply = Apply("in", "out", MockModule(1),
+                      options=ApplyOptions.PaddedSequence)
+
+        padded = pad_sequence([torch.arange(2).reshape(-1, 1),
+                               torch.arange(1).reshape(-1, 1) * 10,
+                               torch.arange(3).reshape(-1, 1) * 100],
+                              padding_value=-1)
+        output = apply({"in": padded})
+        self.assertTrue(np.array_equal(
+            [
+                [[1], [1], [1]],
+                [[2], [0], [101]],
+                [[0], [0], [201]]
+            ],
+            output["out"].data.detach().numpy()
+        ))
+        self.assertTrue(np.array_equal(
+            [
+                [1, 1, 1],
+                [1, 0, 1],
+                [0, 0, 1]
+            ],
+            output["out"].mask.detach().numpy()
+        ))
 
 
 if __name__ == "__main__":
