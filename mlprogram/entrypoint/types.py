@@ -105,6 +105,8 @@ types = {
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
+    "mlprogram.samplers.transform":
+        mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,
 

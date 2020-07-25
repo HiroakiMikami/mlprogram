@@ -1,9 +1,11 @@
-from typing import TypeVar, Generic, Optional, List, Generator, Any
+from typing import TypeVar, Generic, Optional, List, Generator, Any, Callable
 from dataclasses import dataclass
 
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
+Output1 = TypeVar("Output1")
+Output2 = TypeVar("Output2")
 State = TypeVar("State")
 
 
@@ -35,3 +37,34 @@ class Sampler(Generic[Input, Output, State]):
     def k_samples(self, states: List[SamplerState[State]], n: int) \
             -> Generator[SamplerState[State], None, None]:
         raise NotImplementedError
+
+
+def transform(sampler: Sampler[Input, Output1, State],
+              transform: Callable[[Output1], Optional[Output2]]) \
+        -> Sampler[Input, Output2, State]:
+    class TransformedSampler(Sampler[Input, Output2, State],
+                             Generic[Input, Output2, State]):
+        def __init__(self, sampler: Sampler[Input, Output1, State],
+                     transform: Callable[[Output1], Optional[Output2]]):
+            self.sampler = sampler
+            self.transform = transform
+
+        def initialize(self, input: Input) -> State:
+            return self.sampler.initialize(input)
+
+        def create_output(self, state: State) -> Optional[Output]:
+            output1 = self.sampler.create_output(state)
+            if output1 is None:
+                return None
+            output2 = self.transform(output1)
+            return output2
+
+        def top_k_samples(self, states: List[SamplerState[State]], k: int) \
+                -> Generator[SamplerState[State], None, None]:
+            return self.sampler.top_k_samples(states, k)
+
+        def k_samples(self, states: List[SamplerState[State]], n: int) \
+                -> Generator[SamplerState[State], None, None]:
+            return self.sampler.k_samples(states, n)
+
+    return TransformedSampler(sampler, transform)
