@@ -39,7 +39,8 @@ class Apply(nn.Module):
         elif self.options == ApplyOptions.PaddedSequence:
             input = entry[self.in_key]
             L, B = input.data.shape[:2]
-            output = self.module(input.data.reshape(L * B, *input.data.shape[2:]))
+            output = self.module(
+                input.data.reshape(L * B, *input.data.shape[2:]))
             output = output.reshape(L, B, *output.shape[1:])
             entry[self.out_key] = PaddedSequenceWithMask(output, input.mask)
         return entry
