@@ -1,3 +1,4 @@
+import torch
 from typing import List, Dict, Any, cast, Callable, Optional, Set, Tuple
 from mlprogram.utils import Reference, Token
 from mlprogram.asts import AST, Node, Leaf
@@ -35,11 +36,17 @@ class ToEpisode:
         refs: Set[Reference] = set()
         for ref in references:
             rs = list(refs)
+            vs = [variables[r] for r in rs]
+            if len(vs) == 0:
+                s = input.shape
+                tensor = torch.zeros(0, *s)
+            else:
+                tensor = torch.stack(vs, dim=0)
             retval.append({
                 "input": input,
                 "ground_truth": gt_refs[ref],
                 "reference": [Token(None, r) for r in rs],
-                "variables": [variables[r] for r in rs]
+                "variables": tensor
             })
             refs.add(ref)
             if self.remove_used_reference:
