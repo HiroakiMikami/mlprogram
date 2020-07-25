@@ -23,12 +23,6 @@ class TestDataset(unittest.TestCase):
         self.assertNotEqual(samples[0][0]["ground_truth"],
                             samples[1][0]["ground_truth"])
 
-    def test_transform(self):
-        dataset = Dataset(2, 1, 1, 45, transform=lambda x: 0)
-        for x in dataset:
-            self.assertEqual(0, x)
-            break
-
     def test_reference(self):
         torch.manual_seed(0)
         dataset = Dataset(2, 3, 1, 45, reference=True)

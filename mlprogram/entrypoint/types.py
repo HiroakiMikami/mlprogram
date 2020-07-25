@@ -115,6 +115,7 @@ types = {
     "mlprogram.utils.data.get_samples": mlprogram.utils.data.get_samples,
     "mlprogram.utils.data.to_map_style_dataset":
         mlprogram.utils.data.to_map_style_dataset,
+    "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
     "mlprogram.utils.transform.AstToSingleActionSequence":
         mlprogram.utils.transform.AstToSingleActionSequence,

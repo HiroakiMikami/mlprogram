@@ -3,7 +3,7 @@ import logging
 
 from torch.utils import data
 from torch.utils.data import IterableDataset
-from typing import Optional, Any, Callable, Tuple, Dict, List
+from typing import Optional, Any, Tuple, Dict, List
 
 from mlprogram.utils import Reference as R
 from mlprogram.languages.csg import AST, Reference
@@ -21,8 +21,7 @@ class Dataset(IterableDataset):
             depth: int, length_stride: int,
             degree_stride: int,
             reference: bool = False,
-            seed: Optional[int] = None,
-            transform: Optional[Callable[[Dict[str, Any]], Any]] = None):
+            seed: Optional[int] = None):
         self.canvas_size = canvas_size
         self.depth = depth
         s = self.canvas_size // 2
@@ -35,7 +34,6 @@ class Dataset(IterableDataset):
         self.node_candidates = ["Translation", "Rotation",
                                 "Union", "Difference"]
         self.seed = seed if seed is not None else 0
-        self.transform = transform
 
     def sample_ast(self, rng: np.random.RandomState, depth: int) -> AST:
         if depth == 1:
@@ -144,8 +142,6 @@ class Dataset(IterableDataset):
                     retval = {
                         "ground_truth": ast
                     }
-                if self.parent.transform is not None:
-                    retval = self.parent.transform(retval)
                 return retval
 
         return InternalIterator(self)
