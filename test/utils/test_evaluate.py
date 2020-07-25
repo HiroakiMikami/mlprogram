@@ -20,7 +20,7 @@ class TestEvaluate(unittest.TestCase):
             for i, s in enumerate(output):
                 yield DecoderResult(s, -i)
 
-        accuracy = Accuracy(str, str)
+        accuracy = Accuracy()
         dataset = ListDataset([{
             "input": ["query0", "query1", "query2"],
             "ground_truth": ["c0", "c1", "c4"]

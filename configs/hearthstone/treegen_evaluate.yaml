@@ -4,10 +4,27 @@ device:
   type_str: "cuda"
   index: 0
 
+normalize_dataset:
+  type: mlprogram.utils.transform.NormalizeGroundTruth
+  normalize:
+    type: mlprogram.utils.Sequence
+    funcs:
+      type: collections.OrderedDict
+      items:
+        - - parse
+          - type: mlprogram.languages.python.Parse
+        - - unparse
+          - type: mlprogram.languages.python.Unparse
 dataset:
   type: mlprogram.datasets.hearthstone.download
-test_dataset: "@/dataset.test"
-valid_dataset: "@/dataset.valid"
+test_dataset:
+  type: mlprogram.utils.data.transform
+  dataset: "@/dataset.test"
+  transform: "@/normalize_dataset"
+valid_dataset:
+  type: mlprogram.utils.data.transform
+  dataset: "@/dataset.valid"
+  transform: "@/normalize_dataset"
 
 to_action_sequence:
   type: mlprogram.utils.Compose
@@ -179,30 +196,27 @@ synthesizer:
   beam_size: 15
   max_step_size: 250
   sampler:
-    type: mlprogram.samplers.ActionSequenceSampler
-    encoder: "@/encoder.action_sequence_encoder"
-    get_token_type: null
-    is_subtype:
-      type: mlprogram.languages.python.IsSubtype
-    transform_input: "@/transform.transform_input"
-    transform_action_sequence: "@/transform.transform_action_sequence"
-    collate: "@/collate"
-    module: "@/model"
+  sampler:
+    type: mlprogram.samplers.transform
+    sampler:
+      type: mlprogram.samplers.ActionSequenceSampler
+      encoder: "@/encoder.action_sequence_encoder"
+      get_token_type: null
+      is_subtype:
+        type: mlprogram.languages.python.IsSubtype
+      transform_input: "@/transform.transform_input"
+      transform_action_sequence: "@/transform.transform_action_sequence"
+      collate: "@/collate"
+      module: "@/model"
+    transform:
+      type: mlprogram.languages.python.Unparse
 
 # Metrics
 metrics:
   accuracy:
     type: mlprogram.metrics.Accuracy
-    parse:
-      type: mlprogram.languages.python.Parse
-    unparse:
-      type: mlprogram.languages.python.Unparse
   bleu:
     type: mlprogram.metrics.python.Bleu
-    parse:
-      type: mlprogram.languages.python.Parse
-    unparse:
-      type: mlprogram.languages.python.Unparse
 
 main:
   type: mlprogram.entrypoint.evaluate

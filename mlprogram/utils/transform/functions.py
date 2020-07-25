@@ -11,11 +11,14 @@ class NormalizeGroudTruth(Generic[Code]):
         self.normalize = normalize
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        gt = self.normalize(entry["ground_truth"])
-        if gt is None:
-            return entry
-        entry["ground_truth"] = gt
-        return gt
+        gts = []
+        for gt in entry["ground_truth"]:
+            norm_gt = self.normalize(gt)
+            if norm_gt is None:
+                norm_gt = gt
+            gts.append(norm_gt)
+        entry["ground_truth"] = gts
+        return entry
 
 
 class EvaluateGroundTruth:

@@ -1,14 +1,10 @@
-from typing import Callable, TypeVar, Generic, Optional
-from .metric_using_ground_truth import MetricUsingGroundTruth
+from typing import TypeVar, Generic, Dict, Any
+from .metric import Metric
 
-Code = TypeVar("Code")
 Value = TypeVar("Value")
 
 
-class Accuracy(MetricUsingGroundTruth[Code, Value], Generic[Code, Value]):
-    def __init__(self, parse: Optional[Callable[[Code], Value]],
-                 unparse: Optional[Callable[[Value], Code]]):
-        super().__init__(parse, unparse)
-
-    def metric(self, gts, value) -> float:
+class Accuracy(Metric[Value], Generic[Value]):
+    def __call__(self, input: Dict[str, Any], value: Value) -> float:
+        gts = input["ground_truth"]
         return 1.0 if value in gts else 0.0

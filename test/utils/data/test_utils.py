@@ -28,6 +28,7 @@ class TestTransform(unittest.TestCase):
         dataset = transform(ListDataset([0]), lambda x: x + 1)
         self.assertEqual(1, len(dataset))
         self.assertEqual(1, dataset[0])
+        self.assertEqual([1], dataset[:1])
 
     def test_iterable_dataset(self):
         dataset = transform(MockDataset(), lambda x: x + 1)

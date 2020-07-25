@@ -42,8 +42,7 @@ class Sampler(Generic[Input, Output, State]):
 def transform(sampler: Sampler[Input, Output1, State],
               transform: Callable[[Output1], Optional[Output2]]) \
         -> Sampler[Input, Output2, State]:
-    class TransformedSampler(Sampler[Input, Output2, State],
-                             Generic[Input, Output2, State]):
+    class TransformedSampler(Sampler[Input, Output2, State]):
         def __init__(self, sampler: Sampler[Input, Output1, State],
                      transform: Callable[[Output1], Optional[Output2]]):
             self.sampler = sampler
@@ -52,7 +51,7 @@ def transform(sampler: Sampler[Input, Output1, State],
         def initialize(self, input: Input) -> State:
             return self.sampler.initialize(input)
 
-        def create_output(self, state: State) -> Optional[Output]:
+        def create_output(self, state: State) -> Optional[Output2]:
             output1 = self.sampler.create_output(state)
             if output1 is None:
                 return None

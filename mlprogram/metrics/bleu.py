@@ -1,15 +1,9 @@
-from typing import Callable, Generic, TypeVar, Optional
+from typing import Dict, Any
 from nltk.translate.bleu_score import sentence_bleu
-from .metric_using_ground_truth import MetricUsingGroundTruth
-
-Code = TypeVar("Code")
-Value = TypeVar("Value")
+from .metric import Metric
 
 
-class Bleu(MetricUsingGroundTruth[Code, Value], Generic[Code, Value]):
-    def __init__(self, parse: Optional[Callable[[Code], Value]],
-                 unparse: Optional[Callable[[Value], Code]]):
-        super().__init__(parse, unparse)
-
-    def metric(self, gts, value) -> float:
+class Bleu(Metric[str]):
+    def __call__(self, input: Dict[str, Any], value: str) -> float:
+        gts = input["ground_truth"]
         return sentence_bleu(list(gts), value)

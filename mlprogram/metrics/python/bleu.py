@@ -1,18 +1,12 @@
-from typing import Callable, List, Generic, TypeVar, Optional
-from mlprogram.metrics.metric_using_ground_truth import MetricUsingGroundTruth
+from typing import Dict, Any, List
+from mlprogram.metrics import Metric
 import re
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
-Code = TypeVar("Code")
-Value = TypeVar("Value")
 
-
-class Bleu(MetricUsingGroundTruth[Code, Value], Generic[Code, Value]):
-    def __init__(self, parse: Optional[Callable[[Code], Value]],
-                 unparse: Optional[Callable[[Value], Code]]):
-        super().__init__(parse, unparse)
-
-    def metric(self, gts, value) -> float:
+class Bleu(Metric[str]):
+    def __call__(self, input: Dict[str, Any], value: str) -> float:
+        gts = input["ground_truth"]
         sm = SmoothingFunction()
 
         def tokenize(code: str) -> List[str]:

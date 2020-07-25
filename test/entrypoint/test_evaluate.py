@@ -4,7 +4,6 @@ import os
 import torch
 
 from mlprogram.entrypoint import evaluate
-from mlprogram.asts import Leaf
 from mlprogram.utils.data import ListDataset
 from mlprogram.synthesizers import Result
 from mlprogram.metrics import Accuracy, Bleu
@@ -33,7 +32,7 @@ class TestEvaluate(unittest.TestCase):
                 self.model = model
 
             def __call__(self, query):
-                yield Result(Leaf("str", self.model.state_dict["name"]),
+                yield Result(self.model.state_dict["name"],
                              self.model.state_dict["score"])
 
         return MockSynthesizer(model)
@@ -54,10 +53,8 @@ class TestEvaluate(unittest.TestCase):
             evaluate(input, ws, output, dataset["test"], dataset["valid"],
                      model, self.prepare_synthesizer(model),
                      {
-                "accuracy": Accuracy(lambda x: Leaf("str", x),
-                                     lambda x: x.value),
-                "bleu": Bleu(lambda x: Leaf("str", x),
-                             lambda x: x.value),
+                "accuracy": Accuracy(),
+                "bleu": Bleu(),
             }, (1, "bleu"))
             self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
             results = torch.load(os.path.join(ws, "results.pt"))
@@ -85,10 +82,8 @@ class TestEvaluate(unittest.TestCase):
             evaluate(input, ws, output, dataset["test"], dataset["valid"],
                      model, self.prepare_synthesizer(model),
                      {
-                "accuracy": Accuracy(lambda x: Leaf("str", x),
-                                     lambda x: x.value),
-                "bleu": Bleu(lambda x: Leaf("str", x),
-                             lambda x: x.value),
+                "accuracy": Accuracy(),
+                "bleu": Bleu(),
             }, (1, "bleu"))
             self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
             results = torch.load(os.path.join(ws, "results.pt"))
@@ -102,10 +97,8 @@ class TestEvaluate(unittest.TestCase):
             evaluate(input, ws, output, dataset["test"], dataset["valid"],
                      model, self.prepare_synthesizer(model),
                      {
-                "accuracy": Accuracy(lambda x: Leaf("str", x),
-                                     lambda x: x.value),
-                "bleu": Bleu(lambda x: Leaf("str", x),
-                             lambda x: x.value),
+                "accuracy": Accuracy(),
+                "bleu": Bleu(),
             }, (1, "bleu"))
             self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
             results = torch.load(os.path.join(ws, "results.pt"))

@@ -6,19 +6,14 @@ V1 = TypeVar("V1")
 
 
 class ListDataset(torch.utils.data.Dataset):
-    def __init__(self, elems: List[Any],
-                 transform: Callable[[Any], Any] = None):
+    def __init__(self, elems: List[Any]):
         self.elems = elems
-        self.transform = None
 
     def __len__(self) -> int:
         return len(self.elems)
 
     def __getitem__(self, idx) -> Any:
-        item = self.elems[idx]
-        if self.transform is not None:
-            return self.transform(item)
-        return item
+        return self.elems[idx]
 
 
 class TransformedDataset(torch.utils.data.Dataset, Generic[V0, V1]):
@@ -31,7 +26,10 @@ class TransformedDataset(torch.utils.data.Dataset, Generic[V0, V1]):
         return len(self.dataset)
 
     def __getitem__(self, index: int) -> V1:
-        return self.transform(self.dataset[index])
+        if isinstance(index, int):
+            return self.transform(self.dataset[index])
+        else:
+            return [self.transform(entry) for entry in self.dataset[index]]
 
 
 class TransformedIterableDataset(torch.utils.data.IterableDataset,

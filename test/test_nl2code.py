@@ -112,7 +112,7 @@ class TestNL2Code(unittest.TestCase):
                 test_dataset, test_dataset,
                 model,
                 self.prepare_synthesizer(model, qencoder, aencoder),
-                {"accuracy": Accuracy(lambda x: x, lambda x: x)},
+                {"accuracy": Accuracy()},
                 (5, "accuracy"), top_n=[5]
             )
         results = torch.load(os.path.join(dir, "results.pt"))
