@@ -44,6 +44,14 @@ class TestPadSequence(unittest.TestCase):
         self.assertTrue(np.allclose([[1], [1]], result.data.numpy()))
         self.assertTrue(np.array_equal([[1], [1]], result.mask.numpy()))
 
+    def test_empty(self):
+        x1 = torch.zeros((0, 1))
+        x2 = torch.FloatTensor([[2], [2]])
+        result = rnn.pad_sequence([x1, x2])
+        self.assertTrue(np.allclose([[[0], [2]], [[0], [2]]],
+                                    result.data.numpy()))
+        self.assertTrue(np.array_equal([[0, 1], [0, 1]], result.mask.numpy()))
+
 
 if __name__ == "__main__":
     unittest.main()
