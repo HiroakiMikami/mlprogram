@@ -7,13 +7,14 @@ from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class Predictor(nn.Module):
-    def __init__(self, feature_size: int, nl_feature_size: int,
+    def __init__(self, feature_size: int, reference_feature_size: int,
                  rule_size: int, token_size: int, hidden_size: int):
         super(Predictor, self).__init__()
         self.select = nn.Linear(feature_size, 3)
         self.rule = nn.Linear(feature_size, rule_size)
         self.token = nn.Linear(feature_size, token_size)
-        self.reference = PointerNet(feature_size, nl_feature_size, hidden_size)
+        self.reference = PointerNet(feature_size, reference_feature_size,
+                                    hidden_size)
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
