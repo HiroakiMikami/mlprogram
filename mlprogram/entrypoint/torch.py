@@ -16,5 +16,6 @@ types = {
     "torch.device": device,
     "torch.nn.Sequential": lambda modules: torch.nn.Sequential(modules),
     "torch.optim.create_optimizer": create_optimizer,
-    "torch.optim.Adam": lambda: torch.optim.Adam
+    "torch.optim.Adam": lambda: torch.optim.Adam,
+    "torch.nn.BCELoss": torch.nn.BCELoss
 }

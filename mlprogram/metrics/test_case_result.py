@@ -11,7 +11,7 @@ Result = TypeVar("Result")
 class TestCaseResult(Metric[Value], Generic[Code, Value]):
     def __init__(self, unparse: Callable[[Value], Code],
                  interpreter: Interpreter[Code, Result],
-                 metric: Metric[Result] = Accuracy(None, None)):
+                 metric: Metric[Result] = Accuracy()):
         self.unparse = unparse
         self.interpreter = interpreter
         self.metric = metric

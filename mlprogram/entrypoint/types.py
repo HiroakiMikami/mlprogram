@@ -121,6 +121,10 @@ types = {
         mlprogram.utils.transform.AstToSingleActionSequence,
     "mlprogram.utils.transform.RandomChoice":
         mlprogram.utils.transform.RandomChoice,
+    "mlprogram.utils.transform.EvaluateGroundTruth":
+        mlprogram.utils.transform.EvaluateGroundTruth,
+    "mlprogram.utils.transform.NormalizeGroundTruth":
+        mlprogram.utils.transform.NormalizeGroudTruth,
     "mlprogram.utils.transform.action_sequence.TransformCode":
         mlprogram.utils.transform.action_sequence.TransformCode,
     "mlprogram.utils.transform.action_sequence.TransformGroundTruth":

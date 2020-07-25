@@ -1,7 +1,21 @@
 import numpy as np
 
 from mlprogram.interpreters import Interpreter
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Callable, TypeVar, Generic
+
+Code = TypeVar("Code")
+
+
+class NormalizeGroudTruth(Generic[Code]):
+    def __init__(self, normalize: Callable[[Code], Optional[Code]]):
+        self.normalize = normalize
+
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        gt = self.normalize(entry["ground_truth"])
+        if gt is None:
+            return entry
+        entry["ground_truth"] = gt
+        return gt
 
 
 class EvaluateGroundTruth:

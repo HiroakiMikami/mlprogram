@@ -1,6 +1,7 @@
 import unittest
 from mlprogram.utils import Reference
-from mlprogram.utils.transform import RandomChoice, EvaluateGroundTruth
+from mlprogram.utils.transform \
+    import RandomChoice, EvaluateGroundTruth, NormalizeGroudTruth
 from mlprogram.interpreters import Interpreter
 
 
@@ -36,6 +37,16 @@ class TestEvaluateGroundTruth(unittest.TestCase):
         self.assertEqual(2, result["test_case"])
         self.assertEqual({Reference(0): 1, Reference(1): 2},
                          result["variables"])
+
+
+class TestNormalizeGroundTruth(unittest.TestCase):
+    def test_happy_path(self):
+        f = NormalizeGroudTruth(lambda x: len(x))
+        self.assertEqual(1, f({"ground_truth": [1]})["ground_truth"])
+
+    def test_return_None(self):
+        f = NormalizeGroudTruth(lambda x: None)
+        self.assertEqual([1], f({"ground_truth": [1]})["ground_truth"])
 
 
 if __name__ == "__main__":
