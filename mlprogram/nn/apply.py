@@ -17,10 +17,13 @@ class Apply(nn.Module):
         if self.is_sequence:
             input = entry[self.in_key]
             sizes = tuple([len(x) for x in input])
-            packed_input = torch.cat(input, dim=0)
-            packed_output = self.module(packed_input)
-            output = torch.split(packed_output, sizes)
-            entry[self.out_key] = output
+            if sum(sizes) != 0:
+                packed_input = torch.cat(input, dim=0)
+                packed_output = self.module(packed_input)
+                output = torch.split(packed_output, sizes)
+                entry[self.out_key] = output
+            else:
+                entry[self.out_key] = [[] for _ in input]
         else:
             input = entry[self.in_key]
             output = self.module(input)

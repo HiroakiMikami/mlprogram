@@ -44,6 +44,14 @@ class TestApply(unittest.TestCase):
             [[1], [101], [201]], output["out"][2].detach().numpy()
         ))
 
+    def test_empty_sequence(self):
+        apply = Apply("in", "out", MockModule(1), is_sequence=True)
+
+        output = apply({"in": []})
+        self.assertEqual([], output["out"])
+        output = apply({"in": [torch.zeros((0,))]})
+        self.assertEqual([[]], output["out"])
+
 
 if __name__ == "__main__":
     unittest.main()
