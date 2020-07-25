@@ -1,5 +1,5 @@
 import logging
-from typing import Union as U, Optional, Callable, Set
+from typing import Union as U, Optional, Callable, List
 from mlprogram.utils import Reference as R
 from mlprogram.languages.csg import AST as csgAST
 from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
@@ -158,8 +158,10 @@ def get_samples(dataset: Dataset,
                 to_action_sequence: Callable[[csgAST],
                                              Optional[ActionSequence]]
                 ) -> Samples:
-    rules: Set[Rule] = set()
-    node_types = set()
+    rules: List[Rule] = []
+    node_types = []
+    srule = set()
+    sntype = set()
     tokens = dataset.size_candidates
     tokens.extend(dataset.length_candidates)
     tokens.extend(dataset.degree_candidates)
@@ -187,9 +189,15 @@ def get_samples(dataset: Dataset,
             if isinstance(action, ApplyRule):
                 rule = action.rule
                 if not isinstance(rule, CloseVariadicFieldRule):
-                    rules.add(rule)
-                    node_types.add(rule.parent)
+                    if rule not in srule:
+                        rules.append(rule)
+                        srule.add(rule)
+                    if rule.parent not in sntype:
+                        node_types.append(rule.parent)
+                        sntype.add(rule.parent)
                     for _, child in rule.children:
-                        node_types.add(child)
+                        if child not in sntype:
+                            node_types.append(child)
+                            sntype.add(child)
 
     return Samples(list(rules), list(node_types), list(set(tokens)))
