@@ -6,7 +6,7 @@ device:
 parse:
   type: mlprogram.datasets.django.Parse
   tokenize:
-    type: mlprogram.languages.python.TokenizeToken
+    type: mlprogram.datasets.django.TokenizeToken
 
 to_action_sequence:
   type: mlprogram.utils.Compose

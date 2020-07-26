@@ -14,7 +14,7 @@ class ParseMode(Enum):
 
 
 class Parse:
-    def __init__(self, tokenize: Optional[Callable[[str], List[str]]] = None,
+    def __init__(self, tokenize: Callable[[str], List[str]],
                  mode: ParseMode = ParseMode.Single):
         self.mode = mode
         self.tokenize = tokenize

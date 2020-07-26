@@ -11,7 +11,7 @@ normalize_dataset:
       type: collections.OrderedDict
       items:
         - - parse
-          - type: mlprogram.languages.python.Parse
+          - "@/parse"
         - - unparse
           - type: mlprogram.languages.python.Unparse
 dataset:

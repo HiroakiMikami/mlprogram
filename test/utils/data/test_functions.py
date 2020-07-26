@@ -18,7 +18,7 @@ def tokenize_query(str: str) -> Query:
 
 def to_action_sequence(code: str):
     return AstToSingleActionSequence()(
-        to_ast(ast.parse(code).body[0]))
+        to_ast(ast.parse(code).body[0], lambda x: [x]))
 
 
 class TestGetWords(unittest.TestCase):

@@ -64,12 +64,16 @@ types = {
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,
     "mlprogram.datasets.django.Parse": mlprogram.datasets.django.Parse,
+    "mlprogram.datasets.django.TokenizeToken":
+        mlprogram.datasets.django.TokenizeToken,
     "mlprogram.datasets.django.TokenizeQuery":
         mlprogram.datasets.django.TokenizeQuery,
     "mlprogram.datasets.hearthstone.download":
         mlprogram.datasets.hearthstone.download,
     "mlprogram.datasets.hearthstone.TokenizeQuery":
         mlprogram.datasets.hearthstone.TokenizeQuery,
+    "mlprogram.datasets.hearthstone.TokenizeToken":
+        mlprogram.datasets.hearthstone.TokenizeToken,
     "mlprogram.datasets.nl2bash.download": mlprogram.datasets.nl2bash.download,
     "mlprogram.datasets.nl2bash.TokenizeQuery":
         mlprogram.datasets.nl2bash.TokenizeQuery,
@@ -84,8 +88,6 @@ types = {
     "mlprogram.languages.python.Unparse": mlprogram.languages.python.Unparse,
     "mlprogram.languages.python.IsSubtype":
         mlprogram.languages.python.IsSubtype,
-    "mlprogram.languages.python.TokenizeToken":
-        mlprogram.languages.python.TokenizeToken,
     "mlprogram.languages.python.ParseMode.Eval":
         lambda: mlprogram.languages.python.ParseMode.Eval,
     "mlprogram.languages.python.ParseMode.Exec":

@@ -3,13 +3,17 @@ device:
   type_str: "cuda"
   index: 0
 
+parse:
+  type: mlprogram.languages.python.Parse
+  tokenize:
+    type: mlprogram.datasets.hearthstone.TokenizeToken
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
     type: collections.OrderedDict
     items:
       - - "parse"
-        - type: mlprogram.languages.python.Parse
+        - "@/parse"
       - - "ast_to_action_sequence"
         - type: mlprogram.utils.transform.AstToSingleActionSequence
 

@@ -30,11 +30,10 @@ class TestToPythonAST(unittest.TestCase):
         setattr(name, "id", None)
         setattr(name, "ctx", None)
         setattr(node, "value", name)
-        node2 = to_python_ast(to_ast(node))
+        node2 = to_python_ast(to_ast(node, lambda x: [x]))
         self.assertEqual(python_ast.dump(node), python_ast.dump(node2))
 
     def test_builtin_type(self):
-        self.assertEqual(10, to_python_ast(ast.Leaf("int", "10")))
         node = python_ast.List()
         ten = python_ast.Constant()
         setattr(ten, "value", 10)
@@ -44,7 +43,6 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(python_ast.dump(node),
                          python_ast.dump(to_python_ast(to_ast(node,
                                                               tokenize=list))))
-        self.assertEqual(True, to_python_ast(ast.Leaf("bool", "True")))
 
     def test_variadic_args(self):
         node = python_ast.List()
@@ -58,13 +56,14 @@ class TestToPythonAST(unittest.TestCase):
         setattr(node, "ctx", None)
         self.assertEqual(
             python_ast.dump(node),
-            python_ast.dump(to_python_ast(to_ast(node))))
+            python_ast.dump(to_python_ast(to_ast(node, lambda x: [x]))))
 
     def test_optional_arg(self):
         node = python_ast.Yield()
         setattr(node, "value", None)
         self.assertEqual(python_ast.dump(node),
-                         python_ast.dump(to_python_ast(to_ast(node))))
+                         python_ast.dump(to_python_ast(to_ast(node,
+                                                              lambda x: [x]))))
 
     def test_empty_list(self):
         node = python_ast.List()
@@ -72,14 +71,14 @@ class TestToPythonAST(unittest.TestCase):
         setattr(node, "elts", [])
         self.assertEqual(
             python_ast.dump(node),
-            python_ast.dump(to_python_ast(to_ast(node))))
+            python_ast.dump(to_python_ast(to_ast(node, lambda x: [x]))))
 
     def test_token_list(self):
         node = python_ast.Global()
         setattr(node, "names", ["v1", "v2"])
         self.assertEqual(
             python_ast.dump(node),
-            python_ast.dump(to_python_ast(to_ast(node))))
+            python_ast.dump(to_python_ast(to_ast(node, lambda x: [x]))))
 
 
 if __name__ == "__main__":

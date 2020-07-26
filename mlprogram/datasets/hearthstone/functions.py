@@ -1,5 +1,5 @@
 from mlprogram.utils import Query, Token
-from typing import Optional
+from typing import Optional, List
 
 
 class TokenizeQuery:
@@ -33,3 +33,8 @@ class TokenizeQuery:
         if value is not None:
             reference.append(Token[str](None, value))
         return Query(reference, list(map(lambda x: x.value, reference)))
+
+
+class TokenizeToken:
+    def __call__(self, token: str) -> List[str]:
+        return [token]

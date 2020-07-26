@@ -25,16 +25,13 @@ class TestToAST(unittest.TestCase):
         self.assertEqual(
             ast.Node("Expr", [ast.Field("value", "expr",
                                         ast.Node("Name", []))]),
-            to_ast(node))
+            to_ast(node, lambda x: [x]))
 
     def test_node_with_ctx_field(self):
         node = python_ast.List()
         setattr(node, "ctx", 10)
-        self.assertEqual(ast.Node("List", []), to_ast(node))
-
-    def test_builtin_type(self):
-        self.assertEqual(ast.Leaf("int", "10"), to_ast(10))
-        self.assertEqual(ast.Leaf("bool", "True"), to_ast(True))
+        self.assertEqual(ast.Node("List", []),
+                         to_ast(node, lambda x: [x]))
 
     def test_tokenize_builtin_type(self):
         def tokenize(x: str):
@@ -62,20 +59,20 @@ class TestToAST(unittest.TestCase):
                 ast.Field("elts", "expr",
                           [ast.Node("Constant", []),
                            ast.Node("Constant", [])])]),
-            to_ast(node)
+            to_ast(node, lambda x: [x])
         )
 
     def test_optional_arg(self):
         node = python_ast.Yield()
         setattr(node, "value", None)
-        self.assertEqual(ast.Node("Yield", []), to_ast(node))
+        self.assertEqual(ast.Node("Yield", []), to_ast(node, lambda x: [x]))
 
     def test_empty_list(self):
         node = python_ast.List()
         setattr(node, "elts", [])
         self.assertEqual(
             ast.Node("List", [ast.Field("elts", "AST", [])]),
-            to_ast(node))
+            to_ast(node, lambda x: [x]))
 
     def test_token_list(self):
         node = python_ast.Global()
@@ -83,11 +80,11 @@ class TestToAST(unittest.TestCase):
         self.assertEqual(
             ast.Node("Global", [ast.Field("names", "str__proxy", [
                 ast.Node("str__proxy", [ast.Field("token", "str",
-                                                  ast.Leaf("str", "v1"))]),
+                                                  [ast.Leaf("str", "v1")])]),
                 ast.Node("str__proxy", [ast.Field("token", "str",
-                                                  ast.Leaf("str", "v2"))])
+                                                  [ast.Leaf("str", "v2")])])
             ])]),
-            to_ast(node)
+            to_ast(node, lambda x: [x])
         )
 
 

@@ -1,5 +1,5 @@
 import ast as python_ast
-from typing import List, Type, Union, Callable, Optional
+from typing import List, Type, Union, Callable
 
 import mlprogram.asts as ast
 from mlprogram.languages.python import PythonAST
@@ -26,7 +26,7 @@ def base_ast_type(node: PythonAST) \
 
 
 def to_ast(target: PythonAST,
-           tokenize: Optional[Callable[[str], List[str]]] = None) -> ast.AST:
+           tokenize: Callable[[str], List[str]]) -> ast.AST:
     """
     Return the AST corresponding to the Python AST
 
@@ -47,13 +47,10 @@ def to_ast(target: PythonAST,
                 value = target.decode()
             else:
                 value = str(target)
-            if tokenize is not None:
-                tokens = tokenize(value)
-                return list(map(
-                    lambda token: ast.Leaf(type(target).__name__, token),
-                    tokens))
-            else:
-                return ast.Leaf(type(target).__name__, value)
+            tokens = tokenize(value)
+            return list(map(
+                lambda token: ast.Leaf(type(target).__name__, token),
+                tokens))
         assert isinstance(target, python_ast.AST)
         type_name = type(target).__name__
         fields: List[ast.Field] = []
