@@ -85,7 +85,8 @@ class TestAstReferenceSampler(unittest.TestCase):
             SamplerState(1, {
                 "x": 0,
                 "reference": [Token("def", Reference("v1"))],
-                "variables": [(Reference("v0"), ast), (Reference("v1"), asts[0])]
+                "variables": [(Reference("v0"), ast),
+                              (Reference("v1"), asts[0])]
             }),
             samples[0]
         )
