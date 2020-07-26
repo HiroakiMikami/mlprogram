@@ -22,12 +22,13 @@ class NormalizeGroudTruth(Generic[Code]):
 
 
 class EvaluateGroundTruth:
-    def __init__(self, interpreter: Interpreter):
+    def __init__(self, interpreter: Interpreter, reference: bool = False):
         self.interpreter = interpreter
+        self.reference = reference
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         gt = entry["ground_truth"]
-        if isinstance(gt, list):
+        if self.reference:
             results = self.interpreter.eval_references(gt)
             entry["variables"] = results
             entry["test_case"] = results[gt[-1][0]]

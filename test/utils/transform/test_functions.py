@@ -27,7 +27,7 @@ class TestEvaluateGroundTruth(unittest.TestCase):
         self.assertEqual(1, f({"ground_truth": "1"})["test_case"])
 
     def test_reference(self):
-        f = EvaluateGroundTruth(MockInterpreter())
+        f = EvaluateGroundTruth(MockInterpreter(), reference=True)
         result = f({
             "ground_truth": [
                 (Reference(0), "1"),
