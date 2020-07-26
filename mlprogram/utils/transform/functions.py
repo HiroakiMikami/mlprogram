@@ -46,5 +46,6 @@ class RandomChoice:
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         output = {}
         for key, value in entry.items():
-            output[key] = self.rng.choice(value, size=()).item()
+            idx = self.rng.randint(0, len(value))
+            output[key] = value[idx]
         return output
