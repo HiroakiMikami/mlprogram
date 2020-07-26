@@ -15,11 +15,9 @@ class ParseMode(Enum):
 
 class Parse:
     def __init__(self, tokenize: Optional[Callable[[str], List[str]]] = None,
-                 retain_variadic_fields: bool = True,
                  mode: ParseMode = ParseMode.Single):
         self.mode = mode
         self.tokenize = tokenize
-        self.retain_variadic_fields = retain_variadic_fields
 
     def __call__(self, code: str) -> Optional[AST]:
         try:
@@ -27,13 +25,11 @@ class Parse:
             if self.mode == ParseMode.Exec:
                 return to_ast(
                     past,
-                    tokenize=self.tokenize,
-                    retain_variadic_fields=self.retain_variadic_fields)
+                    tokenize=self.tokenize)
             else:
                 return to_ast(
                     past.body[0],
-                    tokenize=self.tokenize,
-                    retain_variadic_fields=self.retain_variadic_fields)
+                    tokenize=self.tokenize)
         except:  # noqa
             return None
 

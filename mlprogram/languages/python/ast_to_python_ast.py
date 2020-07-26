@@ -56,15 +56,7 @@ def to_python_ast(target: ast.AST) -> PythonAST:
                         elems.append(to_python_ast(child))
                     setattr(node, name, elems)
             else:
-                if str(field.type_name).endswith("__list"):
-                    assert isinstance(field.value, ast.Node)
-                    elems = []
-                    for f in field.value.fields:
-                        assert isinstance(f.value, ast.AST)
-                        elems.append(to_python_ast(f.value))
-                    setattr(node, name, elems)
-                else:
-                    setattr(node, name, to_python_ast(field.value))
+                setattr(node, name, to_python_ast(field.value))
 
         return node
     elif isinstance(target, ast.Leaf):

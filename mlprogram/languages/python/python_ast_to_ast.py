@@ -26,8 +26,7 @@ def base_ast_type(node: PythonAST) \
 
 
 def to_ast(target: PythonAST,
-           tokenize: Optional[Callable[[str], List[str]]] = None,
-           retain_variadic_fields: bool = True) -> ast.AST:
+           tokenize: Optional[Callable[[str], List[str]]] = None) -> ast.AST:
     """
     Return the AST corresponding to the Python AST
 
@@ -89,17 +88,7 @@ def to_ast(target: PythonAST,
                             parent_type, [ast.Field("token", base_type, c)])
                     assert isinstance(c, ast.AST)
                     elements.append(c)
-                if retain_variadic_fields:
-                    fields.append(ast.Field(chname, parent_type, elements))
-                else:
-                    fields.append(ast.Field(
-                        chname, f"{parent_type}__list",
-                        ast.Node(
-                            f"{parent_type}__list",
-                            [ast.Field(str(i), parent_type, elem)
-                             for i, elem in enumerate(elements)]
-                        )
-                    ))
+                fields.append(ast.Field(chname, parent_type, elements))
             else:
                 base_type = base_ast_type(chval).__name__
                 fields.append(ast.Field(chname, base_type,

@@ -34,9 +34,6 @@ class IsSubtype:
             return True
         if isinstance(subtype, Root):
             return False
-        if subtype.endswith("__list") or \
-                basetype.endswith("__list"):
-            return subtype == basetype
         if subtype.endswith("__proxy") or \
                 basetype.endswith("__proxy"):
             return subtype == basetype

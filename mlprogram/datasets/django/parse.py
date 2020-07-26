@@ -63,10 +63,8 @@ p_decorator = re.compile(r'^@.*')
 
 
 class Parse:
-    def __init__(self, tokenize: Optional[Callable[[str], List[str]]] = None,
-                 retain_variadic_fields: bool = True):
+    def __init__(self, tokenize: Optional[Callable[[str], List[str]]] = None):
         self.tokenize = tokenize
-        self.retain_variadic_fields = retain_variadic_fields
 
     def __call__(self, code: str) -> Optional[AST]:
         """
@@ -106,7 +104,6 @@ class Parse:
 
             return to_ast(
                 ast.parse(code).body[0],
-                tokenize=self.tokenize,
-                retain_variadic_fields=self.retain_variadic_fields)
+                tokenize=self.tokenize)
         except:  # noqa
             return None

@@ -59,11 +59,6 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(
             python_ast.dump(node),
             python_ast.dump(to_python_ast(to_ast(node))))
-        self.assertEqual(
-            python_ast.dump(node),
-            python_ast.dump(to_python_ast(to_ast(node,
-                                                 retain_variadic_fields=False))
-                            ))
 
     def test_optional_arg(self):
         node = python_ast.Yield()
@@ -85,12 +80,6 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(
             python_ast.dump(node),
             python_ast.dump(to_python_ast(to_ast(node))))
-        self.assertEqual(
-            python_ast.dump(node),
-            python_ast.dump(to_python_ast(to_ast(node,
-                                                 retain_variadic_fields=False)
-                                          ))
-        )
 
 
 if __name__ == "__main__":

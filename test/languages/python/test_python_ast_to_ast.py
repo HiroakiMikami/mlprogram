@@ -65,22 +65,6 @@ class TestToAST(unittest.TestCase):
             to_ast(node)
         )
 
-    def test_expand_variadic_args(self):
-        node = python_ast.List()
-        setattr(node, "elts", [python_ast.Num(), python_ast.Str()])
-        self.assertEqual(
-            ast.Node("List", [
-                ast.Field(
-                    "elts", "expr__list",
-                    ast.Node("expr__list", [
-                        ast.Field("0", "expr", ast.Node("Constant", [])),
-                        ast.Field("1", "expr", ast.Node("Constant", [])),
-                    ])
-                )
-            ]),
-            to_ast(node, retain_variadic_fields=False)
-        )
-
     def test_optional_arg(self):
         node = python_ast.Yield()
         setattr(node, "value", None)
@@ -104,27 +88,6 @@ class TestToAST(unittest.TestCase):
                                                   ast.Leaf("str", "v2"))])
             ])]),
             to_ast(node)
-        )
-
-    def test_expand_token_list(self):
-        node = python_ast.Global()
-        setattr(node, "names", ["v1", "v2"])
-        self.assertEqual(
-            ast.Node("Global", [
-                ast.Field("names", "str__proxy__list",
-                          ast.Node("str__proxy__list", [
-                              ast.Field("0", "str__proxy",
-                                        ast.Node("str__proxy", [
-                                            ast.Field("token", "str",
-                                                      ast.Leaf("str", "v1"))
-                                        ])),
-                              ast.Field("1", "str__proxy",
-                                        ast.Node("str__proxy", [
-                                            ast.Field("token", "str",
-                                                      ast.Leaf("str", "v2"))
-                                        ]))
-                          ]))]),
-            to_ast(node, retain_variadic_fields=False)
         )
 
 
