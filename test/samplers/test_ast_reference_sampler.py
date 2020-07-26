@@ -34,7 +34,8 @@ class TestAstReferenceSampler(unittest.TestCase):
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),
-            MockEncoder())
+            MockEncoder(),
+            to_code=lambda x: x)
         zero = SamplerState(0, sampler.initialize(0))
         samples = list(sampler.k_samples([zero], 3))
         samples.sort(key=lambda x: -x.score)
@@ -74,7 +75,8 @@ class TestAstReferenceSampler(unittest.TestCase):
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),
-            MockEncoder())
+            MockEncoder(),
+            to_code=lambda x: x)
         zero = SamplerState(0, sampler.initialize(0))
         zero.state["reference"] = [Token("str", Reference("v0"))]
         zero.state["code"] = [(Reference("v0"), ast)]

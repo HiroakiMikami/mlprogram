@@ -13,22 +13,25 @@ from mlprogram.utils.data import Collate
 logger = logging.getLogger(__name__)
 
 Input = TypeVar("Input")
+Code = TypeVar("Code")
 
 
-class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
+class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
                                   Dict[str, Any]],
-                          Generic[Input]):
+                          Generic[Input, Code]):
     def __init__(self,
                  synthesizer: Synthesizer[Dict[str, Any], AST],
                  transform_input: Callable[[Input], Dict[str, Any]],
                  collate: Collate,
                  encoder: nn.Module,
+                 to_code: Callable[[AST], Optional[Code]],
                  remove_used_variable: bool = True,
                  rng: Optional[np.random.RandomState] = None):
         self.synthesizer = synthesizer
         self.transform_input = transform_input
         self.collate = collate
         self.encoder = encoder
+        self.to_code = to_code
         self.remove_used_variable = remove_used_variable
         if rng is None:
             self.rng = np.random
@@ -46,7 +49,7 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
         return state
 
     def create_output(self, state: Dict[str, Any]) \
-            -> Optional[List[Tuple[Reference, AST]]]:
+            -> Optional[List[Tuple[Reference, Code]]]:
         return state["code"]
 
     def k_samples(self, states: List[SamplerState[Dict[str, Any]]], n: int) \
@@ -75,6 +78,9 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
                 new_state["code"] = list(new_state["code"])
                 n_var = len(new_state["code"])
                 ref = Reference(f"v{n_var}")
+                code = self.to_code(result.output)
+                if code is None:
+                    continue
                 type_name = result.output.get_type_name()
                 if type_name is not None:
                     type_name = str(type_name)
@@ -85,7 +91,7 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
                          if token.value not in vars]
                 new_state["reference"].append(
                     Token(type_name, ref))
-                new_state["code"].append((ref, result.output))
+                new_state["code"].append((ref, code))
                 sampler_states.append(SamplerState(state.score + result.score,
                                                    new_state))
                 if i == n:
