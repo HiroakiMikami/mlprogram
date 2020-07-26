@@ -43,7 +43,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             SamplerState(1, {
                 "x": 0,
                 "reference": [Token("def", Reference("v0"))],
-                "variables": [(Reference("v0"), asts[0])]
+                "code": [(Reference("v0"), asts[0])]
             }),
             samples[0]
         )
@@ -51,7 +51,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             SamplerState(0.5, {
                 "x": 0,
                 "reference": [Token("int", Reference("v0"))],
-                "variables": [(Reference("v0"), asts[1])]
+                "code": [(Reference("v0"), asts[1])]
             }),
             samples[1]
         )
@@ -59,7 +59,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             SamplerState(1.0 / 3, {
                 "x": 0,
                 "reference": [Token("float", Reference("v0"))],
-                "variables": [(Reference("v0"), asts[2])]
+                "code": [(Reference("v0"), asts[2])]
             }),
             samples[2]
         )
@@ -77,7 +77,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             MockEncoder())
         zero = SamplerState(0, sampler.initialize(0))
         zero.state["reference"] = [Token("str", Reference("v0"))]
-        zero.state["variables"] = [(Reference("v0"), ast)]
+        zero.state["code"] = [(Reference("v0"), ast)]
         samples = list(sampler.k_samples([zero], 1))
         samples.sort(key=lambda x: -x.score)
         self.assertEqual(1, len(samples))
@@ -85,8 +85,8 @@ class TestAstReferenceSampler(unittest.TestCase):
             SamplerState(1, {
                 "x": 0,
                 "reference": [Token("def", Reference("v1"))],
-                "variables": [(Reference("v0"), ast),
-                              (Reference("v1"), asts[0])]
+                "code": [(Reference("v0"), ast),
+                         (Reference("v1"), asts[0])]
             }),
             samples[0]
         )
