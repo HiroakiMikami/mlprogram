@@ -42,12 +42,12 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
         state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
         state["reference"] = []
-        state["code"] = []
+        state["variables"] = []
         return state
 
     def create_output(self, state: Dict[str, Any]) \
             -> Optional[List[Tuple[Reference, AST]]]:
-        return state["code"]
+        return state["variables"]
 
     def k_samples(self, states: List[SamplerState[Dict[str, Any]]], n: int) \
             -> Generator[SamplerState[Dict[str, Any]],
@@ -72,8 +72,8 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
                 new_state = {key: value for key, value in state.state.items()}
                 # Copy reference
                 new_state["reference"] = list(new_state["reference"])
-                new_state["code"] = list(new_state["code"])
-                n_var = len(new_state["code"])
+                new_state["variables"] = list(new_state["variables"])
+                n_var = len(new_state["variables"])
                 ref = Reference(f"v{n_var}")
                 type_name = result.output.get_type_name()
                 if type_name is not None:
@@ -85,7 +85,7 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, AST]],
                          if token.value not in vars]
                 new_state["reference"].append(
                     Token(type_name, ref))
-                new_state["code"].append((ref, result.output))
+                new_state["variables"].append((ref, result.output))
                 sampler_states.append(SamplerState(state.score + result.score,
                                                    new_state))
                 if i == n:
