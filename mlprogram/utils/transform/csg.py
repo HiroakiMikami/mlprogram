@@ -9,11 +9,14 @@ class TransformCanvas:
         return tensor.float().unsqueeze(0) - 0.5
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        if "input" in entry:
-            entry["input"] = self.per_canvas(entry["input"])
+        entry["input"] = self.per_canvas(entry["input"])
         if "variables" in entry:
-            entry["variables"] = {
-                ref: self.per_canvas(canvas)
-                for ref, canvas in entry["variables"].items()
-            }
+            variables = entry["variables"]
+            s = entry["input"].shape
+            if len(variables) == 0:
+                entry["variables"] = torch.zeros((0, *s))
+            else:
+                entry["variables"] = torch.stack([
+                    self.per_canvas(canvas) for canvas in variables
+                ])
         return entry

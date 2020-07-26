@@ -1,11 +1,10 @@
 import unittest
 import torch
 import numpy as np
-from mlprogram.utils import Reference
 from mlprogram.utils.transform.csg import TransformCanvas
 
 
-class TestEvaluateGroundTruth(unittest.TestCase):
+class TestTransformCanvas(unittest.TestCase):
     def test_test_case(self):
         f = TransformCanvas()
         self.assertTrue(np.array_equal(
@@ -18,10 +17,11 @@ class TestEvaluateGroundTruth(unittest.TestCase):
     def test_variables(self):
         f = TransformCanvas()
         self.assertTrue(np.array_equal(
-            torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 2, 2),
-            f({"variables": {
-                Reference(0): np.array([[True, False], [False, True]])
-            }})["variables"][Reference(0)]
+            torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 1, 2, 2),
+            f({
+                "input": np.array([[True, False], [False, True]]),
+                "variables": [np.array([[True, False], [False, True]])]
+            })["variables"]
         ))
 
 
