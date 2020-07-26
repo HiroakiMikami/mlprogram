@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from collections import OrderedDict
-from math import prod
+import numpy as np
 
 
 def block_2d(in_channel: int, out_channel: int, n_conv: int):
@@ -49,6 +49,6 @@ class CNN2d(nn.Module):
                 N, C, H, W = out.shape
                 out = out.reshape(N, C, H // self.pool, W // self.pool)
         if self.flatten:
-            return out.reshape(out.shape[0], prod(out.shape[1:]))
+            return out.reshape(out.shape[0], np.prod(out.shape[1:]))
         else:
             return out
