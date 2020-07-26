@@ -1,8 +1,7 @@
+imports:
+  - "nl2code_base.yaml"
+
 output_dir: "output/output"
-device:
-  type: torch.device
-  type_str: "cuda"
-  index: 0
 
 normalize_dataset:
   type: mlprogram.utils.transform.NormalizeGroundTruth
@@ -25,16 +24,6 @@ valid_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.valid"
   transform: "@/normalize_dataset"
-
-to_action_sequence:
-  type: mlprogram.utils.Compose
-  funcs:
-    type: collections.OrderedDict
-    items:
-      - - "parse"
-        - type: mlprogram.languages.python.Parse
-      - - "ast_to_action_sequence"
-        - type: mlprogram.utils.transform.AstToSingleActionSequence
 
 encoder:
   word_encoder:
@@ -62,106 +51,6 @@ transform:
     type: mlprogram.utils.transform.nl2code.TransformActionSequence
     action_sequence_encoder: "@/encoder.action_sequence_encoder"
     train: false
-
-action_sequence_reader:
-  type: mlprogram.nn.nl2code.ActionSequenceReader
-  num_rules: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-  num_tokens: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
-  num_node_types: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
-  node_type_embedding_size: 64
-  embedding_size: 128
-model:
-  type: torch.nn.Sequential
-  modules:
-    type: collections.OrderedDict
-    items:
-      - - "encoder"
-        - type: mlprogram.nn.nl2code.NLReader
-          num_words: "@/encoder.word_encoder.vocab_size"
-          embedding_dim: 128
-          hidden_size: 256
-          dropout: 0.2
-      - - "decoder"
-        - type: torch.nn.Sequential
-          modules:
-            type: collections.OrderedDict
-            items:
-              - - "action_sequence_reader"
-                - "@/action_sequence_reader"
-              - - "decoder"
-                - type: mlprogram.nn.nl2code.Decoder
-                  query_size: 256
-                  input_size:
-                    type: add
-                    x:
-                      type: mul
-                      x: 2
-                      y: 128
-                    y: 64
-                  hidden_size: 256
-                  att_hidden_size: 50
-                  dropout: 0.2
-              - - "predictor"
-                - type: mlprogram.nn.nl2code.Predictor
-                  reader: "@/action_sequence_reader"
-                  embedding_size: 128
-                  query_size: 256
-                  hidden_size: 256
-                  att_hidden_size: 50
-
-collate:
-  type: mlprogram.utils.data.Collate
-  device: "@/device"
-  word_nl_query:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  nl_query_features:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  reference_features:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  previous_actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  previous_action_rules:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  history:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 1
-    padding_value: 0
-  hidden_state:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 0
-    padding_value: 0
-  state:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 0
-    padding_value: 0
-  ground_truth_actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
 
 synthesizer:
   type: mlprogram.synthesizers.BeamSearch

@@ -1,8 +1,7 @@
+imports:
+- "treegen_base.yaml"
+
 output_dir: "output/output"
-device:
-  type: torch.device
-  type_str: "cuda"
-  index: 0
 
 normalize_dataset:
   type: mlprogram.utils.transform.NormalizeGroundTruth
@@ -25,16 +24,6 @@ valid_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.valid"
   transform: "@/normalize_dataset"
-
-to_action_sequence:
-  type: mlprogram.utils.Compose
-  funcs:
-    type: collections.OrderedDict
-    items:
-      - - "parse"
-        - type: mlprogram.languages.python.Parse
-      - - "ast_to_action_sequence"
-        - type: mlprogram.utils.transform.AstToSingleActionSequence
 
 encoder:
   word_encoder:
@@ -73,123 +62,6 @@ transform:
     max_arity: 128
     max_depth: 128
     train: false
-
-action_sequence_reader:
-  type: mlprogram.nn.nl2code.ActionSequenceReader
-  num_rules: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-  num_tokens: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
-  num_node_types: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
-  node_type_embedding_size: 64
-  embedding_size: 128
-
-model:
-  type: torch.nn.Sequential
-  modules:
-    type: collections.OrderedDict
-    items:
-      - - "encoder"
-        - type: mlprogram.nn.treegen.NLReader
-          token_num: "@/encoder.word_encoder.vocab_size"
-          char_num: "@/encoder.char_encoder.vocab_size"
-          max_token_len: 128
-          char_embed_size: 256
-          hidden_size: 256
-          n_heads: 1
-          dropout: 0.15
-          n_blocks: 6
-      - - "decoder"
-        - type: torch.nn.Sequential
-          modules:
-            type: collections.OrderedDict
-            items:
-              - - "action_sequence_reader"
-                - type: mlprogram.nn.treegen.ActionSequenceReader
-                  rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-                  token_num: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
-                  node_type_num: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
-                  max_arity: 128
-                  rule_embed_size: 256
-                  hidden_size: 256
-                  tree_conv_kernel_size: 3
-                  n_heads: 1
-                  dropout: 0.15
-                  n_blocks: 6
-              - - "decoder"
-                - type: mlprogram.nn.treegen.Decoder
-                  rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-                  max_depth: 128
-                  feature_size: 256
-                  hidden_size: 1024
-                  out_size: 256
-                  n_heads: 1
-                  dropout: 0.15
-                  n_blocks: 6
-              - - "predictor"
-                - type: mlprogram.nn.action_sequence.Predictor
-                  feature_size: 256
-                  reference_feature_size: 256
-                  rule_size: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-                  token_size: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"  # TODO
-                  hidden_size: 256
-
-collate:
-  type: mlprogram.utils.data.Collate
-  device: "@/device"
-  word_nl_query:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  char_nl_query:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  nl_query_features:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  reference_features:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  previous_actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  previous_action_rules:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  depthes:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 1
-    padding_value: 0
-  adjacency_matrix:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 0
-    padding_value: 0
-  action_queries:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  ground_truth_actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
 
 synthesizer:
   type: mlprogram.synthesizers.BeamSearch
