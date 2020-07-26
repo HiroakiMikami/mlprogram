@@ -1,7 +1,7 @@
-import torch
 from typing import List, Dict, Any, cast, Callable, Optional, Set, Tuple
 from mlprogram.utils import Reference, Token
 from mlprogram.asts import AST, Node, Leaf
+from mlprogram.interpreters import Interpreter
 
 
 class ToEpisode:
@@ -14,8 +14,6 @@ class ToEpisode:
         input = entry["input"]
         ground_truth = cast(List[Tuple[Reference, Any]], entry["ground_truth"])
         gt_refs = {ref: value for ref, value in ground_truth}
-        references = [ref for ref, _ in ground_truth]
-        variables = cast(Dict[Reference, Any], entry["variables"])
 
         def find_refs(ast: AST) -> List[Reference]:
             if isinstance(ast, Node):
@@ -34,19 +32,13 @@ class ToEpisode:
 
         retval: List[Dict[str, Any]] = []
         refs: Set[Reference] = set()
-        for ref in references:
+        for i, (ref, _) in enumerate(ground_truth):
             rs = list(refs)
-            vs = [variables[r] for r in rs]
-            if len(vs) == 0:
-                s = input.shape
-                tensor = torch.zeros(0, *s)
-            else:
-                tensor = torch.stack(vs, dim=0)
             retval.append({
                 "input": input,
                 "ground_truth": gt_refs[ref],
                 "reference": [Token(None, r) for r in rs],
-                "variables": tensor
+                "code": ground_truth[:(i + 1)]
             })
             refs.add(ref)
             if self.remove_used_reference:
@@ -57,3 +49,17 @@ class ToEpisode:
                         refs.remove(r)
 
         return retval
+
+
+class EvaluateCode:
+    def __init__(self, interpreter: Interpreter):
+        self.interpreter = interpreter
+
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        code = entry["code"]
+        reference = entry["reference"]
+        refs = [token.value for token in reference]
+        result = self.interpreter.eval_references(code)
+        variables = [result[ref] for ref in refs]
+        entry["variables"] = variables
+        return entry

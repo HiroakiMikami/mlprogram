@@ -35,8 +35,6 @@ class TestEvaluateGroundTruth(unittest.TestCase):
             ]]
         })
         self.assertEqual([2], result["input"])
-        self.assertEqual([{Reference(0): 1, Reference(1): 2}],
-                         result["variables"])
 
 
 class TestNormalizeGroundTruth(unittest.TestCase):
