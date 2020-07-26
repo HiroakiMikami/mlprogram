@@ -143,12 +143,6 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
-    "mlprogram.nn.ApplyOptions.Nothing":
-        lambda: mlprogram.nn.ApplyOptions.Nothing,
-    "mlprogram.nn.ApplyOptions.Sequence":
-        lambda: mlprogram.nn.ApplyOptions.Sequence,
-    "mlprogram.nn.ApplyOptions.PaddedSequence":
-        lambda: mlprogram.nn.ApplyOptions.PaddedSequence,
     "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.action_sequence.Predictor":

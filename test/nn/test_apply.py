@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 import unittest
-from mlprogram.nn import Apply, ApplyOptions
+from mlprogram.nn import Apply
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
@@ -31,7 +31,7 @@ class TestApply(unittest.TestCase):
 
     def test_sequence(self):
         apply = Apply("in", "out", MockModule(1),
-                      options=ApplyOptions.Sequence)
+                      value_type="list")
 
         output = apply({"in": [torch.arange(2).reshape(-1, 1),
                                torch.arange(1).reshape(-1, 1) * 10,
@@ -48,7 +48,7 @@ class TestApply(unittest.TestCase):
 
     def test_empty_sequence(self):
         apply = Apply("in", "out", MockModule(1),
-                      options=ApplyOptions.Sequence)
+                      value_type="list")
 
         output = apply({"in": []})
         self.assertEqual([], output["out"])
@@ -57,7 +57,7 @@ class TestApply(unittest.TestCase):
 
     def test_padded_sequence(self):
         apply = Apply("in", "out", MockModule(1),
-                      options=ApplyOptions.PaddedSequence)
+                      value_type="padded_tensor")
 
         padded = pad_sequence([torch.arange(2).reshape(-1, 1),
                                torch.arange(1).reshape(-1, 1) * 10,
