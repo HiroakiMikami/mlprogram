@@ -2,9 +2,8 @@ import unittest
 import tempfile
 import os
 import logging
-import yaml
 import sys
-from mlprogram.entrypoint.parse import parse_config
+from mlprogram.entrypoint.parse import parse_config, load_config
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 logger = logging.getLogger(__name__)
@@ -15,8 +14,7 @@ class ConfigTest(unittest.TestCase):
         logger.info(f"Train: {train_config}")
         logger.info(f"Evaluate: {evaluate_config}")
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(train_config) as file:
-                configs = yaml.load(file)
+            configs = load_config(train_config)
             # Modify configs for testing
             configs["main"]["length"] = {
                 "type": "mlprogram.entrypoint.train.Iteration",
@@ -32,8 +30,7 @@ class ConfigTest(unittest.TestCase):
             # Train
             parse_config(configs)["/main"]
 
-            with open(evaluate_config) as file:
-                configs = yaml.load(file)
+            configs = load_config(evaluate_config)
             # Modify configs for testing
             configs["main"]["n_samples"] = 1
             configs["device"]["type_str"] = "cpu"
