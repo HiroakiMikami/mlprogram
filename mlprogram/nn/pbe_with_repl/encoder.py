@@ -1,35 +1,30 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Any, cast, List
-from mlprogram.nn.utils.rnn import pad_sequence
+from typing import Dict, Any, cast
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class Encoder(nn.Module):
-    def __init__(self, module: nn.Module,
-                 reduction: str = "sum"):
+    def __init__(self, reduction: str = "sum"):
         assert reduction == "sum" or reduction == "mean"
         super().__init__()
-        self.module = module
         self.reduction = reduction
 
     def forward(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        input = cast(torch.Tensor, entry["input"])
-        variables = cast(List[torch.Tensor], entry["variables"])
-        in_feature = self.module(input)
+        in_feature = cast(torch.Tensor, entry["input_feature"])
+        features = cast(PaddedSequenceWithMask, entry["reference_features"])
+        B = in_feature.shape[0]
         C = in_feature.shape[1:]
-        sizes = [len(v) for v in variables]
-        if sum(sizes) == 0:
-            features = [torch.zeros(0, *C, device=in_feature.device,
-                                    dtype=in_feature.dtype) for _ in variables]
-        else:
-            packed_features = self.module(torch.cat(variables, dim=0))
-            features = torch.split(packed_features, tuple(sizes))
-        entry["reference_features"] = pad_sequence(features)
+        if features.data.numel() == 0:
+            features.data = torch.zeros(0, B, *C, device=in_feature.device,
+                                        dtype=in_feature.dtype)
+        entry["reference_features"] = features
 
-        if self.reduction == "sum":
-            reduced_feature = torch.stack([f.sum(dim=0) for f in features])
-        else:
-            reduced_feature = torch.stack([f.mean(dim=0) for f in features])
+        reduced_feature = features.data.sum(dim=0)
+        if self.reduction == "mean":
+            in_feature = in_feature.float()
+            reduced_feature = \
+                reduced_feature / features.mask.sum(dim=0).float()
         entry["input_feature"] = torch.cat([in_feature, reduced_feature],
                                            dim=1)
         return entry
