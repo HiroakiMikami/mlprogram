@@ -32,10 +32,10 @@ class TestDataset(unittest.TestCase):
             if cnt == 10:
                 sample = x
                 break
-        n_ref = len(sample["ground_truth"])
+        n_ref = len(sample["ground_truth"][0])
         self.assertEqual(
             [R(str(i)) for i in range(n_ref)],
-            [ref for ref, _ in sample["ground_truth"]]
+            [ref for ref, _ in sample["ground_truth"][0]]
         )
 
 
