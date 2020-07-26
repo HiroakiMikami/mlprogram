@@ -27,13 +27,21 @@ class EvaluateGroundTruth:
         self.reference = reference
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        gt = entry["ground_truth"]
+        gts = entry["ground_truth"]
+        variables = []
+        input = []
+        for gt in gts:
+            if self.reference:
+                results = self.interpreter.eval_references(gt)
+                variables.append(results)
+                input.append(results[gt[-1][0]])
+            else:
+                input.append(self.interpreter.eval(gt))
+
+        # TODO may be inconsistent in RandomChoice
         if self.reference:
-            results = self.interpreter.eval_references(gt)
-            entry["variables"] = results
-            entry["test_case"] = results[gt[-1][0]]
-        else:
-            entry["test_case"] = self.interpreter.eval(gt)
+            entry["variables"] = variables
+        entry["input"] = input
         return entry
 
 

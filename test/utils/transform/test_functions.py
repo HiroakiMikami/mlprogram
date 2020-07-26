@@ -24,18 +24,18 @@ class MockInterpreter(Interpreter):
 class TestEvaluateGroundTruth(unittest.TestCase):
     def test_non_reference(self):
         f = EvaluateGroundTruth(MockInterpreter())
-        self.assertEqual(1, f({"ground_truth": "1"})["test_case"])
+        self.assertEqual([1], f({"ground_truth": ["1"]})["input"])
 
     def test_reference(self):
         f = EvaluateGroundTruth(MockInterpreter(), reference=True)
         result = f({
-            "ground_truth": [
+            "ground_truth": [[
                 (Reference(0), "1"),
                 (Reference(1), "2")
-            ]
+            ]]
         })
-        self.assertEqual(2, result["test_case"])
-        self.assertEqual({Reference(0): 1, Reference(1): 2},
+        self.assertEqual([2], result["input"])
+        self.assertEqual([{Reference(0): 1, Reference(1): 2}],
                          result["variables"])
 
 

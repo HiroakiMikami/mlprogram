@@ -11,7 +11,7 @@ class TestEvaluateGroundTruth(unittest.TestCase):
         self.assertTrue(np.array_equal(
             torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 2, 2),
             f({
-                "test_case": np.array([[True, False], [False, True]])
+                "input": np.array([[True, False], [False, True]])
             })["input"]
         ))
 
