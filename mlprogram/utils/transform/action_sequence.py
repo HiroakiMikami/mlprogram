@@ -67,8 +67,6 @@ class TransformActionSequenceForRnnDecoder:
             prev_action = a[-2, 1:].view(1, -1)
 
         entry["previous_actions"] = prev_action
-        if self.train or "history" not in entry:
-            entry["history"] = None
         if self.train or "hidden_state" not in entry:
             entry["hidden_state"] = None
         if self.train or "state" not in entry:
