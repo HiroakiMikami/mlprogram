@@ -20,6 +20,7 @@ class TestGetTokenType(unittest.TestCase):
 class TestIsSubType(unittest.TestCase):
     def test_happy_path(self):
         self.assertTrue(IsSubtype()("CSG", "CSG"))
+        self.assertTrue(IsSubtype()("Circle", "CSG"))
 
     def test_integer(self):
         self.assertTrue(IsSubtype()("int", "size"))

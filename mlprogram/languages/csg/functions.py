@@ -26,6 +26,9 @@ class IsSubtype:
                  basetype: U[str, Root]) -> bool:
         if isinstance(basetype, Root):
             return True
+        if basetype == "CSG":
+            return subtype in set(["CSG", "Circle", "Rectangle", "Rotation",
+                                   "Translation", "Union", "Difference"])
         if subtype == "int":
             return basetype in set(["size", "degree", "length"])
         return subtype == basetype
