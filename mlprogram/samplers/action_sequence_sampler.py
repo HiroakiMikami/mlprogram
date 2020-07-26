@@ -250,6 +250,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                   next_states, states):
             actions.extend(
                 list(self.enumerate_samples_per_state(r, t, c, ns, s)))
+        if len(actions) == 0:
+            return
+
         # log_prob -> prob
         probs = [np.exp(score) for score, _, _, _ in actions]
         # normalize
