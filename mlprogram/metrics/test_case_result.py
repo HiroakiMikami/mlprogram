@@ -1,33 +1,38 @@
-from typing import Callable, Dict, Any, Generic, TypeVar
+from typing import Dict, Any, Generic, TypeVar, List, Tuple, cast
+from mlprogram.utils import Reference
 from mlprogram.metrics import Metric, Accuracy
 from mlprogram.interpreters import Interpreter
 
 
 Code = TypeVar("Code")
-Value = TypeVar("Value")
 Result = TypeVar("Result")
 
 
-class TestCaseResult(Metric[Value], Generic[Code, Value]):
-    def __init__(self, unparse: Callable[[Value], Code],
+class TestCaseResult(Metric[Code], Generic[Code]):
+    def __init__(self,
                  interpreter: Interpreter[Code, Result],
+                 reference: bool = False,
                  metric: Metric[Result] = Accuracy()):
-        self.unparse = unparse
         self.interpreter = interpreter
+        self.reference = reference
         self.metric = metric
 
-    def __call__(self, input: Dict[str, Any], value: Value) -> float:
+    def _eval(self, code: Code):
+        if self.reference:
+            ref = cast(List[Tuple[Reference, Any]], code)
+            output = self.interpreter.eval_references(ref)[
+                ref[-1][0]]
+        else:
+            output = self.interpreter.eval(code)
+        return output
+
+    def __call__(self, input: Dict[str, Any], value: Code) -> float:
         ground_truth = input["ground_truth"]
         # evaluate ground truth
         outputs = set()
         for gt in ground_truth:
-            outputs.add(self.interpreter.eval(gt))
-
-        # normalize value
-        code = self.unparse(value)
-        if code is None:
-            return 0.0
+            outputs.add(self._eval(gt))
 
         # calc. metric
-        actual = self.interpreter.eval(code)
+        actual = self._eval(value)
         return self.metric({"ground_truth": outputs}, actual)
