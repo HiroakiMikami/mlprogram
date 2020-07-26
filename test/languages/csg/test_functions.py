@@ -14,12 +14,16 @@ class TestGetTokenType(unittest.TestCase):
         self.assertEqual("CSG", GetTokenType()(R("0")))
 
     def test_number(self):
-        self.assertEqual(None, GetTokenType()(0))
+        self.assertEqual("int", GetTokenType()(0))
 
 
 class TestIsSubType(unittest.TestCase):
     def test_happy_path(self):
         self.assertTrue(IsSubtype()("CSG", "CSG"))
+
+    def test_integer(self):
+        self.assertTrue(IsSubtype()("int", "size"))
+        self.assertFalse(IsSubtype()("int", "CSG"))
 
 
 class TestToAst(unittest.TestCase):

@@ -18,7 +18,7 @@ class GetTokenType:
         if isinstance(value, R):
             return "CSG"
         else:
-            return None
+            return "int"
 
 
 class IsSubtype:
@@ -26,6 +26,8 @@ class IsSubtype:
                  basetype: U[str, Root]) -> bool:
         if isinstance(basetype, Root):
             return True
+        if subtype == "int":
+            return basetype in set(["size", "degree", "length"])
         return subtype == basetype
 
 
