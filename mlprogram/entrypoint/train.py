@@ -189,6 +189,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     loss: Callable[[Any], torch.Tensor],
                     score: Metric,
                     reward: Callable[[float], float],
+                    rollout_transform: Callable[[Any], Any],
                     collate: Callable[[List[Any]], Any],
                     batch_size: int,
                     n_rollout: int,
@@ -254,15 +255,18 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     for j in range(n_rollout):
                         max_score = 0.0
                         rollout = None
-                        for x in synthesizer(sample):
+                        input = rollout_transform(sample)
+
+                        for x in synthesizer(input):
                             s = score(sample, x.output)
                             if rollout is None or max_score < s:
                                 max_score = s
                                 rollout = x.output
                         if rollout is not None:
                             output = \
-                                {key: value for key, value in sample.items()}
+                                {key: value for key, value in input.items()}
                             output["ground_truth"] = rollout
+                            output["reward"] = torch.tensor(reward(max_score))
                             rollouts.append(output)
                             scores.append(max_score)
                 if len(rollouts) == 0:
@@ -270,8 +274,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     continue
 
                 batch2 = collate(rollouts)
-                batch2["reward"] = torch.tensor([reward(score)
-                                                 for score in scores])
+                model.train()
                 output = model(batch2)
                 bloss = loss(output)
                 model.zero_grad()

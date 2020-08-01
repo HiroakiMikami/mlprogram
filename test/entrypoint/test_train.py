@@ -219,7 +219,11 @@ class TestTrainREINFORCE(unittest.TestCase):
         B = len(elems)
         output = [elem["ground_truth"]["output"] for elem in elems]
         tensor = torch.tensor(output).reshape(B, 1).float()
-        return {"value": tensor, "target": tensor}
+        if "reward" in elems[0]:
+            reward = torch.stack([elem["reward"] for elem in elems])
+            return {"value": tensor, "target": tensor, "reward": reward}
+        else:
+            return {"value": tensor, "target": tensor}
 
     def prepare_synthesizer(self, model):
         class MockSynthesizer:
@@ -247,6 +251,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda sample, output:
                                 sample["value"] == output["output"],
                             lambda score: score > 0.5,
+                            lambda x: x,
                             self.collate,
                             1, 1, Epoch(2))
             self.assertTrue(os.path.exists(
@@ -288,6 +293,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda sample, output:
                                 sample["value"] == output["output"],
                             lambda score: score > 0.5,
+                            lambda x: x,
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_model=True)
