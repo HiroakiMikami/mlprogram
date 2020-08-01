@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from typing import Dict, Any
+from pytorch_pfn_extras.reporting import report
 
 
 class AggregatedLoss(nn.Module):
@@ -9,6 +10,7 @@ class AggregatedLoss(nn.Module):
         self.losses = losses
 
     def forward(self, entry: Dict[str, Any]) -> torch.Tensor:
-        return torch.sum(torch.cat([
-            loss(entry).reshape(1) for _, loss in self.losses.items()
-        ]))
+        losses = {key: loss(entry).reshape(1)
+                  for key, loss in self.losses.items()}
+        report({key: loss.item() for key, loss in losses.items()})
+        return torch.sum(torch.cat(list(losses.values())))
