@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from enum import Enum
 import logging
 from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
@@ -21,6 +22,11 @@ logger = logging.getLogger(__name__)
 V = TypeVar("V")
 
 
+class Enumeration(Enum):
+    Random = 1
+    Top = 2
+
+
 Tensor = Union[torch.Tensor, PaddedSequenceWithMask]
 
 
@@ -36,7 +42,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                                      Dict[str, Any]],
                  collate: Collate,
                  module: torch.nn.Module,
-                 eps: float = 1e-8,
+                 eps: float = 1e-5,
                  rng: np.random.RandomState = np.random
                  ):
         self.encoder = encoder
@@ -110,11 +116,28 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                     reference_pred: torch.Tensor,
                                     next_state: Dict[str, Any],
                                     state: SamplerState[Dict[str, Any]],
-                                    k: Optional[int] = None) \
+                                    enumerateion: Enumeration,
+                                    k: int) \
             -> Generator[Tuple[float,
                                SamplerState[Dict[str, Any]],
                                Dict[str, Any], Action],
                          None, None]:
+        def indices(pred: torch.Tensor):
+            # 0 is unknown token
+            if enumerateion == Enumeration.Top:
+                _, indices = torch.sort(pred[1:], descending=True)
+                for index in indices:
+                    yield index + 1
+            else:
+                while True:
+                    npred = [max(0,
+                                 (p.item() / pred[1:].numpy().sum()) -
+                                 self.eps)
+                             for p in pred[1:]]
+                    if pred[1:].sum().item() < self.eps:
+                        return
+                    yield self.rng.multinomial(1, npred).nonzero()[0][0] + 1
+
         head = state.state["action_sequence"].head
         if head is None:
             return
@@ -148,14 +171,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 tokens.append(ApplyRule(CloseVariadicFieldRule()))
                 pred = torch.cat([pred, torch.tensor([p])], dim=0)
             n_action = 0
-            # 0 is unknown token
-            _, indices = torch.sort(pred[1:], descending=True)
-            for j in range(len(indices)):
+            for x in indices(pred):
                 # Finish enumeration
                 if n_action == k:
                     return
 
-                x = indices[j] + 1
                 p = pred[x].item()
                 token = tokens[x]
 
@@ -169,6 +189,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         t = self.get_token_type(token)
                     if t is not None and \
                             not self.is_subtype(t, head_field.type_name):
+                        pred[x] = 0.0
                         continue
                     action = GenerateToken(token)
 
@@ -182,15 +203,12 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         else:
             # Apply rule
             # 0 is unknown rule
-            _, indices = torch.sort(rule_pred[1:], descending=True)
             n_rule = 0
-            for j in range(min(rule_pred.shape[0],
-                               self.encoder._rule_encoder.vocab_size) - 1):
+            for x in indices(rule_pred):
                 # Finish enumeration
                 if n_rule == k:
                     return
 
-                x = indices[j] + 1
                 p = rule_pred[x].item()
                 if p < self.eps:
                     lp = np.log(self.eps)
@@ -205,6 +223,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         n_rule += 1
                         yield (state.score + lp, state,
                                next_state, ApplyRule(rule))
+                    else:
+                        rule_pred[x] = 0.0
                 else:
                     # CloseVariadicFieldRule
                     if head_field is not None and \
@@ -212,6 +232,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         n_rule += 1
                         yield (state.score + lp, state, next_state,
                                ApplyRule(rule))
+                    else:
+                        rule_pred[x] = 0.0
 
     def top_k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
@@ -221,12 +243,10 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             self.batch_infer(states)
         topk = TopKElement(k)
         for i, state in enumerate(states):
-            for elem in self.enumerate_samples_per_state(rule_pred[i],
-                                                         token_pred[i],
-                                                         reference_pred[i],
-                                                         next_states[i],
-                                                         state,
-                                                         k=k):
+            for elem in self.enumerate_samples_per_state(
+                    rule_pred[i], token_pred[i], reference_pred[i],
+                    next_states[i], state, enumerateion=Enumeration.Top,
+                    k=k):
                 topk.add(elem[0], tuple(elem[1:]))
 
         # Instantiate top-k hypothesis
@@ -245,21 +265,25 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
         rule_pred, token_pred, reference_pred, next_states = \
             self.batch_infer(states)
-        actions = []
-        for r, t, c, ns, s in zip(rule_pred, token_pred, reference_pred,
-                                  next_states, states):
-            actions.extend(
-                list(self.enumerate_samples_per_state(r, t, c, ns, s)))
-        if len(actions) == 0:
-            return
 
-        # log_prob -> prob
-        probs = [np.exp(score) for score, _, _, _ in actions]
-        # normalize
-        probs = [p / sum(probs) for p in probs]
-        resamples = self.rng.multinomial(n, probs)
-        for (score, state, new_state, action), m in zip(actions, resamples):
+        # Split and decide the number of samples per state
+        probs = [1 / (n + 1) - self.eps for _ in range(n + 2)]
+        divisors: List[int] = []
+        for i, m in enumerate(self.rng.multinomial(len(states) - 1, probs)):
             for _ in range(m):
+                divisors.append(i)
+        last = 0
+        ks = []
+        for divisor in divisors:
+            ks.append(divisor - last)
+            last = divisor
+        ks.append(n - last)
+
+        for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
+                                     next_states, states, ks):
+            for score, state, new_state, action in \
+                    self.enumerate_samples_per_state(
+                        r, t, c, ns, s, Enumeration.Random, k=k):
                 action_sequence = state.state["action_sequence"].clone()
                 action_sequence.eval(action)
                 x = {key: value for key, value in new_state.items()}

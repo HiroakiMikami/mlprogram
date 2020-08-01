@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from typing import List
 import unittest
 from mlprogram.samplers \
@@ -270,6 +271,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                 log(0.2) + log(0.8) + 1e-5))
 
     def test_reference(self):
+        torch.manual_seed(0)
         rule_prob = torch.tensor([
             [[
                 1.0,  # unknown
@@ -293,11 +295,11 @@ class TestActionSequenceSampler(unittest.TestCase):
             [[0.0, 0.0, 0.0]],
             [[
                 1.0,  # Unknown
-                0.2,  # x
-                0.8,  # 1
+                0.8,  # x
+                0.2,  # 1
             ]]])
         reference_prob = \
-            torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.4, 0.4]]])
+            torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.1, 0.1]]])
         sampler = ActionSequenceSampler(
             create_encoder(),
             get_token_type,
@@ -307,6 +309,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             collate,
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob)),
+            rng=np.random.RandomState(0)
         )
         s = SamplerState(0.0, sampler.initialize({}))
         results = list(sampler.top_k_samples([s], 1))
