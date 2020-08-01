@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import unittest
-from typing import List
+from typing import List, Dict, Any
 from mlprogram.samplers import Sampler, SamplerWithValueNetwork, SamplerState
+from mlprogram.utils.data import CollateOptions, Collate
 
 
 class MockSampler(Sampler[int, int, str]):
@@ -17,13 +18,18 @@ class MockSampler(Sampler[int, int, str]):
 
 
 class MockValueNetwork(nn.Module):
-    def forward(self, state: str) -> torch.Tensor:
-        return torch.tensor(int(state))
+    def forward(self, state: Dict[str, Any]) -> torch.Tensor:
+        return state["x"]
 
 
 class TestSamplerWithValueNetwork(unittest.TestCase):
     def test_rescore(self):
-        sampler = SamplerWithValueNetwork(MockSampler(), MockValueNetwork())
+        def transform(state: str) -> torch.Tensor:
+            return {"x": torch.tensor([int(state)])}
+        collate = Collate(device=torch.device("cpu"),
+                          x=CollateOptions(False, 0, 0))
+        sampler = SamplerWithValueNetwork(MockSampler(), transform, collate,
+                                          MockValueNetwork())
         zero = SamplerState(0, sampler.initialize(0))
         samples = list(sampler.k_samples([zero], 3))
         self.assertEqual(

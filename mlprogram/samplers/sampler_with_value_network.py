@@ -1,8 +1,9 @@
 import torch
 import logging
 from typing \
-    import TypeVar, Generic, Generator, Optional, List
+    import TypeVar, Generic, Generator, Optional, List, Callable, Any
 from mlprogram.samplers import SamplerState, Sampler
+from mlprogram.utils.data import Collate
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,12 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                               Generic[Input, Output, State]):
     def __init__(self,
                  sampler: Sampler[Input, Output, State],
+                 transform: Callable[[State], Any],
+                 collate: Collate,
                  value_network: torch.nn.Module):
         self.sampler = sampler
+        self.transform = transform
+        self.collate = collate
         self.value_network = value_network
 
     def initialize(self, input: Input) -> State:
@@ -31,6 +36,6 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                          None, None]:
         self.value_network.eval()
         for state in self.sampler.k_samples(states, n):
-            # TODO batch computation
-            value = self.value_network(state.state)
+            input = self.transform(state.state)
+            value = self.value_network(self.collate([input]))
             yield SamplerState(value.item(), state.state)
