@@ -59,6 +59,7 @@ class RnnDecoder(nn.Module):
             h1, c1 = self.lstm(input, s)
             hs.append(h1)
             cs.append(c1)
+            s = (h1, c1)
         hs = torch.stack(hs)
         cs = torch.stack(cs)
 

@@ -35,6 +35,25 @@ class TestRnnDecoder(unittest.TestCase):
         self.assertEqual((2, 5), h_n.shape)
         self.assertEqual((2, 5), c_n.shape)
 
+    def test_state(self):
+        decoder = RnnDecoder(2, 3, 5, 0.0)
+        input = torch.rand(1, 2)
+        action0 = torch.ones(2, 3)  # length = 3
+        action = rnn.pad_sequence([action0])
+        h_0 = torch.zeros(1, 5)
+        c_0 = torch.zeros(1, 5)
+
+        inputs = decoder({
+            "input_feature": input,
+            "action_features": action,
+            "hidden_state": h_0,
+            "state": c_0
+        })
+        output = inputs["action_features"].data
+        self.assertFalse(np.array_equal(
+            output[0, 0, :].detach().numpy(), output[1, 0, :].detach().numpy()
+        ))
+
 
 if __name__ == "__main__":
     unittest.main()
