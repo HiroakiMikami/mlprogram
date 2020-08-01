@@ -129,7 +129,8 @@ class Dataset(IterableDataset):
         class InternalIterator:
             def __init__(self, parent: Dataset):
                 self.parent = parent
-                self.depth_prob = [1 << d for d in range(self.parent.depth)]
+                self.depth_prob = \
+                    [float(1 << d) for d in range(self.parent.depth)]
                 self.depth_prob = \
                     [p / sum(self.depth_prob) for p in self.depth_prob]
 
