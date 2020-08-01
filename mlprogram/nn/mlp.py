@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from typing import Optional
 from collections import OrderedDict
 
 
@@ -15,7 +16,8 @@ def block(in_channel: int, out_channel: int, n_linear: int):
 
 class MLP(nn.Module):
     def __init__(self, in_channel: int, out_channel: int, hidden_channel: int,
-                 n_linear_per_block: int, n_block: int):
+                 n_linear_per_block: int, n_block: int,
+                 activation: Optional[nn.Module] = None):
         super().__init__()
         assert n_block >= 2
         modules = []
@@ -30,6 +32,10 @@ class MLP(nn.Module):
         modules.append((f"block{n_block - 1}", block(
             dim, out_channel, n_linear_per_block)))
         self.module = nn.Sequential(OrderedDict(modules))
+        self.activation = activation
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.module(x)
+        out = self.module(x)
+        if self.activation is not None:
+            out = self.activation(out)
+        return out

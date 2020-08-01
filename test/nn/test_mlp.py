@@ -2,6 +2,7 @@ import unittest
 import torch
 
 from mlprogram.nn import MLP
+from torch import nn
 
 
 class TestMLP(unittest.TestCase):
@@ -20,6 +21,13 @@ class TestMLP(unittest.TestCase):
         mlp = MLP(1, 2, 3, 1, 2)
         out = mlp(torch.rand(1, 1))
         self.assertEqual((1, 2), out.shape)
+
+    def test_activation(self):
+        mlp = MLP(1, 2, 3, 1, 2, activation=nn.Sigmoid())
+        out = mlp(torch.rand(1, 1))
+        self.assertEqual((1, 2), out.shape)
+        self.assertTrue(torch.all(0 <= out))
+        self.assertTrue(torch.all(out <= 1))
 
 
 if __name__ == "__main__":
