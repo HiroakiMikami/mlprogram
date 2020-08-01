@@ -29,9 +29,9 @@ class TestCaseResult(Metric[Code], Generic[Code]):
     def __call__(self, input: Dict[str, Any], value: Code) -> float:
         ground_truth = input["ground_truth"]
         # evaluate ground truth
-        outputs = set()
+        outputs = []
         for gt in ground_truth:
-            outputs.add(self._eval(gt))
+            outputs.append(self._eval(gt))
 
         # calc. metric
         actual = self._eval(value)
