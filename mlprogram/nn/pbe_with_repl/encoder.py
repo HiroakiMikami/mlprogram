@@ -20,11 +20,13 @@ class Encoder(nn.Module):
                                         dtype=in_feature.dtype)
         entry["reference_features"] = features
 
-        reduced_feature = features.data.sum(dim=0)
+        reduced_feature = \
+            (features.data * features.mask.unsqueeze(2)).sum(dim=0)
         if self.reduction == "mean":
             in_feature = in_feature.float()
             reduced_feature = \
                 reduced_feature / features.mask.sum(dim=0).float()
+        entry["variable_feature"] = reduced_feature
         entry["input_feature"] = torch.cat([in_feature, reduced_feature],
                                            dim=1)
         return entry
