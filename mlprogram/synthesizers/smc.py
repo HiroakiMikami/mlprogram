@@ -1,4 +1,5 @@
-from typing import TypeVar, Generic, Optional, Generator, Dict, Tuple
+from typing \
+    import TypeVar, Generic, Optional, Generator, Dict, Tuple, Callable, cast
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 import math
@@ -7,17 +8,20 @@ import numpy as np
 Input = TypeVar("Input")
 Output = TypeVar("Output")
 State = TypeVar("State")
+Key = TypeVar("Key")
 
 
-class SMC(Synthesizer[Input, Output], Generic[Input, Output, State]):
+class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
     def __init__(self, max_step_size: int, max_retry_num: int,
                  initial_particle_size: int,
                  sampler: Sampler[Input, Output, State],
+                 to_key: Callable[[State], Key] = lambda x: cast(Key, x),
                  factor: int = 2,
                  rng: Optional[np.random.RandomState] = None):
         self.max_step_size = max_step_size
         self.max_retry_num = max_retry_num
         self.initial_particle_size = initial_particle_size
+        self.to_key = to_key
         self.factor = factor
         self.sampler = sampler
         self.rng = rng or np.random
@@ -31,23 +35,26 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State]):
             step = 0
             while step < self.max_step_size:
                 # Generate particles
-                samples: Dict[State, Tuple[float, int]] = {}
+                samples: Dict[Key, Tuple[SamplerState[State], int]] = {}
                 for state, n in particles:
                     for sample in self.sampler.k_samples([state], n):
-                        if sample.state in samples:
-                            samples[sample.state] = \
-                                (samples[sample.state][0],
-                                 samples[sample.state][1] + 1)
+                        key = self.to_key(sample.state)
+                        if key in samples:
+                            samples[key] = \
+                                (samples[key][0],
+                                 samples[key][1] + 1)
                         else:
-                            samples[sample.state] = (sample.score, 1)
+                            samples[key] = (sample, 1)
 
-                        output_opt = self.sampler.create_output(sample.state)
-                        if output_opt is not None:
-                            yield Result(output_opt, sample.score)
+                            output_opt = \
+                                self.sampler.create_output(sample.state)
+                            if output_opt is not None:
+                                yield Result(output_opt, sample.score)
 
+                if len(samples) == 0:
+                    break
                 # Resample
-                list_samples = [(SamplerState(score, state), n)
-                                for state, (score, n) in samples.items()]
+                list_samples = list(samples.values())
                 log_weights = [math.log(n) + state.score
                                for state, n in list_samples]
                 probs = [math.exp(log_weight - max(log_weights))

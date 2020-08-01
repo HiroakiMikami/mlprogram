@@ -34,7 +34,7 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
                                    (state.state[0], state.state[1] + x))
 
 
-class MockSMC(SMC[str, str, Tuple[str, str]]):
+class MockSMC(SMC[str, str, Tuple[str, str], str]):
     def __init__(self, max_step_size: int, max_retry_num: int,
                  initial_particle: int, rng: np.random.RandomState):
         super().__init__(max_step_size, max_retry_num, initial_particle,
