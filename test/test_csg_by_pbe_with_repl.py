@@ -99,7 +99,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 ("tcanvas", TransformCanvas())
             ])),
             TransformActionSequenceForRnnDecoder(encoder, train=False),
-            collate, model)
+            collate, model,
+            rng=np.random.RandomState(0))
         subsynthesizer = SMC(
             20, 1, 20,
             subsampler,
@@ -119,7 +120,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             TransformCanvas(),
             collate,
             model.encode_input,
-            to_code=ToCsgAst())
+            to_code=ToCsgAst(),
+            rng=np.random.RandomState(0))
         sampler = SamplerWithValueNetwork(
             sampler,
             Compose(OrderedDict([
@@ -285,7 +287,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 1, 1,
                 Epoch(30), interval=Epoch(10),
                 num_models=1,
-                use_pretrained_model=True)
+                use_pretrained_model=True,
+                score_threshold=0.9)
 
     def test(self):
         torch.manual_seed(0)
