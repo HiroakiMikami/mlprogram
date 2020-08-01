@@ -9,10 +9,11 @@ class TransformCanvas:
         return tensor.float().unsqueeze(0) - 0.5
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        entry["input"] = self.per_canvas(entry["input"])
+        # TODO
+        entry["processed_input"] = self.per_canvas(entry["input"])
         if "variables" in entry:
             variables = entry["variables"]
-            s = entry["input"].shape
+            s = entry["processed_input"].shape
             if len(variables) == 0:
                 entry["variables"] = torch.zeros((0, *s))
             else:
