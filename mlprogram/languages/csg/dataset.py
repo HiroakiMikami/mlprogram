@@ -129,9 +129,12 @@ class Dataset(IterableDataset):
         class InternalIterator:
             def __init__(self, parent: Dataset):
                 self.parent = parent
+                self.depth_prob = [1 << d for d in range(self.parent.depth)]
+                self.depth_prob = \
+                    [p / sum(self.depth_prob) for p in self.depth_prob]
 
             def __next__(self) -> Any:
-                depth = np.random.randint(1, self.parent.depth + 1)
+                depth = rng.multinomial(1, self.depth_prob).nonzero()[0] + 1
                 ast = self.parent.sample_ast(rng, depth)
                 if self.parent.reference:
                     refs, output = self.parent.to_reference(ast)
