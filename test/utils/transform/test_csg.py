@@ -6,7 +6,7 @@ from mlprogram.utils.transform.csg import TransformCanvas
 
 class TestTransformCanvas(unittest.TestCase):
     def test_test_case(self):
-        f = TransformCanvas()
+        f = TransformCanvas(["input"])
         self.assertTrue(np.array_equal(
             torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 2, 2),
             f({
@@ -15,7 +15,7 @@ class TestTransformCanvas(unittest.TestCase):
         ))
 
     def test_variables(self):
-        f = TransformCanvas()
+        f = TransformCanvas(["input", "variables"])
         self.assertTrue(np.array_equal(
             torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 1, 2, 2),
             f({

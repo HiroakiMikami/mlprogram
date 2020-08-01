@@ -96,7 +96,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             encoder, GetTokenType(), IsSubtype(),
             Compose(OrderedDict([
                 ("ecode", EvaluateCode(interpreter)),
-                ("tcanvas", TransformCanvas())
+                ("tcanvas", TransformCanvas(["variables"]))
             ])),
             TransformActionSequenceForRnnDecoder(encoder, train=False),
             collate, model,
@@ -117,7 +117,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
 
         sampler = AstReferenceSampler(
             subsynthesizer,
-            TransformCanvas(),
+            TransformCanvas(["input"]),
             collate,
             model.encode_input,
             to_code=ToCsgAst(),
@@ -126,7 +126,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             sampler,
             Compose(OrderedDict([
                 ("ecode", EvaluateCode(interpreter)),
-                ("tcanvas", TransformCanvas())
+                ("tcanvas", TransformCanvas(["variables"]))
             ])),
             collate,
             torch.nn.Sequential(OrderedDict([
@@ -154,7 +154,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         )
 
     def transform(self, encoder, interpreter, to_action_sequence):
-        tcanvas = TransformCanvas()
+        tcanvas = TransformCanvas(["input", "variables"])
         tcode = TransformCode(to_action_sequence)
         taction = TransformActionSequenceForRnnDecoder(encoder)
         tgt = TransformGroundTruth(encoder)
