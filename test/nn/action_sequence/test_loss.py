@@ -42,7 +42,8 @@ class TestLoss(unittest.TestCase):
         reference_prob = rnn.pad_sequence([reference_prob0])
 
         loss0 = Loss()
-        loss1 = Loss(reduction=2)
+        loss1 = Loss(reduction="sum")
+        loss2 = Loss(reduction="none")
         objective0 = loss0({"rule_probs": rule_prob,
                             "token_probs": token_prob,
                             "reference_probs": reference_prob,
@@ -51,7 +52,12 @@ class TestLoss(unittest.TestCase):
                             "token_probs": token_prob,
                             "reference_probs": reference_prob,
                             "ground_truth_actions": gt})
-        self.assertAlmostEqual(objective0.item(), objective1.item() * 2)
+        objective2 = loss2({"rule_probs": rule_prob,
+                            "token_probs": token_prob,
+                            "reference_probs": reference_prob,
+                            "ground_truth_actions": gt})
+        self.assertEqual((1,), objective2.shape)
+        self.assertAlmostEqual(objective0.item(), objective1.item())
 
 
 if __name__ == "__main__":

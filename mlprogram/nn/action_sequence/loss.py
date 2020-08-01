@@ -1,14 +1,16 @@
 import torch
 import torch.nn as nn
-from typing import Any, cast, Dict, Optional
+from typing import Any, cast, Dict
 
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class Loss(nn.Module):
-    def __init__(self, reduction: Optional[float] = None):
+    def __init__(self, reduction: str = "mean"):
         super(Loss, self).__init__()
         self.reduction = reduction
+        assert self.reduction == "mean" or self.reduction == "sum" or \
+            self.reduction == "none"
 
     def forward(self, inputs: Dict[str, Any]) -> torch.Tensor:
         """
@@ -79,7 +81,9 @@ class Loss(nn.Module):
         likelihood = torch.log(prob)  # (L_a, B)
         loss = -likelihood * \
             ground_truth_actions.mask.to(rule_prob_tensor.dtype)  # (L_a, B)
-        if self.reduction is None:
+        if self.reduction == "mean":
             return torch.mean(torch.sum(loss, dim=0))
+        elif self.reduction == "sum":
+            return torch.sum(loss)
         else:
-            return torch.sum(loss) / self.reduction
+            return torch.sum(loss, dim=0)
