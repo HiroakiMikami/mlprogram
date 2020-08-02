@@ -197,7 +197,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     n_rollout: int,
                     length: Length,
                     interval: Optional[Length] = None,
-                    score_threshold: Optional[float] = None,
                     num_models: int = 3,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
@@ -271,9 +270,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                             if rollout is None or max_score < s:
                                 max_score = s
                                 rollout = x.output
-                            if score_threshold is not None and \
-                                    s >= score_threshold:
-                                break
                         if rollout is not None:
                             output = {key: value
                                       for key, value in input.items()}
