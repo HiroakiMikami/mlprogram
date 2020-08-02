@@ -11,9 +11,9 @@ class ToEpisode:
         self.remove_used_reference = remove_used_reference
 
     def __call__(self, entry: Dict[str, Any]) -> List[Dict[str, Any]]:
-        input = entry.pop("input")
+        input = entry["input"]
         ground_truth = cast(List[Tuple[Reference, Any]],
-                            entry.pop("ground_truth"))
+                            entry["ground_truth"])
         gt_refs = {ref: value for ref, value in ground_truth}
 
         def find_refs(ast: AST) -> List[Reference]:
@@ -35,7 +35,9 @@ class ToEpisode:
         refs: Set[Reference] = set()
         for i, (ref, _) in enumerate(ground_truth):
             rs = list(refs)
-            xs = {key: value for key, value in entry.items()}
+            rs.sort(key=lambda r: r.name)
+            xs = {key: value for key, value in entry.items()
+                  if key not in set(["input", "ground_truth"])}
             xs["input"] = input
             xs["ground_truth"] = gt_refs[ref]
             xs["reference"] = [Token(None, r) for r in rs]
