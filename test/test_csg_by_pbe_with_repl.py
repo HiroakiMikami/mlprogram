@@ -45,17 +45,12 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                                      0)
 
     def prepare_model(self, encoder: ActionSequenceEncoder):
-        embed = CNN2d(1, 64, 64, 2, 4, 2)
         return torch.nn.Sequential(OrderedDict([
             ("encode_input",
-             Apply("processed_input", "input_feature", embed)),
+             Apply("processed_input", "input_feature",
+                   CNN2d(1, 16, 32, 2, 2, 2))),
             ("encoder",
-             torch.nn.Sequential(OrderedDict([
-                 ("encode_variables",
-                  Apply("variables", "reference_features", embed,
-                        value_type="padded_tensor")),
-                 ("encoder", Encoder())
-             ]))),
+             Encoder(CNN2d(2, 16, 32, 2, 2, 2))),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
                  ("action_sequence_reader",
@@ -63,16 +58,16 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                                            encoder._token_encoder.vocab_size,
                                            256)),
                  ("decoder",
-                  a_s.RnnDecoder(2 * 64 * 1 * 1, 256, 256, 0.0)),
+                  a_s.RnnDecoder(2 * 16 * 8 * 8, 256, 512, 0.0)),
                  ("predictor",
-                  a_s.Predictor(256, 64 * 1 * 1,
+                  a_s.Predictor(512, 16 * 8 * 8,
                                 encoder._rule_encoder.vocab_size,
                                 encoder._token_encoder.vocab_size,
-                                256))
+                                512))
              ]))),
             ("value",
              Apply("variable_feature", "value",
-                   MLP(64 * 1 * 1, 1, 512, 4, 2,
+                   MLP(16 * 8 * 8, 1, 512, 2,
                        activation=torch.nn.Sigmoid()),
                    value_type="tensor"))
         ]))
@@ -135,7 +130,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 ("pick", Pick("value"))
             ])))
 
-        return SMC(3, 1, 20, sampler, rng=np.random.RandomState(0),
+        return SMC(4, 1, 20, sampler, rng=np.random.RandomState(0),
                    to_key=lambda x: tuple(x["code"]))  # TODO
 
     def interpreter(self):
@@ -185,7 +180,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         return results["valid"]
 
     def pretrain(self, output_dir):
-        dataset = Dataset(2, 2, 1, 45, reference=True, seed=1)
+        dataset = Dataset(2, 1, 2, 1, 45, reference=True, seed=1)
         train_dataset = to_map_style_dataset(dataset, 10)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -223,15 +218,15 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             train_supervised(
                 tmpdir, output_dir,
                 train_dataset, model, optimizer,
-                Loss(), Accuracy(),
+                Loss(reduction="sum"),  # TODO divide by batch size
+                Accuracy(),
                 collate_fn,
-                1, Epoch(30), interval=Epoch(10),
+                1, Epoch(50), interval=Epoch(10),
                 num_models=0
             )
         return encoder, train_dataset
 
     def reinforce(self, train_dataset, encoder, output_dir):
-        # train_dataset = train_dataset[:1]
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = Sequence(OrderedDict([
                 ("to_ast", ToAst()),
