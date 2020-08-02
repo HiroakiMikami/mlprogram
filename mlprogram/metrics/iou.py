@@ -9,7 +9,10 @@ class Iou(Metric[np.array]):
         ground_truth = input["ground_truth"]
         iou = 0.0
         for gt in ground_truth:
-            intersection = (gt & actual).astype(np.float).sum()
-            union = (gt | actual).astype(np.float).sum()
-            iou = max(iou, (intersection / union).item())
+            if gt.sum() == 0:
+                iou = max(iou, 1.0 - actual.sum() / np.prod(actual.shape))
+            else:
+                intersection = (gt & actual).astype(np.float).sum()
+                union = (gt | actual).astype(np.float).sum()
+                iou = max(iou, (intersection / union).item())
         return iou
