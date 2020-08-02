@@ -54,6 +54,14 @@ class Flatten(Generic[V]):
         return retval
 
 
+class Threshold(object):
+    def __init__(self, threshold: float):
+        self.threshold = threshold
+
+    def __call__(self, value: float) -> bool:
+        return value >= self.threshold
+
+
 def save(obj: V, file: str) -> V:
     if os.path.exists(file):
         logger.info(f"Reuse data from {file}")
