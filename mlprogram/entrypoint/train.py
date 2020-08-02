@@ -179,6 +179,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
 
     logger.info("Dump the last model")
     torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+    torch.save(optimizer.state_dict(),
+               os.path.join(output_dir, "optimizer.pt"))
 
 
 def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
@@ -198,6 +200,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     score_threshold: Optional[float] = None,
                     num_models: int = 3,
                     use_pretrained_model: bool = False,
+                    use_pretrained_optimizer: bool = False,
                     device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -221,6 +224,12 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
         state_dict = torch.load(pretrained_model,
                                 map_location=torch.device("cpu"))
         model.load_state_dict(state_dict)
+    if use_pretrained_optimizer:
+        logger.info("Load pretrained optimizer")
+        pretrained_optimizer = os.path.join(input_dir, "optimizer.pt")
+        state_dict = torch.load(pretrained_optimizer,
+                                map_location=torch.device("cpu"))
+        optimizer.load_state_dict(state_dict)
 
     # Initialize extensions manager
     log_reporter, manager = \
@@ -248,16 +257,15 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
         for samples in loader:
             if manager.updater.iteration >= n_iter:
                 break
-            with manager.run_iteration():
-                # Rolleout
-                rollouts = []
-                scores = []
+            # Rollout
+            rollouts = []
+            scores = []
+            with torch.no_grad():
                 for sample in samples:
                     for j in range(n_rollout):
                         max_score = 0.0
                         rollout = None
                         input = rollout_transform(sample)
-
                         for x in synthesizer(input):
                             s = score(sample, x.output)
                             if rollout is None or max_score < s:
@@ -267,16 +275,17 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                     s >= score_threshold:
                                 break
                         if rollout is not None:
-                            output = \
-                                {key: value for key, value in input.items()}
+                            output = {key: value
+                                      for key, value in input.items()}
                             output["ground_truth"] = rollout
                             output["reward"] = torch.tensor(reward(max_score))
                             rollouts.append(output)
                             scores.append(max_score)
-                if len(rollouts) == 0:
-                    logger.warning("No rollout")
-                    continue
+            if len(rollouts) == 0:
+                logger.warning("No rollout")
+                continue
 
+            with manager.run_iteration():
                 batch2 = collate(rollouts)
                 model.train()
                 output = model(batch2)
@@ -317,3 +326,5 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
     logger.info("Dump the last model")
     torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+    torch.save(optimizer.state_dict(),
+               os.path.join(output_dir, "optimizer.pt"))

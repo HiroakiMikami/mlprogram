@@ -80,6 +80,8 @@ class TestTrainSupervised(unittest.TestCase):
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(
+                os.path.exists(os.path.join(output, "optimizer.pt")))
 
     def test_remove_old_snapshots(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -270,6 +272,8 @@ class TestTrainREINFORCE(unittest.TestCase):
             self.assertEqual(2, len(log))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "optimizer.pt")))
 
     def test_pretrained_model(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -313,6 +317,53 @@ class TestTrainREINFORCE(unittest.TestCase):
             self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "optimizer.pt")))
+
+    def test_pretrained_optimizer(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            input = os.path.join(tmpdir, "in")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            optimizer = torch.optim.SGD(model.parameters(), lr=np.nan)
+            os.makedirs(input)
+            torch.save(optimizer.state_dict(),
+                       os.path.join(input, "optimizer.pt"))
+
+            train_REINFORCE(input, ws, output,
+                            self.prepare_dataset(),
+                            self.prepare_synthesizer(model),
+                            model,
+                            self.prepare_optimizer(model),
+                            lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                        kwargs["target"]
+                                                        ) * kwargs["reward"],
+                            lambda sample, output:
+                                sample["value"] == output["output"],
+                            lambda score: score > 0.5,
+                            lambda x: x,
+                            self.collate,
+                            1, 1, Epoch(2),
+                            use_pretrained_optimizer=True)
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_3")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "optimizer.pt")))
 
 
 if __name__ == "__main__":
