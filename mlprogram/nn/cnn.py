@@ -5,13 +5,33 @@ from collections import OrderedDict
 import numpy as np
 
 
-def block_2d(in_channel: int, out_channel: int, n_conv: int):
+class MaxPool2d(nn.Module):
+    def __init__(self, pool: int):
+        super().__init__()
+        self.pool = pool
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if len(x) != 0:
+            return F.max_pool2d(x, self.pool)
+        elif len(x) == 0:
+            N, C, H, W = x.shape
+            return x.reshape(N, C, H // self.pool, W // self.pool)
+
+
+def block_2d(in_channel: int, out_channel: int, hidden_channel: int,
+             n_conv: int, pool: int):
     modules = []
     dim = in_channel
-    for i in range(n_conv):
-        modules.append((f"conv{i}", nn.Conv2d(dim, out_channel, 3, padding=1)))
-        dim = out_channel
+    for i in range(n_conv - 1):
+        modules.append((f"conv{i}",
+                        nn.Conv2d(dim, hidden_channel, 3, padding=1)))
+        dim = hidden_channel
         modules.append((f"relu{i}", nn.ReLU()))
+    modules.append((f"conv{n_conv - 1}",
+                    nn.Conv2d(dim, out_channel, 3, padding=1)))
+    modules.append((f"relu{n_conv - 1}", nn.ReLU()))
+    if pool != 1:
+        modules.append(("pool", MaxPool2d(pool)))
     return nn.Sequential(OrderedDict(modules))
 
 
@@ -22,32 +42,21 @@ class CNN2d(nn.Module):
         super().__init__()
         assert n_block >= 2
         modules = []
-        dim = in_channel
         modules.append(("block0", block_2d(
-            dim, hidden_channel, n_conv_per_block)))
+            in_channel, hidden_channel, hidden_channel, n_conv_per_block,
+            pool)))
         dim = hidden_channel
         for i in range(n_block - 2):
             modules.append((f"block{i + 1}", block_2d(
-                dim, hidden_channel, n_conv_per_block)))
+                dim, hidden_channel, hidden_channel, n_conv_per_block, pool)))
             dim = hidden_channel
         modules.append((f"block{n_block - 1}", block_2d(
-            dim, out_channel, n_conv_per_block)))
-        for name, module in modules:
-            self.add_module(name, module)
-        self.keys = list([key for key, _ in modules])
-        self.pool = pool
+            dim, out_channel, hidden_channel, n_conv_per_block, 1)))
+        self.module = torch.nn.Sequential(OrderedDict(modules))
         self.flatten = flatten
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = x
-        modules = dict(self.named_modules())
-        for key in self.keys:
-            out = modules[key](out)
-            if self.pool != 1 and len(out) != 0:
-                out = F.max_pool2d(out, self.pool)
-            elif len(out) == 0:
-                N, C, H, W = out.shape
-                out = out.reshape(N, C, H // self.pool, W // self.pool)
+        out = self.module(x)
         if self.flatten:
             return out.reshape(out.shape[0], np.prod(out.shape[1:]))
         else:
