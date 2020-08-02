@@ -12,8 +12,10 @@ class TestCaseResult(Metric[Code], Generic[Code]):
     def __init__(self,
                  interpreter: Interpreter[Code, Result],
                  reference: bool = False,
+                 use_input: bool = False,
                  metric: Metric[Result] = Accuracy()):
         self.interpreter = interpreter
+        self.use_input = use_input
         self.reference = reference
         self.metric = metric
 
@@ -27,11 +29,12 @@ class TestCaseResult(Metric[Code], Generic[Code]):
         return output
 
     def __call__(self, input: Dict[str, Any], value: Code) -> float:
-        ground_truth = input["ground_truth"]
-        # evaluate ground truth
-        outputs = []
-        for gt in ground_truth:
-            outputs.append(self._eval(gt))
+        if self.use_input:
+            outputs = [input["input"]]
+        else:
+            ground_truth = input["ground_truth"]
+            # evaluate ground truth
+            outputs = [self._eval(gt) for gt in ground_truth]
 
         # calc. metric
         actual = self._eval(value)

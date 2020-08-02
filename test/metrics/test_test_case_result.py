@@ -19,6 +19,10 @@ class TestTestCaseResult(unittest.TestCase):
         self.assertAlmostEqual(0.0, acc({"ground_truth": ["0"]}, "1"))
         self.assertAlmostEqual(1.0, acc({"ground_truth": ["0", "1"]}, "1"))
 
+    def test_use_input(self):
+        acc = TestCaseResult(MockInterpreter(), use_input=True)
+        self.assertAlmostEqual(1.0, acc({"input": 0}, "0"))
+
     def test_reference(self):
         acc = TestCaseResult(MockInterpreter(), reference=True)
         self.assertAlmostEqual(
