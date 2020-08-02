@@ -32,20 +32,26 @@ class TestEvaluate(unittest.TestCase):
             results.metrics,
             {1: {"accuracy": 1.0 / 3}, 3: {"accuracy": 2.0 / 3}})
         self.assertEqual(3, len(results.results))
+        results.results[0].time = 0.0
+        results.results[1].time = 0.0
+        results.results[2].time = 0.0
         self.assertEqual(
             Result("query0", {"ground_truth": ["c0", "c1", "c4"]},
                    ["c0", "c1", "c2"],
-                   {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}}),
+                   {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
+                   True, 0.0),
             results.results[0])
         self.assertEqual(
             Result("query1", {"ground_truth": ["c0", "c1", "c4"]},
                    ["c2", "c3", "c0"],
-                   {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}}),
+                   {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
+                   True, 0.0),
             results.results[1])
         self.assertEqual(
             Result("query2", {"ground_truth": ["c0", "c1", "c4"]},
                    ["c2", "c3", "c5"],
-                   {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}}),
+                   {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
+                   True, 0.0),
             results.results[2])
 
 

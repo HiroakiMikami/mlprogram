@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from tqdm import tqdm
-from typing import Optional, Tuple, List, Mapping
+from typing import Optional, Tuple, List, Mapping, Union
 import os
 import logging
 import shutil
@@ -20,11 +20,13 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              model: nn.Module,
              synthesizer: Synthesizer,
              metrics: Mapping[str, Metric],
-             main_metric: Tuple[int, str],
+             main_metric: Union[Tuple[int, str], str],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
              n_samples: Optional[int] = None) \
         -> None:
+    if isinstance(main_metric, str):
+        assert main_metric == "generation"
     os.makedirs(workspace_dir, exist_ok=True)
 
     if n_samples is not None:
@@ -61,9 +63,17 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
 
     logger.info("Find best model")
     best_model: Optional[str] = None
-    best_score: float = -1.0
+    if isinstance(main_metric, str):
+        if main_metric == "generation":
+            best_score: Union[float, Tuple[float, float]] = (-1.0, 0.0)
+    else:
+        best_score = -1.0
     for name, result in results["test"].items():
-        m = result.metrics[main_metric[0]][main_metric[1]]
+        if isinstance(main_metric, str):
+            if main_metric == "generation":
+                m = (result.generation_rate, -result.generation_time)
+        else:
+            m = result.metrics[main_metric[0]][main_metric[1]]
         if best_score < m:
             best_model = name
             best_score = m
@@ -81,6 +91,8 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
                       synthesizer,
                       metrics=metrics, top_n=top_n)
         logger.info(f"{name}: {result.metrics}")
+        logger.info(f"generation rate: {result.generation_rate}")
+        logger.info(f"generation time: {result.generation_time}")
         results["best_model"] = best_model
         results["valid"] = result
         torch.save(results, results_path)
