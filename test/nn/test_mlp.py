@@ -1,5 +1,6 @@
 import unittest
 import torch
+import numpy as np
 
 from mlprogram.nn import MLP
 from torch import nn
@@ -28,6 +29,15 @@ class TestMLP(unittest.TestCase):
         self.assertEqual((1, 2), out.shape)
         self.assertTrue(torch.all(0 <= out))
         self.assertTrue(torch.all(out <= 1))
+
+    def test_value(self):
+        mlp = MLP(1, 2, 3, 1, 2, activation=nn.Sigmoid())
+        input = torch.zeros(2, 1)
+        input[0] = 1
+        out = mlp(input)
+        self.assertEqual((2, 2), out.shape)
+        self.assertFalse(np.array_equal(out[0, :].detach().numpy(),
+                                        out[1, :].detach().numpy()))
 
 
 if __name__ == "__main__":
