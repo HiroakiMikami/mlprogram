@@ -189,9 +189,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 model,
                 self.prepare_synthesizer(model, encoder, interpreter,
                                          rollout=False),
-                {"iou": metrics.TestCaseResult(interpreter, reference=True,
-                                               metric=metrics.Iou())},
-                (5, "iou"), top_n=[5]
+                {},
+                "generation", top_n=[]
             )
         results = torch.load(os.path.join(dir, "results.pt"))
         return results["valid"]
