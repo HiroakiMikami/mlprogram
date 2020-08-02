@@ -13,7 +13,7 @@ from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import create_optimizer
-from mlprogram.synthesizers import SMC
+from mlprogram.synthesizers import SMC, FilteredSynthesizer
 from mlprogram.samplers \
     import ActionSequenceSampler, AstReferenceSampler, SamplerWithValueNetwork
 from mlprogram.encoders import ActionSequenceEncoder
@@ -75,7 +75,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
     def prepare_optimizer(self, model):
         return create_optimizer(optim.Adam, model)
 
-    def prepare_synthesizer(self, model, encoder, interpreter):
+    def prepare_synthesizer(self, model, encoder, interpreter, rollout=True):
         collate = Collate(
             torch.device("cpu"),
             processed_input=CollateOptions(False, 0, 0),
@@ -130,8 +130,24 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 ("pick", Pick("value"))
             ])))
 
-        return SMC(4, 1, 20, sampler, rng=np.random.RandomState(0),
-                   to_key=lambda x: tuple(x["code"]))  # TODO
+        synthesizer = SMC(4, 1, 20, sampler, rng=np.random.RandomState(0),
+                          to_key=lambda x: tuple(x["code"]))  # TODO
+        if rollout:
+            return FilteredSynthesizer(
+                synthesizer,
+                metrics.TestCaseResult(interpreter, reference=True,
+                                       use_input=True, metric=metrics.Iou()),
+                0.9,
+                n_output_if_empty=1
+            )
+        else:
+            return FilteredSynthesizer(
+                synthesizer,
+                metrics.TestCaseResult(interpreter, reference=True,
+                                       use_input=True, metric=metrics.Iou()),
+                0.9,
+                n_output_if_empty=0
+            )
 
     def interpreter(self):
         return Interpreter(2, 2, 8)
@@ -171,7 +187,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 dir, tmpdir, dir,
                 dataset, dataset,
                 model,
-                self.prepare_synthesizer(model, encoder, interpreter),
+                self.prepare_synthesizer(model, encoder, interpreter,
+                                         rollout=False),
                 {"iou": metrics.TestCaseResult(interpreter, reference=True,
                                                metric=metrics.Iou())},
                 (5, "iou"), top_n=[5]
@@ -282,8 +299,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 1, 1,
                 Epoch(30), interval=Epoch(10),
                 num_models=1,
-                use_pretrained_model=True,
-                score_threshold=0.9)
+                use_pretrained_model=True)
 
     def test(self):
         torch.manual_seed(0)
@@ -293,7 +309,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             results = self.evaluate(dataset, encoder, tmpdir)
-        self.assertLessEqual(0.9, results.metrics[5]["iou"])
+        self.assertLessEqual(1.0, results.generation_rate)
 
 
 if __name__ == "__main__":
