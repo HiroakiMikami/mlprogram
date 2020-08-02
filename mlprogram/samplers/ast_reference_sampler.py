@@ -9,6 +9,7 @@ from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import Token, Reference
 from mlprogram.utils.data import Collate
+from mlprogram.utils import random
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +70,8 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
                     retval.add(node.value)
             return retval
 
-        sampler_states = []
-        for state in states:
+        ks = random.split(self.rng, n, len(states), 1e-8)
+        for state, k in zip(states, ks):
             for i, result in enumerate(self.synthesizer(state.state)):
                 new_state = {key: value for key, value in state.state.items()}
                 # Copy reference
@@ -92,20 +93,4 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
                 new_state["reference"].append(
                     Token(type_name, ref))
                 new_state["code"].append((ref, code))
-                sampler_states.append(SamplerState(state.score + result.score,
-                                                   new_state))
-                if i == n:
-                    break
-
-        if len(sampler_states) <= n:
-            for s in sampler_states:
-                yield s
-        else:
-            # log_prob -> prob
-            probs = [np.exp(s.score) for s in sampler_states]
-            # normalize
-            probs = [p / sum(probs) for p in probs]
-            resamples = self.rng.multinomial(n, probs)
-            for s, m in zip(sampler_states, resamples):
-                for _ in range(m):
-                    yield s
+                yield SamplerState(result.score, new_state)

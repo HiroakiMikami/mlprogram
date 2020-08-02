@@ -16,6 +16,7 @@ from mlprogram.samplers import SamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKElement, Token
 from mlprogram.utils.data import Collate
+from mlprogram.utils import random
 
 logger = logging.getLogger(__name__)
 
@@ -267,17 +268,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             self.batch_infer(states)
 
         # Split and decide the number of samples per state
-        probs = [1 / (n + 1) - self.eps for _ in range(n + 2)]
-        divisors: List[int] = []
-        for i, m in enumerate(self.rng.multinomial(len(states) - 1, probs)):
-            for _ in range(m):
-                divisors.append(i)
-        last = 0
-        ks = []
-        for divisor in divisors:
-            ks.append(divisor - last)
-            last = divisor
-        ks.append(n - last)
+        ks = random.split(self.rng, n, len(states), self.eps)
 
         for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
                                      next_states, states, ks):
