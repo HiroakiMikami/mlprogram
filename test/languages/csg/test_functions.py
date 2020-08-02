@@ -123,7 +123,7 @@ class TestToCsgAst(unittest.TestCase):
 
 class TestGetSamples(unittest.TestCase):
     def test_not_reference(self):
-        dataset = Dataset(1, 1, 1, 45)
+        dataset = Dataset(1, 1, 1, 1, 45)
 
         def to_action_sequence(code):
             return AstToSingleActionSequence()(ToAst()(code))
@@ -134,7 +134,7 @@ class TestGetSamples(unittest.TestCase):
         self.assertEqual(8, len(samples.tokens))
 
     def test_reference(self):
-        dataset = Dataset(1, 1, 1, 45, reference=True)
+        dataset = Dataset(1, 1, 1, 1, 45, reference=True)
 
         def to_action_sequence(code):
             return AstToSingleActionSequence()(ToAst()(code))
