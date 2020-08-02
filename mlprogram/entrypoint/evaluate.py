@@ -65,18 +65,19 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     best_model: Optional[str] = None
     if isinstance(main_metric, str):
         if main_metric == "generation":
-            best_score: Union[float, Tuple[float, float]] = (-1.0, 0.0)
+            best_score0 = (-1.0, 0.0)
+            for name, result in results["test"].items():
+                m0 = (result.generation_rate, -result.generation_time)
+            if best_score0 < m0:
+                best_model = name
+                best_score0 = m0
     else:
-        best_score = -1.0
-    for name, result in results["test"].items():
-        if isinstance(main_metric, str):
-            if main_metric == "generation":
-                m = (result.generation_rate, -result.generation_time)
-        else:
-            m = result.metrics[main_metric[0]][main_metric[1]]
-        if best_score < m:
-            best_model = name
-            best_score = m
+        best_score1 = -1.0
+        for name, result in results["test"].items():
+            m1 = result.metrics[main_metric[0]][main_metric[1]]
+            if best_score1 < m1:
+                best_model = name
+                best_score1 = m1
 
     if best_model is not None:
         logger.info(f"Start evaluation (valid dataset): {best_model}")
