@@ -4,38 +4,25 @@ from typing import Optional
 from collections import OrderedDict
 
 
-def block(in_channel: int, out_channel: int, n_linear: int):
-    modules = []
-    dim = in_channel
-    for i in range(n_linear):
-        modules.append((f"linear{i}", nn.Linear(dim, out_channel)))
-        dim = out_channel
-        modules.append((f"relu{i}", nn.ReLU()))
-    return nn.Sequential(OrderedDict(modules))
-
-
 class MLP(nn.Module):
     def __init__(self, in_channel: int, out_channel: int, hidden_channel: int,
-                 n_linear_per_block: int, n_block: int,
-                 activation: Optional[nn.Module] = None):
+                 n_linear: int, activation: Optional[nn.Module] = None):
         super().__init__()
-        assert n_block >= 2
+        assert n_linear > 1
         modules = []
         dim = in_channel
-        modules.append(("block0", block(
-            dim, hidden_channel, n_linear_per_block)))
-        dim = hidden_channel
-        for i in range(n_block - 2):
-            modules.append((f"block{i + 1}", block(
-                dim, hidden_channel, n_linear_per_block)))
+        for i in range(n_linear - 1):
+            modules.append((f"linear{i}",
+                            nn.Linear(dim, hidden_channel)))
+            modules.append((f"act{i}", nn.ReLU()))
             dim = hidden_channel
-        modules.append((f"block{n_block - 1}", block(
-            dim, out_channel, n_linear_per_block)))
+        modules.append((f"linear{n_linear - 1}", nn.Linear(dim, out_channel)))
+        if activation is None:
+            modules.append((f"act{n_linear - 1}", nn.ReLU()))
+        else:
+            modules.append((f"act{n_linear - 1}", activation))
         self.module = nn.Sequential(OrderedDict(modules))
-        self.activation = activation
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.module(x)
-        if self.activation is not None:
-            out = self.activation(out)
         return out
