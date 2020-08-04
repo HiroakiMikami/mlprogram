@@ -237,7 +237,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 Loss(reduction="sum"),  # TODO divide by batch size
                 Accuracy(),
                 collate_fn,
-                1, Epoch(50), interval=Epoch(10),
+                1, Epoch(100), interval=Epoch(10),
                 num_models=0
             )
         return encoder, train_dataset
@@ -298,7 +298,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 1, 1,
                 Epoch(30), interval=Epoch(10),
                 num_models=1,
-                use_pretrained_model=True)
+                use_pretrained_model=True,
+                use_pretrained_optimizer=True)
 
     def test(self):
         torch.manual_seed(0)
