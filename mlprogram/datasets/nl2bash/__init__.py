@@ -1,2 +1,2 @@
-from .download import download  # noqa
-from .functions import TokenizeQuery, TokenizeToken  # noqa
+from mlprogram.datasets.nl2bash.download import download  # noqa
+from mlprogram.datasets.nl2bash.functions import TokenizeQuery, TokenizeToken  # noqa

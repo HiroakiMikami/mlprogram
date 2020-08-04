@@ -1,5 +1,5 @@
-from .datatypes import Token, Query, Reference  # noqa
-from .top_k_element import TopKElement  # noqa
-from .top_k_model import TopKModel  # noqa
-from .functions import Compose, Sequence, Map, Flatten, Threshold, Pick, save, load  # noqa
-from .evaluate import evaluate, Result, EvaluationResult  # noqa
+from mlprogram.utils.datatypes import Token, Query, Reference  # noqa
+from mlprogram.utils.top_k_element import TopKElement  # noqa
+from mlprogram.utils.top_k_model import TopKModel  # noqa
+from mlprogram.utils.functions import Compose, Sequence, Map, Flatten, Threshold, Pick, save, load  # noqa
+from mlprogram.utils.evaluate import evaluate, Result, EvaluationResult  # noqa

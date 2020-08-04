@@ -3,7 +3,7 @@ import logging
 from typing import Callable, Tuple, List, Dict, Any
 
 from mlprogram.utils.data import ListDataset
-from .format_annotations import format_annotations
+from mlprogram.datasets.django.format_annotations import format_annotations
 
 logger = logging.getLogger(__name__)
 

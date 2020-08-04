@@ -3,7 +3,7 @@ from typing import List, Type, Union, Callable
 
 import mlprogram.asts as ast
 from mlprogram.languages.python import PythonAST
-from .utils import is_builtin_type, BuiltinType
+from mlprogram.languages.python.utils import is_builtin_type, BuiltinType
 
 
 def base_ast_type(node: PythonAST) \

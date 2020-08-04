@@ -1,5 +1,5 @@
 from typing import TypeVar, Generic, Dict, Any
-from .metric import Metric
+from mlprogram.metrics.metric import Metric
 
 Value = TypeVar("Value")
 

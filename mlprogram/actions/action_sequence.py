@@ -3,7 +3,7 @@ from typing import Dict, Optional, List, cast, Any
 from copy import deepcopy
 import logging
 
-from .action \
+from mlprogram.actions.action \
     import Action, ApplyRule, Rule, ExpandTreeRule, NodeConstraint, NodeType, \
     GenerateToken, CloseVariadicFieldRule
 from mlprogram.asts import AST, Node, Leaf, Field, Root

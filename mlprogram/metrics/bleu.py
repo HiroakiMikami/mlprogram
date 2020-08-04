@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from nltk.translate.bleu_score import sentence_bleu
-from .metric import Metric
+from mlprogram.metrics.metric import Metric
 
 
 class Bleu(Metric[str]):

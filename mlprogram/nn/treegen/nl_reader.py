@@ -6,8 +6,8 @@ from mlprogram.nn import SeparableConv1d, EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
     import index_embeddings, gelu, lne_to_nel, nel_to_lne
-from .gating import Gating
-from .embedding import ElementEmbedding
+from mlprogram.nn.treegen.gating import Gating
+from mlprogram.nn.treegen.embedding import ElementEmbedding
 
 
 class NLReaderBlock(nn.Module):

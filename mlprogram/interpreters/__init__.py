@@ -1,1 +1,1 @@
-from .interpreter import Interpreter  # noqa
+from mlprogram.interpreters.interpreter import Interpreter  # noqa

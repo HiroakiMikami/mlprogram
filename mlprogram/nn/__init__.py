@@ -1,13 +1,10 @@
-from .embedding import EmbeddingWithMask
-from .separable_convolution import SeparableConv1d
-from .tree_convolution import TreeConvolution
-from .pointer_net import PointerNet
-from .cnn import CNN2d  # noqa
-from .mlp import MLP  # noqa
-from .apply import Apply  # noqa
-from .aggregated_loss import AggregatedLoss # noqa
+from mlprogram.nn.embedding import EmbeddingWithMask  # noqa
+from mlprogram.nn.separable_convolution import SeparableConv1d  # noqa
+from mlprogram.nn.tree_convolution import TreeConvolution  # noqa
+from mlprogram.nn.pointer_net import PointerNet  # noqa
+from mlprogram.nn.cnn import CNN2d  # noqa
+from mlprogram.nn.mlp import MLP  # noqa
+from mlprogram.nn.apply import Apply  # noqa
+from mlprogram.nn.aggregated_loss import AggregatedLoss # noqa
 from mlprogram.nn.pick import Pick  # noqa
 from mlprogram.nn.primitives import Add, Sub, Mul, Div, IntDiv, Neg  # noqa
-
-__all__ = ["EmbeddingWithMask", "SeparableConv1d", "TreeConvolution",
-           "PointerNet"]

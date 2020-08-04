@@ -6,8 +6,8 @@ from mlprogram.nn import TreeConvolution
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
     import index_embeddings, position_embeddings, gelu, lne_to_nel, nel_to_lne
-from .gating import Gating
-from .embedding \
+from mlprogram.nn.treegen.gating import Gating
+from mlprogram.nn.treegen.embedding \
     import ActionEmbedding, ActionSignatureEmbedding, ElementEmbedding
 
 

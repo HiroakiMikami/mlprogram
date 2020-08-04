@@ -1,2 +1,2 @@
-from .train import train_supervised, train_REINFORCE  # noqa
-from .evaluate import evaluate  # noqa
+from mlprogram.entrypoint.train import train_supervised, train_REINFORCE  # noqa
+from mlprogram.entrypoint.evaluate import evaluate  # noqa

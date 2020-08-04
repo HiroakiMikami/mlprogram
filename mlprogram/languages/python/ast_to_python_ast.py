@@ -3,7 +3,7 @@ import ast as python_ast  # noqa
 
 import mlprogram.asts as ast
 from mlprogram.languages.python import PythonAST
-from .utils import BuiltinType
+from mlprogram.languages.python.utils import BuiltinType
 
 
 def to_builtin_type(value: str, type_name: str) -> BuiltinType:

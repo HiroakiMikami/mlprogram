@@ -3,8 +3,8 @@ import transpyle
 from enum import Enum
 from typing import Optional, Callable, List
 from mlprogram.asts import AST
-from .python_ast_to_ast import to_ast
-from .ast_to_python_ast import to_python_ast
+from mlprogram.languages.python.python_ast_to_ast import to_ast
+from mlprogram.languages.python.ast_to_python_ast import to_python_ast
 
 
 class ParseMode(Enum):

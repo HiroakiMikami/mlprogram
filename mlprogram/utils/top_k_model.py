@@ -1,6 +1,6 @@
 import os
 import torch
-from .top_k_element import TopKElement
+from mlprogram.utils.top_k_element import TopKElement
 
 
 class TopKModel:

@@ -2,7 +2,7 @@ import os
 import yaml
 from typing import Dict, Any
 from pytorch_pfn_extras.config import Config
-from .types import types
+from mlprogram.entrypoint.types import types
 
 
 def parse_config(configs: Dict[str, Any]) -> Config:

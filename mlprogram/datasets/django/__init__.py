@@ -1,3 +1,3 @@
-from .parse import Parse  # noqa
-from .download import download  # noqa
-from .functions import TokenizeQuery, TokenizeToken # noqa
+from mlprogram.datasets.django.parse import Parse  # noqa
+from mlprogram.datasets.django.download import download  # noqa
+from mlprogram.datasets.django.functions import TokenizeQuery, TokenizeToken # noqa
