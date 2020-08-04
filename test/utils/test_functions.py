@@ -2,7 +2,7 @@ import unittest
 import tempfile
 import os
 from collections import OrderedDict
-from mlprogram.utils import Compose, Sequence, Map, Flatten, save, load
+from mlprogram.utils import Compose, Sequence, Map, Flatten, Pick, save, load
 
 
 class TestCompose(unittest.TestCase):
@@ -44,6 +44,18 @@ class TestSequence(unittest.TestCase):
         f = Sequence(OrderedDict([("f0", lambda x: None),
                                   ("f1", lambda x: {"x": x["x"] * 2})]))
         self.assertEqual(None, f({"x": 2}))
+
+
+class TestPick(unittest.TestCase):
+    def test_happy_path(self):
+        pick = Pick("x")
+        out = pick({"x": 10})
+        self.assertEqual(10, out)
+
+    def test_if_key_not_exist(self):
+        pick = Pick("x")
+        out = pick({})
+        self.assertEqual(None, out)
 
 
 class MockData:

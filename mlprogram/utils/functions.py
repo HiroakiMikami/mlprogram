@@ -2,7 +2,7 @@ import torch
 import logging
 import os
 from collections import OrderedDict
-from typing import Generic, TypeVar, Optional, Any, List, Callable
+from typing import Generic, TypeVar, Optional, Any, List, Callable, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,14 @@ class Threshold(object):
 
     def __call__(self, value: float) -> bool:
         return value >= self.threshold
+
+
+class Pick(object):
+    def __init__(self, key: str):
+        self.key = key
+
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Any]:
+        return entry[self.key] if self.key in entry else None
 
 
 def save(obj: V, file: str) -> V:

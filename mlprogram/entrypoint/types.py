@@ -102,13 +102,13 @@ types = {
     "mlprogram.utils.Map": mlprogram.utils.Map,
     "mlprogram.utils.Flatten": mlprogram.utils.Flatten,
     "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
+    "mlprogram.utils.Pick": mlprogram.utils.Pick,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
-    "mlprogram.samplers.transform":
-        mlprogram.samplers.transform,
+    "mlprogram.samplers.transform": mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,
 
