@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from torch import nn
 import logging
 from typing \
@@ -43,7 +44,8 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
         self.encoder.eval()
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
-        state_tensor = self.encoder(state_tensor)
+        with torch.no_grad():
+            state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
         state["reference"] = []
         state["code"] = []

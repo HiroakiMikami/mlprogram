@@ -62,7 +62,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         action_sequence = ActionSequence()
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
-        state_tensor = self.module.encoder(state_tensor)
+        with torch.no_grad():
+            state_tensor = self.module.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
 
         # Add initial rule

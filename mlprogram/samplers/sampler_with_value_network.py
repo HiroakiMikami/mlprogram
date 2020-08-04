@@ -37,5 +37,6 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
         self.value_network.eval()
         for state in self.sampler.k_samples(states, n):
             input = self.transform(state.state)
-            value = self.value_network(self.collate([input]))
+            with torch.no_grad():
+                value = self.value_network(self.collate([input]))
             yield SamplerState(value.item(), state.state)
