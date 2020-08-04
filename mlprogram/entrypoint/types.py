@@ -148,6 +148,12 @@ types = {
     "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.Pick": mlprogram.nn.Pick,
+    "mlprogram.nn.Add": mlprogram.nn.Add,
+    "mlprogram.nn.Sub": mlprogram.nn.Sub,
+    "mlprogram.nn.Mul": mlprogram.nn.Mul,
+    "mlprogram.nn.Div": mlprogram.nn.Div,
+    "mlprogram.nn.IntDiv": mlprogram.nn.IntDiv,
+    "mlprogram.nn.Neg": mlprogram.nn.Neg,
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
