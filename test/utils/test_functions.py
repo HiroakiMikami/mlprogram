@@ -2,7 +2,8 @@ import unittest
 import tempfile
 import os
 from collections import OrderedDict
-from mlprogram.utils import Compose, Sequence, Map, Flatten, Pick, save, load
+from mlprogram.utils \
+    import Compose, Sequence, Map, Flatten, Pick, Threshold, save, load
 
 
 class TestCompose(unittest.TestCase):
@@ -44,6 +45,13 @@ class TestSequence(unittest.TestCase):
         f = Sequence(OrderedDict([("f0", lambda x: None),
                                   ("f1", lambda x: {"x": x["x"] * 2})]))
         self.assertEqual(None, f({"x": 2}))
+
+
+class TestThreshold(unittest.TestCase):
+    def test_happy_path(self):
+        f = Threshold(0.6)
+        self.assertTrue(f(0.7))
+        self.assertFalse(f(0.5))
 
 
 class TestPick(unittest.TestCase):
