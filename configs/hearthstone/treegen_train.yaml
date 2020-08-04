@@ -85,7 +85,7 @@ transform:
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
 
 optimizer:
-  type: torch.optim.create_optimizer
+  type: torch.optim.Optimizer
   optimizer_cls:
     type: fairseq.optim.Adafactor
   model: "@/model"

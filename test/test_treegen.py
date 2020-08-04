@@ -12,7 +12,7 @@ from torchnlp.encoders import LabelEncoder
 
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.torch import create_optimizer
+from mlprogram.entrypoint.torch import Optimizer
 from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
@@ -75,8 +75,8 @@ class TestTreeGen(unittest.TestCase):
         ]))
 
     def prepare_optimizer(self, model):
-        return create_optimizer(optim.adafactor.Adafactor,
-                                model)
+        return Optimizer(optim.adafactor.Adafactor,
+                         model)
 
     def prepare_synthesizer(self, model, qencoder, cencoder, aencoder):
         transform_input = TransformQuery(tokenize_query, qencoder,

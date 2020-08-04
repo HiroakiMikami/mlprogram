@@ -12,15 +12,16 @@ import torch.optim as optim
 from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
 from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.torch import create_optimizer
+from mlprogram.entrypoint.torch import Optimizer
 from mlprogram.synthesizers import SMC, FilteredSynthesizer
 from mlprogram.samplers \
     import ActionSequenceSampler, AstReferenceSampler, SamplerWithValueNetwork
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence, Map, Flatten, Compose
+from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform \
     import AstToSingleActionSequence, EvaluateGroundTruth, RandomChoice
+import mlprogram.nn
 from mlprogram.nn.action_sequence import Loss, Accuracy
 from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
 from mlprogram.nn.pbe_with_repl import Encoder
@@ -73,7 +74,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         ]))
 
     def prepare_optimizer(self, model):
-        return create_optimizer(optim.Adam, model)
+        return Optimizer(optim.Adam, model)
 
     def prepare_synthesizer(self, model, encoder, interpreter, rollout=True):
         collate = Collate(
@@ -99,16 +100,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         subsynthesizer = SMC(
             20, 1, 20,
             subsampler,
-            to_key=lambda x: x["action_sequence"]  # TODO
+            to_key=Pick("action_sequence")
         )
-
-        class Pick(torch.nn.Module):
-            def __init__(self, key):
-                super().__init__()
-                self.key = key
-
-            def forward(self, entry):
-                return entry[self.key]
 
         sampler = AstReferenceSampler(
             subsynthesizer,
@@ -127,7 +120,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             torch.nn.Sequential(OrderedDict([
                 ("encoder", model.encoder),
                 ("value", model.value),
-                ("pick", Pick("value"))
+                ("pick", mlprogram.nn.Pick("value"))
             ])))
 
         synthesizer = SMC(4, 1, 20, sampler, rng=np.random.RandomState(0),
@@ -292,7 +285,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 }),
                 metrics.TestCaseResult(interpreter, reference=True,
                                        metric=metrics.Iou()),
-                lambda x: x > 0.9,
+                Threshold(0.9),
                 RandomChoice(rng=np.random.RandomState(0)),
                 collate_fn,
                 1, 1,
