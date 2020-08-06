@@ -1,6 +1,8 @@
 import unittest
-from mlprogram.utils import Reference
 from mlprogram.metrics import TestCaseResult
+from mlprogram.interpreters import Reference
+from mlprogram.interpreters import Statement
+from mlprogram.interpreters import SequentialProgram
 from mlprogram.interpreters import Interpreter
 
 
@@ -9,7 +11,7 @@ class MockInterpreter(Interpreter):
         return int(code)
 
     def eval_references(self, code):
-        return {key: int(code) for key, code in code}
+        return {stmt.reference: int(stmt.code) for stmt in code.statements}
 
 
 class TestTestCaseResult(unittest.TestCase):
@@ -27,8 +29,9 @@ class TestTestCaseResult(unittest.TestCase):
         acc = TestCaseResult(MockInterpreter(), reference=True)
         self.assertAlmostEqual(
             1.0,
-            acc({"ground_truth": [[(Reference("0"), "0")]]},
-                [(Reference("0"), "0")])
+            acc({"ground_truth":
+                 [SequentialProgram([Statement(Reference("0"), "0")])]},
+                SequentialProgram([Statement(Reference("0"), "0")]))
         )
 
     def test_custom_metric(self):

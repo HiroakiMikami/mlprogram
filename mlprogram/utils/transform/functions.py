@@ -32,7 +32,7 @@ class EvaluateGroundTruth:
         for gt in gts:
             if self.reference:
                 results = self.interpreter.eval_references(gt)
-                input.append(results[gt[-1][0]])
+                input.append(results[gt.statements[-1].reference])
             else:
                 input.append(self.interpreter.eval(gt))
 

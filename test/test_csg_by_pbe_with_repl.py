@@ -124,7 +124,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             ])))
 
         synthesizer = SMC(4, 1, 20, sampler, rng=np.random.RandomState(0),
-                          to_key=lambda x: tuple(x["code"]))  # TODO
+                          to_key=Pick("code"))
         if rollout:
             return FilteredSynthesizer(
                 synthesizer,

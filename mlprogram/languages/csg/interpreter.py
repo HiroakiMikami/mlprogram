@@ -1,10 +1,11 @@
 import numpy as np
-from mlprogram.utils import Reference as R
+from mlprogram.interpreters import Reference as R
+from mlprogram.interpreters import SequentialProgram
 from mlprogram.interpreters import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
     Reference
-from typing import Callable, Dict, Tuple, List
+from typing import Callable, Dict
 import math
 from functools import lru_cache
 
@@ -53,10 +54,13 @@ class Interpreter(BaseInterpreter[AST, Shape]):
         return self._cached_eval(code).render(
             self.width, self.height, self.resolution)
 
-    def eval_references(self, code: List[Tuple[R, AST]]) -> Dict[R, np.array]:
+    def eval_references(self, code: SequentialProgram[AST]) \
+            -> Dict[R, np.array]:
         unref_code: Dict[R, AST] = {}
         values = {}
-        for ref, ast in code:
+        for statement in code.statements:
+            ref = statement.reference
+            ast = statement.code
             unref_code[ref] = self._unreference(ast, unref_code)
             values[ref] = self.eval(unref_code[ref])
         return values

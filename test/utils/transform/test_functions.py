@@ -1,7 +1,9 @@
 import unittest
-from mlprogram.utils import Reference
 from mlprogram.utils.transform \
     import RandomChoice, EvaluateGroundTruth, NormalizeGroudTruth
+from mlprogram.interpreters import Reference
+from mlprogram.interpreters import Statement
+from mlprogram.interpreters import SequentialProgram
 from mlprogram.interpreters import Interpreter
 
 
@@ -18,7 +20,7 @@ class MockInterpreter(Interpreter):
         return int(code)
 
     def eval_references(self, code):
-        return {ref: int(code) for ref, code in code}
+        return {stmt.reference: int(stmt.code) for stmt in code.statements}
 
 
 class TestEvaluateGroundTruth(unittest.TestCase):
@@ -29,10 +31,10 @@ class TestEvaluateGroundTruth(unittest.TestCase):
     def test_reference(self):
         f = EvaluateGroundTruth(MockInterpreter(), reference=True)
         result = f({
-            "ground_truth": [[
-                (Reference(0), "1"),
-                (Reference(1), "2")
-            ]]
+            "ground_truth": [SequentialProgram([
+                Statement(Reference(0), "1"),
+                Statement(Reference(1), "2")
+            ])]
         })
         self.assertEqual([2], result["input"])
 

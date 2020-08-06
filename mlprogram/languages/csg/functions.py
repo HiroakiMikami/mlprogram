@@ -1,6 +1,6 @@
 import logging
 from typing import Union as U, Optional, Callable, List
-from mlprogram.utils import Reference as R
+from mlprogram.interpreters import Reference as R
 from mlprogram.languages.csg import AST as csgAST
 from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
 from mlprogram.languages.csg import Union, Difference, Reference

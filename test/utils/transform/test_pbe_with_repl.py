@@ -2,8 +2,11 @@ import torch
 import numpy as np
 import unittest
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
-from mlprogram.utils import Reference, Token
+from mlprogram.utils import Token
 from mlprogram.asts import Leaf
+from mlprogram.interpreters import Reference
+from mlprogram.interpreters import Statement
+from mlprogram.interpreters import SequentialProgram
 from mlprogram.interpreters import Interpreter
 
 
@@ -12,7 +15,7 @@ class MockInterpreter(Interpreter):
         return int(code)
 
     def eval_references(self, code):
-        return {ref: int(code) for ref, code in code}
+        return {stmt.reference: int(stmt.code) for stmt in code.statements}
 
 
 class TestToEpisode(unittest.TestCase):
@@ -20,10 +23,10 @@ class TestToEpisode(unittest.TestCase):
         f = ToEpisode(remove_used_reference=False)
         retval = f({
             "input": torch.tensor(0),
-            "ground_truth": [
-                (Reference(0), 0),
-                (Reference(1), 1)
-            ]
+            "ground_truth": SequentialProgram([
+                Statement(Reference(0), 0),
+                Statement(Reference(1), 1)
+            ])
         })
         self.assertEqual(2, len(retval))
         self.assertTrue(np.array_equal(
@@ -31,7 +34,7 @@ class TestToEpisode(unittest.TestCase):
             retval[0]["input"]
         ))
         self.assertEqual(
-            [(Reference(0), 0)],
+            SequentialProgram([Statement(Reference(0), 0)]),
             retval[0]["code"]
         )
         self.assertEqual(0, retval[0]["ground_truth"])
@@ -42,7 +45,8 @@ class TestToEpisode(unittest.TestCase):
             retval[1]["input"]
         ))
         self.assertEqual(
-            [(Reference(0), 0), (Reference(1), 1)],
+            SequentialProgram([Statement(Reference(0), 0),
+                               Statement(Reference(1), 1)]),
             retval[1]["code"]
         )
         self.assertEqual(1, retval[1]["ground_truth"])
@@ -53,11 +57,11 @@ class TestToEpisode(unittest.TestCase):
                       remove_used_reference=True)
         retval = f({
             "input": torch.tensor(0),
-            "ground_truth": [
-                (Reference(0), torch.tensor(0)),
-                (Reference(1), torch.tensor(1)),
-                (Reference(2), torch.tensor(2))
-            ]
+            "ground_truth": SequentialProgram([
+                Statement(Reference(0), torch.tensor(0)),
+                Statement(Reference(1), torch.tensor(1)),
+                Statement(Reference(2), torch.tensor(2))
+            ])
         })
         self.assertEqual(3, len(retval))
         self.assertTrue(np.array_equal(
@@ -65,7 +69,7 @@ class TestToEpisode(unittest.TestCase):
             retval[0]["input"]
         ))
         self.assertEqual(
-            [(Reference(0), torch.tensor(0))],
+            SequentialProgram([Statement(Reference(0), torch.tensor(0))]),
             retval[0]["code"]
         )
         self.assertEqual(0, retval[0]["ground_truth"])
@@ -76,7 +80,8 @@ class TestToEpisode(unittest.TestCase):
             retval[1]["input"]
         ))
         self.assertEqual(
-            [(Reference(0), torch.tensor(0)), (Reference(1), torch.tensor(1))],
+            SequentialProgram([Statement(Reference(0), torch.tensor(0)),
+                               Statement(Reference(1), torch.tensor(1))]),
             retval[1]["code"]
         )
         self.assertEqual(1, retval[1]["ground_truth"])
@@ -87,8 +92,9 @@ class TestToEpisode(unittest.TestCase):
             retval[2]["input"]
         ))
         self.assertEqual(
-            [(Reference(0), torch.tensor(0)), (Reference(1), torch.tensor(1)),
-             (Reference(2), torch.tensor(2))],
+            SequentialProgram([Statement(Reference(0), torch.tensor(0)),
+                               Statement(Reference(1), torch.tensor(1)),
+                               Statement(Reference(2), torch.tensor(2))]),
             retval[2]["code"]
         )
         self.assertEqual(2, retval[2]["ground_truth"])
@@ -100,7 +106,9 @@ class TestEvaluateCode(unittest.TestCase):
         f = EvaluateCode(MockInterpreter())
         output = f({
             "reference": [Token(None, Reference(1))],
-            "code": [(Reference(0), "0"), (Reference(1), "1")]
+            "code": SequentialProgram(
+                [Statement(Reference(0), "0"), Statement(Reference(1), "1")]
+            )
         })
         self.assertEqual([1], output["variables"])
 

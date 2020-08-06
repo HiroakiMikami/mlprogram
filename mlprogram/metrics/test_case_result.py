@@ -1,7 +1,6 @@
-from typing import Dict, Any, Generic, TypeVar, List, Tuple, cast
-from mlprogram.utils import Reference
+from typing import Dict, Any, Generic, TypeVar, cast
 from mlprogram.metrics import Metric, Accuracy
-from mlprogram.interpreters import Interpreter
+from mlprogram.interpreters import Interpreter, SequentialProgram
 
 
 Code = TypeVar("Code")
@@ -21,9 +20,9 @@ class TestCaseResult(Metric[Code], Generic[Code]):
 
     def _eval(self, code: Code):
         if self.reference:
-            ref = cast(List[Tuple[Reference, Any]], code)
+            ref = cast(SequentialProgram[Any], code)
             output = self.interpreter.eval_references(ref)[
-                ref[-1][0]]
+                ref.statements[-1].reference]
         else:
             output = self.interpreter.eval(code)
         return output

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from mlprogram.utils import Reference as R
+from mlprogram.interpreters import Reference as R, SequentialProgram, Statement
 from mlprogram.languages.csg import show, Shape, Interpreter
 from mlprogram.languages.csg \
     import Circle, Rectangle, Translation, Rotation, Union, Difference, \
@@ -72,9 +72,12 @@ class TestInterpreter(unittest.TestCase):
         ref2 = Difference(Reference(R(0)), Reference(R(1)))
         ref3 = Union(Rectangle(1, 1), Reference(R(2)))
         code = [
-            (R(0), ref0), (R(1), ref1), (R(2), ref2), (R(3), ref3)
+            Statement(R(0), ref0),
+            Statement(R(1), ref1),
+            Statement(R(2), ref2),
+            Statement(R(3), ref3)
         ]
-        result = Interpreter(3, 3, 1).eval_references(code)
+        result = Interpreter(3, 3, 1).eval_references(SequentialProgram(code))
         self.assertEqual(
             "   \n # \n   \n",
             show(result[R(0)]))

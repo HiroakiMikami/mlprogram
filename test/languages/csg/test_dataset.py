@@ -1,6 +1,6 @@
 import unittest
 import torch
-from mlprogram.utils import Reference as R
+from mlprogram.interpreters import Reference as R
 from mlprogram.languages.csg import Dataset
 
 
@@ -32,10 +32,10 @@ class TestDataset(unittest.TestCase):
             if cnt == 10:
                 sample = x
                 break
-        n_ref = len(sample["ground_truth"][0])
+        n_ref = len(sample["ground_truth"][0].statements)
         self.assertEqual(
             [R(str(i)) for i in range(n_ref)],
-            [ref for ref, _ in sample["ground_truth"][0]]
+            [stmt.reference for stmt in sample["ground_truth"][0].statements]
         )
 
 

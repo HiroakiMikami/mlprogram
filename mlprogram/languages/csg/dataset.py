@@ -5,7 +5,9 @@ from torch.utils import data
 from torch.utils.data import IterableDataset
 from typing import Optional, Any, Tuple, Dict, List
 
-from mlprogram.utils import Reference as R
+from mlprogram.interpreters import Reference as R
+from mlprogram.interpreters import Statement
+from mlprogram.interpreters import SequentialProgram
 from mlprogram.languages.csg import AST, Reference
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
@@ -80,14 +82,14 @@ class Dataset(IterableDataset):
         return list(objects.values())[0]
 
     def to_reference(self, code: AST, n_ref: int = 0) \
-            -> Tuple[List[Tuple[R, AST]], int]:
+            -> Tuple[List[Statement[AST]], int]:
         if isinstance(code, Circle):
-            return [(R(str(n_ref)), code)], n_ref
+            return [Statement(R(str(n_ref)), code)], n_ref
         elif isinstance(code, Rectangle):
-            return [(R(str(n_ref)), code)], n_ref
+            return [Statement(R(str(n_ref)), code)], n_ref
         elif isinstance(code, Translation):
             retval, n_ref = self.to_reference(code.child, n_ref)
-            retval.append((
+            retval.append(Statement(
                 R(str(n_ref + 1)),
                 Translation(code.x, code.y,
                             Reference(R(str(n_ref))))
@@ -95,7 +97,7 @@ class Dataset(IterableDataset):
             return retval, n_ref + 1
         elif isinstance(code, Rotation):
             retval, n_ref = self.to_reference(code.child, n_ref)
-            retval.append((
+            retval.append(Statement(
                 R(str(n_ref + 1)),
                 Rotation(code.theta_degree,
                          Reference(R(str(n_ref))))
@@ -105,7 +107,7 @@ class Dataset(IterableDataset):
             retval0, n_ref0 = self.to_reference(code.a, n_ref)
             retval1, n_ref1 = self.to_reference(code.b, n_ref0 + 1)
             retval0.extend(retval1)
-            retval0.append((
+            retval0.append(Statement(
                 R(str(n_ref1 + 1)),
                 Union(Reference(R(str(n_ref0))),
                       Reference(R(str(n_ref1))))
@@ -115,7 +117,7 @@ class Dataset(IterableDataset):
             retval0, n_ref0 = self.to_reference(code.a, n_ref)
             retval1, n_ref1 = self.to_reference(code.b, n_ref0 + 1)
             retval0.extend(retval1)
-            retval0.append((
+            retval0.append(Statement(
                 R(str(n_ref1 + 1)),
                 Difference(Reference(R(str(n_ref0))),
                            Reference(R(str(n_ref1))))
@@ -147,7 +149,7 @@ class Dataset(IterableDataset):
                 if self.parent.reference:
                     refs, output = self.parent.to_reference(ast)
                     retval: Dict[str, Any] = {
-                        "ground_truth": [refs]
+                        "ground_truth": [SequentialProgram(refs)]
                     }
                 else:
                     retval = {

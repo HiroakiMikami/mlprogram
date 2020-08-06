@@ -4,11 +4,14 @@ from torch import nn
 import logging
 from typing \
     import TypeVar, Generic, Generator, Optional, Dict, Any, Callable, \
-    List, Set, Tuple
+    List, Set
 from mlprogram.asts import AST, Node, Leaf
 from mlprogram.samplers import SamplerState, Sampler
+from mlprogram.interpreters import Reference
+from mlprogram.interpreters import Statement
+from mlprogram.interpreters import SequentialProgram
 from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils import Token, Reference
+from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
 from mlprogram.utils import random
 
@@ -18,7 +21,7 @@ Input = TypeVar("Input")
 Code = TypeVar("Code")
 
 
-class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
+class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                                   Dict[str, Any]],
                           Generic[Input, Code]):
     def __init__(self,
@@ -48,11 +51,11 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
             state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
         state["reference"] = []
-        state["code"] = []
+        state["code"] = SequentialProgram([])
         return state
 
     def create_output(self, state: Dict[str, Any]) \
-            -> Optional[List[Tuple[Reference, Code]]]:
+            -> Optional[SequentialProgram[Code]]:
         return state["code"]
 
     def k_samples(self, states: List[SamplerState[Dict[str, Any]]], n: int) \
@@ -78,8 +81,8 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
                 new_state = {key: value for key, value in state.state.items()}
                 # Copy reference
                 new_state["reference"] = list(new_state["reference"])
-                new_state["code"] = list(new_state["code"])
-                n_var = len(new_state["code"])
+                new_code = list(new_state["code"].statements)
+                n_var = len(new_state["code"].statements)
                 ref = Reference(f"v{n_var}")
                 code = self.to_code(result.output)
                 if code is None:
@@ -94,5 +97,6 @@ class AstReferenceSampler(Sampler[Input, List[Tuple[Reference, Code]],
                          if token.value not in vars]
                 new_state["reference"].append(
                     Token(type_name, ref))
-                new_state["code"].append((ref, code))
+                new_code.append(Statement(ref, code))
+                new_state["code"] = SequentialProgram(new_code)
                 yield SamplerState(result.score, new_state)

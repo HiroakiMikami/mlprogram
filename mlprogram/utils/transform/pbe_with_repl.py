@@ -1,7 +1,7 @@
-from typing import List, Dict, Any, cast, Callable, Optional, Set, Tuple
-from mlprogram.utils import Reference, Token
+from typing import List, Dict, Any, cast, Callable, Optional, Set
+from mlprogram.utils import Token
 from mlprogram.asts import AST, Node, Leaf
-from mlprogram.interpreters import Interpreter
+from mlprogram.interpreters import Interpreter, SequentialProgram, Reference
 
 
 class ToEpisode:
@@ -12,9 +12,9 @@ class ToEpisode:
 
     def __call__(self, entry: Dict[str, Any]) -> List[Dict[str, Any]]:
         input = entry["input"]
-        ground_truth = cast(List[Tuple[Reference, Any]],
-                            entry["ground_truth"])
-        gt_refs = {ref: value for ref, value in ground_truth}
+        ground_truth = cast(SequentialProgram[Any], entry["ground_truth"])
+        gt_refs = {statement.reference: statement.code
+                   for statement in ground_truth.statements}
 
         def find_refs(ast: AST) -> List[Reference]:
             if isinstance(ast, Node):
@@ -33,7 +33,8 @@ class ToEpisode:
 
         retval: List[Dict[str, Any]] = []
         refs: Set[Reference] = set()
-        for i, (ref, _) in enumerate(ground_truth):
+        for i, statement in enumerate(ground_truth.statements):
+            ref = statement.reference
             rs = list(refs)
             rs.sort(key=lambda r: r.name)
             xs = {key: value for key, value in entry.items()
@@ -41,7 +42,7 @@ class ToEpisode:
             xs["input"] = input
             xs["ground_truth"] = gt_refs[ref]
             xs["reference"] = [Token(None, r) for r in rs]
-            xs["code"] = ground_truth[:(i + 1)]
+            xs["code"] = SequentialProgram(ground_truth.statements[:(i + 1)])
             retval.append(xs)
             refs.add(ref)
             if self.remove_used_reference:

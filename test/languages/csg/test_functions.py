@@ -1,5 +1,5 @@
 import unittest
-from mlprogram.utils import Reference as R
+from mlprogram.interpreters import Reference as R
 from mlprogram.asts import Node, Leaf, Field
 from mlprogram.languages.csg import GetTokenType, IsSubtype, ToAst, ToCsgAst
 from mlprogram.languages.csg import Circle, Rectangle, Reference
