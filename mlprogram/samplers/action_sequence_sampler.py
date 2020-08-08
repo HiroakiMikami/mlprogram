@@ -43,6 +43,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                                      Dict[str, Any]],
                  collate: Collate,
                  module: torch.nn.Module,
+                 max_samples: int = 1000,
                  eps: float = 1e-5,
                  rng: np.random.RandomState = np.random
                  ):
@@ -53,6 +54,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self.transform_action_sequence = transform_action_sequence
         self.collate = collate
         self.module = module
+        self.max_samples = max_samples
         self.eps = eps
         self.rng = rng
 
@@ -131,7 +133,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 for index in indices:
                     yield index + 1
             else:
-                while True:
+                for _ in range(self.max_samples):
                     npred = [max(0,
                                  (p.item() / pred[1:].numpy().sum()) -
                                  self.eps)
