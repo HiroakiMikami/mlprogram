@@ -1,17 +1,92 @@
+import time
+from dataclasses import dataclass
+from typing \
+    import List, Dict, TypeVar, Generic, Mapping, Any, Optional, Tuple, Union
+import numpy as np
 import torch
 from torch import nn
 from tqdm import tqdm
-from typing import Optional, Tuple, List, Mapping, Union
 import os
 import logging
 import shutil
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils import evaluate as eval, EvaluationResult
 from mlprogram.utils.data import ListDataset
 
 
 logger = logging.getLogger(__name__)
+
+
+Input = TypeVar("Input")
+Code = TypeVar("Code")
+GroundTruth = TypeVar("GroundTruth")
+DecoderInput = TypeVar("DecoderInput")
+
+
+@dataclass
+class Result(Generic[Input, Code, GroundTruth]):
+    query: Input
+    data: Dict[str, Any]
+    candidates: List[Code]
+    metrics: Dict[int, Dict[str, float]]
+    generated: bool
+    time: float
+
+
+@dataclass
+class EvaluationResult(Generic[Input, Code, GroundTruth]):
+    results: List[Result[Input, Code, GroundTruth]]
+    metrics: Dict[int, Dict[str, float]]
+    generation_rate: float
+    generation_time: float
+
+
+def evaluate_synthesizer(dataset: torch.utils.data.Dataset,
+                         synthesizer: Synthesizer[Dict[str, Any], Code],
+                         metrics: Mapping[str, Metric],
+                         top_n: List[int] = [1, 3],
+                         ) -> EvaluationResult[Input, Code, GroundTruth]:
+    results: List[Result[Input, Code, GroundTruth]] = []
+    total = {}
+    generated = []
+    times = []
+    for n in top_n:
+        t = {}
+        for name in metrics.keys():
+            t[name] = 0.0
+        total[n] = t
+    n_query = 0
+    for group in dataset:
+        inputs = group["input"]
+        for input in inputs:
+            n_query += 1
+            begin = time.time()
+            candidates = list(synthesizer({"input": input}))
+            end = time.time()
+            generated.append(1.0 if len(candidates) != 0 else 0.0)
+            if len(candidates) != 0:
+                times.append(end - begin)
+            candidates.sort(key=lambda x: -x.score)
+            ms = {}
+            for n in top_n:
+                m: Dict[str, float] = {}
+                for name in metrics.keys():
+                    m[name] = 0
+                for c in candidates[:n]:
+                    for name, f in metrics.items():
+                        m[name] = max(m[name], f(group, c.output))
+                for name in metrics.keys():
+                    total[n][name] += \
+                        m[name] if m[name] is not None else 0
+                ms[n] = m
+            results.append(Result(
+                input,
+                {key: value for key, value in group.items() if key != "input"},
+                list(map(lambda x: x.output, candidates)), ms,
+                len(candidates) != 0, end - begin))
+    total = {n: {name: value / n_query for name, value in metric.items()}
+             for n, metric in total.items()}
+    return EvaluationResult(results, total, np.mean(generated), np.mean(times))
 
 
 def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
@@ -54,9 +129,8 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
 
         test_data = tqdm(test_dataset)
 
-        result: EvaluationResult = eval(test_data,
-                                        synthesizer,
-                                        metrics=metrics, top_n=top_n)
+        result: EvaluationResult = evaluate_synthesizer(
+            test_data, synthesizer, metrics=metrics, top_n=top_n)
         logger.info(f"{name}: {result.metrics}")
         results["test"][name] = result
         torch.save(results, results_path)
@@ -88,9 +162,9 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
 
         test_data = tqdm(valid_dataset)
 
-        result = eval(test_data,
-                      synthesizer,
-                      metrics=metrics, top_n=top_n)
+        result = evaluate_synthesizer(test_data,
+                                      synthesizer,
+                                      metrics=metrics, top_n=top_n)
         logger.info(f"{name}: {result.metrics}")
         logger.info(f"generation rate: {result.generation_rate}")
         logger.info(f"generation time: {result.generation_time}")
