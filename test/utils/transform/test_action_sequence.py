@@ -4,8 +4,8 @@ import numpy as np
 from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Leaf, Field
+from mlprogram.actions import AstToActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder
@@ -32,7 +32,7 @@ def to_action_sequence(code: str):
                                                        [Leaf("number", "1")])
                                                  ]))]
                            ))])
-    return AstToSingleActionSequence()(ast)
+    return AstToActionSequence()(ast)
 
 
 class TestTransformCode(unittest.TestCase):

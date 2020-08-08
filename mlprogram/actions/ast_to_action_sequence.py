@@ -11,7 +11,7 @@ from mlprogram.actions import ActionSequence
 logger = logging.getLogger(__name__)
 
 
-class AstToSingleActionSequence:
+class AstToActionSequence:
     def __call__(self, node: AST) -> ActionSequence:
         """
         Return the action sequence corresponding to this AST

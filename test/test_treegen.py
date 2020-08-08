@@ -13,6 +13,7 @@ from torchnlp.encoders import LabelEncoder
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer
+from mlprogram.actions import AstToActionSequence
 from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
@@ -20,7 +21,6 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_characters, get_samples
-from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform import RandomChoice
 from mlprogram.utils.transform.action_sequence \
     import TransformGroundTruth, TransformCode
@@ -135,7 +135,7 @@ class TestTreeGen(unittest.TestCase):
 
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = AstToSingleActionSequence()
+            to_action_sequence = AstToActionSequence()
 
             collate = Collate(
                 torch.device("cpu"),

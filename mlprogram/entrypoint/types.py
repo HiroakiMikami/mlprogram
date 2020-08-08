@@ -115,8 +115,8 @@ types = {
         mlprogram.utils.data.to_map_style_dataset,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
-    "mlprogram.utils.transform.AstToSingleActionSequence":
-        mlprogram.utils.transform.AstToSingleActionSequence,
+    "mlprogram.actions.AstToActionSequence":
+        mlprogram.actions.AstToActionSequence,
     "mlprogram.utils.transform.RandomChoice":
         mlprogram.utils.transform.RandomChoice,
     "mlprogram.utils.transform.EvaluateGroundTruth":

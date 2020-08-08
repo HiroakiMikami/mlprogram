@@ -16,7 +16,7 @@ to_action_sequence:
       - - "parse"
         - "@/parse"
       - - "ast_to_action_sequence"
-        - type: mlprogram.utils.transform.AstToSingleActionSequence
+        - type: mlprogram.actions.AstToActionSequence
 
 
 action_sequence_reader:

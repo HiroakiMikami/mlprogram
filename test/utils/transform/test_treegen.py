@@ -4,8 +4,8 @@ from torchnlp.encoders import LabelEncoder
 from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.asts import Node, Field, Leaf
+from mlprogram.actions import AstToActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils.transform import AstToSingleActionSequence
 from mlprogram.utils.transform.action_sequence import TransformCode
 from mlprogram.utils.transform.treegen \
     import TransformQuery, TransformActionSequence
@@ -31,7 +31,7 @@ def to_action_sequence(code: str):
                                  Node("Number", [Field("value", "number",
                                                        Leaf("number", "1"))]))]
                            ))])
-    return AstToSingleActionSequence()(ast)
+    return AstToActionSequence()(ast)
 
 
 class TestTransformQuery(unittest.TestCase):

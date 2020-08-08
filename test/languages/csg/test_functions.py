@@ -1,12 +1,12 @@
 import unittest
 from mlprogram.interpreters import Reference as R
 from mlprogram.asts import Node, Leaf, Field
+from mlprogram.actions import AstToActionSequence
 from mlprogram.languages.csg import GetTokenType, IsSubtype, ToAst, ToCsgAst
 from mlprogram.languages.csg import Circle, Rectangle, Reference
 from mlprogram.languages.csg import Translation, Rotation
 from mlprogram.languages.csg import Union, Difference
 from mlprogram.languages.csg import get_samples, Dataset
-from mlprogram.utils.transform import AstToSingleActionSequence
 
 
 class TestGetTokenType(unittest.TestCase):
@@ -126,7 +126,7 @@ class TestGetSamples(unittest.TestCase):
         dataset = Dataset(1, 1, 1, 1, 45)
 
         def to_action_sequence(code):
-            return AstToSingleActionSequence()(ToAst()(code))
+            return AstToActionSequence()(ToAst()(code))
 
         samples = get_samples(dataset, to_action_sequence)
         self.assertEqual(7, len(samples.rules))
@@ -137,7 +137,7 @@ class TestGetSamples(unittest.TestCase):
         dataset = Dataset(1, 1, 1, 1, 45, reference=True)
 
         def to_action_sequence(code):
-            return AstToSingleActionSequence()(ToAst()(code))
+            return AstToActionSequence()(ToAst()(code))
 
         samples = get_samples(dataset, to_action_sequence)
         self.assertEqual(7, len(samples.rules))

@@ -4,12 +4,12 @@ from mlprogram.actions \
     NodeConstraint, GenerateToken, CloseVariadicFieldRule
 from mlprogram import asts
 from mlprogram.asts import Root
-from mlprogram.utils.transform import AstToSingleActionSequence
+from mlprogram.actions import AstToActionSequence
 
 
-class TestAstToActionSequence(unittest.TestCase):
+class TestAstToSequence(unittest.TestCase):
     def test_leaf(self):
-        f = AstToSingleActionSequence()
+        f = AstToActionSequence()
         seq = f(asts.Leaf("str", "t0 t1"))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(
@@ -21,7 +21,7 @@ class TestAstToActionSequence(unittest.TestCase):
             seq.action_sequence
         )
 
-        f = AstToSingleActionSequence()
+        f = AstToActionSequence()
         seq = f(asts.Node("value", [asts.Field("name", "str",
                                                [asts.Leaf("str", "t0"),
                                                 asts.Leaf("str", "t1")])]))
@@ -45,7 +45,7 @@ class TestAstToActionSequence(unittest.TestCase):
         a = asts.Node(
             "def",
             [asts.Field("name", "literal", asts.Leaf("str", "foo"))])
-        f = AstToSingleActionSequence()
+        f = AstToActionSequence()
         seq = f(a)
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(
@@ -64,7 +64,7 @@ class TestAstToActionSequence(unittest.TestCase):
     def test_node_with_variadic_fields(self):
         a = asts.Node("list", [asts.Field("elems", "literal", [
             asts.Node("str", []), asts.Node("str", [])])])
-        f = AstToSingleActionSequence()
+        f = AstToActionSequence()
         seq = f(a)
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(

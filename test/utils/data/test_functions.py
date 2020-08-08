@@ -2,12 +2,12 @@ import torch
 import unittest
 import numpy as np
 import ast
+from mlprogram.actions import AstToActionSequence
 from mlprogram.utils import Query, Token
 from mlprogram.languages.python import to_ast
 from mlprogram.utils.data \
     import ListDataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions
-from mlprogram.utils.transform import AstToSingleActionSequence
 
 
 def tokenize_query(str: str) -> Query:
@@ -17,7 +17,7 @@ def tokenize_query(str: str) -> Query:
 
 
 def to_action_sequence(code: str):
-    return AstToSingleActionSequence()(
+    return AstToActionSequence()(
         to_ast(ast.parse(code).body[0], lambda x: [x]))
 
 

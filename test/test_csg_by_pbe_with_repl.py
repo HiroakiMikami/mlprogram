@@ -14,13 +14,14 @@ from mlprogram.entrypoint \
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer
 from mlprogram.synthesizers import SMC, FilteredSynthesizer
+from mlprogram.actions import AstToActionSequence
 from mlprogram.samplers \
     import ActionSequenceSampler, AstReferenceSampler, SamplerWithValueNetwork
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform \
-    import AstToSingleActionSequence, EvaluateGroundTruth, RandomChoice
+    import EvaluateGroundTruth, RandomChoice
 import mlprogram.nn
 from mlprogram.nn.action_sequence import Loss, Accuracy
 from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
@@ -195,7 +196,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = Sequence(OrderedDict([
                 ("to_ast", ToAst()),
-                ("to_sequence", AstToSingleActionSequence())
+                ("to_sequence", AstToActionSequence())
             ]))
             interpreter = self.interpreter()
             train_dataset = data_transform(
@@ -239,7 +240,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = Sequence(OrderedDict([
                 ("to_ast", ToAst()),
-                ("to_sequence", AstToSingleActionSequence())
+                ("to_sequence", AstToActionSequence())
             ]))
             interpreter = self.interpreter()
 
