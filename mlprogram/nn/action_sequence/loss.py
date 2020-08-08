@@ -12,7 +12,7 @@ class Loss(nn.Module):
         assert self.reduction == "mean" or self.reduction == "sum" or \
             self.reduction == "none"
 
-    def forward(self, inputs: Dict[str, Any]) -> torch.Tensor:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------
@@ -82,8 +82,9 @@ class Loss(nn.Module):
         loss = -likelihood * \
             ground_truth_actions.mask.to(rule_prob_tensor.dtype)  # (L_a, B)
         if self.reduction == "mean":
-            return torch.mean(torch.sum(loss, dim=0))
+            inputs["action_sequence_loss"] = torch.mean(torch.sum(loss, dim=0))
         elif self.reduction == "sum":
-            return torch.sum(loss)
+            inputs["action_sequence_loss"] = torch.sum(loss)
         else:
-            return torch.sum(loss, dim=0)
+            inputs["action_sequence_loss"] = torch.sum(loss, dim=0)
+        return inputs

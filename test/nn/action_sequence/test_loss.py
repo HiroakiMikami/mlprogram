@@ -26,7 +26,7 @@ class TestLoss(unittest.TestCase):
         objective = loss({"rule_probs": rule_prob,
                           "token_probs": token_prob,
                           "reference_probs": reference_prob,
-                          "ground_truth_actions": gt})
+                          "ground_truth_actions": gt})["action_sequence_loss"]
         self.assertEqual((), objective.shape)
 
     def test_reduction(self):
@@ -44,18 +44,21 @@ class TestLoss(unittest.TestCase):
         loss0 = Loss()
         loss1 = Loss(reduction="sum")
         loss2 = Loss(reduction="none")
-        objective0 = loss0({"rule_probs": rule_prob,
-                            "token_probs": token_prob,
-                            "reference_probs": reference_prob,
-                            "ground_truth_actions": gt})
-        objective1 = loss1({"rule_probs": rule_prob,
-                            "token_probs": token_prob,
-                            "reference_probs": reference_prob,
-                            "ground_truth_actions": gt})
-        objective2 = loss2({"rule_probs": rule_prob,
-                            "token_probs": token_prob,
-                            "reference_probs": reference_prob,
-                            "ground_truth_actions": gt})
+        objective0 = loss0(
+            {"rule_probs": rule_prob,
+             "token_probs": token_prob,
+             "reference_probs": reference_prob,
+             "ground_truth_actions": gt})["action_sequence_loss"]
+        objective1 = loss1(
+            {"rule_probs": rule_prob,
+             "token_probs": token_prob,
+             "reference_probs": reference_prob,
+             "ground_truth_actions": gt})["action_sequence_loss"]
+        objective2 = loss2(
+            {"rule_probs": rule_prob,
+             "token_probs": token_prob,
+             "reference_probs": reference_prob,
+             "ground_truth_actions": gt})["action_sequence_loss"]
         self.assertEqual((1,), objective2.shape)
         self.assertAlmostEqual(objective0.item(), objective1.item())
 

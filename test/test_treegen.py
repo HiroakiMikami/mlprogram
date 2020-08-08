@@ -7,9 +7,11 @@ import tempfile
 import os
 
 import torch
+import torch.nn as nn
 import fairseq.optim as optim
 from torchnlp.encoders import LabelEncoder
 
+import mlprogram.nn
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer
@@ -136,6 +138,10 @@ class TestTreeGen(unittest.TestCase):
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = AstToActionSequence()
+            loss_fn = nn.Sequential(OrderedDict([
+                ("loss", Loss()),
+                ("pick", mlprogram.nn.Pick("action_sequence_loss"))
+            ]))
 
             collate = Collate(
                 torch.device("cpu"),
@@ -157,7 +163,7 @@ class TestTreeGen(unittest.TestCase):
             train_supervised(
                 tmpdir, output_dir, train_dataset,
                 model, self.prepare_optimizer(model),
-                Loss(), lambda args: -Loss()(args),
+                loss_fn, lambda args: -loss_fn(args),
                 lambda x: collate(transform(x)),
                 1, Epoch(100), interval=Epoch(10),
                 num_models=1

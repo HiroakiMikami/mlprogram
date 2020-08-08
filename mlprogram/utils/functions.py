@@ -55,11 +55,19 @@ class Flatten(Generic[V]):
 
 
 class Threshold(object):
-    def __init__(self, threshold: float):
+    def __init__(self, threshold: float, dtype: str = "bool"):
         self.threshold = threshold
+        assert dtype in set(["bool", "int", "float"])
+        if dtype == "bool":
+            self.dtype: Callable[[bool], Any] = bool
+        elif dtype == "int":
+            self.dtype = int
+        elif dtype == "float":
+            self.dtype = float
 
     def __call__(self, value: float) -> bool:
-        return value >= self.threshold
+        out = value >= self.threshold
+        return self.dtype(out)
 
 
 class Pick(object):

@@ -12,7 +12,7 @@ import torch.optim as optim
 from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
 from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.torch import Optimizer
+from mlprogram.entrypoint.torch import Optimizer, Reshape
 from mlprogram.synthesizers import SMC, FilteredSynthesizer
 from mlprogram.actions import AstToActionSequence
 from mlprogram.samplers \
@@ -49,7 +49,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
     def prepare_model(self, encoder: ActionSequenceEncoder):
         return torch.nn.Sequential(OrderedDict([
             ("encode_input",
-             Apply("processed_input", "input_feature",
+             Apply([("processed_input", "x")], "input_feature",
                    CNN2d(1, 16, 32, 2, 2, 2))),
             ("encoder",
              Encoder(CNN2d(2, 16, 32, 2, 2, 2))),
@@ -68,7 +68,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                                 512))
              ]))),
             ("value",
-             Apply("variable_feature", "value",
+             Apply([("variable_feature", "x")], "value",
                    MLP(16 * 8 * 8, 1, 512, 2,
                        activation=torch.nn.Sigmoid()),
                    value_type="tensor"))
@@ -228,8 +228,20 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             train_supervised(
                 tmpdir, output_dir,
                 train_dataset, model, optimizer,
-                Loss(reduction="sum"),  # TODO divide by batch size
-                Accuracy(),
+                torch.nn.Sequential(OrderedDict([
+                    ("loss", Loss(reduction="sum")),
+                    ("normalize",  # divided by batch_size
+                     Apply(
+                         [("action_sequence_loss", "lhs")],
+                         "action_sequence_loss",
+                         mlprogram.nn.Div(),
+                         constants={"rhs": 1})),
+                    ("pick", mlprogram.nn.Pick("action_sequence_loss"))
+                ])),
+                torch.nn.Sequential(OrderedDict([
+                    ("accuracy", Accuracy()),
+                    ("pick", mlprogram.nn.Pick("action_sequence_accuracy"))
+                ])),
                 collate_fn,
                 1, Epoch(100), interval=Epoch(10),
                 num_models=0
@@ -272,21 +284,47 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 train_dataset,
                 self.prepare_synthesizer(model, encoder, interpreter),
                 model, optimizer,
-                AggregatedLoss({
-                    "policy":
-                        lambda entry:
-                            (entry["reward"].float() *
-                             Loss(reduction="none")(entry)).sum() / 1.0,
-                    "value":
-                        lambda entry:
-                            torch.nn.BCELoss(reduction='sum')(
-                                input=entry["value"],
-                                target=entry["reward"].float().reshape(-1, 1)
-                            ) / 1.0
-                }),
+                torch.nn.Sequential(OrderedDict([
+                    ("policy",
+                     torch.nn.Sequential(OrderedDict([
+                         ("loss", Loss(reduction="none")),
+                         ("weight_by_reward",
+                             Apply(
+                                 [("reward", "lhs"),
+                                  ("action_sequence_loss", "rhs")],
+                                 "action_sequence_loss",
+                                 mlprogram.nn.Mul()))
+                     ]))),
+                    ("value",
+                     torch.nn.Sequential(OrderedDict([
+                         ("reshape_reward",
+                             Apply(
+                                 [("reward", "x")],
+                                 "value_loss_target",
+                                 Reshape([-1, 1]))),
+                         ("BCE",
+                             Apply(
+                                 [("value", "input"),
+                                  ("value_loss_target", "target")],
+                                 "value_loss",
+                                 torch.nn.BCELoss(reduction='sum')))
+                     ]))),
+                    ("aggregate",
+                     Apply(
+                         ["action_sequence_loss", "value_loss"],
+                         "loss",
+                         AggregatedLoss())),
+                    ("normalize",
+                     Apply(
+                         [("loss", "lhs")],
+                         "loss",
+                         mlprogram.nn.Div(),
+                         constants={"rhs": 1})),
+                    ("pick", mlprogram.nn.Pick("loss"))
+                ])),
                 metrics.TestCaseResult(interpreter, reference=True,
                                        metric=metrics.Iou()),
-                Threshold(0.9),
+                Threshold(0.9, dtype="float"),
                 RandomChoice(rng=np.random.RandomState(0)),
                 collate_fn,
                 1, 1,

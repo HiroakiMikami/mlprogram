@@ -11,31 +11,34 @@ class MockModule(nn.Module):
         super().__init__()
         self.p = nn.Parameter(torch.tensor(k, dtype=torch.float))
 
-    def forward(self, x):
+    def forward(self, x, y=None):
         assert len(x.shape) == 2
-        return x + self.p
+        out = x + self.p
+        if y is not None:
+            out = out + y
+        return out
 
 
 class TestApply(unittest.TestCase):
     def test_parameters(self):
-        apply = Apply("in", "out", MockModule(1))
+        apply = Apply(["x"], "out", MockModule(1))
         self.assertEqual(set(["module.p"]),
                          dict(apply.named_parameters()).keys())
 
     def test_simple(self):
-        apply = Apply("in", "out", MockModule(1))
-        output = apply({"in": torch.arange(3).reshape(-1, 1)})
+        apply = Apply(["x"], "out", MockModule(1))
+        output = apply({"x": torch.arange(3).reshape(-1, 1)})
         self.assertTrue(np.array_equal(
             [[1], [2], [3]], output["out"].detach().numpy()
         ))
 
     def test_sequence(self):
-        apply = Apply("in", "out", MockModule(1),
+        apply = Apply(["x"], "out", MockModule(1),
                       value_type="list")
 
-        output = apply({"in": [torch.arange(2).reshape(-1, 1),
-                               torch.arange(1).reshape(-1, 1) * 10,
-                               torch.arange(3).reshape(-1, 1) * 100]})
+        output = apply({"x": [torch.arange(2).reshape(-1, 1),
+                              torch.arange(1).reshape(-1, 1) * 10,
+                              torch.arange(3).reshape(-1, 1) * 100]})
         self.assertTrue(np.array_equal(
             [[1], [2]], output["out"][0].detach().numpy()
         ))
@@ -47,23 +50,23 @@ class TestApply(unittest.TestCase):
         ))
 
     def test_empty_sequence(self):
-        apply = Apply("in", "out", MockModule(1),
+        apply = Apply(["x"], "out", MockModule(1),
                       value_type="list")
 
-        output = apply({"in": []})
+        output = apply({"x": []})
         self.assertEqual([], output["out"])
-        output = apply({"in": [torch.zeros((0,))]})
+        output = apply({"x": [torch.zeros((0,))]})
         self.assertEqual([[]], output["out"])
 
     def test_padded_sequence(self):
-        apply = Apply("in", "out", MockModule(1),
+        apply = Apply(["x"], "out", MockModule(1),
                       value_type="padded_tensor")
 
         padded = pad_sequence([torch.arange(2).reshape(-1, 1),
                                torch.arange(1).reshape(-1, 1) * 10,
                                torch.arange(3).reshape(-1, 1) * 100],
                               padding_value=-1)
-        output = apply({"in": padded})
+        output = apply({"x": padded})
         self.assertTrue(np.array_equal(
             [
                 [[1], [1], [1]],
@@ -79,6 +82,28 @@ class TestApply(unittest.TestCase):
                 [0, 0, 1]
             ],
             output["out"].mask.detach().numpy()
+        ))
+
+    def test_multiple_inputs(self):
+        apply = Apply(["x", "y"], "out", MockModule(1))
+        output = apply({"x": torch.arange(3).reshape(-1, 1), "y": 10})
+        self.assertTrue(np.array_equal(
+            [[11], [12], [13]], output["out"].detach().numpy()
+        ))
+
+    def test_rename_keys(self):
+        apply = Apply([("in", "x")], "out", MockModule(1))
+        output = apply({"in": torch.arange(3).reshape(-1, 1)})
+        self.assertTrue(np.array_equal(
+            [[1], [2], [3]], output["out"].detach().numpy()
+        ))
+
+    def test_constants(self):
+        apply = Apply([], "out", MockModule(1),
+                      constants={"x": torch.arange(3).reshape(-1, 1)})
+        output = apply({})
+        self.assertTrue(np.array_equal(
+            [[1], [2], [3]], output["out"].detach().numpy()
         ))
 
 

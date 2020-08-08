@@ -77,10 +77,26 @@ main:
   dataset: "@/train_dataset"
   model: "@/model"
   optimizer: "@/optimizer"
-  loss:  
-    type: mlprogram.nn.action_sequence.Loss
+  loss:
+    type: torch.nn.Sequential
+    modules: 
+      type: collections.OrderedDict
+      items:
+        - - "loss"
+          - type: mlprogram.nn.action_sequence.Loss
+        - - "pick"
+          - type: mlprogram.nn.Pick
+            key: "action_sequence_loss"
   score:
-    type: mlprogram.nn.action_sequence.Accuracy
+    type: torch.nn.Sequential
+    modules: 
+      type: collections.OrderedDict
+      items:
+        - - "loss"
+          - type: mlprogram.nn.action_sequence.Accuracy
+        - - "pick"
+          - type: mlprogram.nn.Pick
+            key: "action_sequence_accuracy"
   collate:
     type: mlprogram.utils.Compose
     funcs:

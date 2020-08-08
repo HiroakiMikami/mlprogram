@@ -59,5 +59,6 @@ class Accuracy(nn.Module):
              (gt_reference != -1).long()).sum()
 
         acc = rule_acc + token_acc + reference_acc
-        return acc.to(rule_probs.data.dtype) \
+        inputs["action_sequence_accuracy"] = acc.to(rule_probs.data.dtype) \
             / (n_rule + n_token + n_reference)
+        return inputs

@@ -26,7 +26,7 @@ class TestAccuracy(unittest.TestCase):
         a = acc({"rule_probs": rule_prob,
                  "token_probs": token_prob,
                  "reference_probs": reference_prob,
-                 "ground_truth_actions": gt})
+                 "ground_truth_actions": gt})["action_sequence_accuracy"]
         self.assertEqual((), a.shape)
 
     def test_accuracy_if_match(self):
@@ -48,7 +48,7 @@ class TestAccuracy(unittest.TestCase):
         a = acc({"rule_probs": rule_prob,
                  "token_probs": token_prob,
                  "reference_probs": reference_prob,
-                 "ground_truth_actions": gt})
+                 "ground_truth_actions": gt})["action_sequence_accuracy"]
         self.assertAlmostEqual(1.0, float(a.numpy()))
 
 

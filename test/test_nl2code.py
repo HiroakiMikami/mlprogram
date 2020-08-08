@@ -7,8 +7,10 @@ import tempfile
 import os
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
+import mlprogram.nn
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer
@@ -121,6 +123,10 @@ class TestNL2Code(unittest.TestCase):
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = AstToActionSequence()
+            loss_fn = nn.Sequential(OrderedDict([
+                ("loss", Loss()),
+                ("pick", mlprogram.nn.Pick("action_sequence_loss"))
+            ]))
             collate = Collate(
                 torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),
@@ -144,7 +150,7 @@ class TestNL2Code(unittest.TestCase):
             train_supervised(
                 tmpdir, output_dir,
                 train_dataset, model, optimizer,
-                Loss(), lambda args: -Loss()(args),
+                loss_fn, lambda args: -loss_fn(args),
                 lambda x: collate(transform(x)),
                 1, Epoch(100), interval=Epoch(10),
                 num_models=1
