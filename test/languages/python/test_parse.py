@@ -1,7 +1,7 @@
 import unittest
 import ast
 
-from mlprogram.languages.python import to_ast, Parse, Unparse, ParseMode
+from mlprogram.languages.python import to_ast, Parse, Unparse
 from mlprogram.asts import Node
 
 
@@ -19,7 +19,7 @@ class TestParse(unittest.TestCase):
         self.assertEqual(
             to_ast(ast.parse("xs = input().split()\nprint(','.join(xs))"),
                    lambda x: [x]),
-            Parse(lambda x: [x], mode=ParseMode.Exec)(
+            Parse(lambda x: [x], mode="exec")(
                 "xs = input().split()\nprint(','.join(xs))")
         )
 
@@ -36,7 +36,7 @@ class TestUnparse(unittest.TestCase):
     def test_mode(self):
         self.assertEqual(
             "\nxs = input().split()\nprint(','.join(xs))\n",
-            Unparse()(Parse(lambda x: [x], mode=ParseMode.Exec)(
+            Unparse()(Parse(lambda x: [x], mode="exec")(
                 "xs = input().split()\nprint(','.join(xs))"))
         )
 

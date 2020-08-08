@@ -88,12 +88,6 @@ types = {
     "mlprogram.languages.python.Unparse": mlprogram.languages.python.Unparse,
     "mlprogram.languages.python.IsSubtype":
         mlprogram.languages.python.IsSubtype,
-    "mlprogram.languages.python.ParseMode.Eval":
-        lambda: mlprogram.languages.python.ParseMode.Eval,
-    "mlprogram.languages.python.ParseMode.Exec":
-        lambda: mlprogram.languages.python.ParseMode.Exec,
-    "mlprogram.languages.python.ParseMode.Single":
-        lambda: mlprogram.languages.python.ParseMode.Single,
     "mlprogram.languages.bash.Parse": mlprogram.languages.bash.Parse,
     "mlprogram.languages.bash.Unparse": mlprogram.languages.bash.Unparse,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,

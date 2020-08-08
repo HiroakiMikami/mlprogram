@@ -1,28 +1,22 @@
 import ast as python_ast
 import transpyle
-from enum import Enum
 from typing import Optional, Callable, List
 from mlprogram.asts import AST
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.languages.python.ast_to_python_ast import to_python_ast
 
 
-class ParseMode(Enum):
-    Single = 1
-    Eval = 2
-    Exec = 3
-
-
 class Parse:
     def __init__(self, tokenize: Callable[[str], List[str]],
-                 mode: ParseMode = ParseMode.Single):
+                 mode: str = "single"):
+        assert mode in set(["single", "eval", "exec"])
         self.mode = mode
         self.tokenize = tokenize
 
     def __call__(self, code: str) -> Optional[AST]:
         try:
             past = python_ast.parse(code)
-            if self.mode == ParseMode.Exec:
+            if self.mode == "exec":
                 return to_ast(
                     past,
                     tokenize=self.tokenize)
