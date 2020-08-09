@@ -9,10 +9,9 @@ import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
 import mlprogram.metrics.python
-import mlprogram.metrics.accuracy
-import mlprogram.metrics.python.bleu
 import mlprogram.languages.python
 import mlprogram.languages.bash
+import mlprogram.languages.csg
 import mlprogram.actions
 import mlprogram.synthesizers
 import mlprogram.utils
@@ -27,8 +26,12 @@ import mlprogram.utils.transform.nl2code
 import mlprogram.nn.treegen
 import mlprogram.utils.transform.treegen
 
+import mlprogram.nn.pbe_with_repl
+import mlprogram.utils.transform.pbe_with_repl
+
 import mlprogram.utils.transform.csg
 
+from mlprogram.entrypoint.numpy import types as numpy_types
 from mlprogram.entrypoint.torch import types as torch_types
 from mlprogram.entrypoint.torchnlp import types as torchnlp_types
 try:
@@ -38,10 +41,13 @@ except:  # noqa
     pass
 
 types = {
+    "select": lambda key, options: options[key],
+
     "add": lambda x, y: x + y,
     "sub": lambda x, y: x - y,
     "mul": lambda x, y: x * y,
     "div": lambda x, y: x / y,
+    "intdiv": lambda x, y: x // y,
     "gt": lambda x, y: x > y,
     "ge": lambda x, y: x >= y,
     "lt": lambda x, y: x < y,
@@ -82,6 +88,8 @@ types = {
 
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
+    "mlprogram.metrics.Iou": mlprogram.metrics.Iou,
+    "mlprogram.metrics.TestCaseResult": mlprogram.metrics.TestCaseResult,
     "mlprogram.metrics.python.Bleu": mlprogram.metrics.python.Bleu,
 
     "mlprogram.languages.python.Parse": mlprogram.languages.python.Parse,
@@ -96,15 +104,22 @@ types = {
     "mlprogram.utils.Map": mlprogram.utils.Map,
     "mlprogram.utils.Flatten": mlprogram.utils.Flatten,
     "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
+    "mlprogram.utils.Threshold": mlprogram.utils.Threshold,
     "mlprogram.utils.Pick": mlprogram.utils.Pick,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
+    "mlprogram.synthesizers.FilteredSynthesizer":
+        mlprogram.synthesizers.FilteredSynthesizer,
     "mlprogram.samplers.transform": mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,
+    "mlprogram.samplers.AstReferenceSampler":
+        mlprogram.samplers.AstReferenceSampler,
+    "mlprogram.samplers.SamplerWithValueNetwork":
+        mlprogram.samplers.SamplerWithValueNetwork,
 
     "mlprogram.utils.data.Collate": mlprogram.utils.data.Collate,
     "mlprogram.utils.data.CollateOptions": mlprogram.utils.data.CollateOptions,
@@ -123,6 +138,8 @@ types = {
         mlprogram.utils.transform.EvaluateGroundTruth,
     "mlprogram.utils.transform.NormalizeGroundTruth":
         mlprogram.utils.transform.NormalizeGroudTruth,
+    "mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder":  # noqa
+        mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder,  # noqa
     "mlprogram.utils.transform.action_sequence.TransformCode":
         mlprogram.utils.transform.action_sequence.TransformCode,
     "mlprogram.utils.transform.action_sequence.TransformGroundTruth":
@@ -135,6 +152,11 @@ types = {
         mlprogram.utils.transform.treegen.TransformQuery,
     "mlprogram.utils.transform.treegen.TransformActionSequence":
         mlprogram.utils.transform.treegen.TransformActionSequence,
+    "mlprogram.utils.transform.pbe_with_repl.ToEpisode":
+        mlprogram.utils.transform.pbe_with_repl.ToEpisode,
+    "mlprogram.utils.transform.pbe_with_repl.EvaluateCode":
+        mlprogram.utils.transform.pbe_with_repl.EvaluateCode,
+
 
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
@@ -148,6 +170,12 @@ types = {
     "mlprogram.nn.Div": mlprogram.nn.Div,
     "mlprogram.nn.IntDiv": mlprogram.nn.IntDiv,
     "mlprogram.nn.Neg": mlprogram.nn.Neg,
+    "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
+    "mlprogram.nn.MLP": mlprogram.nn.MLP,
+    "mlprogram.nn.action_sequence.ActionSequenceReader":
+        mlprogram.nn.action_sequence.ActionSequenceReader,
+    "mlprogram.nn.action_sequence.RnnDecoder":
+        mlprogram.nn.action_sequence.RnnDecoder,
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
@@ -162,7 +190,16 @@ types = {
     "mlprogram.nn.treegen.ActionSequenceReader":
         mlprogram.nn.treegen.ActionSequenceReader,
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
+    "mlprogram.nn.pbe_with_repl.Encoder": mlprogram.nn.pbe_with_repl.Encoder,
 
+    "mlprogram.languages.csg.ToAst": mlprogram.languages.csg.ToAst,
+    "mlprogram.languages.csg.ToCsgAst": mlprogram.languages.csg.ToCsgAst,
+    "mlprogram.languages.csg.Dataset": mlprogram.languages.csg.Dataset,
+    "mlprogram.languages.csg.Interpreter": mlprogram.languages.csg.Interpreter,
+    "mlprogram.languages.csg.GetTokenType":
+        mlprogram.languages.csg.GetTokenType,
+    "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
+    "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
     "mlprogram.utils.transform.csg.TransformCanvas":
         mlprogram.utils.transform.csg.TransformCanvas
 }
@@ -170,3 +207,4 @@ types = {
 types.update(torch_types)
 types.update(torchnlp_types)
 types.update(fairseq_types)
+types.update(numpy_types)

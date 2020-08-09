@@ -51,3 +51,9 @@ class SequentialProgram(Generic[Code]):
             return self.statements == other.statements
         else:
             return False
+
+    def __str__(self) -> str:
+        return ";".join(map(lambda x: f"{x[0]}<-{x[1]}", self._stmts))
+
+    def __repr__(self) -> str:
+        return self.__str__()

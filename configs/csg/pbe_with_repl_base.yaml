@@ -1,0 +1,339 @@
+options:
+    small:
+        n_pretrain_iteration: 36000
+        n_train_iteration: 105000
+        train_max_object: 3
+        evaluate_max_object: 6
+        size: 4
+        resolution: 4
+        n_evaluate_dataset: 1000
+    large:
+        n_pretrain_iteration: 156250
+        n_train_iteration: 450000
+        train_max_object: 13
+        evaluate_max_object: 30
+        size: 16
+        resolution: 1
+        n_evaluate_dataset: 1000
+
+device:
+    type: torch.device
+    type_str: "cuda"
+    index: 0
+
+to_action_sequence:
+    type: mlprogram.utils.Sequence
+    funcs:
+        type: collections.OrderedDict
+        items:
+            - - "to_ast"
+              - type: mlprogram.languages.csg.ToAst
+            - - "to_sequence"
+              - type: mlprogram.actions.AstToActionSequence
+
+n_pixel:
+    type: mul
+    x: "@/option.size"
+    y: "@/option.resolution"
+n_feature_pixel:
+    type: intdiv
+    x: "@/n_pixel"
+    y: 2
+
+dataset:
+    type: mlprogram.languages.csg.Dataset
+    canvas_size: "@/option.size"
+    min_object: 1
+    max_object: "@/option.train_max_object"
+    length_stride: 1
+    degree_stride: 15
+    reference: true
+
+train_dataset:
+    type: mlprogram.utils.data.transform
+    dataset: "@/dataset"
+    transform:
+        type: mlprogram.utils.transform.EvaluateGroundTruth
+        interpreter: "@/interpreter"
+        reference: true
+test_dataset:
+    type: mlprogram.utils.data.transform
+    dataset:
+        type: mlprogram.utils.data.to_map_style_dataset
+        dataset:
+            type: mlprogram.languages.csg.Dataset
+            canvas_size: "@/option.size"
+            min_object: 1
+            max_object: "@/option.evaluate_max_object"
+            length_stride: 1
+            degree_stride: 15
+            reference: true
+            seed: 10000
+        n: "@/option.n_evaluate_dataset"
+    transform:
+        type: mlprogram.utils.transform.EvaluateGroundTruth
+        interpreter: "@/interpreter"
+        reference: true
+valid_dataset:
+    type: mlprogram.utils.data.transform
+    dataset:
+        type: mlprogram.utils.data.to_map_style_dataset
+        dataset:
+            type: mlprogram.languages.csg.Dataset
+            canvas_size: "@/option.size"
+            min_object: 1
+            max_object: "@/option.evaluate_max_object"
+            length_stride: 1
+            degree_stride: 15
+            reference: true
+            seed: 20000
+        n: "@/option.n_evaluate_dataset"
+    transform:
+        type: mlprogram.utils.transform.EvaluateGroundTruth
+        interpreter: "@/interpreter"
+        reference: true
+
+interpreter:
+    type: mlprogram.languages.csg.Interpreter
+    width: "@/option.size"
+    height: "@/option.size"
+    resolution: "@/option.resolution"
+model:
+    type: torch.nn.Sequential
+    modules:
+        type: collections.OrderedDict
+        items:
+            - - "encode_input"
+              - type: mlprogram.nn.Apply
+                in_keys:
+                    - ["processed_input", "x"]
+                out_key: "input_feature"
+                module:
+                    type: mlprogram.nn.CNN2d
+                    in_channel: 1
+                    out_channel: 16
+                    hidden_channel: 32
+                    n_conv_per_block: 2
+                    n_block: 2
+                    pool: 2
+            - - "encoder"
+              - type: mlprogram.nn.pbe_with_repl.Encoder
+                module:
+                    type: mlprogram.nn.CNN2d
+                    in_channel: 2
+                    out_channel: 16
+                    hidden_channel: 32
+                    n_conv_per_block: 2
+                    n_block: 2
+                    pool: 2
+            - - "decoder"
+              - type: torch.nn.Sequential
+                modules:
+                    type: collections.OrderedDict
+                    items:
+                        - - "action_sequence_reader"
+                          - type: mlprogram.nn.action_sequence.ActionSequenceReader
+                            n_rule: "@/encoder._rule_encoder.vocab_size"
+                            n_token: "@/encoder._token_encoder.vocab_size"
+                            hidden_size: 256
+                        - - "decoder"
+                          - type: mlprogram.nn.action_sequence.RnnDecoder
+                            input_feature_size:
+                                type: mul
+                                x: 32  # 2 * 16
+                                y:
+                                    type: mul
+                                    x: "@/n_feature_pixel"
+                                    y: "@/n_feature_pixel"
+                            action_feature_size: 256
+                            output_feature_size: 512
+                            dropout: 0.1
+                        - - "predictor"
+                          - type: mlprogram.nn.action_sequence.Predictor
+                            feature_size: 512
+                            reference_feature_size:
+                                type: mul
+                                x: 16  # 16
+                                y:
+                                    type: mul
+                                    x: "@/n_feature_pixel"
+                                    y: "@/n_feature_pixel"
+                            rule_size: "@/encoder._rule_encoder.vocab_size"
+                            token_size: "@/encoder._token_encoder.vocab_size"
+                            hidden_size: 512
+            - - "value"
+              - type: mlprogram.nn.Apply
+                in_keys:
+                    - ["variable_feature", "x"]
+                out_key: "value"
+                module:
+                    type: mlprogram.nn.MLP
+                    in_channel:
+                        type: mul
+                        x: 16  # 16
+                        y:
+                            type: mul
+                            x: "@/n_feature_pixel"
+                            y: "@/n_feature_pixel"
+                    out_channel: 1
+                    hidden_channel: 512
+                    n_linear: 2
+                    activation:
+                        type: torch.nn.Sigmoid
+                value_type: "tensor"
+
+collate:
+    type: mlprogram.utils.data.Collate
+    device: "@/device"
+    processed_input:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+    input_feature:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+    reference_features:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: true
+        dim: 0
+        padding_value: 0
+    variables:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: true
+        dim: 0
+        padding_value: 0
+    previous_actions:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: true
+        dim: 0
+        padding_value: -1
+    hidden_state:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+    state:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+    ground_truth_actions:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: true
+        dim: 0
+        padding_value: -1
+    reward:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+
+subsampler:
+    type: mlprogram.samplers.ActionSequenceSampler
+    encoder: "@/encoder"
+    get_token_type:
+        type: mlprogram.languages.csg.GetTokenType
+    is_subtype:
+        type: mlprogram.languages.csg.IsSubtype
+    transform_input:
+        type: mlprogram.utils.Compose
+        funcs:
+            type: collections.OrderedDict
+            items:
+                - - "evaluete_code"
+                  - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
+                    interpreter: "@/interpreter"
+                - - "transform_canvas"
+                  - type: mlprogram.utils.transform.csg.TransformCanvas
+                    targets: ["variables"]
+    transform_action_sequence:
+        type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
+        action_sequence_encoder: "@/encoder"
+        train: false
+    collate: "@/collate"
+    module: "@/model"
+subsynthesizer:
+    type: mlprogram.synthesizers.SMC
+    max_step_size: 5
+    max_try_num: 1
+    initial_particle_size: 1
+    sampler: "@/subsampler"
+    to_key:
+        type: mlprogram.utils.Pick
+        key: "action_sequence"
+sampler:
+    type: mlprogram.samplers.SamplerWithValueNetwork
+    sampler:
+        type: mlprogram.samplers.AstReferenceSampler
+        synthesizer: "@/subsynthesizer"
+        transform_input:
+            type: mlprogram.utils.transform.csg.TransformCanvas
+            targets: ["input"]
+        collate: "@/collate"
+        encoder: "@/model.encode_input"
+        to_code:
+            type: mlprogram.languages.csg.ToCsgAst
+    transform:
+        type: mlprogram.utils.Compose
+        funcs:
+            type: collections.OrderedDict
+            items:
+                - - "evaluete_code"
+                  - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
+                    interpreter: "@/interpreter"
+                - - "transform_canvas"
+                  - type: mlprogram.utils.transform.csg.TransformCanvas
+                    targets: ["variables"]
+    collate: "@/collate"
+    value_network:
+        type: torch.nn.Sequential
+        modules:
+            type: collections.OrderedDict
+            items:
+                - - "encoder"
+                  - "@/model.encoder"
+                - - "value"
+                  - "@/model.value"
+                - - "pick"
+                  - type: mlprogram.nn.Pick
+                    key: "value"
+base_synthesizer:
+    type: mlprogram.synthesizers.SMC
+    max_step_size: 120
+    max_try_num: 5
+    initial_particle_size: 100
+    sampler: "@/sampler"
+    to_key:
+        type: mlprogram.utils.Pick
+        key: "code"
+
+to_episode:
+    type: mlprogram.utils.transform.pbe_with_repl.ToEpisode
+    to_ast:
+        type: mlprogram.languages.csg.ToAst
+    remove_used_reference: true
+
+transform:
+    type: mlprogram.utils.Sequence
+    funcs:
+        type: collections.OrderedDict
+        items:
+            - - "evaluete_code"
+              - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
+                interpreter: "@/interpreter"
+            - - "transform_canvas"
+              - type: mlprogram.utils.transform.csg.TransformCanvas
+                targets: ["input", "variables"]
+            - - "transform_code"
+              - type: mlprogram.utils.transform.action_sequence.TransformCode
+                to_action_sequence: "@/to_action_sequence"
+            - - "transform_action_sequence"
+              - type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
+                action_sequence_encoder: "@/encoder"
+                train: true
+            - - "transform_ground_truth"
+              - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
+                action_sequence_encoder: "@/encoder"

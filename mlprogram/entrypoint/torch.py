@@ -24,7 +24,10 @@ class Reshape(nn.Module):
 
 types = {
     "torch.device": device,
+    "torch.nn.Sigmoid": lambda: torch.nn.Sigmoid(),
     "torch.nn.Sequential": lambda modules: torch.nn.Sequential(modules),
+    "torch.nn.BCELoss":
+        lambda *args, **kwargs: torch.nn.BCELoss(*args, **kwargs),
     "torch.optim.Optimizer": Optimizer,
     "torch.optim.Adam": lambda: torch.optim.Adam,
     "torch.Reshape": Reshape,

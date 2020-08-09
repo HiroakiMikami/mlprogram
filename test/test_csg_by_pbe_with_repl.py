@@ -99,7 +99,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             collate, model,
             rng=np.random.RandomState(0))
         subsynthesizer = SMC(
-            20, 1, 20,
+            5, 1, 1,
             subsampler,
             to_key=Pick("action_sequence")
         )

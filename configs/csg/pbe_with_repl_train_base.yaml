@@ -1,0 +1,148 @@
+imports:
+    - "pbe_with_repl_base.yaml"
+
+output_dir: "output/output"
+
+encoder:
+  type: mlprogram.utils.load
+  file:
+    type: os.path.join
+    args:
+      - "@/output_dir"
+      - "encoder.pt"
+
+optimizer:
+    type: torch.optim.Optimizer
+    optimizer_cls:
+      type: torch.optim.Adam
+    model: "@/model"
+
+synthesizer:
+  type: mlprogram.synthesizers.FilteredSynthesizer
+  synthesizer: "@/base_synthesizer"
+  score:
+    type: mlprogram.metrics.TestCaseResult
+    interpreter: "@/interpreter"
+    reference: True
+    use_input: True
+    metric:
+      type: mlprogram.metrics.Iou
+  threshold: 0.9
+  n_output_if_empty: 1
+
+batch_size: 2
+n_rollout: 16
+
+collate_fn:
+  type: mlprogram.utils.Sequence
+  funcs:
+    type: collections.OrderedDict
+    items:
+      - - "to_episode"
+        - type: mlprogram.utils.Map
+          func: "@/to_episode"
+      - - "flatten"
+        - type: mlprogram.utils.Flatten
+      - - "transform"
+        - type: mlprogram.utils.Map
+          func: "@/transform"
+      - - "collate"
+        - "@/collate"
+
+loss_fn:
+  type: torch.nn.Sequential
+  modules:
+    type: collections.OrderedDict
+    items:
+      - - "policy"
+        - type: torch.nn.Sequential
+          modules:
+            type: collections.OrderedDict
+            items:
+              - - "loss"
+                - type: mlprogram.nn.action_sequence.Loss
+                  reduction: "none"
+              - - "weight_by_reward"
+                - type: mlprogram.nn.Apply
+                  in_keys:
+                    - ["reward", "lhs"]
+                    - ["action_sequence_loss", "rhs"]
+                  out_key: action_sequence_loss
+                  module:
+                    type: mlprogram.nn.Mul
+      - - "value"
+        - type: torch.nn.Sequential
+          modules:
+            type: collections.OrderedDict
+            items:
+              - - "reshape_reward"
+                - type: mlprogram.nn.Apply
+                  in_keys:
+                    - ["reward", "x"]
+                  out_key: value_loss_target
+                  module:
+                    type: torch.Reshape
+                    sizes: [-1, 1]
+              - - "BCE"
+                - type: mlprogram.nn.Apply
+                  in_keys:
+                    - ["value", "input"]
+                    - ["value_loss_target", "target"]
+                  out_key: value_loss
+                  module:
+                    type: torch.nn.BCELoss
+                    reduction: sum
+      - - "aggregate"
+        - type: mlprogram.nn.Apply
+          in_keys:
+            - "action_sequence_loss"
+            - "value_loss"
+          out_key: "loss"
+          module:
+            type: mlprogram.nn.AggregatedLoss
+      - - "normalize"
+        - type: mlprogram.nn.Apply
+          in_keys:
+            - ["loss", "lhs"]
+          out_key: "loss"
+          module:
+            type: mlprogram.nn.Div
+          constants:
+            "rhs": "@/batch_size"
+      - - "pick"
+        - type: mlprogram.nn.Pick
+          key: loss
+
+main:
+  type: mlprogram.entrypoint.train_REINFORCE
+  input_dir: "@/output_dir"
+  workspace_dir: "output/workspace"
+  output_dir: "@/output_dir"
+  dataset: "@/train_dataset"
+  synthesizer: "@/synthesizer"
+  model: "@/model"
+  optimizer: "@/optimizer"
+  loss: "@/loss_fn"
+  score:
+    type: mlprogram.metrics.TestCaseResult
+    interpreter: "@/interpreter"
+    reference: true
+    metric:
+      type: mlprogram.metrics.Iou
+  reward:
+    type: mlprogram.utils.Threshold
+    threshold: 0.9
+    dtype: "float"
+  rollout_transform:
+    type: mlprogram.utils.transform.RandomChoice
+  collate: "@/collate_fn"
+  batch_size: "@/batch_size"
+  n_rollout: "@/n_rollout"
+  length:
+    type: mlprogram.entrypoint.train.Iteration
+    n: "@/option.n_train_iteration"
+  interval:
+    type: mlprogram.entrypoint.train.Iteration
+    n: 1000
+  use_pretrained_model: true
+  device: "@/device"
