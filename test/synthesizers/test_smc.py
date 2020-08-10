@@ -3,6 +3,7 @@ from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import SMC
 from typing import Tuple, Optional, List
 import numpy as np
+import timeout_decorator
 
 
 class MockSampler(Sampler[str, str, Tuple[str, str]]):
@@ -46,6 +47,16 @@ class TestBeamSearch(unittest.TestCase):
         decoder = MockSMC(3, 10, 10, np.random.RandomState(0))
         results = set([result.output for result in decoder("x0")])
         self.assertTrue("x0" in results)
+
+    def test_n_required_output_limit_n_particle(self):
+        @timeout_decorator.timeout(1)
+        def f():
+            decoder = MockSMC(3, 10, int(1e20), np.random.RandomState(0))
+            results = set([
+                result.output
+                for result in decoder("x0", n_required_output=10)])
+            self.assertTrue("x0" in results)
+        f()
 
 
 if __name__ == "__main__":

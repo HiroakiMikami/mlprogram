@@ -78,7 +78,7 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
         ks = random.split(self.rng, n, len(states), 1e-8)
         for state, k in zip(states, ks):
             cnt = 0
-            for result in self.synthesizer(state.state):
+            for result in self.synthesizer(state.state, n_required_output=k):
                 if cnt == k:
                     break
 

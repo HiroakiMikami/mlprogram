@@ -7,7 +7,7 @@ class MockSynthesizer(Synthesizer[Dict[str, Any], int]):
     def __init__(self, values: List[int]):
         self.values = values
 
-    def __call__(self, input: Dict[str, Any]):
+    def __call__(self, input: Dict[str, Any], n_required_output=None):
         for i, value in enumerate(self.values):
             yield Result(value, 1.0 / (i + 1))
 

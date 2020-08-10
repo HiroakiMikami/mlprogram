@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Generator
+from typing import Generic, TypeVar, Generator, Optional
 from dataclasses import dataclass
 
 
@@ -14,5 +14,6 @@ class Result(Generic[Output]):
 
 
 class Synthesizer(Generic[Input, Output]):
-    def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
+    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+            -> Generator[Result[Output], None, None]:
         raise NotImplementedError

@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Generator, Callable
+from typing import TypeVar, Generic, Generator, Callable, Optional
 from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.utils import TopKElement
 
@@ -19,9 +19,10 @@ class FilteredSynthesizer(Synthesizer[Input, Output], Generic[Input, Output]):
         assert metric in set(["score", "original_score"])
         self.metric = metric
 
-    def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
+    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+            -> Generator[Result[Output], None, None]:
         topk = TopKElement(self.n_output_if_empty)
-        for result in self.synthesizer(input):
+        for result in self.synthesizer(input, n_required_output):
             original_score = result.score
             score = self.score(input, result.output)
             if score >= self.threshold:

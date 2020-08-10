@@ -8,7 +8,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 7:
     requires.append("dataclasses")
 
 extras = {
-    "test": ["flake8", "autopep8", "fairseq", "mypy"],
+    "test": ["flake8", "autopep8", "fairseq", "mypy", "timeout-decorator"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }

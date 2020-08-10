@@ -26,12 +26,16 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
         self.sampler = sampler
         self.rng = rng or np.random
 
-    def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
-        num_particle = self.initial_particle_size
+    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+            -> Generator[Result[Output], None, None]:
+        if n_required_output is None:
+            n_particle = self.initial_particle_size
+        else:
+            n_particle = n_required_output
         initial_state = SamplerState(0.0, self.sampler.initialize(input))
         for _ in range(self.max_retry_num):
             # Initialize state
-            particles = [(initial_state, num_particle)]
+            particles = [(initial_state, n_particle)]
             step = 0
             while step < self.max_step_size:
                 # Generate particles
@@ -61,11 +65,11 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                          for log_weight in log_weights]
                 probs = [p / sum(probs) for p in probs]
                 particles = []
-                resampled = self.rng.multinomial(num_particle, probs)
+                resampled = self.rng.multinomial(n_particle, probs)
                 for (state, _), n in zip(list_samples, resampled):
                     if n > 0:
                         particles.append((state, n))
 
                 step += 1
 
-            num_particle *= self.factor
+            n_particle *= self.factor

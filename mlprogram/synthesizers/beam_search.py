@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Generator
+from typing import TypeVar, Generic, Generator, Optional
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Synthesizer, Result
 
@@ -15,7 +15,8 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
         self.max_step_size = max_step_size
         self.sampler = sampler
 
-    def __call__(self, input: Input) -> Generator[Result[Output], None, None]:
+    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+            -> Generator[Result[Output], None, None]:
         # Start from empty sequence
         states = [SamplerState(0.0, self.sampler.initialize(input))]
 
