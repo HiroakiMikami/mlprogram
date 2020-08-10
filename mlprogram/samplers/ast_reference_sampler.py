@@ -77,7 +77,11 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
 
         ks = random.split(self.rng, n, len(states), 1e-8)
         for state, k in zip(states, ks):
-            for i, result in enumerate(self.synthesizer(state.state)):
+            cnt = 0
+            for result in self.synthesizer(state.state):
+                if cnt == k:
+                    break
+
                 new_state = {key: value for key, value in state.state.items()}
                 # Copy reference
                 new_state["reference"] = list(new_state["reference"])
@@ -100,3 +104,4 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                 new_code.append(Statement(ref, code))
                 new_state["code"] = SequentialProgram(new_code)
                 yield SamplerState(result.score, new_state)
+                cnt += 1
