@@ -64,6 +64,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                               model: nn.Module,
                               optimizer: torch.optim.Optimizer,
                               workspace_dir: str):
+    logger.info("Prepare pytorch-pfn-extras")
     log_reporter = \
         extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
     manager = ppe.training.ExtensionsManager(
@@ -122,6 +123,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
 
     log_loss = 0.0
     log_score = 0.0
+    logger.info("Start training")
     while manager.updater.iteration < n_iter:
         # TODO num_workers > 0 causes the RuntimeError
         if is_iterable:
@@ -137,14 +139,22 @@ def train_supervised(workspace_dir: str, output_dir: str,
             if manager.updater.iteration >= n_iter:
                 break
             with manager.run_iteration():
+                logger.debug(f"start iteration: {manager.updater.iteration}")
                 if len(batch) == 0:
                     logger.info(f"Skip {manager.updater.iteration} th batch")
                     continue
+                logger.debug("batch:")
+                for key, value in batch.items():
+                    if isinstance(value, torch.Tensor):
+                        logger.debug(f"\t{key}: {value.shape}")
+                logger.debug("forward")
                 output = model(batch)
                 bloss = loss(output)
                 s = score(output)
+                logger.debug("backward")
                 model.zero_grad()
                 bloss.backward()
+                logger.debug("optimizer.step")
                 optimizer.step()
 
                 ppe.reporting.report({
@@ -156,6 +166,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
                 log_score = log_reporter.log[-1]["score"]
 
             if manager.updater.iteration % interval_iter == 0:
+                logger.debug(
+                    f"Update top-K model: score of the new model: {log_score}")
                 top_k_model.save(log_score,
                                  f"{manager.updater.iteration}", model)
 
@@ -242,6 +254,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
     log_loss = 0.0
     log_score = 0.0
+    logger.info("Start training")
     while manager.updater.iteration < n_iter:
         # TODO num_workers > 0 causes the RuntimeError
         if is_iterable:
@@ -256,12 +269,16 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
         for samples in loader:
             if manager.updater.iteration >= n_iter:
                 break
+            logger.debug(f"start iteration: {manager.updater.iteration}")
             # Rollout
             rollouts = []
             scores = []
+            logger.debug("start rollout")
             with torch.no_grad():
-                for sample in samples:
+                for i, sample in enumerate(samples):
+                    logger.debug(f"start rollout: {i}")
                     for j in range(n_rollout):
+                        logger.debug(f"\t{j} th rollout")
                         max_score = 0.0
                         rollout = None
                         input = rollout_transform(sample)
@@ -283,11 +300,18 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
             with manager.run_iteration():
                 batch2 = collate(rollouts)
+                logger.debug("batch:")
+                for key, value in batch2.items():
+                    if isinstance(value, torch.Tensor):
+                        logger.debug(f"\t{key}: {value.shape}")
+                logger.debug("forward")
                 model.train()
                 output = model(batch2)
                 bloss = loss(output)
+                logger.debug("backward")
                 model.zero_grad()
                 bloss.backward()
+                logger.debug("optimizer.step")
                 optimizer.step()
 
                 ppe.reporting.report({
@@ -299,6 +323,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 log_score = log_reporter.log[-1]["score"]
 
             if manager.updater.iteration % interval_iter == 0:
+                logger.debug(
+                    f"Update top-K model: score of the new model: {log_score}")
                 top_k_model.save(log_score,
                                  f"{manager.updater.iteration}", model)
 

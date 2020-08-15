@@ -4,6 +4,9 @@ from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 import math
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
@@ -33,7 +36,8 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
         else:
             n_particle = n_required_output
         initial_state = SamplerState(0.0, self.sampler.initialize(input))
-        for _ in range(self.max_try_num):
+        for i in range(self.max_try_num):
+            logger.debug(f"start {i} th trial: n_particle={n_particle}")
             # Initialize state
             particles = [(initial_state, n_particle)]
             step = 0

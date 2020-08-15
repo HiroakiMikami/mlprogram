@@ -1,6 +1,9 @@
 from typing import TypeVar, Generic, Generator, Optional
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Synthesizer, Result
+import logging
+
+logger = logging.getLogger(__name__)
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
@@ -20,6 +23,7 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
         # Start from empty sequence
         states = [SamplerState(0.0, self.sampler.initialize(input))]
 
+        logger.debug("start synthesize")
         k = self.beam_size
         steps = 0
         while steps < self.max_step_size and k > 0:

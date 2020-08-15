@@ -59,10 +59,12 @@ def evaluate_synthesizer(dataset: torch.utils.data.Dataset,
     for group in dataset:
         inputs = group["input"]
         for input in inputs:
+            logger.debug("start evaluation")
             n_query += 1
             begin = time.time()
             candidates = list(synthesizer({"input": input}))
             end = time.time()
+            logger.debug("calculate metrics")
             generated.append(1.0 if len(candidates) != 0 else 0.0)
             if len(candidates) != 0:
                 times.append(end - begin)
@@ -118,6 +120,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         results = torch.load(results_path)
     else:
         results = {"test": {}}
+    logger.info("Find the best model using test dataset")
     for name in os.listdir(model_dir):
         if name in results:
             continue
@@ -162,6 +165,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
 
         test_data = tqdm(valid_dataset)
 
+        logger.info("Start evaluation using valid dataset")
         result = evaluate_synthesizer(test_data,
                                       synthesizer,
                                       metrics=metrics, top_n=top_n)

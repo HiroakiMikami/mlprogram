@@ -1,6 +1,9 @@
 from typing import TypeVar, Generic, Generator, Callable, Optional
 from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.utils import TopKElement
+import logging
+
+logger = logging.getLogger(__name__)
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
@@ -26,6 +29,7 @@ class FilteredSynthesizer(Synthesizer[Input, Output], Generic[Input, Output]):
             original_score = result.score
             score = self.score(input, result.output)
             if score >= self.threshold:
+                logger.debug(f"find appropriate output: score={score}")
                 yield result
                 return
             s = score if self.metric == "score" else original_score
