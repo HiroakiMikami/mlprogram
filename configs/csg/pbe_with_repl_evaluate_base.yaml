@@ -13,7 +13,7 @@ encoder:
 
 synthesizer:
   type: mlprogram.synthesizers.FilteredSynthesizer
-  synthesizer: "@/base_synthesizer"
+  synthesizer: "@/evaluate_synthesizer"
   score:
     type: mlprogram.metrics.TestCaseResult
     interpreter: "@/interpreter"

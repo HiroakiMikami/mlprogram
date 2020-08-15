@@ -19,7 +19,7 @@ optimizer:
 
 synthesizer:
   type: mlprogram.synthesizers.FilteredSynthesizer
-  synthesizer: "@/base_synthesizer"
+  synthesizer: "@/train_synthesizer"
   score:
     type: mlprogram.metrics.TestCaseResult
     interpreter: "@/interpreter"

@@ -300,9 +300,24 @@ sampler:
                 - - "pick"
                   - type: mlprogram.nn.Pick
                     key: "value"
-base_synthesizer:
+train_synthesizer:
     type: mlprogram.synthesizers.SMC
-    max_step_size: 120
+    max_step_size:
+        type: mul
+            x: "@/option.train_max_object"
+            y: 3
+    max_try_num: 5
+    initial_particle_size: 100
+    sampler: "@/sampler"
+    to_key:
+        type: mlprogram.utils.Pick
+        key: "code"
+evaluate_synthesizer:
+    type: mlprogram.synthesizers.SMC
+    max_step_size:
+        type: mul
+            x: "@/option.evaluate_max_object"
+            y: 3
     max_try_num: 5
     initial_particle_size: 100
     sampler: "@/sampler"
