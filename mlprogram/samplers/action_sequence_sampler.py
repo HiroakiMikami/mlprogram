@@ -134,12 +134,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     yield index + 1
             else:
                 for _ in range(self.max_samples):
-                    npred = [max(0,
-                                 (p.item() / pred[1:].numpy().sum()) -
-                                 self.eps)
-                             for p in pred[1:]]
-                    if pred[1:].sum().item() < self.eps:
+                    s = pred[1:].sum().item()
+                    if s < self.eps:
                         return
+                    ps = (pred[1:] / s - self.eps).numpy()
+                    npred = [max(0, p) for p in ps]
                     yield self.rng.multinomial(1, npred).nonzero()[0][0] + 1
 
         head = state.state["action_sequence"].head
