@@ -15,10 +15,11 @@ Key = TypeVar("Key")
 
 
 class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
-    def __init__(self, max_step_size: int, max_try_num: int,
+    def __init__(self, max_step_size: int,
                  initial_particle_size: int,
                  sampler: Sampler[Input, Output, State],
                  to_key: Callable[[State], Key] = lambda x: cast(Key, x),
+                 max_try_num: Optional[int] = None,
                  factor: int = 2,
                  rng: Optional[np.random.RandomState] = None):
         self.max_step_size = max_step_size
@@ -36,8 +37,10 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
         else:
             n_particle = n_required_output
         initial_state = SamplerState(0.0, self.sampler.initialize(input))
-        for i in range(self.max_try_num):
+        i = 0
+        while True:
             logger.debug(f"start {i} th trial: n_particle={n_particle}")
+            i += 1
             # Initialize state
             particles = [(initial_state, n_particle)]
             step = 0
@@ -77,3 +80,5 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                 step += 1
 
             n_particle *= self.factor
+            if i == self.max_try_num:
+                break

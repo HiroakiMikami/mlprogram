@@ -145,9 +145,9 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
             best_score0 = (-1.0, 0.0)
             for name, result in results["test"].items():
                 m0 = (result.generation_rate, -result.generation_time)
-            if best_score0 < m0:
-                best_model = name
-                best_score0 = m0
+                if best_score0 < m0:
+                    best_model = name
+                    best_score0 = m0
     else:
         best_score1 = -1.0
         for name, result in results["test"].items():

@@ -113,6 +113,8 @@ types = {
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
     "mlprogram.synthesizers.FilteredSynthesizer":
         mlprogram.synthesizers.FilteredSynthesizer,
+    "mlprogram.synthesizers.SynthesizerWithTimeout":
+        mlprogram.synthesizers.SynthesizerWithTimeout,
     "mlprogram.samplers.transform": mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,

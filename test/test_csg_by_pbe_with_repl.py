@@ -13,7 +13,8 @@ from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer, Reshape
-from mlprogram.synthesizers import SMC, FilteredSynthesizer
+from mlprogram.synthesizers \
+    import SMC, FilteredSynthesizer, SynthesizerWithTimeout
 from mlprogram.actions import AstToActionSequence
 from mlprogram.samplers \
     import ActionSequenceSampler, AstReferenceSampler, SamplerWithValueNetwork
@@ -99,8 +100,9 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             collate, model,
             rng=np.random.RandomState(0))
         subsynthesizer = SMC(
-            5, 1, 1,
+            5, 1,
             subsampler,
+            max_try_num=1,
             to_key=Pick("action_sequence")
         )
 
@@ -124,8 +126,11 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 ("pick", mlprogram.nn.Pick("value"))
             ])))
 
-        synthesizer = SMC(4, 1, 20, sampler, rng=np.random.RandomState(0),
-                          to_key=Pick("code"))
+        synthesizer = SynthesizerWithTimeout(
+            SMC(4, 20, sampler, rng=np.random.RandomState(0),
+                to_key=Pick("code")),
+            1
+        )
         if rollout:
             return FilteredSynthesizer(
                 synthesizer,

@@ -7,6 +7,8 @@ options:
         size: 4
         resolution: 4
         n_evaluate_dataset: 1000
+        train_timeout_sec: 1
+        evaluate_timeout_sec: 5
     large:
         n_pretrain_iteration: 156250
         n_train_iteration: 450000
@@ -15,6 +17,8 @@ options:
         size: 16
         resolution: 1
         n_evaluate_dataset: 1000
+        train_timeout_sec: 2
+        evaluate_timeout_sec: 10
 
 device:
     type: torch.device
@@ -301,29 +305,33 @@ sampler:
                   - type: mlprogram.nn.Pick
                     key: "value"
 train_synthesizer:
-    type: mlprogram.synthesizers.SMC
-    max_step_size:
-        type: mul
+    type: mlprogram.synthesizers.SynthesizerWithTimeout
+    synthesizer:
+        type: mlprogram.synthesizers.SMC
+        max_step_size:
+            type: mul
             x: "@/option.train_max_object"
-            y: 3
-    max_try_num: 5
-    initial_particle_size: 100
-    sampler: "@/sampler"
-    to_key:
-        type: mlprogram.utils.Pick
-        key: "code"
+            y: 5
+        initial_particle_size: 100
+        sampler: "@/sampler"
+        to_key:
+            type: mlprogram.utils.Pick
+            key: "code"
+    timeout_sec: "@/option.train_timeout_sec"
 evaluate_synthesizer:
-    type: mlprogram.synthesizers.SMC
-    max_step_size:
-        type: mul
+    type: mlprogram.synthesizers.SynthesizerWithTimeout
+    synthesizer:
+        type: mlprogram.synthesizers.SMC
+        max_step_size:
+            type: mul
             x: "@/option.evaluate_max_object"
-            y: 3
-    max_try_num: 5
-    initial_particle_size: 100
-    sampler: "@/sampler"
-    to_key:
-        type: mlprogram.utils.Pick
-        key: "code"
+            y: 5
+        initial_particle_size: 100
+        sampler: "@/sampler"
+        to_key:
+            type: mlprogram.utils.Pick
+            key: "code"
+    timeout_sec: "@/option.evaluate_timeout_sec"
 
 to_episode:
     type: mlprogram.utils.transform.pbe_with_repl.ToEpisode

@@ -38,8 +38,8 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
 class MockSMC(SMC[str, str, Tuple[str, str], str]):
     def __init__(self, max_step_size: int, max_try_num: int,
                  initial_particle: int, rng: np.random.RandomState):
-        super().__init__(max_step_size, max_try_num, initial_particle,
-                         MockSampler(rng), rng=rng)
+        super().__init__(max_step_size, initial_particle,
+                         MockSampler(rng), rng=rng, max_try_num=max_try_num)
 
 
 class TestBeamSearch(unittest.TestCase):
