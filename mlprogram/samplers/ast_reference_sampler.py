@@ -5,7 +5,7 @@ from typing \
     import TypeVar, Generic, Generator, Optional, Dict, Any, Callable, \
     List, Set
 from mlprogram.asts import AST, Node, Leaf
-from mlprogram.samplers import SamplerState, Sampler
+from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
 from mlprogram.interpreters import SequentialProgram
@@ -60,7 +60,7 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
         return state["code"]
 
     def k_samples(self, states: List[SamplerState[Dict[str, Any]]], n: int) \
-            -> Generator[SamplerState[Dict[str, Any]],
+            -> Generator[DuplicatedSamplerState[Dict[str, Any]],
                          None, None]:
         with logger.block("k_samples"):
             def find_variables(node: AST) -> Set[Reference]:
@@ -107,5 +107,6 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                         Token(type_name, ref))
                     new_code.append(Statement(ref, code))
                     new_state["code"] = SequentialProgram(new_code)
-                    yield SamplerState(result.score, new_state, 1)
+                    yield DuplicatedSamplerState(
+                        SamplerState(result.score, new_state), 1)
                     cnt += 1

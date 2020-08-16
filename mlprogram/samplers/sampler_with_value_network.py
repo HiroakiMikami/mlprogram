@@ -1,7 +1,7 @@
 import torch
 from typing \
     import TypeVar, Generic, Generator, Optional, List, Callable, Any
-from mlprogram.samplers import SamplerState, Sampler
+from mlprogram.samplers import SamplerState, Sampler, DuplicatedSamplerState
 from mlprogram.utils.data import Collate
 from mlprogram.utils import logging
 
@@ -32,11 +32,12 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
         return self.sampler.create_output(state)
 
     def k_samples(self, states: List[SamplerState[State]], n: int) \
-            -> Generator[SamplerState[State],
+            -> Generator[DuplicatedSamplerState[State],
                          None, None]:
         self.value_network.eval()
         for state in self.sampler.k_samples(states, n):
-            input = self.transform(state.state)
+            input = self.transform(state.state.state)
             with torch.no_grad(), logger.block("calculate_value"):
                 value = self.value_network(self.collate([input]))
-            yield SamplerState(value.item(), state.state, state.num)
+            yield DuplicatedSamplerState(
+                SamplerState(value.item(), state.state.state), state.num)

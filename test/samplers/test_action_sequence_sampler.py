@@ -143,20 +143,22 @@ class TestActionSequenceSampler(unittest.TestCase):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}), 1)
+        s = SamplerState(0.0, sampler.initialize({}))
         topk_results = list(sampler.top_k_samples([s], 1))
         self.assertEqual(1, len(topk_results))
-        self.assertEqual(1, topk_results[0].state["length"].item())
-        self.assertAlmostEqual(log(0.2), topk_results[0].score)
+        self.assertEqual(1, topk_results[0].state.state["length"].item())
+        self.assertAlmostEqual(log(0.2), topk_results[0].state.score)
         random_results = list(sampler.k_samples([s], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(1, random_results[0].state["length"].item())
+        self.assertEqual(1, random_results[0].state.state["length"].item())
         self.assertTrue(
-            log(0.1) - 1e-5 <= random_results[0].score <= log(0.2) + 1e-5)
+            log(0.1) - 1e-5 <= random_results[0].state.score
+            <= log(0.2) + 1e-5)
 
-        next = list(sampler.top_k_samples(topk_results, 1))[0]
-        self.assertEqual(2, next.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.5), next.score)
+        next = list(sampler.top_k_samples(
+            [s.state for s in topk_results], 1))[0]
+        self.assertEqual(2, next.state.state["length"].item())
+        self.assertAlmostEqual(log(0.2) + log(0.5), next.state.score)
 
     def test_variadic_rule(self):
         rule_prob = torch.tensor([
@@ -195,22 +197,23 @@ class TestActionSequenceSampler(unittest.TestCase):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}), 1)
-        results = list(sampler.top_k_samples([s], 1))
-        results = list(sampler.top_k_samples(results, 1))
-        topk_results = list(sampler.top_k_samples(results, 2))
+        s = SamplerState(0.0, sampler.initialize({}))
+        results = [s.state for s in sampler.top_k_samples([s], 1)]
+        results = [s.state for s in sampler.top_k_samples(results, 1)]
+        topk_results = \
+            list(sampler.top_k_samples(results, 2))
         self.assertEqual(2, len(topk_results))
-        self.assertEqual(3, topk_results[0].state["length"].item())
+        self.assertEqual(3, topk_results[0].state.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.5) +
-                               log(0.8), topk_results[0].score)
+                               log(0.8), topk_results[0].state.score)
         self.assertAlmostEqual(log(0.2) + log(0.5) +
-                               log(0.2), topk_results[1].score)
+                               log(0.2), topk_results[1].state.score)
         random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state["length"].item())
+        self.assertEqual(3, random_results[0].state.state["length"].item())
         self.assertTrue(
             (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
-                random_results[0].score <=
+                random_results[0].state.score <=
                 log(0.2) + log(0.5) + log(0.8) + 1e-5))
 
     def test_token(self):
@@ -252,22 +255,22 @@ class TestActionSequenceSampler(unittest.TestCase):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}), 1)
-        results = list(sampler.top_k_samples([s], 1))
-        results = list(sampler.top_k_samples(results, 1))
+        s = SamplerState(0.0, sampler.initialize({}))
+        results = [s.state for s in sampler.top_k_samples([s], 1)]
+        results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = list(sampler.top_k_samples(results, 2))
         self.assertEqual(2, len(topk_results))
-        self.assertEqual(3, topk_results[0].state["length"].item())
+        self.assertEqual(3, topk_results[0].state.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(0.8),
-                               topk_results[0].score)
+                               topk_results[0].state.score)
         self.assertAlmostEqual(log(0.2) + log(0.2),
-                               topk_results[1].score)
+                               topk_results[1].state.score)
         random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state["length"].item())
+        self.assertEqual(3, random_results[0].state.state["length"].item())
         self.assertTrue(
             (log(0.2) + log(0.2) - 1e-5 <=
-                random_results[0].score <=
+                random_results[0].state.score <=
                 log(0.2) + log(0.8) + 1e-5))
 
     def test_reference(self):
@@ -311,19 +314,19 @@ class TestActionSequenceSampler(unittest.TestCase):
                    DecoderModule(rule_prob, token_prob, reference_prob)),
             rng=np.random.RandomState(0)
         )
-        s = SamplerState(0.0, sampler.initialize({}), 1)
-        results = list(sampler.top_k_samples([s], 1))
-        results = list(sampler.top_k_samples(results, 1))
+        s = SamplerState(0.0, sampler.initialize({}))
+        results = [s.state for s in sampler.top_k_samples([s], 1)]
+        results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = list(sampler.top_k_samples(results, 1))
         self.assertEqual(1, len(topk_results))
-        self.assertEqual(3, topk_results[0].state["length"].item())
+        self.assertEqual(3, topk_results[0].state.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(1.),
-                               topk_results[0].score)
+                               topk_results[0].state.score)
         random_results = list(sampler.k_samples(results[:1], 1))
         self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state["length"].item())
+        self.assertEqual(3, random_results[0].state.state["length"].item())
         self.assertAlmostEqual(log(0.2) + log(1.0),
-                               random_results[0].score)
+                               random_results[0].state.score)
 
 
 if __name__ == "__main__":

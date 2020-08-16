@@ -1,5 +1,5 @@
 import unittest
-from mlprogram.samplers import Sampler, SamplerState
+from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import SMC
 from typing import Tuple, Optional, List
 import numpy as np
@@ -31,8 +31,10 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
             for _ in range(k // len(states)):
                 x = self.rng.choice(['x', 'y', '0', '1'])
                 score = 0.0 if gt == x else -1.0
-                yield SamplerState(state.score + score,
-                                   (state.state[0], state.state[1] + x), 1)
+                yield DuplicatedSamplerState(
+                    SamplerState(state.score + score,
+                                 (state.state[0], state.state[1] + x)),
+                    1)
 
 
 class MockSMC(SMC[str, str, Tuple[str, str], str]):

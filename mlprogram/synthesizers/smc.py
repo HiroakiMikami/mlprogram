@@ -1,6 +1,6 @@
 from typing \
     import TypeVar, Generic, Optional, Generator, Dict, Callable, cast
-from mlprogram.samplers import Sampler, SamplerState
+from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 import math
 import numpy as np
@@ -42,17 +42,20 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
             logger.debug(f"start {i} th trial: n_particle={n_particle}")
             i += 1
             # Initialize state
-            particles = [SamplerState(0.0, initial_state, n_particle)]
+            particles = [DuplicatedSamplerState(
+                SamplerState(0.0, initial_state),
+                n_particle
+            )]
             step = 0
             while step < self.max_step_size:
                 # Generate particles
-                samples: Dict[Key, SamplerState[State]] = {}
+                samples: Dict[Key, DuplicatedSamplerState[State]] = {}
                 for state in particles:
-                    for sample in self.sampler.k_samples([state], state.num):
-                        key = self.to_key(sample.state)
+                    for sample in self.sampler.k_samples([state.state],
+                                                         state.num):
+                        key = self.to_key(sample.state.state)
                         if key in samples:
-                            samples[key] = SamplerState(
-                                samples[key].score,
+                            samples[key] = DuplicatedSamplerState(
                                 samples[key].state,
                                 samples[key].num + sample.num
                             )
@@ -60,15 +63,15 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                             samples[key] = sample
 
                             output_opt = \
-                                self.sampler.create_output(sample.state)
+                                self.sampler.create_output(sample.state.state)
                             if output_opt is not None:
-                                yield Result(output_opt, sample.score)
+                                yield Result(output_opt, sample.state.score)
 
                 if len(samples) == 0:
                     break
                 # Resample
                 list_samples = list(samples.values())
-                log_weights = [math.log(state.num) + state.score
+                log_weights = [math.log(state.num) + state.state.score
                                for state in list_samples]
                 probs = [math.exp(log_weight - max(log_weights))
                          for log_weight in log_weights]
@@ -78,8 +81,10 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                 for state, n in zip(list_samples, resampled):
                     if n > 0:
                         particles.append(
-                            SamplerState(state.score, state.state, n))
-
+                            DuplicatedSamplerState(
+                                state.state, n
+                            )
+                        )
                 step += 1
 
             n_particle *= self.factor

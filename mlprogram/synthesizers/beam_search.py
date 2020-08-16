@@ -22,7 +22,7 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
     def __call__(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
         # Start from empty sequence
-        states = [SamplerState(0.0, self.sampler.initialize(input), 1)]
+        states = [SamplerState(0.0, self.sampler.initialize(input))]
 
         k = self.beam_size
         steps = 0
@@ -32,11 +32,11 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
             next_states = []
 
             for next_state in self.sampler.top_k_samples(states, k):
-                output_opt = self.sampler.create_output(next_state.state)
+                output_opt = self.sampler.create_output(next_state.state.state)
                 if output_opt is not None:
-                    yield Result(output_opt, next_state.score)
+                    yield Result(output_opt, next_state.state.score)
                     k -= 1
                 else:
-                    next_states.append(next_state)
+                    next_states.append(next_state.state)
             states = next_states
             steps += 1

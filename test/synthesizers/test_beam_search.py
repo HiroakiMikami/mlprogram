@@ -1,5 +1,5 @@
 import unittest
-from mlprogram.samplers import Sampler, SamplerState
+from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import BeamSearch, Result
 from typing import List, Tuple
 
@@ -22,13 +22,17 @@ class MockSampler(Sampler[str, str, Tuple[str, List[str]]]):
             elems = len("".join(s.state[1]))
             if elems < len(s.state[0]):
                 gt = s.state[0][elems]
-                yield SamplerState(s.score + 0.0,
-                                   (s.state[0], s.state[1] + [gt]), 1)
+                yield DuplicatedSamplerState(
+                    SamplerState(s.score + 0.0,
+                                 (s.state[0], s.state[1] + [gt])),
+                    1)
         s = states[0]
         for i in range(k - len(states)):
             x = chr(i + ord('0'))
-            yield SamplerState(s.score - i - 1,
-                               (s.state[0], s.state[1] + [x]), 1)
+            yield DuplicatedSamplerState(
+                SamplerState(s.score - i - 1,
+                             (s.state[0], s.state[1] + [x])),
+                1)
 
 
 class MockBeamSearch(BeamSearch[str, str, Tuple[str, List[str]]]):

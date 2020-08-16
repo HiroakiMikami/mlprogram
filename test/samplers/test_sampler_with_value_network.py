@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 import unittest
 from typing import List, Dict, Any
-from mlprogram.samplers import Sampler, SamplerWithValueNetwork, SamplerState
+from mlprogram.samplers \
+    import Sampler, SamplerWithValueNetwork, SamplerState, \
+    DuplicatedSamplerState
 from mlprogram.utils.data import CollateOptions, Collate
 
 
@@ -14,7 +16,7 @@ class MockSampler(Sampler[int, int, str]):
         for state in states:
             for i in range(n // len(states)):
                 x = state.state + str(i)
-                yield SamplerState(len(x), x, 1)
+                yield DuplicatedSamplerState(SamplerState(len(x), x), 1)
 
 
 class MockValueNetwork(nn.Module):
@@ -30,11 +32,12 @@ class TestSamplerWithValueNetwork(unittest.TestCase):
                           x=CollateOptions(False, 0, 0))
         sampler = SamplerWithValueNetwork(MockSampler(), transform, collate,
                                           MockValueNetwork())
-        zero = SamplerState(0, sampler.initialize(0), 1)
+        zero = SamplerState(0, sampler.initialize(0))
         samples = list(sampler.k_samples([zero], 3))
         self.assertEqual(
-            [SamplerState(0, "00", 1), SamplerState(1, "01", 1),
-             SamplerState(2, "02", 1)],
+            [DuplicatedSamplerState(SamplerState(0, "00"), 1),
+             DuplicatedSamplerState(SamplerState(1, "01"), 1),
+             DuplicatedSamplerState(SamplerState(2, "02"), 1)],
             samples
         )
 

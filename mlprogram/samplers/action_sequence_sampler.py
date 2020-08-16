@@ -11,7 +11,7 @@ from mlprogram.actions \
     GenerateToken, Action, NodeType, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.asts import AST, Node
-from mlprogram.samplers import SamplerState, Sampler
+from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKElement, Token
 from mlprogram.utils.data import Collate
@@ -145,7 +145,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                     state: SamplerState[Dict[str, Any]],
                                     enumerateion: Enumeration,
                                     k: int) \
-            -> Generator[SamplerState[Dict[str, Any]], None, None]:
+            -> Generator[DuplicatedSamplerState[Dict[str, Any]], None, None]:
         def indices(pred: torch.Tensor):
             # 0 is unknown token
             if enumerateion == Enumeration.Top:
@@ -244,8 +244,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     next_state["action_sequence"] = \
                         LazyActionSequence(state.state["action_sequence"],
                                            action)
-                    yield SamplerState[Dict[str, Any]](state.score + lp,
-                                                       next_state, 1)
+                    yield DuplicatedSamplerState(
+                        SamplerState(state.score + lp, next_state),
+                        1)
             else:
                 # Apply rule
                 with logger.block("exclude_invalid_rules"):
@@ -286,12 +287,14 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     next_state["action_sequence"] = \
                         LazyActionSequence(state.state["action_sequence"],
                                            ApplyRule(rule))
-                    yield SamplerState[Dict[str, Any]](state.score + lp,
-                                                       next_state, 1)
+
+                    yield DuplicatedSamplerState(
+                        SamplerState(state.score + lp, next_state),
+                        1)
 
     def top_k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
-            -> Generator[SamplerState[Dict[str, Any]], None, None]:
+            -> Generator[DuplicatedSamplerState[Dict[str, Any]], None, None]:
         with logger.block("top_k_samples"):
             self.module.eval()
             rule_pred, token_pred, reference_pred, next_states = \
@@ -303,18 +306,18 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         rule_pred[i], token_pred[i], reference_pred[i],
                         next_states[i], state, enumerateion=Enumeration.Top,
                         k=k):
-                    topk.add(state.score, state)
+                    topk.add(state.state.score, state)
 
             # Instantiate top-k hypothesis
             with logger.block("find_top_k_among_all_states"):
                 for score, state in topk.elements:
-                    state.state["action_sequence"] = \
-                        state.state["action_sequence"]()
+                    state.state.state["action_sequence"] = \
+                        state.state.state["action_sequence"]()
                     yield state
 
     def k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], n: int) \
-            -> Generator[SamplerState[Dict[str, Any]],
+            -> Generator[DuplicatedSamplerState[Dict[str, Any]],
                          None, None]:
         with logger.block("k_samples"):
             self.module.eval()
@@ -329,6 +332,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                          next_states, states, ks):
                 for state in self.enumerate_samples_per_state(
                         r, t, c, ns, s, Enumeration.Random, k=k):
-                    state.state["action_sequence"] = \
-                        state.state["action_sequence"]()
+                    state.state.state["action_sequence"] = \
+                        state.state.state["action_sequence"]()
                     yield state

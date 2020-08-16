@@ -9,7 +9,8 @@ from mlprogram.utils.data import Collate
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
 from mlprogram.interpreters import SequentialProgram
-from mlprogram.samplers import AstReferenceSampler, SamplerState
+from mlprogram.samplers \
+    import AstReferenceSampler, SamplerState, DuplicatedSamplerState
 
 
 class MockSynthesizer(Synthesizer[Dict[str, Any], AST]):
@@ -39,35 +40,41 @@ class TestAstReferenceSampler(unittest.TestCase):
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
-        zero = SamplerState(0, sampler.initialize(0), 1)
+        zero = SamplerState(0, sampler.initialize(0))
         samples = list(sampler.k_samples([zero], 3))
-        samples.sort(key=lambda x: -x.score)
+        samples.sort(key=lambda x: -x.state.score)
         self.assertEqual(3, len(samples))
         self.assertEqual(
-            SamplerState(1, {
-                "x": 0,
-                "reference": [Token("def", Reference("v0"))],
-                "code": SequentialProgram(
-                    [Statement(Reference("v0"), asts[0])])
-            }, 1),
+            DuplicatedSamplerState(
+                SamplerState(1, {
+                    "x": 0,
+                    "reference": [Token("def", Reference("v0"))],
+                    "code": SequentialProgram(
+                        [Statement(Reference("v0"), asts[0])])
+                }),
+                1),
             samples[0]
         )
         self.assertEqual(
-            SamplerState(0.5, {
-                "x": 0,
-                "reference": [Token("int", Reference("v0"))],
-                "code": SequentialProgram(
-                    [Statement(Reference("v0"), asts[1])])
-            }, 1),
+            DuplicatedSamplerState(
+                SamplerState(0.5, {
+                    "x": 0,
+                    "reference": [Token("int", Reference("v0"))],
+                    "code": SequentialProgram(
+                        [Statement(Reference("v0"), asts[1])])
+                }),
+                1),
             samples[1]
         )
         self.assertEqual(
-            SamplerState(1.0 / 3, {
-                "x": 0,
-                "reference": [Token("float", Reference("v0"))],
-                "code": SequentialProgram(
-                    [Statement(Reference("v0"), asts[2])])
-            }, 1),
+            DuplicatedSamplerState(
+                SamplerState(1.0 / 3, {
+                    "x": 0,
+                    "reference": [Token("float", Reference("v0"))],
+                    "code": SequentialProgram(
+                        [Statement(Reference("v0"), asts[2])])
+                }),
+                1),
             samples[2]
         )
 
@@ -83,21 +90,23 @@ class TestAstReferenceSampler(unittest.TestCase):
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
-        zero = SamplerState(0, sampler.initialize(0), 1)
+        zero = SamplerState(0, sampler.initialize(0))
         zero.state["reference"] = [Token("str", Reference("v0"))]
         zero.state["code"] = \
             SequentialProgram([Statement(Reference("v0"), ast)])
         samples = list(sampler.k_samples([zero], 1))
-        samples.sort(key=lambda x: -x.score)
+        samples.sort(key=lambda x: -x.state.score)
         self.assertEqual(1, len(samples))
         self.assertEqual(
-            SamplerState(1, {
-                "x": 0,
-                "reference": [Token("def", Reference("v1"))],
-                "code": SequentialProgram([
-                    Statement(Reference("v0"), ast),
-                    Statement(Reference("v1"), asts[0])])
-            }, 1),
+            DuplicatedSamplerState(
+                SamplerState(1, {
+                    "x": 0,
+                    "reference": [Token("def", Reference("v1"))],
+                    "code": SequentialProgram([
+                        Statement(Reference("v0"), ast),
+                        Statement(Reference("v1"), asts[0])])
+                }),
+                1),
             samples[0]
         )
 
