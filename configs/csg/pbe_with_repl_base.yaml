@@ -304,6 +304,7 @@ sampler:
                 - - "pick"
                   - type: mlprogram.nn.Pick
                     key: "value"
+    batch_size: 32
 train_synthesizer:
     type: mlprogram.synthesizers.SynthesizerWithTimeout
     synthesizer:
