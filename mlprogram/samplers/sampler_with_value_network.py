@@ -52,7 +52,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                     for value, output in zip(value, outputs):
                         yield DuplicatedSamplerState(
                             SamplerState(value.item(), output.state.state),
-                            state.num)
+                            output.num)
                     outputs = []
                     value_network_inputs = []
             if len(outputs) != 0:
@@ -62,4 +62,4 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                 for value, output in zip(value, outputs):
                     yield DuplicatedSamplerState(
                         SamplerState(value.item(), output.state.state),
-                        state.num)
+                        output.num)
