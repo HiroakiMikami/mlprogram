@@ -108,5 +108,5 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                     new_code.append(Statement(ref, code))
                     new_state["code"] = SequentialProgram(new_code)
                     yield DuplicatedSamplerState(
-                        SamplerState(result.score, new_state), 1)
+                        SamplerState(result.score, new_state), result.num)
                     cnt += 1

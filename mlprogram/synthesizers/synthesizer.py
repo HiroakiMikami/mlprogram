@@ -11,6 +11,7 @@ State = TypeVar("State")
 class Result(Generic[Output]):
     output: Output
     score: float
+    num: int
 
 
 class Synthesizer(Generic[Input, Output]):

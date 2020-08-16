@@ -65,7 +65,8 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                             output_opt = \
                                 self.sampler.create_output(sample.state.state)
                             if output_opt is not None:
-                                yield Result(output_opt, sample.state.score)
+                                yield Result(output_opt, sample.state.score,
+                                             sample.num)
 
                 if len(samples) == 0:
                     break

@@ -33,6 +33,6 @@ class FilteredSynthesizer(Synthesizer[Input, Output], Generic[Input, Output]):
                 yield result
                 return
             s = score if self.metric == "score" else original_score
-            topk.add(s, result.output)
+            topk.add(s, result)
         for elem in topk.elements:
-            yield Result(elem[1], elem[0])
+            yield elem[1]

@@ -84,7 +84,8 @@ class TestEvaluate(unittest.TestCase):
 
             def __call__(self, query):
                 yield DecoderResult(self.model.state_dict["name"],
-                                    self.model.state_dict["score"])
+                                    self.model.state_dict["score"],
+                                    1)
 
         return MockSynthesizer(model)
 

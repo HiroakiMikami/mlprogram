@@ -233,7 +233,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                 self.model = model
 
             def __call__(self, query):
-                yield Result({"output": query["value"]}, 0)
+                yield Result({"output": query["value"]}, 0, 1)
 
         return MockSynthesizer(model)
 
