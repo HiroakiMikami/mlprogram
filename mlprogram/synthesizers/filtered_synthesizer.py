@@ -24,15 +24,16 @@ class FilteredSynthesizer(Synthesizer[Input, Output], Generic[Input, Output]):
 
     def __call__(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        topk = TopKElement(self.n_output_if_empty)
-        for result in self.synthesizer(input, n_required_output):
-            original_score = result.score
-            score = self.score(input, result.output)
-            if score >= self.threshold:
-                logger.debug(f"find appropriate output: score={score}")
-                yield result
-                return
-            s = score if self.metric == "score" else original_score
-            topk.add(s, result)
-        for elem in topk.elements:
-            yield elem[1]
+        with logger.block("__call__"):
+            topk = TopKElement(self.n_output_if_empty)
+            for result in self.synthesizer(input, n_required_output):
+                original_score = result.score
+                score = self.score(input, result.output)
+                if score >= self.threshold:
+                    logger.debug(f"find appropriate output: score={score}")
+                    yield result
+                    return
+                s = score if self.metric == "score" else original_score
+                topk.add(s, result)
+            for elem in topk.elements:
+                yield elem[1]

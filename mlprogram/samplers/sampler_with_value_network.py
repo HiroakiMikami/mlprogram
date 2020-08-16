@@ -26,6 +26,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
         self.value_network = value_network
         self.batch_size = batch_size
 
+    @logger.function_block("initialize")
     def initialize(self, input: Input) -> State:
         return self.sampler.initialize(input)
 
@@ -36,14 +37,25 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
     def k_samples(self, states: List[SamplerState[State]], n: List[int]) \
             -> Generator[DuplicatedSamplerState[State],
                          None, None]:
-        self.value_network.eval()
-        outputs = []
-        value_network_inputs = []
-        for state in self.sampler.k_samples(states, n):
-            input = self.transform(state.state.state)
-            outputs.append(state)
-            value_network_inputs.append(input)
-            if len(outputs) == self.batch_size:
+        with logger.block("k_samples"):
+            self.value_network.eval()
+            outputs = []
+            value_network_inputs = []
+            for state in self.sampler.k_samples(states, n):
+                input = self.transform(state.state.state)
+                outputs.append(state)
+                value_network_inputs.append(input)
+                if len(outputs) == self.batch_size:
+                    with torch.no_grad(), logger.block("calculate_value"):
+                        value = self.value_network(
+                            self.collate(value_network_inputs))
+                    for value, output in zip(value, outputs):
+                        yield DuplicatedSamplerState(
+                            SamplerState(value.item(), output.state.state),
+                            state.num)
+                    outputs = []
+                    value_network_inputs = []
+            if len(outputs) != 0:
                 with torch.no_grad(), logger.block("calculate_value"):
                     value = self.value_network(
                         self.collate(value_network_inputs))
@@ -51,13 +63,3 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                     yield DuplicatedSamplerState(
                         SamplerState(value.item(), output.state.state),
                         state.num)
-                outputs = []
-                value_network_inputs = []
-        if len(outputs) != 0:
-            with torch.no_grad(), logger.block("calculate_value"):
-                value = self.value_network(
-                    self.collate(value_network_inputs))
-            for value, output in zip(value, outputs):
-                yield DuplicatedSamplerState(
-                    SamplerState(value.item(), output.state.state),
-                    state.num)
