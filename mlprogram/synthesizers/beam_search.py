@@ -26,17 +26,19 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
 
         k = self.beam_size
         steps = 0
-        while steps < self.max_step_size and k > 0:
-            if len(states) == 0:
-                return
-            next_states = []
+        with logger.block("__call__"):
+            while steps < self.max_step_size and k > 0:
+                if len(states) == 0:
+                    return
+                next_states = []
 
-            for next_state in self.sampler.top_k_samples(states, k):
-                output_opt = self.sampler.create_output(next_state.state.state)
-                if output_opt is not None:
-                    yield Result(output_opt, next_state.state.score, 1)
-                    k -= 1
-                else:
-                    next_states.append(next_state.state)
-            states = next_states
-            steps += 1
+                for next_state in self.sampler.top_k_samples(states, k):
+                    output_opt = self.sampler.create_output(
+                        next_state.state.state)
+                    if output_opt is not None:
+                        yield Result(output_opt, next_state.state.score, 1)
+                        k -= 1
+                    else:
+                        next_states.append(next_state.state)
+                states = next_states
+                steps += 1
