@@ -1,5 +1,5 @@
 from typing \
-    import TypeVar, Generic, Optional, Generator, Dict, Tuple, Callable, cast
+    import TypeVar, Generic, Optional, Generator, Dict, Callable, cast
 from mlprogram.samplers import Sampler, SamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 import math
@@ -36,27 +36,28 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
             n_particle = self.initial_particle_size
         else:
             n_particle = n_required_output
-        # TODO merge n_particle
-        initial_state = SamplerState(0.0, self.sampler.initialize(input), 1)
+        initial_state = self.sampler.initialize(input)
         i = 0
         while True:
             logger.debug(f"start {i} th trial: n_particle={n_particle}")
             i += 1
             # Initialize state
-            particles = [(initial_state, n_particle)]
+            particles = [SamplerState(0.0, initial_state, n_particle)]
             step = 0
             while step < self.max_step_size:
                 # Generate particles
-                samples: Dict[Key, Tuple[SamplerState[State], int]] = {}
-                for state, n in particles:
-                    for sample in self.sampler.k_samples([state], n):
+                samples: Dict[Key, SamplerState[State]] = {}
+                for state in particles:
+                    for sample in self.sampler.k_samples([state], state.num):
                         key = self.to_key(sample.state)
                         if key in samples:
-                            samples[key] = \
-                                (samples[key][0],
-                                 samples[key][1] + 1)
+                            samples[key] = SamplerState(
+                                samples[key].score,
+                                samples[key].state,
+                                samples[key].num + sample.num
+                            )
                         else:
-                            samples[key] = (sample, 1)
+                            samples[key] = sample
 
                             output_opt = \
                                 self.sampler.create_output(sample.state)
@@ -67,16 +68,17 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                     break
                 # Resample
                 list_samples = list(samples.values())
-                log_weights = [math.log(n) + state.score
-                               for state, n in list_samples]
+                log_weights = [math.log(state.num) + state.score
+                               for state in list_samples]
                 probs = [math.exp(log_weight - max(log_weights))
                          for log_weight in log_weights]
                 probs = [p / sum(probs) for p in probs]
                 particles = []
                 resampled = self.rng.multinomial(n_particle, probs)
-                for (state, _), n in zip(list_samples, resampled):
+                for state, n in zip(list_samples, resampled):
                     if n > 0:
-                        particles.append((state, n))
+                        particles.append(
+                            SamplerState(state.score, state.state, n))
 
                 step += 1
 
