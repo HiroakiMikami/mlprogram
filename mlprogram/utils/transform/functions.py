@@ -42,9 +42,8 @@ class EvaluateGroundTruth:
 
 class RandomChoice:
     def __init__(self, rng: Optional[np.random.RandomState] = None):
-        if rng is None:
-            rng = np.random
-        self.rng = rng
+        self.rng = \
+            rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         output = {}

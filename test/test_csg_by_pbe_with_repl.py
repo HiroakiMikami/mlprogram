@@ -103,7 +103,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             5, 1,
             subsampler,
             max_try_num=1,
-            to_key=Pick("action_sequence")
+            to_key=Pick("action_sequence"),
+            rng=np.random.RandomState(0)
         )
 
         sampler = AstReferenceSampler(
@@ -335,6 +336,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 1, 1,
                 Epoch(30), interval=Epoch(10),
                 num_models=1,
+                n_rollout_worker=1,
                 use_pretrained_model=True,
                 use_pretrained_optimizer=True)
 

@@ -37,10 +37,8 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
         self.encoder = encoder
         self.to_code = to_code
         self.remove_used_variable = remove_used_variable
-        if rng is None:
-            self.rng = np.random
-        else:
-            self.rng = rng
+        self.rng = \
+            rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
 
     @logger.function_block("initialize")
     def initialize(self, input: Input) -> Dict[str, Any]:

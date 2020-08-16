@@ -64,7 +64,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                  collate: Collate,
                  module: torch.nn.Module,
                  eps: float = 1e-5,
-                 rng: np.random.RandomState = np.random
+                 rng: Optional[np.random.RandomState] = None
                  ):
         self.encoder = encoder
         self.get_token_type = get_token_type or (lambda x: None)
@@ -74,7 +74,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self.collate = collate
         self.module = module
         self.eps = eps
-        self.rng = rng
+        self.rng = \
+            rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
 
     @logger.function_block("initialize")
     def initialize(self, input: Dict[str, Any]) \

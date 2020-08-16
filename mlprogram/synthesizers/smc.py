@@ -28,7 +28,8 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
         self.to_key = to_key
         self.factor = factor
         self.sampler = sampler
-        self.rng = rng or np.random
+        self.rng = \
+            rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
 
     def __call__(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
