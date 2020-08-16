@@ -12,7 +12,7 @@ Output = TypeVar("Output")
 class SynthesizerWithTimeout(Synthesizer[Input, Output],
                              Generic[Input, Output]):
     def __init__(self, synthesizer: Synthesizer[Input, Output],
-                 timeout_sec: int):
+                 timeout_sec: float):
         self.synthesizer = synthesizer
         self.timeout_sec = timeout_sec
 
