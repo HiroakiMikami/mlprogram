@@ -23,7 +23,7 @@ class TestEvaluateSynthesizer(unittest.TestCase):
                 output = ["c2", "c3", "c5"]
 
             for i, s in enumerate(output):
-                yield DecoderResult(s, -i)
+                yield DecoderResult(s, -i, 1)
 
         accuracy = Accuracy()
         dataset = ListDataset([{

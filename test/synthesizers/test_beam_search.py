@@ -45,14 +45,15 @@ class TestBeamSearch(unittest.TestCase):
         decoder = MockBeamSearch(3, 100)
         results = list(decoder("x0"))
         self.assertEqual(
-            [Result("0", -1.0), Result("x0", 0.0), Result("10", -2.0)],
+            [Result("0", -1.0, 1), Result("x0", 0.0, 1),
+             Result("10", -2.0, 1)],
             results
         )
 
     def test_abort(self):
         decoder = MockBeamSearch(3, 2)
         results = list(decoder("".join([" "] * 100)))
-        self.assertEqual([Result("0", -1.0)], results)
+        self.assertEqual([Result("0", -1.0, 1)], results)
 
 
 if __name__ == "__main__":

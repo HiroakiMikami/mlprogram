@@ -64,7 +64,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                                      Dict[str, Any]],
                  collate: Collate,
                  module: torch.nn.Module,
-                 max_samples: int = 1000,
                  eps: float = 1e-5,
                  rng: np.random.RandomState = np.random
                  ):
@@ -75,7 +74,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self.transform_action_sequence = transform_action_sequence
         self.collate = collate
         self.module = module
-        self.max_samples = max_samples
         self.eps = eps
         self.rng = rng
 
@@ -150,8 +148,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             # 0 is unknown token
             if enumerateion == Enumeration.Top:
                 _, indices = torch.sort(pred[1:], descending=True)
-                for index in indices:
-                    yield index + 1
+                for index in indices[:k]:
+                    yield index + 1, 1
             else:
                 with logger.block("normalize_prob"):
                     s = pred[1:].sum().item()
@@ -159,8 +157,10 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         return
                     ps = (pred[1:] / s - self.eps).numpy()
                     npred = [max(0, p) for p in ps]
-                for _ in range(self.max_samples):
-                    yield self.rng.multinomial(1, npred).nonzero()[0][0] + 1
+                for i, n in enumerate(self.rng.multinomial(k, npred)):
+                    if n == 0:
+                        continue
+                    yield i + 1, n
 
         with logger.block("enumerate_samples_per_state"):
             head = state.state["action_sequence"].head
@@ -216,7 +216,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                 pred[x] = 0.0
 
                 n_action = 0
-                for x in logger.iterable_block("sample-tokens", indices(pred)):
+                for x, n in logger.iterable_block("sample-tokens",
+                                                  indices(pred)):
                     # Finish enumeration
                     if n_action == k:
                         return
@@ -246,7 +247,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                            action)
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
-                        1)
+                        n)
             else:
                 # Apply rule
                 with logger.block("exclude_invalid_rules"):
@@ -266,8 +267,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                 rule_pred[x] = 0.0
 
                 n_rule = 0
-                for x in logger.iterable_block("sample-rule",
-                                               indices(rule_pred)):
+                for x, n in logger.iterable_block("sample-rule",
+                                                  indices(rule_pred)):
                     # Finish enumeration
                     if n_rule == k:
                         return
@@ -290,7 +291,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
-                        1)
+                        n)
 
     def top_k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
