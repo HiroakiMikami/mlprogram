@@ -144,6 +144,6 @@ main:
   interval:
     type: mlprogram.entrypoint.train.Iteration
     n: 1000
-  n_rollout_worker: 2
+  n_rollout_worker: 0
   use_pretrained_model: true
   device: "@/device"

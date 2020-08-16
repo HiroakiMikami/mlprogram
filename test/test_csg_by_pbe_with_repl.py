@@ -336,7 +336,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 1, 1,
                 Epoch(30), interval=Epoch(10),
                 num_models=1,
-                n_rollout_worker=1,
+                n_rollout_worker=0,
                 use_pretrained_model=True,
                 use_pretrained_optimizer=True)
 
