@@ -163,8 +163,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
         with logger.block("enumerate_samples_per_state"):
             head = state.state["action_sequence"].head
-            if head is None:
-                return
+            assert head is not None
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
@@ -297,6 +296,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
             -> Generator[DuplicatedSamplerState[Dict[str, Any]], None, None]:
         with logger.block("top_k_samples"):
+            states = [state for state in states
+                      if state.state["action_sequence"].head is not None]
+            if len(states) == 0:
+                return
+
             self.module.eval()
             rule_pred, token_pred, reference_pred, next_states = \
                 self.batch_infer(states)
@@ -322,6 +326,12 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                          None, None]:
         with logger.block("k_samples"):
             self.module.eval()
+            n = [n[i] for i in range(len(states))
+                 if states[i].state["action_sequence"].head is not None]
+            states = [state for state in states
+                      if state.state["action_sequence"].head is not None]
+            if len(states) == 0:
+                return
 
             rule_pred, token_pred, reference_pred, next_states = \
                 self.batch_infer(states)
