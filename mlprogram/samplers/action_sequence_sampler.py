@@ -135,13 +135,13 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 for index in indices:
                     yield index + 1
             else:
+                with logger.block("normalize_prob"):
+                    s = pred[1:].sum().item()
+                    if s < self.eps:
+                        return
+                    ps = (pred[1:] / s - self.eps).numpy()
+                    npred = [max(0, p) for p in ps]
                 for _ in range(self.max_samples):
-                    with logger.block("normalize_prob"):
-                        s = pred[1:].sum().item()
-                        if s < self.eps:
-                            return
-                        ps = (pred[1:] / s - self.eps).numpy()
-                        npred = [max(0, p) for p in ps]
                     yield self.rng.multinomial(1, npred).nonzero()[0][0] + 1
 
         with logger.block("enumerate_samples_per_state"):
@@ -178,6 +178,24 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     p = rule_pred[close_rule_idx].item()
                     tokens.append(ApplyRule(CloseVariadicFieldRule()))
                     pred = torch.cat([pred, torch.tensor([p])], dim=0)
+
+                with logger.block("exclude_invalid_tokens"):
+                    for x, p in enumerate(pred[1:]):
+                        x += 1
+                        token = tokens[x]
+                        if isinstance(token, ApplyRule):
+                            action: Action = token
+                        else:
+                            if isinstance(token, Token):
+                                t = token.type_name
+                                token = token.value
+                            else:
+                                t = self.get_token_type(token)
+                            if t is not None and \
+                                    not self.is_subtype(t,
+                                                        head_field.type_name):
+                                pred[x] = 0.0
+
                 n_action = 0
                 for x in logger.iterable_block("sample-tokens", indices(pred)):
                     # Finish enumeration
@@ -188,20 +206,16 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     token = tokens[x]
 
                     if isinstance(token, ApplyRule):
-                        action: Action = token
+                        action = token
                     else:
                         if isinstance(token, Token):
                             t = token.type_name
                             token = token.value
-                        else:
-                            t = self.get_token_type(token)
-                        if t is not None and \
-                                not self.is_subtype(t, head_field.type_name):
-                            pred[x] = 0.0
-                            continue
                         action = GenerateToken(token)
 
-                    if p < self.eps:
+                    if p == 0.0:
+                        continue
+                    elif p < self.eps:
                         lp = np.log(self.eps)
                     else:
                         lp = np.log(p)
@@ -210,7 +224,22 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                            action)
             else:
                 # Apply rule
-                # 0 is unknown rule
+                with logger.block("exclude_invalid_rules"):
+                    for x, p in enumerate(rule_pred[1:]):
+                        x += 1
+                        rule = self.encoder._rule_encoder.vocab[x]
+                        if isinstance(rule, ExpandTreeRule):
+                            if not (rule.parent.type_name is not None and
+                                    self.is_subtype(
+                                    rule.parent.type_name,
+                                    head_field.type_name)):
+                                rule_pred[x] = 0.0
+                        else:
+                            # CloseVariadicFieldRule
+                            if not(head_field is not None and
+                                    head_field.is_variadic):
+                                rule_pred[x] = 0.0
+
                 n_rule = 0
                 for x in logger.iterable_block("sample-rule",
                                                indices(rule_pred)):
@@ -219,30 +248,16 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         return
 
                     p = rule_pred[x].item()
-                    if p < self.eps:
+                    if p == 0.0:
+                        continue
+                    elif p < self.eps:
                         lp = np.log(self.eps)
                     else:
                         lp = np.log(p)
                     rule = self.encoder._rule_encoder.vocab[x]
-                    if isinstance(rule, ExpandTreeRule):
-                        if rule.parent.type_name is not None and \
-                            self.is_subtype(
-                                rule.parent.type_name,
-                                head_field.type_name):
-                            n_rule += 1
-                            yield (state.score + lp, state,
-                                   next_state, ApplyRule(rule))
-                        else:
-                            rule_pred[x] = 0.0
-                    else:
-                        # CloseVariadicFieldRule
-                        if head_field is not None and \
-                                head_field.is_variadic:
-                            n_rule += 1
-                            yield (state.score + lp, state, next_state,
-                                   ApplyRule(rule))
-                        else:
-                            rule_pred[x] = 0.0
+                    n_rule += 1
+                    yield (state.score + lp, state, next_state,
+                           ApplyRule(rule))
 
     def top_k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
