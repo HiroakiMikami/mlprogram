@@ -33,13 +33,10 @@ Tensor = Union[torch.Tensor, PaddedSequenceWithMask]
 
 class LazyActionSequence(object):
     def __init__(self, action_sequence: ActionSequence,
-                 action: Optional[Action]):
-        if action is None:
-            self.action_sequence: Optional[ActionSequence] = action_sequence
-        else:
-            self.old_action_sequence = action_sequence
-            self.action = action
-            self.action_sequence = None
+                 action: Action):
+        self.old_action_sequence = action_sequence
+        self.action = action
+        self.action_sequence = None
 
     def __call__(self):
         if self.action_sequence is not None:
@@ -98,14 +95,14 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             ExpandTreeRule(NodeType(None, NodeConstraint.Node, False),
                            [("root",
                              NodeType(Root(), NodeConstraint.Node, False))])))
-        state["action_sequence"] = LazyActionSequence(action_sequence, None)
+        state["action_sequence"] = action_sequence
         return state
 
     def create_output(self, state: Dict[str, Any]) \
             -> Optional[AST]:
-        if state["action_sequence"]().head is None:
+        if state["action_sequence"].head is None:
             # complete
-            ast = cast(Node, state["action_sequence"]().generate())
+            ast = cast(Node, state["action_sequence"].generate())
             return cast(AST, ast.fields[0].value)
         return None
 
@@ -166,14 +163,14 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     yield self.rng.multinomial(1, npred).nonzero()[0][0] + 1
 
         with logger.block("enumerate_samples_per_state"):
-            head = state.state["action_sequence"]().head
+            head = state.state["action_sequence"].head
             if head is None:
                 return
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
-                    state.state["action_sequence"](
-                    ).action_sequence[head.action]
+                    state.state["action_sequence"]
+                    .action_sequence[head.action]
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 # Generate token
@@ -245,7 +242,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     next_state = {key: value
                                   for key, value in next_state.items()}
                     next_state["action_sequence"] = \
-                        LazyActionSequence(state.state["action_sequence"](),
+                        LazyActionSequence(state.state["action_sequence"],
                                            action)
                     yield SamplerState[Dict[str, Any]](state.score + lp,
                                                        next_state, 1)
@@ -287,7 +284,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     next_state = {key: value
                                   for key, value in next_state.items()}
                     next_state["action_sequence"] = \
-                        LazyActionSequence(state.state["action_sequence"](),
+                        LazyActionSequence(state.state["action_sequence"],
                                            ApplyRule(rule))
                     yield SamplerState[Dict[str, Any]](state.score + lp,
                                                        next_state, 1)
@@ -311,6 +308,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             # Instantiate top-k hypothesis
             with logger.block("find_top_k_among_all_states"):
                 for score, state in topk.elements:
+                    state.state["action_sequence"] = \
+                        state.state["action_sequence"]()
                     yield state
 
     def k_samples(
@@ -329,5 +328,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
                                          next_states, states, ks):
                 for state in self.enumerate_samples_per_state(
-                            r, t, c, ns, s, Enumeration.Random, k=k):
+                        r, t, c, ns, s, Enumeration.Random, k=k):
+                    state.state["action_sequence"] = \
+                        state.state["action_sequence"]()
                     yield state

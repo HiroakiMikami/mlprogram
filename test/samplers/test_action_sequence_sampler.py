@@ -64,7 +64,7 @@ def create_transform_input(reference: List[Token[str]]):
 
 def transform_action_sequence(kwargs):
     kwargs["length"] = \
-        torch.tensor(len(kwargs["action_sequence"]().action_sequence))
+        torch.tensor(len(kwargs["action_sequence"].action_sequence))
     return kwargs
 
 
@@ -110,7 +110,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                    DecoderModule([], [], []))
         )
         s = sampler.initialize({})
-        self.assertEqual(1, len(s["action_sequence"]().action_sequence))
+        self.assertEqual(1, len(s["action_sequence"].action_sequence))
         s.pop("action_sequence")
         self.assertEqual({"input": torch.zeros((1,)), "reference": []}, s)
 
