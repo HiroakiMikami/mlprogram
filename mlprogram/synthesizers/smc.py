@@ -36,7 +36,8 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
             n_particle = self.initial_particle_size
         else:
             n_particle = n_required_output
-        initial_state = SamplerState(0.0, self.sampler.initialize(input))
+        # TODO merge n_particle
+        initial_state = SamplerState(0.0, self.sampler.initialize(input), 1)
         i = 0
         while True:
             logger.debug(f"start {i} th trial: n_particle={n_particle}")

@@ -107,5 +107,5 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                         Token(type_name, ref))
                     new_code.append(Statement(ref, code))
                     new_state["code"] = SequentialProgram(new_code)
-                    yield SamplerState(result.score, new_state)
+                    yield SamplerState(result.score, new_state, 1)
                     cnt += 1

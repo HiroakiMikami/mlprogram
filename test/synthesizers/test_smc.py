@@ -32,7 +32,7 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
                 x = self.rng.choice(['x', 'y', '0', '1'])
                 score = 0.0 if gt == x else -1.0
                 yield SamplerState(state.score + score,
-                                   (state.state[0], state.state[1] + x))
+                                   (state.state[0], state.state[1] + x), 1)
 
 
 class MockSMC(SMC[str, str, Tuple[str, str], str]):

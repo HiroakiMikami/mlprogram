@@ -23,12 +23,12 @@ class MockSampler(Sampler[str, str, Tuple[str, List[str]]]):
             if elems < len(s.state[0]):
                 gt = s.state[0][elems]
                 yield SamplerState(s.score + 0.0,
-                                   (s.state[0], s.state[1] + [gt]))
+                                   (s.state[0], s.state[1] + [gt]), 1)
         s = states[0]
         for i in range(k - len(states)):
             x = chr(i + ord('0'))
             yield SamplerState(s.score - i - 1,
-                               (s.state[0], s.state[1] + [x]))
+                               (s.state[0], s.state[1] + [x]), 1)
 
 
 class MockBeamSearch(BeamSearch[str, str, Tuple[str, List[str]]]):

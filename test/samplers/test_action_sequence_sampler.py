@@ -64,7 +64,7 @@ def create_transform_input(reference: List[Token[str]]):
 
 def transform_action_sequence(kwargs):
     kwargs["length"] = \
-        torch.tensor(len(kwargs["action_sequence"]._action_sequence))
+        torch.tensor(len(kwargs["action_sequence"]().action_sequence))
     return kwargs
 
 
@@ -110,7 +110,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                    DecoderModule([], [], []))
         )
         s = sampler.initialize({})
-        self.assertEqual(1, len(s["action_sequence"]._action_sequence))
+        self.assertEqual(1, len(s["action_sequence"]().action_sequence))
         s.pop("action_sequence")
         self.assertEqual({"input": torch.zeros((1,)), "reference": []}, s)
 
@@ -143,7 +143,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize({}), 1)
         topk_results = list(sampler.top_k_samples([s], 1))
         self.assertEqual(1, len(topk_results))
         self.assertEqual(1, topk_results[0].state["length"].item())
@@ -195,7 +195,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize({}), 1)
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 2))
@@ -252,7 +252,7 @@ class TestActionSequenceSampler(unittest.TestCase):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize({}), 1)
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 2))
@@ -311,7 +311,7 @@ class TestActionSequenceSampler(unittest.TestCase):
                    DecoderModule(rule_prob, token_prob, reference_prob)),
             rng=np.random.RandomState(0)
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize({}), 1)
         results = list(sampler.top_k_samples([s], 1))
         results = list(sampler.top_k_samples(results, 1))
         topk_results = list(sampler.top_k_samples(results, 1))

@@ -39,7 +39,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
-        zero = SamplerState(0, sampler.initialize(0))
+        zero = SamplerState(0, sampler.initialize(0), 1)
         samples = list(sampler.k_samples([zero], 3))
         samples.sort(key=lambda x: -x.score)
         self.assertEqual(3, len(samples))
@@ -49,7 +49,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 "reference": [Token("def", Reference("v0"))],
                 "code": SequentialProgram(
                     [Statement(Reference("v0"), asts[0])])
-            }),
+            }, 1),
             samples[0]
         )
         self.assertEqual(
@@ -58,7 +58,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 "reference": [Token("int", Reference("v0"))],
                 "code": SequentialProgram(
                     [Statement(Reference("v0"), asts[1])])
-            }),
+            }, 1),
             samples[1]
         )
         self.assertEqual(
@@ -67,7 +67,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 "reference": [Token("float", Reference("v0"))],
                 "code": SequentialProgram(
                     [Statement(Reference("v0"), asts[2])])
-            }),
+            }, 1),
             samples[2]
         )
 
@@ -83,7 +83,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
-        zero = SamplerState(0, sampler.initialize(0))
+        zero = SamplerState(0, sampler.initialize(0), 1)
         zero.state["reference"] = [Token("str", Reference("v0"))]
         zero.state["code"] = \
             SequentialProgram([Statement(Reference("v0"), ast)])
@@ -97,7 +97,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 "code": SequentialProgram([
                     Statement(Reference("v0"), ast),
                     Statement(Reference("v1"), asts[0])])
-            }),
+            }, 1),
             samples[0]
         )
 

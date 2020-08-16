@@ -39,4 +39,4 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
             input = self.transform(state.state)
             with torch.no_grad(), logger.block("calculate_value"):
                 value = self.value_network(self.collate([input]))
-            yield SamplerState(value.item(), state.state)
+            yield SamplerState(value.item(), state.state, state.num)

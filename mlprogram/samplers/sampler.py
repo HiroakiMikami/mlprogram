@@ -13,14 +13,16 @@ State = TypeVar("State")
 class SamplerState(Generic[State]):
     score: float
     state: State
+    num: int
 
     def __eq__(self, obj: Any) -> bool:
         if isinstance(obj, SamplerState):
-            return self.score == obj.score and self.state == obj.state
+            return self.score == obj.score and self.state == obj.state \
+                and self.num == obj.num
         return False
 
     def __hash__(self) -> int:
-        return hash(self.score) ^ hash(self.state)
+        return hash(self.score) ^ hash(self.state) ^ hash(self.num)
 
 
 class Sampler(Generic[Input, Output, State]):
