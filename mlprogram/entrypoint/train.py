@@ -13,6 +13,7 @@ from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import logging
 from dataclasses import dataclass
+from concurrent.futures import ProcessPoolExecutor
 
 logger = logging.Logger(__name__)
 
@@ -195,6 +196,23 @@ def train_supervised(workspace_dir: str, output_dir: str,
                os.path.join(output_dir, "optimizer.pt"))
 
 
+def _rollout(synthesizer, score, reward, sample, input):
+    max_score = 0.0
+    rollout = None
+    for x in synthesizer(input):
+        s = score(sample, x.output)
+        if rollout is None or max_score < s:
+            max_score = s
+            rollout = x.output
+    if rollout is not None:
+        output = {key: value
+                  for key, value in input.items()}
+        output["ground_truth"] = rollout
+        output["reward"] = torch.tensor(reward(max_score))
+        return output, max_score
+    return None
+
+
 def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     dataset: torch.utils.data.Dataset,
                     synthesizer: Synthesizer,
@@ -212,6 +230,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     num_models: int = 3,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
+                    n_rollout_worker: int = 0,
                     device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -266,6 +285,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                 shuffle=True, num_workers=0,
                                 collate_fn=lambda x: x)
         model.train()
+        if n_rollout_worker != 0:
+            pool = ProcessPoolExecutor(n_rollout_worker)
         for samples in logger.iterable_block("iteration", loader):
             if manager.updater.iteration >= n_iter:
                 break
@@ -273,25 +294,32 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
             rollouts = []
             scores = []
             with torch.no_grad(), logger.block("rollout"):
-                for i, sample in logger.iterable_block("rollout-sample",
-                                                       enumerate(samples)):
-                    for j in logger.iterable_block("rollout-trial",
-                                                   range(n_rollout)):
-                        max_score = 0.0
-                        rollout = None
-                        input = rollout_transform(sample)
-                        for x in synthesizer(input):
-                            s = score(sample, x.output)
-                            if rollout is None or max_score < s:
-                                max_score = s
-                                rollout = x.output
-                        if rollout is not None:
-                            output = {key: value
-                                      for key, value in input.items()}
-                            output["ground_truth"] = rollout
-                            output["reward"] = torch.tensor(reward(max_score))
-                            rollouts.append(output)
-                            scores.append(max_score)
+                rollout_inputs = []
+                for sample in samples:
+                    rollout_inputs.extend(
+                        [(sample, rollout_transform(sample))
+                         for _ in range(n_rollout)]
+                    )
+                if n_rollout_worker == 0:
+                    for sample, input in logger.iterable_block(
+                            "rollout-sample", rollout_inputs):
+                        output = _rollout(synthesizer, score, reward, sample,
+                                          input)
+                        if output is not None:
+                            rollouts.append(output[0])
+                            scores.append(output[1])
+                else:
+                    outputs = pool.map(
+                        _rollout,
+                        [synthesizer for _ in range(len(rollout_inputs))],
+                        [score for _ in range(len(rollout_inputs))],
+                        [reward for _ in range(len(rollout_inputs))],
+                        [sample for sample, _ in rollout_inputs],
+                        [input for _, input in rollout_inputs])
+                    for output in outputs:
+                        if output is not None:
+                            rollouts.append(output[0])
+                            scores.append(output[1])
             if len(rollouts) == 0:
                 logger.warning("No rollout")
                 continue

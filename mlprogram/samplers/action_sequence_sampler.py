@@ -109,7 +109,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         N = len(states)
 
         state_list: List[Dict[str, Any]] = []
-        for s in states:
+        for s in logger.iterable_block("transform_state", states):
             tmp = self.transform_action_sequence(s.state)
             if tmp is not None:
                 state = {}

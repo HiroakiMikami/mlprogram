@@ -13,6 +13,32 @@ from mlprogram.utils.data import ListDataset
 from mlprogram.synthesizers import Result
 
 
+class MockSynthesizer:
+    def __init__(self, model):
+        self.model = model
+
+    def __call__(self, query):
+        yield Result({"output": query["value"]}, 0, 1)
+
+
+def score(sample, output):
+    return sample["value"] == output["output"]
+
+
+def reward(score):
+    return score > 0.5
+
+
+class DummyModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.m = nn.Linear(1, 1)
+
+    def forward(self, kwargs):
+        kwargs["value"] = self.m(kwargs["value"])
+        return kwargs
+
+
 class TestTrainSupervised(unittest.TestCase):
     def prepare_dataset(self):
         return ListDataset([0, 1, 2])
@@ -31,15 +57,6 @@ class TestTrainSupervised(unittest.TestCase):
         return MockDataset()
 
     def prepare_model(self):
-        class DummyModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.m = nn.Linear(1, 1)
-
-            def forward(self, kwargs):
-                kwargs["value"] = self.m(kwargs["value"])
-                return kwargs
-
         return DummyModel()
 
     def prepare_optimizer(self, model):
@@ -203,15 +220,6 @@ class TestTrainREINFORCE(unittest.TestCase):
         ])
 
     def prepare_model(self):
-        class DummyModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.m = nn.Linear(1, 1)
-
-            def forward(self, kwargs):
-                kwargs["value"] = self.m(kwargs["value"])
-                return kwargs
-
         return DummyModel()
 
     def prepare_optimizer(self, model):
@@ -228,13 +236,6 @@ class TestTrainREINFORCE(unittest.TestCase):
             return {"value": tensor, "target": tensor}
 
     def prepare_synthesizer(self, model):
-        class MockSynthesizer:
-            def __init__(self, model):
-                self.model = model
-
-            def __call__(self, query):
-                yield Result({"output": query["value"]}, 0, 1)
-
         return MockSynthesizer(model)
 
     def test_happy_path(self):
@@ -250,9 +251,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                         kwargs["target"]
                                                         ) * kwargs["reward"],
-                            lambda sample, output:
-                                sample["value"] == output["output"],
-                            lambda score: score > 0.5,
+                            score, reward,
                             lambda x: x,
                             self.collate,
                             1, 1, Epoch(2))
@@ -270,6 +269,35 @@ class TestTrainREINFORCE(unittest.TestCase):
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
+            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "optimizer.pt")))
+
+    def test_multiprocessing(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_REINFORCE(output, ws, output,
+                            self.prepare_dataset(),
+                            self.prepare_synthesizer(model),
+                            model,
+                            self.prepare_optimizer(model),
+                            lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                        kwargs["target"]
+                                                        ) * kwargs["reward"],
+                            score, reward,
+                            lambda x: x,
+                            self.collate,
+                            1, 1, Epoch(2),
+                            n_rollout_worker=2)
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_6")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(os.path.exists(
@@ -294,9 +322,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                         kwargs["target"]
                                                         ) * kwargs["reward"],
-                            lambda sample, output:
-                                sample["value"] == output["output"],
-                            lambda score: score > 0.5,
+                            score, reward,
                             lambda x: x,
                             self.collate,
                             1, 1, Epoch(2),
