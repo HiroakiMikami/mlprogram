@@ -1,13 +1,13 @@
 import subprocess
 import tempfile
-import logging
 import os
 import json
 from typing import Dict, List, Any
 
 from mlprogram.utils.data import ListDataset
+from mlprogram.utils import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 def download(bin_dir: str = "bin") -> Dict[str, ListDataset]:

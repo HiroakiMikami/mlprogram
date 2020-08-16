@@ -1,11 +1,11 @@
 import requests
-import logging
 from typing import Callable, Tuple, List, Dict, Any
 
+from mlprogram.utils import logging
 from mlprogram.utils.data import ListDataset
 from mlprogram.datasets.django.format_annotations import format_annotations
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 BASE_PATH = "https://raw.githubusercontent.com/" + \
     "odashi/ase15-django-dataset/master/django/"

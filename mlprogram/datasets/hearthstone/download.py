@@ -1,10 +1,10 @@
 import requests
-import logging
 from typing import Callable, Dict
 
+from mlprogram.utils import logging
 from mlprogram.utils.data import ListDataset
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 BASE_PATH = "https://raw.githubusercontent.com/" + \
     "deepmind/card2code/master/third_party/hearthstone/"

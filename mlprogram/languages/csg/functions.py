@@ -1,4 +1,3 @@
-import logging
 from typing import Union as U, Optional, Callable, List
 from mlprogram.interpreters import Reference as R
 from mlprogram.languages.csg import AST as csgAST
@@ -9,8 +8,9 @@ from mlprogram.encoders import Samples
 from mlprogram.actions \
     import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
 from mlprogram.asts import AST, Node, Field, Leaf, Root
+from mlprogram.utils import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 class GetTokenType:
@@ -86,6 +86,7 @@ class ToAst:
         elif isinstance(code, Reference):
             return Leaf("CSG", code.ref)
         logger.warning(f"Invalid node type {code.type_name()}")
+        # TODO throw exception
         return None
 
 

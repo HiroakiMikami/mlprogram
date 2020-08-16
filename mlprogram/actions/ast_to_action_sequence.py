@@ -1,14 +1,19 @@
 from typing import List
-import logging
 from mlprogram.asts import AST, Node, Leaf, Field, Root
 from mlprogram.actions import Action, NodeType, NodeConstraint
 from mlprogram.actions import ApplyRule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
 from mlprogram.actions import GenerateToken
 from mlprogram.actions import ActionSequence
+from mlprogram.utils import logging
 
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
+
+
+class InvalidNodeException(Exception):
+    def __init__(self, node_type: str):
+        super().__init__(f"Invalid type of node: {node_type}")
 
 
 class AstToActionSequence:
@@ -61,8 +66,8 @@ class AstToActionSequence:
             elif isinstance(node, Leaf):
                 return [GenerateToken(node.value)]
             else:
-                logger.warn(f"Invalid type of node: {type(node)}")
-                return []
+                logger.critical(f"Invalid type of node: {type(node)}")
+                raise InvalidNodeException(str(type(node)))
         action_sequence = ActionSequence()
         node = Node(None, [Field("root", Root(), node)])
         for action in to_sequence(node):

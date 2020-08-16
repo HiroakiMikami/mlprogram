@@ -1,10 +1,10 @@
 import torch
-import logging
 import os
 from collections import OrderedDict
 from typing import Generic, TypeVar, Optional, Any, List, Callable, Dict
+from mlprogram.utils import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 V = TypeVar("V")
 V0 = TypeVar("V0")

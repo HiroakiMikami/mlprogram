@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, List, cast, Any
 from copy import deepcopy
-import logging
 
 from mlprogram.actions.action \
     import Action, ApplyRule, Rule, ExpandTreeRule, NodeConstraint, NodeType, \
     GenerateToken, CloseVariadicFieldRule
 from mlprogram.asts import AST, Node, Leaf, Field, Root
+from mlprogram.utils import logging
 
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 class InvalidActionException(Exception):
@@ -242,7 +242,7 @@ class ActionSequence:
                                   generate(actions[0], node_type)))
                 return ast
             else:
-                logger.warn(f"Invalid type of action: {type(action)}")
+                logger.critical(f"Invalid type of action: {type(action)}")
                 raise InvalidActionException("Action", action)
 
         if len(self.action_sequence) == 0:

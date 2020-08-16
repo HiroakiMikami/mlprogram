@@ -6,15 +6,15 @@ import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions
 from typing import Callable, Any, Union, Optional, List
 import os
-import logging
 import shutil
 from math import isnan, isinf
 from mlprogram.utils import TopKModel
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
+from mlprogram.utils import logging
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 @dataclass
@@ -135,27 +135,27 @@ def train_supervised(workspace_dir: str, output_dir: str,
                                 shuffle=True, num_workers=0,
                                 collate_fn=collate)
         model.train()
-        for batch in loader:
+        for batch in logger.iterable_block("iteration", loader):
             if manager.updater.iteration >= n_iter:
                 break
             with manager.run_iteration():
-                logger.debug(f"start iteration: {manager.updater.iteration}")
                 if len(batch) == 0:
-                    logger.info(f"Skip {manager.updater.iteration} th batch")
+                    logger.warning(
+                        f"Skip {manager.updater.iteration} th batch")
                     continue
                 logger.debug("batch:")
                 for key, value in batch.items():
                     if isinstance(value, torch.Tensor):
                         logger.debug(f"\t{key}: {value.shape}")
-                logger.debug("forward")
-                output = model(batch)
-                bloss = loss(output)
-                s = score(output)
-                logger.debug("backward")
-                model.zero_grad()
-                bloss.backward()
-                logger.debug("optimizer.step")
-                optimizer.step()
+                with logger.block("forward"):
+                    output = model(batch)
+                    bloss = loss(output)
+                    s = score(output)
+                with logger.block("backward"):
+                    model.zero_grad()
+                    bloss.backward()
+                with logger.block("optimizer.step"):
+                    optimizer.step()
 
                 ppe.reporting.report({
                     "loss": bloss.item(),
@@ -266,19 +266,17 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                 shuffle=True, num_workers=0,
                                 collate_fn=lambda x: x)
         model.train()
-        for samples in loader:
+        for samples in logger.iterable_block("iteration", loader):
             if manager.updater.iteration >= n_iter:
                 break
-            logger.debug(f"start iteration: {manager.updater.iteration}")
             # Rollout
             rollouts = []
             scores = []
-            logger.debug("start rollout")
-            with torch.no_grad():
-                for i, sample in enumerate(samples):
-                    logger.debug(f"start rollout: {i}")
-                    for j in range(n_rollout):
-                        logger.debug(f"\t{j} th rollout")
+            with torch.no_grad(), logger.block("rollout"):
+                for i, sample in logger.iterable_block("rollout-sample",
+                                                       enumerate(samples)):
+                    for j in logger.iterable_block("rollout-trial",
+                                                   range(n_rollout)):
                         max_score = 0.0
                         rollout = None
                         input = rollout_transform(sample)
@@ -304,15 +302,15 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 for key, value in batch2.items():
                     if isinstance(value, torch.Tensor):
                         logger.debug(f"\t{key}: {value.shape}")
-                logger.debug("forward")
-                model.train()
-                output = model(batch2)
-                bloss = loss(output)
-                logger.debug("backward")
-                model.zero_grad()
-                bloss.backward()
-                logger.debug("optimizer.step")
-                optimizer.step()
+                with logger.block("forward"):
+                    model.train()
+                    output = model(batch2)
+                    bloss = loss(output)
+                with logger.block("backward"):
+                    model.zero_grad()
+                    bloss.backward()
+                with logger.block("optimizer.step"):
+                    optimizer.step()
 
                 ppe.reporting.report({
                     "loss": bloss.item(),

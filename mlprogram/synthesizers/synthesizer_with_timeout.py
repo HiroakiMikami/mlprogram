@@ -1,9 +1,9 @@
+import time
 from typing import TypeVar, Generic, Generator, Optional
 from mlprogram.synthesizers import Synthesizer, Result
-import time
-import logging
+from mlprogram.utils import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")

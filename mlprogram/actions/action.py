@@ -3,10 +3,6 @@ from mlprogram.asts import Root
 from typing \
     import Tuple, Union, List, Any, TypeVar, Generic, Optional
 from enum import Enum
-import logging
-
-
-logger = logging.getLogger(__name__)
 
 
 class NodeConstraint(Enum):

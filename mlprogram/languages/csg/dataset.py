@@ -1,5 +1,4 @@
 import numpy as np
-import logging
 
 from torch.utils import data
 from torch.utils.data import IterableDataset
@@ -12,9 +11,10 @@ from mlprogram.languages.csg import AST, Reference
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
 from mlprogram.languages.csg import Union, Difference
+from mlprogram.utils import logging
 
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 class Dataset(IterableDataset):
@@ -124,6 +124,7 @@ class Dataset(IterableDataset):
             ))
             return retval0, n_ref1 + 1
         logger.warning(f"Invalid node type {code.type_name()}")
+        # TODO throw exception
         return [], -1
 
     def __iter__(self):

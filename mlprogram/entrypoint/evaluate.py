@@ -7,14 +7,14 @@ import torch
 from torch import nn
 from tqdm import tqdm
 import os
-import logging
 import shutil
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
+from mlprogram.utils import logging
 
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 Input = TypeVar("Input")
@@ -41,6 +41,7 @@ class EvaluationResult(Generic[Input, Code, GroundTruth]):
     generation_time: float
 
 
+@logger.function_block("evaluate_synthesizer")
 def evaluate_synthesizer(dataset: torch.utils.data.Dataset,
                          synthesizer: Synthesizer[Dict[str, Any], Code],
                          metrics: Mapping[str, Metric],
@@ -58,29 +59,28 @@ def evaluate_synthesizer(dataset: torch.utils.data.Dataset,
     n_query = 0
     for group in dataset:
         inputs = group["input"]
-        for input in inputs:
-            logger.debug("start evaluation")
+        for input in logger.iterable_block("evaluate_input", inputs):
             n_query += 1
             begin = time.time()
             candidates = list(synthesizer({"input": input}))
             end = time.time()
-            logger.debug("calculate metrics")
-            generated.append(1.0 if len(candidates) != 0 else 0.0)
-            if len(candidates) != 0:
-                times.append(end - begin)
-            candidates.sort(key=lambda x: -x.score)
-            ms = {}
-            for n in top_n:
-                m: Dict[str, float] = {}
-                for name in metrics.keys():
-                    m[name] = 0
-                for c in candidates[:n]:
-                    for name, f in metrics.items():
-                        m[name] = max(m[name], f(group, c.output))
-                for name in metrics.keys():
-                    total[n][name] += \
-                        m[name] if m[name] is not None else 0
-                ms[n] = m
+            with logger.block("calculate_metrics"):
+                generated.append(1.0 if len(candidates) != 0 else 0.0)
+                if len(candidates) != 0:
+                    times.append(end - begin)
+                candidates.sort(key=lambda x: -x.score)
+                ms = {}
+                for n in top_n:
+                    m: Dict[str, float] = {}
+                    for name in metrics.keys():
+                        m[name] = 0
+                    for c in candidates[:n]:
+                        for name, f in metrics.items():
+                            m[name] = max(m[name], f(group, c.output))
+                    for name in metrics.keys():
+                        total[n][name] += \
+                            m[name] if m[name] is not None else 0
+                    ms[n] = m
             results.append(Result(
                 input,
                 {key: value for key, value in group.items() if key != "input"},
