@@ -12,7 +12,6 @@ from mlprogram.interpreters import SequentialProgram
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
-from mlprogram.utils import random
 from mlprogram.utils import logging
 
 logger = logging.Logger(__name__)
@@ -59,7 +58,8 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
             -> Optional[SequentialProgram[Code]]:
         return state["code"]
 
-    def k_samples(self, states: List[SamplerState[Dict[str, Any]]], n: int) \
+    def k_samples(self, states: List[SamplerState[Dict[str, Any]]],
+                  n: List[int]) \
             -> Generator[DuplicatedSamplerState[Dict[str, Any]],
                          None, None]:
         with logger.block("k_samples"):
@@ -77,8 +77,7 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                         retval.add(node.value)
                 return retval
 
-            ks = random.split(self.rng, n, len(states), 1e-8)
-            for state, k in zip(states, ks):
+            for state, k in zip(states, n):
                 cnt = 0
                 for result in self.synthesizer(state.state,
                                                n_required_output=k):

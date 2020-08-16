@@ -33,7 +33,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
             -> Optional[Output]:
         return self.sampler.create_output(state)
 
-    def k_samples(self, states: List[SamplerState[State]], n: int) \
+    def k_samples(self, states: List[SamplerState[State]], n: List[int]) \
             -> Generator[DuplicatedSamplerState[State],
                          None, None]:
         self.value_network.eval()

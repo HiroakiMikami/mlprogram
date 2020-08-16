@@ -50,23 +50,24 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
             while step < self.max_step_size:
                 # Generate particles
                 samples: Dict[Key, DuplicatedSamplerState[State]] = {}
-                for state in particles:
-                    for sample in self.sampler.k_samples([state.state],
-                                                         state.num):
-                        key = self.to_key(sample.state.state)
-                        if key in samples:
-                            samples[key] = DuplicatedSamplerState(
-                                samples[key].state,
-                                samples[key].num + sample.num
-                            )
-                        else:
-                            samples[key] = sample
+                for sample in self.sampler.k_samples(
+                    [state.state for state in particles],
+                    [state.num for state in particles]
+                ):
+                    key = self.to_key(sample.state.state)
+                    if key in samples:
+                        samples[key] = DuplicatedSamplerState(
+                            samples[key].state,
+                            samples[key].num + sample.num
+                        )
+                    else:
+                        samples[key] = sample
 
-                            output_opt = \
-                                self.sampler.create_output(sample.state.state)
-                            if output_opt is not None:
-                                yield Result(output_opt, sample.state.score,
-                                             sample.num)
+                        output_opt = \
+                            self.sampler.create_output(sample.state.state)
+                        if output_opt is not None:
+                            yield Result(output_opt, sample.state.score,
+                                         sample.num)
 
                 if len(samples) == 0:
                     break

@@ -15,7 +15,6 @@ from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.utils import TopKElement, Token
 from mlprogram.utils.data import Collate
-from mlprogram.utils import random
 from mlprogram.utils import logging
 
 logger = logging.Logger(__name__)
@@ -239,7 +238,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         lp = np.log(self.eps)
                     else:
                         lp = np.log(p)
-                    n_action += 1
+
+                    n_action += n
                     next_state = {key: value
                                   for key, value in next_state.items()}
                     next_state["action_sequence"] = \
@@ -280,15 +280,15 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         lp = np.log(self.eps)
                     else:
                         lp = np.log(p)
+
+                    n_rule += n
                     rule = self.encoder._rule_encoder.vocab[x]
 
-                    n_rule += 1
                     next_state = {key: value
                                   for key, value in next_state.items()}
                     next_state["action_sequence"] = \
                         LazyActionSequence(state.state["action_sequence"],
                                            ApplyRule(rule))
-
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
                         n)
@@ -317,7 +317,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     yield state
 
     def k_samples(
-        self, states: List[SamplerState[Dict[str, Any]]], n: int) \
+        self, states: List[SamplerState[Dict[str, Any]]], n: List[int]) \
             -> Generator[DuplicatedSamplerState[Dict[str, Any]],
                          None, None]:
         with logger.block("k_samples"):
@@ -326,11 +326,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             rule_pred, token_pred, reference_pred, next_states = \
                 self.batch_infer(states)
 
-            # Split and decide the number of samples per state
-            ks = random.split(self.rng, n, len(states), self.eps)
-
             for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
-                                         next_states, states, ks):
+                                         next_states, states, n):
                 for state in self.enumerate_samples_per_state(
                         r, t, c, ns, s, Enumeration.Random, k=k):
                     state.state.state["action_sequence"] = \

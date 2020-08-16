@@ -41,7 +41,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             MockEncoder(),
             to_code=lambda x: x)
         zero = SamplerState(0, sampler.initialize(0))
-        samples = list(sampler.k_samples([zero], 3))
+        samples = list(sampler.k_samples([zero], [3]))
         samples.sort(key=lambda x: -x.state.score)
         self.assertEqual(3, len(samples))
         self.assertEqual(
@@ -94,7 +94,7 @@ class TestAstReferenceSampler(unittest.TestCase):
         zero.state["reference"] = [Token("str", Reference("v0"))]
         zero.state["code"] = \
             SequentialProgram([Statement(Reference("v0"), ast)])
-        samples = list(sampler.k_samples([zero], 1))
+        samples = list(sampler.k_samples([zero], [1]))
         samples.sort(key=lambda x: -x.state.score)
         self.assertEqual(1, len(samples))
         self.assertEqual(
