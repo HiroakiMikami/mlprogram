@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+import torch.multiprocessing as multiprocessing
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions
 from typing import Callable, Any, Union, Optional, List
@@ -13,7 +14,6 @@ from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import logging
 from dataclasses import dataclass
-from concurrent.futures import ProcessPoolExecutor
 
 logger = logging.Logger(__name__)
 
@@ -196,7 +196,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
                os.path.join(output_dir, "optimizer.pt"))
 
 
-def _rollout(synthesizer, score, reward, sample, input):
+def _rollout(elem):
+    synthesizer, score, reward, sample, input = elem
     max_score = 0.0
     rollout = None
     for x in synthesizer(input):
@@ -286,7 +287,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                 collate_fn=lambda x: x)
         model.train()
         if n_rollout_worker != 0:
-            pool = ProcessPoolExecutor(n_rollout_worker)
+            pool = multiprocessing.Pool(n_rollout_worker)
         for samples in logger.iterable_block("iteration", loader):
             if manager.updater.iteration >= n_iter:
                 break
@@ -303,19 +304,18 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 if n_rollout_worker == 0:
                     for sample, input in logger.iterable_block(
                             "rollout-sample", rollout_inputs):
-                        output = _rollout(synthesizer, score, reward, sample,
-                                          input)
+                        output = _rollout(
+                            (synthesizer, score, reward, sample, input))
                         if output is not None:
                             rollouts.append(output[0])
                             scores.append(output[1])
                 else:
                     outputs = pool.map(
                         _rollout,
-                        [synthesizer for _ in range(len(rollout_inputs))],
-                        [score for _ in range(len(rollout_inputs))],
-                        [reward for _ in range(len(rollout_inputs))],
-                        [sample for sample, _ in rollout_inputs],
-                        [input for _, input in rollout_inputs])
+                        [
+                            (synthesizer, score, reward, sample, input)
+                            for sample, input in rollout_inputs
+                        ])
                     for output in outputs:
                         if output is not None:
                             rollouts.append(output[0])
