@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum
 from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
-    Tuple, cast, Dict, Any
+    cast, Dict, Any
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
@@ -148,10 +148,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                     state: SamplerState[Dict[str, Any]],
                                     enumerateion: Enumeration,
                                     k: int) \
-            -> Generator[Tuple[float,
-                               SamplerState[Dict[str, Any]],
-                               Dict[str, Any], Action],
-                         None, None]:
+            -> Generator[SamplerState[Dict[str, Any]], None, None]:
         def indices(pred: torch.Tensor):
             # 0 is unknown token
             if enumerateion == Enumeration.Top:
@@ -245,8 +242,13 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     else:
                         lp = np.log(p)
                     n_action += 1
-                    yield (state.score + lp, state, next_state,
-                           action)
+                    next_state = {key: value
+                                  for key, value in next_state.items()}
+                    next_state["action_sequence"] = \
+                        LazyActionSequence(state.state["action_sequence"](),
+                                           action)
+                    yield SamplerState[Dict[str, Any]](state.score + lp,
+                                                       next_state, 1)
             else:
                 # Apply rule
                 with logger.block("exclude_invalid_rules"):
@@ -280,9 +282,15 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     else:
                         lp = np.log(p)
                     rule = self.encoder._rule_encoder.vocab[x]
+
                     n_rule += 1
-                    yield (state.score + lp, state, next_state,
-                           ApplyRule(rule))
+                    next_state = {key: value
+                                  for key, value in next_state.items()}
+                    next_state["action_sequence"] = \
+                        LazyActionSequence(state.state["action_sequence"](),
+                                           ApplyRule(rule))
+                    yield SamplerState[Dict[str, Any]](state.score + lp,
+                                                       next_state, 1)
 
     def top_k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], k: int) \
@@ -294,20 +302,16 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             topk = TopKElement(k)
             for i, state in logger.iterable_block("find_top_k_per_state",
                                                   enumerate(states)):
-                for elem in self.enumerate_samples_per_state(
+                for state in self.enumerate_samples_per_state(
                         rule_pred[i], token_pred[i], reference_pred[i],
                         next_states[i], state, enumerateion=Enumeration.Top,
                         k=k):
-                    topk.add(elem[0], tuple(elem[1:]))
+                    topk.add(state.score, state)
 
             # Instantiate top-k hypothesis
             with logger.block("find_top_k_among_all_states"):
-                for score, (state, new_state, action) in topk.elements:
-                    s = {key: value for key, value in new_state.items()}
-                    s["action_sequence"] = \
-                        LazyActionSequence(state.state["action_sequence"](),
-                                           action)
-                    yield SamplerState[Dict[str, Any]](score, s, 1)
+                for score, state in topk.elements:
+                    yield state
 
     def k_samples(
         self, states: List[SamplerState[Dict[str, Any]]], n: int) \
@@ -324,11 +328,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
             for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
                                          next_states, states, ks):
-                for score, state, new_state, action in \
-                        self.enumerate_samples_per_state(
+                for state in self.enumerate_samples_per_state(
                             r, t, c, ns, s, Enumeration.Random, k=k):
-                    x = {key: value for key, value in new_state.items()}
-                    x["action_sequence"] = \
-                        LazyActionSequence(state.state["action_sequence"](),
-                                           action)
-                    yield SamplerState[Dict[str, Any]](score, x, 1)
+                    yield state
