@@ -269,42 +269,15 @@ subsynthesizer:
         type: mlprogram.utils.Pick
         key: "action_sequence"
 sampler:
-    type: mlprogram.samplers.SamplerWithValueNetwork
-    sampler:
-        type: mlprogram.samplers.AstReferenceSampler
-        synthesizer: "@/subsynthesizer"
-        transform_input:
-            type: mlprogram.utils.transform.csg.TransformCanvas
-            targets: ["input"]
-        collate: "@/collate"
-        encoder: "@/model.encode_input"
-        to_code:
-            type: mlprogram.languages.csg.ToCsgAst
-    transform:
-        type: mlprogram.utils.Compose
-        funcs:
-            type: collections.OrderedDict
-            items:
-                - - "evaluete_code"
-                  - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
-                    interpreter: "@/interpreter"
-                - - "transform_canvas"
-                  - type: mlprogram.utils.transform.csg.TransformCanvas
-                    targets: ["variables"]
+    type: mlprogram.samplers.AstReferenceSampler
+    synthesizer: "@/subsynthesizer"
+    transform_input:
+        type: mlprogram.utils.transform.csg.TransformCanvas
+        targets: ["input"]
     collate: "@/collate"
-    value_network:
-        type: torch.nn.Sequential
-        modules:
-            type: collections.OrderedDict
-            items:
-                - - "encoder"
-                  - "@/model.encoder"
-                - - "value"
-                  - "@/model.value"
-                - - "pick"
-                  - type: mlprogram.nn.Pick
-                    key: "value"
-    batch_size: 1
+    encoder: "@/model.encode_input"
+    to_code:
+        type: mlprogram.languages.csg.ToCsgAst
 train_synthesizer:
     type: mlprogram.synthesizers.SynthesizerWithTimeout
     synthesizer:
@@ -329,7 +302,34 @@ evaluate_synthesizer:
             x: "@/option.evaluate_max_object"
             y: 5
         initial_particle_size: 100
-        sampler: "@/sampler"
+        sampler:
+            type: mlprogram.samplers.SamplerWithValueNetwork
+            sampler: "@/sampler"
+            transform:
+                type: mlprogram.utils.Compose
+                funcs:
+                    type: collections.OrderedDict
+                    items:
+                        - - "evaluete_code"
+                        - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
+                            interpreter: "@/interpreter"
+                        - - "transform_canvas"
+                        - type: mlprogram.utils.transform.csg.TransformCanvas
+                            targets: ["variables"]
+            collate: "@/collate"
+            value_network:
+                type: torch.nn.Sequential
+                modules:
+                    type: collections.OrderedDict
+                    items:
+                        - - "encoder"
+                        - "@/model.encoder"
+                        - - "value"
+                        - "@/model.value"
+                        - - "pick"
+                        - type: mlprogram.nn.Pick
+                            key: "value"
+            batch_size: 1
         to_key:
             type: mlprogram.utils.Pick
             key: "code"

@@ -114,33 +114,31 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             model.encode_input,
             to_code=ToCsgAst(),
             rng=np.random.RandomState(0))
-        sampler = SamplerWithValueNetwork(
-            sampler,
-            Compose(OrderedDict([
-                ("ecode", EvaluateCode(interpreter)),
-                ("tcanvas", TransformCanvas(["variables"]))
-            ])),
-            collate,
-            torch.nn.Sequential(OrderedDict([
-                ("encoder", model.encoder),
-                ("value", model.value),
-                ("pick", mlprogram.nn.Pick("value"))
-            ])))
-
-        synthesizer = SynthesizerWithTimeout(
-            SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                to_key=Pick("code")),
-            1
-        )
         if rollout:
-            return FilteredSynthesizer(
-                synthesizer,
-                metrics.TestCaseResult(interpreter, reference=True,
-                                       use_input=True, metric=metrics.Iou()),
-                0.9,
-                n_output_if_empty=1
+            return SynthesizerWithTimeout(
+                SMC(4, 20, sampler, rng=np.random.RandomState(0),
+                    to_key=Pick("code")),
+                1
             )
         else:
+            sampler = SamplerWithValueNetwork(
+                sampler,
+                Compose(OrderedDict([
+                    ("ecode", EvaluateCode(interpreter)),
+                    ("tcanvas", TransformCanvas(["variables"]))
+                ])),
+                collate,
+                torch.nn.Sequential(OrderedDict([
+                    ("encoder", model.encoder),
+                    ("value", model.value),
+                    ("pick", mlprogram.nn.Pick("value"))
+                ])))
+
+            synthesizer = SynthesizerWithTimeout(
+                SMC(4, 20, sampler, rng=np.random.RandomState(0),
+                    to_key=Pick("code")),
+                1
+            )
             return FilteredSynthesizer(
                 synthesizer,
                 metrics.TestCaseResult(interpreter, reference=True,
