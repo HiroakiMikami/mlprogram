@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum
 from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
-    cast, Dict, Any
+    cast, Dict, Any, Tuple
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.asts import Root
 from mlprogram.actions \
@@ -97,11 +97,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         return state
 
     def create_output(self, state: Dict[str, Any]) \
-            -> Optional[AST]:
+            -> Optional[Tuple[AST, bool]]:
         if state["action_sequence"].head is None:
             # complete
             ast = cast(Node, state["action_sequence"].generate())
-            return cast(AST, ast.fields[0].value)
+            return cast(AST, ast.fields[0].value), True
         return None
 
     @logger.function_block("batch_infer")

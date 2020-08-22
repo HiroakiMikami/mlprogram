@@ -5,6 +5,8 @@ from typing import List, Tuple
 
 
 class MockSampler(Sampler[str, str, Tuple[str, List[str]]]):
+    def __init__(self, finish: bool = True):
+        self.finish = finish
 
     def initialize(self, input: str) -> Tuple[str, List[str]]:
         return (input, [""])
@@ -14,7 +16,7 @@ class MockSampler(Sampler[str, str, Tuple[str, List[str]]]):
         if "0" not in x:
             return None
         else:
-            return "".join(x)
+            return "".join(x), self.finish
 
     def top_k_samples(self, states: List[SamplerState[Tuple[str, List[str]]]],
                       k: int):
@@ -36,8 +38,9 @@ class MockSampler(Sampler[str, str, Tuple[str, List[str]]]):
 
 
 class MockBeamSearch(BeamSearch[str, str, Tuple[str, List[str]]]):
-    def __init__(self, beam_size: int, max_step_size: int):
-        super().__init__(beam_size, max_step_size, MockSampler())
+    def __init__(self, beam_size: int, max_step_size: int,
+                 finish: bool = True):
+        super().__init__(beam_size, max_step_size, MockSampler(finish))
 
 
 class TestBeamSearch(unittest.TestCase):
@@ -47,6 +50,15 @@ class TestBeamSearch(unittest.TestCase):
         self.assertEqual(
             [Result("0", -1.0, 1), Result("x0", 0.0, 1),
              Result("10", -2.0, 1)],
+            results
+        )
+
+    def test_not_finished_output(self):
+        decoder = MockBeamSearch(3, 100, False)
+        results = list(decoder("x0"))
+        self.assertEqual(
+            [Result("0", -1.0, 1), Result("x0", 0.0, 1),
+             Result("00", -1.0, 1), Result("10", -2.0, 1)],
             results
         )
 

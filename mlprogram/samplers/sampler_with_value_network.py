@@ -1,6 +1,6 @@
 import torch
 from typing \
-    import TypeVar, Generic, Generator, Optional, List, Callable, Any
+    import TypeVar, Generic, Generator, Optional, List, Callable, Any, Tuple
 from mlprogram.samplers import SamplerState, Sampler, DuplicatedSamplerState
 from mlprogram.utils.data import Collate
 from mlprogram.utils import logging
@@ -31,7 +31,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
         return self.sampler.initialize(input)
 
     def create_output(self, state: State) \
-            -> Optional[Output]:
+            -> Optional[Tuple[Output, bool]]:
         return self.sampler.create_output(state)
 
     def k_samples(self, states: List[SamplerState[State]], n: List[int]) \

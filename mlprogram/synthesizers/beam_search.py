@@ -36,8 +36,12 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
                     output_opt = self.sampler.create_output(
                         next_state.state.state)
                     if output_opt is not None:
-                        yield Result(output_opt, next_state.state.score, 1)
-                        k -= 1
+                        output, is_finished = output_opt
+                        yield Result(output, next_state.state.score, 1)
+                        if is_finished:
+                            k -= 1
+                        else:
+                            next_states.append(next_state.state)
                     else:
                         next_states.append(next_state.state)
                 states = next_states

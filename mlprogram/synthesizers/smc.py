@@ -1,5 +1,5 @@
 from typing \
-    import TypeVar, Generic, Optional, Generator, Dict, Callable, cast
+    import TypeVar, Generic, Optional, Generator, Dict, Callable, cast, Tuple
 from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 from mlprogram.utils import logging
@@ -34,16 +34,18 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
     def __call__(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
         if n_required_output is None:
-            n_particle = self.initial_particle_size
+            n_initial_particle = self.initial_particle_size
         else:
-            n_particle = n_required_output
+            n_initial_particle = n_required_output
         initial_state = self.sampler.initialize(input)
-        i = 0
         with logger.block("__call__"):
+            i = 0
             while True:
-                logger.debug(f"start {i} th trial: n_particle={n_particle}")
+                logger.debug(
+                    f"start {i} th trial: n_particle={n_initial_particle}")
                 i += 1
                 # Initialize state
+                n_particle = n_initial_particle
                 particles = [DuplicatedSamplerState(
                     SamplerState(0.0, initial_state),
                     n_particle
@@ -51,30 +53,47 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                 step = 0
                 while step < self.max_step_size:
                     # Generate particles
-                    samples: Dict[Key, DuplicatedSamplerState[State]] = {}
+                    samples: Dict[Key, Tuple[DuplicatedSamplerState[State],
+                                             Optional[Tuple[Output, bool]]
+                                             ]] = {}
                     for sample in self.sampler.k_samples(
                         [state.state for state in particles],
                         [state.num for state in particles]
                     ):
                         key = self.to_key(sample.state.state)
                         if key in samples:
-                            samples[key] = DuplicatedSamplerState(
-                                samples[key].state,
-                                samples[key].num + sample.num
+                            state, output = samples[key]
+                            samples[key] = (
+                                DuplicatedSamplerState(
+                                    state.state, state.num + sample.num
+                                ),
+                                output
                             )
                         else:
-                            samples[key] = sample
+                            samples[key] = \
+                                (sample,
+                                 self.sampler.create_output(
+                                     sample.state.state))
 
-                            output_opt = \
-                                self.sampler.create_output(sample.state.state)
-                            if output_opt is not None:
-                                yield Result(output_opt, sample.state.score,
-                                             sample.num)
+                        if samples[key][1] is not None:
+                            output, is_finished = samples[key][1]
+                            yield Result(output, sample.state.score,
+                                         sample.num)
+
+                    # Exclude finished particles
+                    for key in list(samples.keys()):
+                        if samples[key][1] is not None:
+                            _, is_finished = samples[key][1]
+                            # Exclude key
+                            if is_finished:
+                                del samples[key]
+                    n_particle = \
+                        sum([state.num for state, _ in samples.values()])
 
                     if len(samples) == 0:
                         break
                     # Resample
-                    list_samples = list(samples.values())
+                    list_samples = [state for state, _ in samples.values()]
                     log_weights = [math.log(state.num) + state.state.score
                                    for state in list_samples]
                     probs = [math.exp(log_weight - max(log_weights))
@@ -91,6 +110,6 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                             )
                     step += 1
 
-                n_particle *= self.factor
+                n_initial_particle *= self.factor
                 if i == self.max_try_num:
                     break

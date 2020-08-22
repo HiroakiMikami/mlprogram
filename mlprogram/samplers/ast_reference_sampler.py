@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from typing \
     import TypeVar, Generic, Generator, Optional, Dict, Any, Callable, \
-    List, Set
+    List, Set, Tuple
 from mlprogram.asts import AST, Node, Leaf
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.interpreters import Reference
@@ -53,8 +53,8 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
         return state
 
     def create_output(self, state: Dict[str, Any]) \
-            -> Optional[SequentialProgram[Code]]:
-        return state["code"]
+            -> Optional[Tuple[SequentialProgram[Code], bool]]:
+        return state["code"], False
 
     def k_samples(self, states: List[SamplerState[Dict[str, Any]]],
                   n: List[int]) \

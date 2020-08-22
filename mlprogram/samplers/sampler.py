@@ -1,4 +1,5 @@
-from typing import TypeVar, Generic, Optional, List, Generator, Any, Callable
+from typing \
+    import TypeVar, Generic, Optional, List, Generator, Any, Callable, Tuple
 from dataclasses import dataclass
 
 
@@ -41,7 +42,7 @@ class Sampler(Generic[Input, Output, State]):
     def initialize(self, input: Input) -> State:
         raise NotImplementedError
 
-    def create_output(self, state: State) -> Optional[Output]:
+    def create_output(self, state: State) -> Optional[Tuple[Output, bool]]:
         raise NotImplementedError
 
     def top_k_samples(self, states: List[SamplerState[State]], k: int) \
@@ -65,12 +66,18 @@ def transform(sampler: Sampler[Input, Output1, State],
         def initialize(self, input: Input) -> State:
             return self.sampler.initialize(input)
 
-        def create_output(self, state: State) -> Optional[Output2]:
-            output1 = self.sampler.create_output(state)
-            if output1 is None:
+        def create_output(self, state: State) \
+                -> Optional[Tuple[Output2, bool]]:
+            output = self.sampler.create_output(state)
+            if output is None:
                 return None
-            output2 = self.transform(output1)
-            return output2
+            else:
+                output1, is_finished = output
+                output2 = self.transform(output1)
+                if output2 is None:
+                    return None
+                else:
+                    return output2, is_finished
 
         def top_k_samples(self, states: List[SamplerState[State]], k: int) \
                 -> Generator[DuplicatedSamplerState[State], None, None]:
