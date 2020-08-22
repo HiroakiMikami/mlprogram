@@ -96,7 +96,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         state["action_sequence"] = action_sequence
         return state
 
-    def create_output(self, state: Dict[str, Any]) \
+    def create_output(self, input, state: Dict[str, Any]) \
             -> Optional[Tuple[AST, bool]]:
         if state["action_sequence"].head is None:
             # complete

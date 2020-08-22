@@ -52,7 +52,7 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
         state["code"] = SequentialProgram([])
         return state
 
-    def create_output(self, state: Dict[str, Any]) \
+    def create_output(self, input, state: Dict[str, Any]) \
             -> Optional[Tuple[SequentialProgram[Code], bool]]:
         return state["code"], False
 

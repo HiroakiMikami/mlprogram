@@ -122,6 +122,8 @@ types = {
         mlprogram.samplers.AstReferenceSampler,
     "mlprogram.samplers.SamplerWithValueNetwork":
         mlprogram.samplers.SamplerWithValueNetwork,
+    "mlprogram.samplers.FilteredSampler":
+        mlprogram.samplers.FilteredSampler,
 
     "mlprogram.utils.data.Collate": mlprogram.utils.data.Collate,
     "mlprogram.utils.data.CollateOptions": mlprogram.utils.data.CollateOptions,

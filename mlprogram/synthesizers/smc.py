@@ -62,28 +62,29 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                     ):
                         key = self.to_key(sample.state.state)
                         if key in samples:
-                            state, output = samples[key]
+                            state, output_opt = samples[key]
                             samples[key] = (
                                 DuplicatedSamplerState(
                                     state.state, state.num + sample.num
                                 ),
-                                output
+                                output_opt
                             )
                         else:
                             samples[key] = \
                                 (sample,
                                  self.sampler.create_output(
-                                     sample.state.state))
+                                     input, sample.state.state))
 
-                        if samples[key][1] is not None:
-                            output, is_finished = samples[key][1]
+                        _, output_opt = samples[key]
+                        if output_opt is not None:
+                            output, is_finished = output_opt
                             yield Result(output, sample.state.score,
                                          sample.num)
 
                     # Exclude finished particles
-                    for key in list(samples.keys()):
-                        if samples[key][1] is not None:
-                            _, is_finished = samples[key][1]
+                    for key, (state, output_opt) in list(samples.items()):
+                        if output_opt is not None:
+                            _, is_finished = output_opt
                             # Exclude key
                             if is_finished:
                                 del samples[key]

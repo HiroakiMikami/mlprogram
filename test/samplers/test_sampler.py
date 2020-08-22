@@ -4,7 +4,7 @@ from mlprogram.samplers import Sampler, transform
 
 
 class MockSampler(Sampler[int, int, str]):
-    def create_output(self, state: str) -> Optional[Tuple[int, bool]]:
+    def create_output(self, input, state: str) -> Optional[Tuple[int, bool]]:
         if len(state) == 0:
             return None
         else:
@@ -14,8 +14,8 @@ class MockSampler(Sampler[int, int, str]):
 class TestTransform(unittest.TestCase):
     def test_transform(self):
         sampler = transform(MockSampler(), lambda x: x * 2)
-        self.assertEqual((4, True), sampler.create_output("2"))
-        self.assertEqual(None, sampler.create_output(""))
+        self.assertEqual((4, True), sampler.create_output(None, "2"))
+        self.assertEqual(None, sampler.create_output(None, ""))
 
 
 if __name__ == "__main__":

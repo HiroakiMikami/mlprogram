@@ -14,7 +14,7 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
     def initialize(self, input: str) -> Tuple[str, str]:
         return (input, "")
 
-    def create_output(self, state: Tuple[str, str]):
+    def create_output(self, input, state: Tuple[str, str]):
         x = state[1]
         if "0" not in x:
             return None

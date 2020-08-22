@@ -42,7 +42,8 @@ class Sampler(Generic[Input, Output, State]):
     def initialize(self, input: Input) -> State:
         raise NotImplementedError
 
-    def create_output(self, state: State) -> Optional[Tuple[Output, bool]]:
+    def create_output(self, input: Input, state: State) \
+            -> Optional[Tuple[Output, bool]]:
         raise NotImplementedError
 
     def top_k_samples(self, states: List[SamplerState[State]], k: int) \
@@ -66,9 +67,9 @@ def transform(sampler: Sampler[Input, Output1, State],
         def initialize(self, input: Input) -> State:
             return self.sampler.initialize(input)
 
-        def create_output(self, state: State) \
+        def create_output(self, input: Input, state: State) \
                 -> Optional[Tuple[Output2, bool]]:
-            output = self.sampler.create_output(state)
+            output = self.sampler.create_output(input, state)
             if output is None:
                 return None
             else:

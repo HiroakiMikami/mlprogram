@@ -34,7 +34,7 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
 
                 for next_state in self.sampler.top_k_samples(states, k):
                     output_opt = self.sampler.create_output(
-                        next_state.state.state)
+                        input, next_state.state.state)
                     if output_opt is not None:
                         output, is_finished = output_opt
                         yield Result(output, next_state.state.score, 1)
