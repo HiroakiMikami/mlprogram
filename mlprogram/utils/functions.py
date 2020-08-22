@@ -15,13 +15,15 @@ class Compose:
     def __init__(self, funcs: OrderedDict):
         self.funcs = funcs
 
+    @logger.function_block("Compose.__call__")
     def __call__(self, value: Optional[Any]) -> Optional[Any]:
         if value is None:
             return None
-        for f in self.funcs.values():
-            value = f(value)
-            if value is None:
-                return None
+        for key, f in self.funcs.items():
+            with logger.block(key):
+                value = f(value)
+                if value is None:
+                    return None
         return value
 
 
@@ -29,12 +31,14 @@ class Sequence:
     def __init__(self, funcs: OrderedDict):
         self.funcs = funcs
 
+    @logger.function_block("Sequence.__call__")
     def __call__(self, values: Any) -> Optional[Any]:
         value_opt: Optional[Any] = values
-        for func in self.funcs.values():
-            value_opt = func(value_opt)
-            if value_opt is None:
-                return None
+        for key, func in self.funcs.items():
+            with logger.block(key):
+                value_opt = func(value_opt)
+                if value_opt is None:
+                    return None
         return value_opt
 
 
@@ -42,8 +46,10 @@ class Map(Generic[V0, V1]):
     def __init__(self, func: Callable[[V0], V1]):
         self.func = func
 
+    @logger.function_block("Map.__call__")
     def __call__(self, values: List[V0]) -> List[V1]:
-        return [self.func(v0) for v0 in values]
+        return [self.func(v0)
+                for v0 in logger.iterable_block("values", values)]
 
 
 class Flatten(Generic[V]):
