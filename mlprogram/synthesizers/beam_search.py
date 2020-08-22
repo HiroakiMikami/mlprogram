@@ -37,7 +37,11 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
                         input, next_state.state.state)
                     if output_opt is not None:
                         output, is_finished = output_opt
-                        yield Result(output, next_state.state.score, 1)
+                        if steps == self.max_step_size - 1:
+                            # The step is last
+                            is_finished = True
+                        yield Result(output, next_state.state.score,
+                                     is_finished, 1)
                         if is_finished:
                             k -= 1
                         else:

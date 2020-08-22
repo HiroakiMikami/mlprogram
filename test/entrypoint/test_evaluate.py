@@ -23,7 +23,7 @@ class TestEvaluateSynthesizer(unittest.TestCase):
                 output = ["c2", "c3", "c5"]
 
             for i, s in enumerate(output):
-                yield DecoderResult(s, -i, 1)
+                yield DecoderResult(s, -i, True, 1)
 
         accuracy = Accuracy()
         dataset = ListDataset([{
@@ -85,6 +85,7 @@ class TestEvaluate(unittest.TestCase):
             def __call__(self, query):
                 yield DecoderResult(self.model.state_dict["name"],
                                     self.model.state_dict["score"],
+                                    True,
                                     1)
 
         return MockSynthesizer(model)

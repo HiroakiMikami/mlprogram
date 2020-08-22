@@ -17,13 +17,11 @@ logger = logging.Logger(__name__)
 class FilteredSampler(Generic[Input, Output, State]):
     def __init__(self, sampler: Sampler[Input, Output, State],
                  score: Callable[[Input, Output], float],
-                 threshold: float,
-                 retain_not_finished_output: bool
+                 threshold: float
                  ):
         self.sampler = sampler
         self.score = score
         self.threshold = threshold
-        self.retain_not_finished_output = retain_not_finished_output
 
     def initialize(self, input: Input) -> State:
         return self.sampler.initialize(input)
@@ -39,8 +37,6 @@ class FilteredSampler(Generic[Input, Output, State]):
         if score >= self.threshold:
             logger.debug(f"find appropriate output: score={score}")
             is_finished = True
-        if not self.retain_not_finished_output and not is_finished:
-            return None
         return output, is_finished
 
     def top_k_samples(self, states: List[SamplerState[State]], k: int) \

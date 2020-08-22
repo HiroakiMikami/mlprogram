@@ -20,7 +20,7 @@ class MockSynthesizer:
     def __call__(self, query, n_required_output=None):
         n_required_output = n_required_output or 1
         for _ in range(n_required_output):
-            yield Result({"output": query["value"]}, 0, 1)
+            yield Result({"output": query["value"]}, 0, True, 1)
 
 
 def score(sample, output):

@@ -16,31 +16,23 @@ class TestFilteredSampler(unittest.TestCase):
         sampler = FilteredSampler(
             MockSampler((0, False)),
             lambda x, y: 1.0 if y in x["input"] else y,
-            0.9, True)
+            0.9)
         output = sampler.create_output({"input": [0]}, None)
         self.assertEqual((0, True), output)
 
         sampler = FilteredSampler(
             MockSampler(None),
             lambda x, y: 1.0 if y in x["input"] else y,
-            0.9, True)
+            0.9)
         output = sampler.create_output({"input": [0]}, None)
         self.assertEqual(None, output)
 
         sampler = FilteredSampler(
             MockSampler((0.1, False)),
             lambda x, y: 1.0 if y in x["input"] else y,
-            0.9, True)
+            0.9)
         output = sampler.create_output({"input": [0]}, None)
         self.assertEqual((0.1, False), output)
-
-    def test_remove_not_finished_output(self):
-        sampler = FilteredSampler(
-            MockSampler((0.1, False)),
-            lambda x, y: 1.0 if y in x["input"] else y,
-            0.9, False)
-        output = sampler.create_output({"input": [0]}, None)
-        self.assertEqual(None, output)
 
 
 if __name__ == "__main__":

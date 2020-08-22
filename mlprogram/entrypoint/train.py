@@ -278,6 +278,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     for rollout in logger.iterable_block(
                             "sample",
                             synthesizer(input, n_required_output=n_rollout)):
+                        if not rollout.is_finished:
+                            continue
                         s = score(sample, rollout.output)
                         for _ in range(rollout.num):
                             output = {key: value

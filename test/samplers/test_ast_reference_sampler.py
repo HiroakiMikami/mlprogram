@@ -19,7 +19,7 @@ class MockSynthesizer(Synthesizer[Dict[str, Any], AST]):
 
     def __call__(self, input: Dict[str, Any], n_required_output=None):
         for i, ast in enumerate(self.asts):
-            yield Result(ast, 1.0 / (i + 1), 1)
+            yield Result(ast, 1.0 / (i + 1), True, 1)
 
 
 class MockEncoder(nn.Module):

@@ -7,8 +7,7 @@ options:
         size: 4
         resolution: 4
         n_evaluate_dataset: 1000
-        train_timeout_sec: 1
-        evaluate_timeout_sec: 5
+        timeout_sec: 5
     large:
         n_pretrain_iteration: 156250
         n_train_iteration: 450000
@@ -17,8 +16,7 @@ options:
         size: 16
         resolution: 1
         n_evaluate_dataset: 1000
-        train_timeout_sec: 2
-        evaluate_timeout_sec: 10
+        timeout_sec: 10
 
 device:
     type: torch.device
@@ -247,7 +245,7 @@ subsampler:
         funcs:
             type: collections.OrderedDict
             items:
-                - - "evaluete_code"
+                - - "evaluate_code"
                   - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
                     interpreter: "@/interpreter"
                 - - "transform_canvas"
@@ -279,20 +277,27 @@ sampler:
     to_code:
         type: mlprogram.languages.csg.ToCsgAst
 train_synthesizer:
-    type: mlprogram.synthesizers.SynthesizerWithTimeout
-    synthesizer:
-        type: mlprogram.synthesizers.SMC
-        max_step_size:
-            type: mul
-            x: "@/option.train_max_object"
-            y: 5
-        initial_particle_size: 1
-        max_try_num: 1
+    type: mlprogram.synthesizers.SMC
+    max_step_size:
+        type: mul
+        x: "@/option.train_max_object"
+        y: 5
+    initial_particle_size: 1
+    max_try_num: 1
+    sampler:
+        type: mlprogram.samplers.FilteredSampler
         sampler: "@/sampler"
-        to_key:
-            type: mlprogram.utils.Pick
-            key: "code"
-    timeout_sec: "@/option.train_timeout_sec"
+        score:
+            type: mlprogram.metrics.TestCaseResult
+            interpreter: "@/interpreter"
+            reference: True
+            use_input: True
+            metric:
+                type: mlprogram.metrics.Iou
+        threshold: 0.9
+    to_key:
+        type: mlprogram.utils.Pick
+        key: "code"
 evaluate_synthesizer:
     type: mlprogram.synthesizers.SynthesizerWithTimeout
     synthesizer:
@@ -310,11 +315,11 @@ evaluate_synthesizer:
                 funcs:
                     type: collections.OrderedDict
                     items:
-                        - - "evaluete_code"
-                        - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
+                        - - "evaluate_code"
+                          - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
                             interpreter: "@/interpreter"
                         - - "transform_canvas"
-                        - type: mlprogram.utils.transform.csg.TransformCanvas
+                          - type: mlprogram.utils.transform.csg.TransformCanvas
                             targets: ["variables"]
             collate: "@/collate"
             value_network:
@@ -323,17 +328,17 @@ evaluate_synthesizer:
                     type: collections.OrderedDict
                     items:
                         - - "encoder"
-                        - "@/model.encoder"
+                          - "@/model.encoder"
                         - - "value"
-                        - "@/model.value"
+                          - "@/model.value"
                         - - "pick"
-                        - type: mlprogram.nn.Pick
+                          - type: mlprogram.nn.Pick
                             key: "value"
             batch_size: 1
         to_key:
             type: mlprogram.utils.Pick
             key: "code"
-    timeout_sec: "@/option.evaluate_timeout_sec"
+    timeout_sec: "@/option.timeout_sec"
 
 to_episode:
     type: mlprogram.utils.transform.pbe_with_repl.ToEpisode
@@ -346,7 +351,7 @@ transform:
     funcs:
         type: collections.OrderedDict
         items:
-            - - "evaluete_code"
+            - - "evaluate_code"
               - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
                 interpreter: "@/interpreter"
             - - "transform_canvas"

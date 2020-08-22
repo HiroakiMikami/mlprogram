@@ -9,7 +9,7 @@ class MockSynthesizer(Synthesizer[Dict[str, Any], int]):
 
     def __call__(self, input: Dict[str, Any], n_required_output=None):
         for i, value in enumerate(self.values):
-            yield Result(value, 1.0 / (i + 1), 1)
+            yield Result(value, 1.0 / (i + 1), True, 1)
 
 
 class TestFilteredSynthesizer(unittest.TestCase):

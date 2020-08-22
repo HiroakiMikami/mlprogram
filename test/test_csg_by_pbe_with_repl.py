@@ -18,6 +18,7 @@ from mlprogram.synthesizers \
 from mlprogram.actions import AstToActionSequence
 from mlprogram.samplers \
     import ActionSequenceSampler, AstReferenceSampler, SamplerWithValueNetwork
+from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
 from mlprogram.utils.data import Collate, CollateOptions
@@ -115,11 +116,14 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             to_code=ToCsgAst(),
             rng=np.random.RandomState(0))
         if rollout:
-            return SynthesizerWithTimeout(
-                SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                    to_key=Pick("code")),
-                1
+            sampler = FilteredSampler(
+                sampler,
+                metrics.TestCaseResult(interpreter, reference=True,
+                                       use_input=True, metric=metrics.Iou()),
+                0.9
             )
+            return SMC(4, 20, sampler, rng=np.random.RandomState(0),
+                       to_key=Pick("code"), max_try_num=1)
         else:
             sampler = SamplerWithValueNetwork(
                 sampler,

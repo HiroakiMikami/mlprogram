@@ -78,8 +78,11 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                         _, output_opt = samples[key]
                         if output_opt is not None:
                             output, is_finished = output_opt
+                            if step == self.max_step_size - 1:
+                                # The step is last
+                                is_finished = True
                             yield Result(output, sample.state.score,
-                                         sample.num)
+                                         is_finished, sample.num)
 
                     # Exclude finished particles
                     for key, (state, output_opt) in list(samples.items()):

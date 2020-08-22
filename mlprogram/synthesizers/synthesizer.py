@@ -11,6 +11,7 @@ State = TypeVar("State")
 class Result(Generic[Output]):
     output: Output
     score: float
+    is_finished: bool
     num: int
 
 
