@@ -1,22 +1,22 @@
 options:
     small:
-        n_pretrain_iteration: 36000
-        n_train_iteration: 105000
+        n_pretrain_iteration: 20000
+        n_train_iteration: 15000
         train_max_object: 3
         evaluate_max_object: 6
         size: 4
         resolution: 4
-        n_evaluate_dataset: 1000
+        n_evaluate_dataset: 10
         timeout_sec: 5
     large:
         n_pretrain_iteration: 156250
-        n_train_iteration: 450000
+        n_train_iteration: 281250
         train_max_object: 13
         evaluate_max_object: 30
         size: 16
         resolution: 1
-        n_evaluate_dataset: 1000
-        timeout_sec: 10
+        n_evaluate_dataset: 30
+        timeout_sec: 120
 
 device:
     type: torch.device
@@ -281,7 +281,7 @@ train_synthesizer:
     max_step_size:
         type: mul
         x: "@/option.train_max_object"
-        y: 5
+        y: 3
     initial_particle_size: 1
     max_try_num: 1
     sampler:

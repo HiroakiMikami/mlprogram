@@ -1,10 +1,13 @@
 import torch
 from torch import nn
 from torch import optim
-from typing import List
+from typing import List, Union
+from mlprogram import distributed
 
 
-def device(type_str: str, index: int = 0):
+def device(type_str: str, index: Union[int, str] = 0):
+    if index == "rank":
+        index = distributed.rank()
     return torch.device(type_str, index)
 
 
@@ -29,5 +32,5 @@ types = {
     "torch.optim.Optimizer": Optimizer,
     "torch.optim.Adam": lambda: torch.optim.Adam,
     "torch.Reshape": Reshape,
-    "torch.nn.BCELoss": torch.nn.BCELoss
+    "torch.nn.BCELoss": torch.nn.BCELoss,
 }

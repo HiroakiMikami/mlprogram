@@ -96,6 +96,6 @@ main:
     n: "@/option.n_pretrain_iteration"
   interval:
     type: mlprogram.entrypoint.train.Iteration
-    n: 10000
+    n: 1000
   num_models: 0
   device: "@/device"

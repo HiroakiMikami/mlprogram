@@ -1,9 +1,10 @@
 import torch
+from torch import multiprocessing
 import os
 from collections import OrderedDict
 from typing import Generic, TypeVar, Optional, Any, List, Callable, Dict
 from mlprogram.utils import logging
-from torch import multiprocessing
+from mlprogram.distributed import is_main_process
 
 logger = logging.Logger(__name__)
 
@@ -97,8 +98,9 @@ def save(obj: V, file: str) -> V:
         logger.info(f"Reuse data from {file}")
         return torch.load(file)
 
-    os.makedirs(os.path.dirname(file), exist_ok=True)
-    torch.save(obj, file)
+    if is_main_process():
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        torch.save(obj, file)
     return obj
 
 

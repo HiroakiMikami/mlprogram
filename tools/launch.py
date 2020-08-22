@@ -6,9 +6,11 @@ import tempfile
 import logging
 import cProfile
 import torch
+from torch import multiprocessing
 from torch.autograd.profiler import profile
 from typing import Optional, Any
 from mlprogram.entrypoint.parse import parse_config, load_config
+from mlprogram import distributed
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +100,8 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
         return configs
 
 
-def launch(config_file: str, option: Optional[str], tmpdir: str):
+def launch(config_file: str, option: Optional[str], tmpdir: str,
+           rank: Optional[int], n_process: Optional[int]):
     logger.info(f"Launch config file: {config_file}")
     configs = load_config(config_file)
     if option == "test":
@@ -109,25 +112,47 @@ def launch(config_file: str, option: Optional[str], tmpdir: str):
         output_dir = configs["output_dir"]  # TODO
         configs = modify_config_for_profile(configs, tmpdir)
 
+    distributed.initialize(tmpdir, rank, n_process)
+
+    logger.info("Run main")
     if option == "profile":
         cprofile = cProfile.Profile()
         cprofile.enable()
         with profile(use_cuda=True) as torch_prof:
             parse_config(configs)["/main"]
         cprofile.disable()
-        torch.save(torch_prof, os.path.join(output_dir, "torch_profiler.pt"))
-        cprofile.dump_stats(os.path.join(output_dir, "cprofile.pt"))
+        torch.save(torch_prof, os.path.join(output_dir,
+                                            f"torch_profiler-{rank}.pt"))
+        cprofile.dump_stats(os.path.join(output_dir, f"cprofile-{rank}.pt"))
     else:
         parse_config(configs)["/main"]
+
+
+def launch_multiprocess(config_file: str, option: Optional[str], tmpdir: str,
+                        n_process: int):
+    if n_process == 0:
+        return launch(config_file, option, tmpdir, None, None)
+    else:
+        ps = []
+        for i in range(n_process):
+            p = multiprocessing.Process(
+                target=launch,
+                args=(config_file, option, tmpdir, i, n_process))
+            p.start()
+            ps.append(p)
+        for p in ps:
+            p.join()
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_file", "-c", required=True, type=str)
     parser.add_argument("--option", choices=["test", "profile"])
+    parser.add_argument("--n_process", type=int, default=0)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as tmpdir:
-        launch(args.config_file, args.option, tmpdir)
+        launch_multiprocess(args.config_file, args.option, tmpdir,
+                            args.n_process)
 
 
 if __name__ == "__main__":

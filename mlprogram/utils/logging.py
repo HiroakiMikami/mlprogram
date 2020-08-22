@@ -2,6 +2,17 @@ import logging
 from typing import Callable, Iterable
 from contextlib import contextmanager
 from torch.autograd.profiler import record_function
+import sys
+
+
+def set_level(level):
+    if sys.version_info[:2] >= (3, 8):
+        # Python 3.8 or later
+        logging.basicConfig(level=level, stream=sys.stdout,
+                            force=True)
+    else:
+        from mlprogram import transpyle  # noqa
+        logging.root.handlers[0].setLevel(level)
 
 
 class Logger(object):

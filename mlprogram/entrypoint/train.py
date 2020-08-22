@@ -12,6 +12,7 @@ from mlprogram.utils import TopKModel
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import logging
+from mlprogram import distributed
 from dataclasses import dataclass
 
 logger = logging.Logger(__name__)
@@ -65,22 +66,67 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                               optimizer: torch.optim.Optimizer,
                               workspace_dir: str):
     logger.info("Prepare pytorch-pfn-extras")
-    log_reporter = \
-        extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
     manager = ppe.training.ExtensionsManager(
         model, optimizer, n_iter / iter_per_epoch,
         out_dir=workspace_dir,
-        extensions=[
-            log_reporter,
-            extensions.ProgressBar(),
-        ],
+        extensions=[],
         iters_per_epoch=iter_per_epoch,
     )
-    manager.extend(extensions.PrintReport(),
-                   trigger=Trigger(interval_iter, n_iter))
-    snapshot = extensions.snapshot(autoload=True, n_retains=1)
+    if distributed.is_main_process():
+        log_reporter = \
+            extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
+        manager.extend(log_reporter)
+        manager.extend(extensions.ProgressBar())
+        manager.extend(extensions.PrintReport(),
+                       trigger=Trigger(interval_iter, n_iter))
+    else:
+        log_reporter = None
+    snapshot = extensions.snapshot(autoload=True, n_retains=1, saver_rank=0)
     manager.extend(snapshot, trigger=Trigger(interval_iter, n_iter))
     return log_reporter, manager
+
+
+def process_group(device: torch.device) -> Optional[torch.distributed.group]:
+    if not distributed.is_initialized():
+        return None
+    else:
+        if device.type == "cuda":
+            return distributed.groups["world_nccl"]
+        else:
+            return distributed.groups["world_gloo"]
+
+
+class StopTrainingException(Exception):
+    pass
+
+
+def abort_if_loss_is_nan(log_reporter):
+    stop = torch.tensor(0)
+    if distributed.is_main_process():
+        if len(log_reporter.log) != 0:
+            log_loss = log_reporter.log[-1]["loss"]
+
+            if isnan(log_loss) or isinf(log_loss):
+                logger.info("Stop training")
+                stop = torch.tensor(1)
+    if distributed.is_initialized():
+        torch.distributed.broadcast(stop, src=0,
+                                    group=distributed.groups["world_gloo"])
+
+    if stop.item() == 1:
+        raise StopTrainingException()
+
+
+def all_reduce(model: nn.Module, group: torch.distributed.group):
+    nparams = list(model.named_parameters())
+    nparams.sort(key=lambda x: x[0])
+    params = [p.grad for _, p in nparams if p.grad is not None]
+    size = torch.distributed.get_world_size(group)
+    torch.distributed.all_reduce_coalesced(
+        params, group=group
+    )
+    for p in params:
+        p /= size
 
 
 def train_supervised(workspace_dir: str, output_dir: str,
@@ -102,6 +148,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
     model.to(device)
     model.train()
 
+    group = process_group(device)
+
     if hasattr(dataset, "__len__"):
         is_iterable = False
         iter_per_epoch = len(dataset) // batch_size
@@ -121,62 +169,61 @@ def train_supervised(workspace_dir: str, output_dir: str,
     os.makedirs(model_dir, exist_ok=True)
     top_k_model = TopKModel(num_models, model_dir)
 
-    log_loss = 0.0
     log_score = 0.0
     logger.info("Start training")
-    while manager.updater.iteration < n_iter:
-        # TODO num_workers > 0 causes the RuntimeError
-        if is_iterable:
-            loader = DataLoader(dataset, batch_size=batch_size,
-                                shuffle=False, num_workers=0,
-                                collate_fn=collate)
-        else:
-            loader = DataLoader(dataset, batch_size=batch_size,
-                                shuffle=True, num_workers=0,
-                                collate_fn=collate)
-        model.train()
-        for batch in logger.iterable_block("iteration", loader):
-            if manager.updater.iteration >= n_iter:
-                break
-            with manager.run_iteration():
-                if len(batch) == 0:
-                    logger.warning(
-                        f"Skip {manager.updater.iteration} th batch")
-                    continue
-                logger.debug("batch:")
-                for key, value in batch.items():
-                    if isinstance(value, torch.Tensor):
-                        logger.debug(f"\t{key}: {value.shape}")
-                with logger.block("forward"):
-                    output = model(batch)
-                    bloss = loss(output)
-                    s = score(output)
-                with logger.block("backward"):
-                    model.zero_grad()
-                    bloss.backward()
-                with logger.block("optimizer.step"):
-                    optimizer.step()
+    try:
+        while manager.updater.iteration < n_iter:
+            # TODO num_workers > 0 causes the RuntimeError
+            if is_iterable:
+                loader = DataLoader(dataset, batch_size=batch_size,
+                                    shuffle=False, num_workers=0,
+                                    collate_fn=collate)
+            else:
+                loader = DataLoader(dataset, batch_size=batch_size,
+                                    shuffle=True, num_workers=0,
+                                    collate_fn=collate)
+            model.train()
+            for batch in logger.iterable_block("iteration", loader):
+                if manager.updater.iteration >= n_iter:
+                    break
+                with manager.run_iteration():
+                    if len(batch) == 0:
+                        logger.warning(
+                            f"Skip {manager.updater.iteration} th batch")
+                        continue
+                    logger.debug("batch:")
+                    for key, value in batch.items():
+                        if isinstance(value, torch.Tensor):
+                            logger.debug(f"\t{key}: {value.shape}")
+                    with logger.block("forward"):
+                        output = model(batch)
+                        bloss = loss(output)
+                        s = score(output)
+                    with logger.block("backward"):
+                        model.zero_grad()
+                        bloss.backward()
+                    if group is not None:
+                        with logger.block("all-reduce"):
+                            all_reduce(model, group)
+                    with logger.block("optimizer.step"):
+                        optimizer.step()
 
-                ppe.reporting.report({
-                    "loss": bloss.item(),
-                    "score": s.item()
-                })
-            if len(log_reporter.log) != 0:
-                log_loss = log_reporter.log[-1]["loss"]
-                log_score = log_reporter.log[-1]["score"]
+                    ppe.reporting.report({
+                        "loss": bloss.item(),
+                        "score": s.item()
+                    })
 
-            if manager.updater.iteration % interval_iter == 0:
-                logger.debug(
-                    f"Update top-K model: score of the new model: {log_score}")
-                top_k_model.save(log_score,
-                                 f"{manager.updater.iteration}", model)
+                if distributed.is_main_process():
+                    if len(log_reporter.log) != 0:
+                        log_score = log_reporter.log[-1]["score"]
+                    if manager.updater.iteration % interval_iter == 0:
+                        logger.debug("Update top-K model: score={log_score}")
+                        top_k_model.save(log_score,
+                                         f"{manager.updater.iteration}", model)
 
-            if isnan(log_loss) or isinf(log_loss):
-                logger.info("Stop training")
-                break
-        if isnan(log_loss) or isinf(log_loss):
-            logger.info("Stop training")
-            break
+                abort_if_loss_is_nan(log_reporter)
+    except StopTrainingException:  # noqa
+        pass
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
@@ -220,6 +267,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     model.to(device)
     model.train()
 
+    group = process_group(device)
+
     if hasattr(dataset, "__len__"):
         is_iterable = False
         iter_per_epoch = len(dataset) // batch_size
@@ -252,83 +301,83 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     os.makedirs(model_dir, exist_ok=True)
     top_k_model = TopKModel(num_models, model_dir)
 
-    log_loss = 0.0
     log_score = 0.0
     logger.info("Start training")
-    while manager.updater.iteration < n_iter:
-        # TODO num_workers > 0 causes the RuntimeError
-        if is_iterable:
-            loader = DataLoader(dataset, batch_size=batch_size,
-                                shuffle=False, num_workers=0,
-                                collate_fn=lambda x: x)
-        else:
-            loader = DataLoader(dataset, batch_size=batch_size,
-                                shuffle=True, num_workers=0,
-                                collate_fn=lambda x: x)
-        model.train()
-        for samples in logger.iterable_block("iteration", loader):
-            if manager.updater.iteration >= n_iter:
-                break
-            # Rollout
-            rollouts = []
-            scores = []
-            with torch.no_grad():
-                for sample in logger.iterable_block("rollout", samples):
-                    input = rollout_transform(sample)
-                    for rollout in logger.iterable_block(
-                            "sample",
-                            synthesizer(input, n_required_output=n_rollout)):
-                        if not rollout.is_finished:
-                            continue
-                        s = score(sample, rollout.output)
-                        for _ in range(rollout.num):
-                            output = {key: value
-                                      for key, value in input.items()}
-                            output["ground_truth"] = rollout.output
-                            output["reward"] = torch.tensor(reward(s))
-                            rollouts.append(output)
-                            scores.append(s)
-            if len(rollouts) == 0:
-                logger.warning("No rollout")
-                continue
+    try:
+        while manager.updater.iteration < n_iter:
+            # TODO num_workers > 0 causes the RuntimeError
+            if is_iterable:
+                loader = DataLoader(dataset, batch_size=batch_size,
+                                    shuffle=False, num_workers=0,
+                                    collate_fn=lambda x: x)
+            else:
+                loader = DataLoader(dataset, batch_size=batch_size,
+                                    shuffle=True, num_workers=0,
+                                    collate_fn=lambda x: x)
+            model.train()
+            for samples in logger.iterable_block("iteration", loader):
+                if manager.updater.iteration >= n_iter:
+                    break
+                # Rollout
+                rollouts = []
+                scores = []
+                with torch.no_grad():
+                    for sample in logger.iterable_block("rollout", samples):
+                        input = rollout_transform(sample)
+                        for rollout in logger.iterable_block(
+                                "sample",
+                                synthesizer(input,
+                                            n_required_output=n_rollout)):
+                            if not rollout.is_finished:
+                                continue
+                            s = score(sample, rollout.output)
+                            for _ in range(rollout.num):
+                                output = {key: value
+                                          for key, value in input.items()}
+                                output["ground_truth"] = rollout.output
+                                output["reward"] = torch.tensor(reward(s))
+                                rollouts.append(output)
+                                scores.append(s)
+                if len(rollouts) == 0:
+                    logger.warning("No rollout")
+                    continue
 
-            with manager.run_iteration():
-                with logger.block("collate"):
-                    batch2 = collate(rollouts)
-                logger.debug("batch:")
-                for key, value in batch2.items():
-                    if isinstance(value, torch.Tensor):
-                        logger.debug(f"\t{key}: {value.shape}")
-                with logger.block("forward"):
-                    model.train()
-                    output = model(batch2)
-                    bloss = loss(output)
-                with logger.block("backward"):
-                    model.zero_grad()
-                    bloss.backward()
-                with logger.block("optimizer.step"):
-                    optimizer.step()
+                with manager.run_iteration():
+                    with logger.block("collate"):
+                        batch2 = collate(rollouts)
+                    logger.debug("batch:")
+                    for key, value in batch2.items():
+                        if isinstance(value, torch.Tensor):
+                            logger.debug(f"\t{key}: {value.shape}")
+                    with logger.block("forward"):
+                        model.train()
+                        output = model(batch2)
+                        bloss = loss(output)
+                    with logger.block("backward"):
+                        model.zero_grad()
+                        bloss.backward()
+                    if group is not None:
+                        with logger.block("all-reduce"):
+                            all_reduce(model, group)
+                    with logger.block("optimizer.step"):
+                        optimizer.step()
 
-                ppe.reporting.report({
-                    "loss": bloss.item(),
-                    "score": np.mean(scores)
-                })
-            if len(log_reporter.log) != 0:
-                log_loss = log_reporter.log[-1]["loss"]
-                log_score = log_reporter.log[-1]["score"]
+                    ppe.reporting.report({
+                        "loss": bloss.item(),
+                        "score": np.mean(scores)
+                    })
 
-            if manager.updater.iteration % interval_iter == 0:
-                logger.debug(
-                    f"Update top-K model: score of the new model: {log_score}")
-                top_k_model.save(log_score,
-                                 f"{manager.updater.iteration}", model)
+                if distributed.is_main_process():
+                    if len(log_reporter.log) != 0:
+                        log_score = log_reporter.log[-1]["score"]
+                    if manager.updater.iteration % interval_iter == 0:
+                        logger.debug("Update top-K model: score={log_score}")
+                        top_k_model.save(log_score,
+                                         f"{manager.updater.iteration}", model)
 
-            if isnan(log_loss) or isinf(log_loss):
-                logger.info("Stop training")
-                break
-        if isnan(log_loss) or isinf(log_loss):
-            logger.info("Stop training")
-            break
+                abort_if_loss_is_nan(log_reporter)
+    except StopTrainingException:  # noqa
+        pass
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
