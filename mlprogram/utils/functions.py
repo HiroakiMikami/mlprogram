@@ -3,6 +3,7 @@ import os
 from collections import OrderedDict
 from typing import Generic, TypeVar, Optional, Any, List, Callable, Dict
 from mlprogram.utils import logging
+from torch import multiprocessing
 
 logger = logging.Logger(__name__)
 
@@ -43,13 +44,20 @@ class Sequence:
 
 
 class Map(Generic[V0, V1]):
-    def __init__(self, func: Callable[[V0], V1]):
+    def __init__(self, func: Callable[[V0], V1], n_worker: int = 0):
         self.func = func
+        if n_worker != 0:
+            self.pool = multiprocessing.Pool(n_worker)
+        else:
+            self.pool = None
 
     @logger.function_block("Map.__call__")
     def __call__(self, values: List[V0]) -> List[V1]:
-        return [self.func(v0)
-                for v0 in logger.iterable_block("values", values)]
+        if self.pool is None:
+            return [self.func(v0)
+                    for v0 in logger.iterable_block("values", values)]
+        else:
+            return list(self.pool.map(self.func, values))
 
 
 class Flatten(Generic[V]):

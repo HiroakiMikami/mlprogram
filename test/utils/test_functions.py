@@ -23,9 +23,17 @@ class TestCompose(unittest.TestCase):
         self.assertEqual(None, f(2))
 
 
+def add1(x):
+    return x + 1
+
+
 class TestMap(unittest.TestCase):
     def test_happy_path(self):
         f = Map(lambda x: x + 1)
+        self.assertEqual([3], f([2]))
+
+    def test_multiprocessing(self):
+        f = Map(add1, 1)
         self.assertEqual([3], f([2]))
 
 
