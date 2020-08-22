@@ -31,6 +31,7 @@ class TestMLP(unittest.TestCase):
         self.assertTrue(torch.all(out <= 1))
 
     def test_value(self):
+        torch.manual_seed(0)
         mlp = MLP(1, 2, 3, 2, activation=nn.Sigmoid())
         input = torch.zeros(2, 1)
         input[0] = 1
