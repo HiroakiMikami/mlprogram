@@ -290,7 +290,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 continue
 
             with manager.run_iteration():
-                batch2 = collate(rollouts)
+                with logger.block("collate"):
+                    batch2 = collate(rollouts)
                 logger.debug("batch:")
                 for key, value in batch2.items():
                     if isinstance(value, torch.Tensor):
