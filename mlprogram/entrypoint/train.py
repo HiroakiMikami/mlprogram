@@ -279,12 +279,13 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                             "sample",
                             synthesizer(input, n_required_output=n_rollout)):
                         s = score(sample, rollout.output)
-                        output = {key: value
-                                  for key, value in input.items()}
-                        output["ground_truth"] = rollout.output
-                        output["reward"] = torch.tensor(reward(s))
-                        rollouts.append(output)
-                        scores.append(s)
+                        for _ in range(rollout.num):
+                            output = {key: value
+                                      for key, value in input.items()}
+                            output["ground_truth"] = rollout.output
+                            output["reward"] = torch.tensor(reward(s))
+                            rollouts.append(output)
+                            scores.append(s)
             if len(rollouts) == 0:
                 logger.warning("No rollout")
                 continue
