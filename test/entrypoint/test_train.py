@@ -17,8 +17,10 @@ class MockSynthesizer:
     def __init__(self, model):
         self.model = model
 
-    def __call__(self, query):
-        yield Result({"output": query["value"]}, 0, 1)
+    def __call__(self, query, n_required_output=None):
+        n_required_output = n_required_output or 1
+        for _ in range(n_required_output):
+            yield Result({"output": query["value"]}, 0, 1)
 
 
 def score(sample, output):
@@ -269,35 +271,6 @@ class TestTrainREINFORCE(unittest.TestCase):
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "optimizer.pt")))
-
-    def test_multiprocessing(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
-            output = os.path.join(tmpdir, "out")
-            model = self.prepare_model()
-            train_REINFORCE(output, ws, output,
-                            self.prepare_dataset(),
-                            self.prepare_synthesizer(model),
-                            model,
-                            self.prepare_optimizer(model),
-                            lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                        kwargs["target"]
-                                                        ) * kwargs["reward"],
-                            score, reward,
-                            lambda x: x,
-                            self.collate,
-                            1, 1, Epoch(2),
-                            n_rollout_worker=2)
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_6")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
-
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(os.path.exists(

@@ -313,7 +313,8 @@ train_synthesizer:
             type: mul
             x: "@/option.train_max_object"
             y: 5
-        initial_particle_size: 100
+        initial_particle_size: 1
+        max_try_num: 1
         sampler: "@/sampler"
         to_key:
             type: mlprogram.utils.Pick

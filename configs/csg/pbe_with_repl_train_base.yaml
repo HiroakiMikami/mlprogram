@@ -17,18 +17,7 @@ optimizer:
       type: torch.optim.Adam
     model: "@/model"
 
-synthesizer:
-  type: mlprogram.synthesizers.FilteredSynthesizer
-  synthesizer: "@/train_synthesizer"
-  score:
-    type: mlprogram.metrics.TestCaseResult
-    interpreter: "@/interpreter"
-    reference: True
-    use_input: True
-    metric:
-      type: mlprogram.metrics.Iou
-  threshold: 0.9
-  n_output_if_empty: 1
+synthesizer: "@/train_synthesizer"
 
 batch_size: 2
 n_rollout: 16
@@ -144,6 +133,5 @@ main:
   interval:
     type: mlprogram.entrypoint.train.Iteration
     n: 1000
-  n_rollout_worker: 0
   use_pretrained_model: true
   device: "@/device"
