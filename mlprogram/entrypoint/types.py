@@ -142,6 +142,8 @@ types = {
         mlprogram.utils.transform.EvaluateGroundTruth,
     "mlprogram.utils.transform.NormalizeGroundTruth":
         mlprogram.utils.transform.NormalizeGroudTruth,
+    "mlprogram.utils.transform.action_sequence.AddEmptyReference":
+        mlprogram.utils.transform.action_sequence.AddEmptyReference,
     "mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder":  # noqa
         mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder,  # noqa
     "mlprogram.utils.transform.action_sequence.TransformCode":

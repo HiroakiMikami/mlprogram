@@ -34,6 +34,7 @@ class ConfigTest(unittest.TestCase):
             (os.path.join("configs", "hearthstone", "treegen_evaluate.yaml"),
              0)
         ])
+
     # TODO skip this dataset because nl2bash.download failed
     """
     def test_nl2bash_nl2code(self):
@@ -42,6 +43,23 @@ class ConfigTest(unittest.TestCase):
             os.path.join("configs", "nl2bash", "nl2code_evaluate.yaml")
         ])
     """
+
+    def test_csg_small_pbe_without_repl(self):
+        self.launch_config([
+            (os.path.join("configs", "csg",
+                          "without_repl_train_small.yaml"), 0),
+            (os.path.join("configs", "csg",
+                          "without_repl_evaluate_small.yaml"), 0)
+        ])
+
+    def test_csg_large_pbe_without_repl(self):
+        self.launch_config([
+            (os.path.join("configs", "csg",
+                          "without_repl_train_large.yaml"), 0),
+            (os.path.join("configs", "csg",
+                          "without_repl_evaluate_large.yaml"), 0),
+        ])
+
     def test_csg_small_pbe_with_repl(self):
         self.launch_config([
             (os.path.join("configs", "csg",

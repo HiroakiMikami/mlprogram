@@ -1,0 +1,7 @@
+imports:
+  - "without_repl_evaluate_base.yaml"
+
+option:
+  type: select
+  key: large
+  options: "@/options"

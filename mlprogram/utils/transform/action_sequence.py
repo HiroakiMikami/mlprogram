@@ -1,3 +1,4 @@
+import torch
 from typing import Dict, Any, Optional, cast, List, TypeVar, Generic, Callable
 from mlprogram.utils import Token
 from mlprogram.encoders import ActionSequenceEncoder
@@ -6,6 +7,13 @@ import numpy as np
 
 
 Code = TypeVar("Code")
+
+
+class AddEmptyReference(object):
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        entry["reference"] = []
+        entry["reference_features"] = torch.zeros((0, 1))
+        return entry
 
 
 class TransformCode(Generic[Code]):
