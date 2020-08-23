@@ -134,7 +134,10 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
 
         result: EvaluationResult = evaluate_synthesizer(
             test_data, synthesizer, metrics=metrics, top_n=top_n)
-        logger.info(f"{name}: {result.metrics}")
+        logger.info(f"{name}")
+        logger.info(f"{result.metrics}")
+        logger.info(f"generation rate: {result.generation_rate}")
+        logger.info(f"generation time: {result.generation_time}")
         results["test"][name] = result
         torch.save(results, results_path)
 
@@ -169,7 +172,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         result = evaluate_synthesizer(test_data,
                                       synthesizer,
                                       metrics=metrics, top_n=top_n)
-        logger.info(f"{name}: {result.metrics}")
+        logger.info(f"{result.metrics}")
         logger.info(f"generation rate: {result.generation_rate}")
         logger.info(f"generation time: {result.generation_time}")
         results["best_model"] = best_model
