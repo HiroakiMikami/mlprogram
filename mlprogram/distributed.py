@@ -65,3 +65,10 @@ def rank() -> int:
         return torch.distributed.get_rank()
     else:
         return 0
+
+
+def size() -> int:
+    if torch.distributed.is_initialized():
+        return torch.distributed.get_world_size()
+    else:
+        return 1

@@ -81,7 +81,14 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                        trigger=Trigger(interval_iter, n_iter))
     else:
         log_reporter = None
-    snapshot = extensions.snapshot(autoload=True, n_retains=1, saver_rank=0)
+    if distributed.is_initialized():
+        snapshot = extensions.snapshot(autoload=True, n_retains=1,
+                                       saver_rank=0)
+        snapshot._rank = distributed.rank()
+        snapshot._size = distributed.size()
+        snapshot._local_rank = distributed.rank()
+    else:
+        snapshot = extensions.snapshot(autoload=True, n_retains=1)
     manager.extend(snapshot, trigger=Trigger(interval_iter, n_iter))
     return log_reporter, manager
 
