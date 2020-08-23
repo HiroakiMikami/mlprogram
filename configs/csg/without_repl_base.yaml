@@ -224,7 +224,7 @@ synthesizer:
         y: 
           type: mul
           x: 5 # up to (3~5)*max_object nodes are requried to create AST
-          y: "@options.evaluate_max_object"
+          y: "@/option.evaluate_max_object"
       initial_particle_size: 100
       max_try_num: 10
       sampler: "@/sampler"
