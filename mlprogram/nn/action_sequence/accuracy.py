@@ -45,7 +45,8 @@ class Accuracy(nn.Module):
         _, rule_pred = torch.max(rule_probs.data, 2)  # (L_a, B)
         _, token_pred = torch.max(token_probs.data, 2)  # (L_a, B)
         if reference_probs.data.shape[2] == 0:
-            reference_pred = torch.zeros(L_a, B)
+            reference_pred = \
+                torch.zeros(L_a, B).to(gt_reference.device)
         else:
             _, reference_pred = torch.max(reference_probs.data, 2)  # (L_a, B)
 
