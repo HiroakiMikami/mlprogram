@@ -1,6 +1,7 @@
 import argparse
 
 import random
+import numpy as np
 import os
 import tempfile
 import logging
@@ -113,6 +114,14 @@ def launch(config_file: str, option: Optional[str], tmpdir: str,
         configs = modify_config_for_profile(configs, tmpdir)
 
     distributed.initialize(tmpdir, rank, n_process)
+
+    rank = distributed.rank()
+    seed = random.randint(0, 2**31) + rank
+    logger.info(f"Fix seed={seed}")
+    rng = np.random.RandomState(seed)
+    torch.manual_seed(rng.randint(0, 2**32 - 1))
+    np.random.seed(rng.randint(0, 2**32 - 1))
+    random.seed(rng.randint(0, 2**32 - 1))
 
     logger.info("Run main")
     if option == "profile":
