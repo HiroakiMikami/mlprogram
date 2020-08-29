@@ -1,5 +1,5 @@
 from typing \
-    import TypeVar, Generic, Optional, Generator, Dict, Callable, cast, Tuple
+    import TypeVar, Generic, Optional, Generator, Dict, Callable, cast
 from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import Result, Synthesizer
 from mlprogram.utils import logging
@@ -53,51 +53,26 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                 step = 0
                 while step < self.max_step_size:
                     # Generate particles
-                    samples: Dict[Key, Tuple[DuplicatedSamplerState[State],
-                                             Optional[Tuple[Output, bool]]
-                                             ]] = {}
+                    samples: Dict[Key, DuplicatedSamplerState[State]] = {}
                     for sample in self.sampler.k_samples(
                         [state.state for state in particles],
                         [state.num for state in particles]
                     ):
                         key = self.to_key(sample.state.state)
                         if key in samples:
-                            state, output_opt = samples[key]
-                            samples[key] = (
+                            state = samples[key]
+                            samples[key] = \
                                 DuplicatedSamplerState(
                                     state.state, state.num + sample.num
-                                ),
-                                output_opt
                             )
                         else:
-                            samples[key] = \
-                                (sample,
-                                 self.sampler.create_output(
-                                     input, sample.state.state))
-
-                        _, output_opt = samples[key]
-                        if output_opt is not None:
-                            output, is_finished = output_opt
-                            if step == self.max_step_size - 1:
-                                # The step is last
-                                is_finished = True
-                            yield Result(output, sample.state.score,
-                                         is_finished, sample.num)
-
-                    # Exclude finished particles
-                    for key, (state, output_opt) in list(samples.items()):
-                        if output_opt is not None:
-                            _, is_finished = output_opt
-                            # Exclude key
-                            if is_finished:
-                                del samples[key]
-                    n_particle = \
-                        sum([state.num for state, _ in samples.values()])
+                            samples[key] = sample
 
                     if len(samples) == 0:
                         break
+
                     # Resample
-                    list_samples = [state for state, _ in samples.values()]
+                    list_samples = [state for state in samples.values()]
                     log_weights = [math.log(state.num) + state.state.score
                                    for state in list_samples]
                     probs = [math.exp(log_weight - max(log_weights))
@@ -106,6 +81,25 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                     particles = []
                     resampled = self.rng.multinomial(n_particle, probs)
                     for state, n in zip(list_samples, resampled):
+                        # Create output
+                        output_opt = \
+                            self.sampler.create_output(input,
+                                                       state.state.state)
+                        if output_opt is not None:
+                            output, is_finished = output_opt
+                            if step == self.max_step_size - 1:
+                                is_finished = True
+                            # TODO dump output with the size of 0 if required
+                            if n > 0:
+                                yield Result(output, state.state.score,
+                                             is_finished, n)
+                        else:
+                            is_finished = False
+
+                        if is_finished:
+                            # Exclude finished particles
+                            n_particle -= n
+
                         if n > 0:
                             particles.append(
                                 DuplicatedSamplerState(
