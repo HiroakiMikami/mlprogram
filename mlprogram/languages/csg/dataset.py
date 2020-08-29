@@ -36,7 +36,8 @@ class Dataset(IterableDataset):
         self.leaf_candidates = ["Circle", "Rectangle"]
         self.branch_candidates = ["Union", "Difference"]
         self.node_candidates = ["Translation", "Rotation"]
-        self.seed = seed if seed is not None else 0
+        self.seed = \
+            seed if seed is not None else np.random.randint(0, 2 ** 32 - 1)
 
     def sample_ast(self, rng: np.random.RandomState, n_object: int) -> AST:
         objects: Dict[int, AST] = {}
