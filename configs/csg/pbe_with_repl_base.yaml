@@ -1,6 +1,6 @@
 options:
     small:
-        n_pretrain_iteration: 20000
+        n_pretrain_iteration: 5000
         n_train_iteration: 15000
         train_max_object: 3
         evaluate_max_object: 6
