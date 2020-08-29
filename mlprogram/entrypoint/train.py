@@ -127,7 +127,8 @@ def abort_if_loss_is_nan(log_reporter):
 def all_reduce(model: nn.Module, group: torch.distributed.group):
     nparams = list(model.named_parameters())
     nparams.sort(key=lambda x: x[0])
-    params = [p.grad for _, p in nparams if p.grad is not None]
+    params = [p.grad if p.grad is not None else torch.zeros_like(p.data)
+              for _, p in nparams]
     size = torch.distributed.get_world_size(group)
     torch.distributed.all_reduce_coalesced(
         params, group=group
