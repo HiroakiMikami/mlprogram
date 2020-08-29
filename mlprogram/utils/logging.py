@@ -3,6 +3,7 @@ from typing import Callable, Iterable
 from contextlib import contextmanager
 from torch.autograd.profiler import record_function
 import sys
+from mlprogram import transpyle  # noqa
 
 
 def set_level(level):
@@ -11,7 +12,6 @@ def set_level(level):
         logging.basicConfig(level=level, stream=sys.stdout,
                             force=True)
     else:
-        from mlprogram import transpyle  # noqa
         logging.root.handlers[0].setLevel(level)
 
 
