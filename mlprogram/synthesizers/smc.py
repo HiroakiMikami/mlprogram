@@ -54,7 +54,7 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                 while step < self.max_step_size and n_particle > 0:
                     # Generate particles
                     samples: Dict[Key, DuplicatedSamplerState[State]] = {}
-                    for sample in self.sampler.k_samples(
+                    for sample in self.sampler.batch_k_samples(
                         [state.state for state in particles],
                         [state.num for state in particles]
                     ):

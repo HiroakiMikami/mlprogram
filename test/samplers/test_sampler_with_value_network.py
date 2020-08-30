@@ -12,7 +12,7 @@ class MockSampler(Sampler[int, int, str]):
     def initialize(self, input: int) -> str:
         return str(input)
 
-    def k_samples(self, states: List[SamplerState[str]], n: List[int]):
+    def batch_k_samples(self, states: List[SamplerState[str]], n: List[int]):
         for state, k in zip(states, n):
             for i in range(k // len(states)):
                 x = state.state + str(i)
@@ -33,7 +33,7 @@ class TestSamplerWithValueNetwork(unittest.TestCase):
         sampler = SamplerWithValueNetwork(MockSampler(), transform, collate,
                                           MockValueNetwork())
         zero = SamplerState(0, sampler.initialize(0))
-        samples = list(sampler.k_samples([zero], [3]))
+        samples = list(sampler.batch_k_samples([zero], [3]))
         self.assertEqual(
             [DuplicatedSamplerState(SamplerState(0, "00"), 1),
              DuplicatedSamplerState(SamplerState(1, "01"), 1),

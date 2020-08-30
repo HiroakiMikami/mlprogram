@@ -321,14 +321,14 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         state.state.state["action_sequence"]()
                     yield state
 
-    def k_samples(
-        self, states: List[SamplerState[Dict[str, Any]]], n: List[int]) \
+    def batch_k_samples(
+        self, states: List[SamplerState[Dict[str, Any]]], ks: List[int]) \
             -> Generator[DuplicatedSamplerState[Dict[str, Any]],
                          None, None]:
-        with logger.block("k_samples"):
+        with logger.block("batch_k_samples"):
             self.module.eval()
-            n = [n[i] for i in range(len(states))
-                 if states[i].state["action_sequence"].head is not None]
+            ks = [ks[i] for i in range(len(states))
+                  if states[i].state["action_sequence"].head is not None]
             states = [state for state in states
                       if state.state["action_sequence"].head is not None]
             if len(states) == 0:
@@ -338,7 +338,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 self.batch_infer(states)
 
             for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
-                                         next_states, states, n):
+                                         next_states, states, ks):
                 for state in self.enumerate_samples_per_state(
                         r, t, c, ns, s, Enumeration.Random, k=k):
                     state.state.state["action_sequence"] = \

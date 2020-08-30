@@ -50,7 +50,8 @@ class Sampler(Generic[Input, Output, State]):
             -> Generator[DuplicatedSamplerState[State], None, None]:
         raise NotImplementedError
 
-    def k_samples(self, states: List[SamplerState[State]], n: List[int]) \
+    def batch_k_samples(self, states: List[SamplerState[State]],
+                        ks: List[int]) \
             -> Generator[DuplicatedSamplerState[State], None, None]:
         raise NotImplementedError
 
@@ -84,8 +85,9 @@ def transform(sampler: Sampler[Input, Output1, State],
                 -> Generator[DuplicatedSamplerState[State], None, None]:
             return self.sampler.top_k_samples(states, k)
 
-        def k_samples(self, states: List[SamplerState[State]], n: List[int]) \
+        def batch_k_samples(self, states: List[SamplerState[State]],
+                            ks: List[int]) \
                 -> Generator[DuplicatedSamplerState[State], None, None]:
-            return self.sampler.k_samples(states, n)
+            return self.sampler.batch_k_samples(states, ks)
 
     return TransformedSampler(sampler, transform)

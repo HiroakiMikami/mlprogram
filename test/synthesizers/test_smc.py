@@ -21,9 +21,9 @@ class MockSampler(Sampler[str, str, Tuple[str, str]]):
         else:
             return x, self.finish
 
-    def k_samples(self, states: List[SamplerState[Tuple[str, str]]],
-                  n: List[int]):
-        for state, k in zip(states, n):
+    def batch_k_samples(self, states: List[SamplerState[Tuple[str, str]]],
+                        ks: List[int]):
+        for state, k in zip(states, ks):
             elems = len(state.state[1])
             if len(state.state[0]) > elems:
                 gt: Optional[str] = state.state[0][elems]

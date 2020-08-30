@@ -65,11 +65,11 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
              if statement.reference not in unused_reference])
         return code, False
 
-    def k_samples(self, states: List[SamplerState[Dict[str, Any]]],
-                  n: List[int]) \
+    def batch_k_samples(self, states: List[SamplerState[Dict[str, Any]]],
+                        ks: List[int]) \
             -> Generator[DuplicatedSamplerState[Dict[str, Any]],
                          None, None]:
-        with logger.block("k_samples"):
+        with logger.block("batch_k_samples"):
             def find_variables(node: AST) -> Set[Reference]:
                 retval: Set[Reference] = set()
                 if isinstance(node, Node):
@@ -84,7 +84,7 @@ class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
                         retval.add(node.value)
                 return retval
 
-            for state, k in zip(states, n):
+            for state, k in zip(states, ks):
                 cnt = 0
                 for result in self.synthesizer(state.state,
                                                n_required_output=k):

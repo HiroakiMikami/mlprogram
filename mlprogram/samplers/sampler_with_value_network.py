@@ -34,14 +34,15 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
             -> Optional[Tuple[Output, bool]]:
         return self.sampler.create_output(input, state)
 
-    def k_samples(self, states: List[SamplerState[State]], n: List[int]) \
+    def batch_k_samples(self, states: List[SamplerState[State]],
+                        ks: List[int]) \
             -> Generator[DuplicatedSamplerState[State],
                          None, None]:
-        with logger.block("k_samples"):
+        with logger.block("batch_k_samples"):
             self.value_network.eval()
             outputs = []
             value_network_inputs = []
-            for state in self.sampler.k_samples(states, n):
+            for state in self.sampler.batch_k_samples(states, ks):
                 input = self.transform(state.state.state)
                 outputs.append(state)
                 value_network_inputs.append(input)
