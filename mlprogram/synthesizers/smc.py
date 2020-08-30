@@ -51,13 +51,16 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                     n_particle
                 )]
                 step = 0
-                while step < self.max_step_size:
+                while step < self.max_step_size and n_particle > 0:
                     # Generate particles
                     samples: Dict[Key, DuplicatedSamplerState[State]] = {}
                     for sample in self.sampler.k_samples(
                         [state.state for state in particles],
                         [state.num for state in particles]
                     ):
+                        if sample.num == 0:
+                            # This sample does not exist
+                            continue
                         key = self.to_key(sample.state.state)
                         if key in samples:
                             state = samples[key]
@@ -69,6 +72,15 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                             samples[key] = sample
 
                     if len(samples) == 0:
+                        # Output last particle with is_finished=True
+                        for state in particles:
+                            output_opt = \
+                                self.sampler.create_output(input,
+                                                           state.state.state)
+                            if output_opt is not None:
+                                output, _ = output_opt
+                                yield Result(output, state.state.score,
+                                             True, state.num)
                         break
 
                     # Resample
@@ -89,10 +101,8 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                             output, is_finished = output_opt
                             if step == self.max_step_size - 1:
                                 is_finished = True
-                            # TODO dump output with the size of 0 if required
-                            if n > 0:
-                                yield Result(output, state.state.score,
-                                             is_finished, n)
+                            yield Result(output, state.state.score,
+                                         is_finished, n)
                         else:
                             is_finished = False
 
