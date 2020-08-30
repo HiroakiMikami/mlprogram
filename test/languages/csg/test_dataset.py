@@ -11,7 +11,7 @@ class TestDataset(unittest.TestCase):
             break
 
     def test_multiprocess_loader(self):
-        torch.manual_seed(0)
+        torch.manual_seed(1)
         dataset = Dataset(2, 1, 1, 1, 45)
         loader = torch.utils.data.DataLoader(dataset, 2, num_workers=2,
                                              collate_fn=lambda x: x)
