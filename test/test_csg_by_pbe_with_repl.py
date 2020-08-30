@@ -147,8 +147,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 synthesizer,
                 metrics.TestCaseResult(interpreter, reference=True,
                                        use_input=True, metric=metrics.Iou()),
-                0.9,
-                n_output_if_empty=0
+                0.9
             )
 
     def interpreter(self):
@@ -339,7 +338,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 Epoch(30), interval=Epoch(10),
                 num_models=1,
                 use_pretrained_model=True,
-                use_pretrained_optimizer=True)
+                use_pretrained_optimizer=False)
 
     def test(self):
         torch.manual_seed(0)
@@ -349,7 +348,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             results = self.evaluate(dataset, encoder, tmpdir)
-        self.assertLessEqual(1.0, results.generation_rate)
+        self.assertLessEqual(0.9, results.generation_rate)
 
 
 if __name__ == "__main__":

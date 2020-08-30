@@ -5,6 +5,8 @@ import logging
 from dummy_dataset import is_subtype, train_dataset, test_dataset
 import tempfile
 import os
+import numpy as np
+import random
 
 import torch
 import torch.nn as nn
@@ -171,7 +173,9 @@ class TestTreeGen(unittest.TestCase):
         return encoder
 
     def test(self):
-        torch.manual_seed(0)
+        torch.manual_seed(1)
+        np.random.seed(1)
+        random.seed(1)
         with tempfile.TemporaryDirectory() as tmpdir:
             encoder = self.train(tmpdir)
             results = self.evaluate(*encoder, tmpdir)
