@@ -194,11 +194,11 @@ def train_supervised(workspace_dir: str, output_dir: str,
             for batch in logger.iterable_block("iteration", loader):
                 if manager.updater.iteration >= n_iter:
                     break
+                if len(batch) == 0:
+                    logger.warning(
+                        f"Skip {manager.updater.iteration} th batch")
+                    continue
                 with manager.run_iteration():
-                    if len(batch) == 0:
-                        logger.warning(
-                            f"Skip {manager.updater.iteration} th batch")
-                        continue
                     logger.debug("batch:")
                     for key, value in batch.items():
                         if isinstance(value, torch.Tensor):
@@ -349,6 +349,10 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 if len(rollouts) == 0:
                     logger.warning("No rollout")
                     continue
+                if len(rollouts) != n_rollout:
+                    logger.warning(
+                        "#rollout is unexpected: "
+                        f"expected={n_rollout} actual={len(rollouts)}")
 
                 with manager.run_iteration():
                     with logger.block("collate"):
