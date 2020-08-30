@@ -226,7 +226,7 @@ synthesizer:
           x: 5 # up to (3~5)*max_object nodes are requried to create AST
           y: "@/option.evaluate_max_object"
       initial_particle_size: 100
-      max_try_num: 100
+      max_try_num: 50
       sampler: "@/sampler"
       to_key:
           type: mlprogram.utils.Pick
