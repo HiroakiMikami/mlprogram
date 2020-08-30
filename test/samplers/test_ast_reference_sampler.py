@@ -28,6 +28,46 @@ class MockEncoder(nn.Module):
 
 
 class TestAstReferenceSampler(unittest.TestCase):
+    def test_create_output(self):
+        asts = [
+            Node("def", [Field("name", "str", Leaf("str", "f"))]),
+            Node("int", [Field("value", "int", Leaf("int", "10"))]),
+            Node("float", [Field("value", "float", Leaf("float", "10.0"))]),
+        ]
+        sampler = AstReferenceSampler(
+            MockSynthesizer(asts),
+            lambda x: {"x": x},
+            Collate(torch.device("cpu")),
+            MockEncoder(),
+            to_code=lambda x: x)
+        self.assertEqual(
+            None,
+            sampler.create_output(None, {"code": SequentialProgram([])}))
+        self.assertEqual(
+            (SequentialProgram([
+                Statement(Reference("v0"), "tmp")
+            ]), False),
+            sampler.create_output(None, {
+                "code": SequentialProgram([
+                    Statement(Reference("v0"), "tmp")
+                ]),
+                "unused_reference": [Token(None, Reference("v0"))]
+            }))
+        self.assertEqual(
+            (SequentialProgram([
+                Statement(Reference("v1"), "tmp")
+            ]), False),
+            sampler.create_output(None, {
+                "code": SequentialProgram([
+                    Statement(Reference("v0"), "tmp2"),
+                    Statement(Reference("v1"), "tmp")
+                ]),
+                "unused_reference": [
+                    Token(None, Reference("v0")),
+                    Token(None, Reference("v1"))
+                ]
+            }))
+
     def test_ast_set_sample(self):
         asts = [
             Node("def", [Field("name", "str", Leaf("str", "f"))]),
@@ -49,6 +89,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 SamplerState(1, {
                     "x": 0,
                     "reference": [Token("def", Reference("v0"))],
+                    "unused_reference": [Token("def", Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[0])])
                 }),
@@ -60,6 +101,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 SamplerState(0.5, {
                     "x": 0,
                     "reference": [Token("int", Reference("v0"))],
+                    "unused_reference": [Token("int", Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[1])])
                 }),
@@ -71,6 +113,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 SamplerState(1.0 / 3, {
                     "x": 0,
                     "reference": [Token("float", Reference("v0"))],
+                    "unused_reference": [Token("float", Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[2])])
                 }),
@@ -92,6 +135,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             to_code=lambda x: x)
         zero = SamplerState(0, sampler.initialize(0))
         zero.state["reference"] = [Token("str", Reference("v0"))]
+        zero.state["unused_reference"] = [Token("str", Reference("v0"))]
         zero.state["code"] = \
             SequentialProgram([Statement(Reference("v0"), ast)])
         samples = list(sampler.k_samples([zero], [1]))
@@ -102,6 +146,7 @@ class TestAstReferenceSampler(unittest.TestCase):
                 SamplerState(1, {
                     "x": 0,
                     "reference": [Token("def", Reference("v1"))],
+                    "unused_reference": [Token("def", Reference("v1"))],
                     "code": SequentialProgram([
                         Statement(Reference("v0"), ast),
                         Statement(Reference("v1"), asts[0])])
