@@ -22,23 +22,6 @@ class TestFilteredSynthesizer(unittest.TestCase):
         self.assertEqual(1, len(candidates))
         self.assertEqual(0, candidates[0].output)
 
-    def test_output_topk_if_al_outputs_filtered(self):
-        synthesizer = FilteredSynthesizer(
-            MockSynthesizer([0.3, 0.5, 0]),
-            lambda x, y: 1.0 if y in x["input"] else y,
-            0.9, n_output_if_empty=1)
-        candidates = list(synthesizer({"input": [10]}))
-        self.assertEqual(1, len(candidates))
-        self.assertEqual(0.5, candidates[0].output)
-
-        synthesizer = FilteredSynthesizer(
-            MockSynthesizer([0.3, 0.5, 0]),
-            lambda x, y: 1.0 if y in x["input"] else y,
-            0.9, n_output_if_empty=1, metric="original_score")
-        candidates = list(synthesizer({"input": [10]}))
-        self.assertEqual(1, len(candidates))
-        self.assertEqual(0.3, candidates[0].output)
-
 
 if __name__ == "__main__":
     unittest.main()

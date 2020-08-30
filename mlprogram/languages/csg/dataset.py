@@ -133,7 +133,7 @@ class Dataset(IterableDataset):
         if worker_info is None:
             seed = self.seed
         else:
-            seed = self.seed + worker_info.id
+            seed = (self.seed * (worker_info.id + 1)) % (2 ** 32 - 1)
         rng = np.random.RandomState(seed)
 
         class InternalIterator:

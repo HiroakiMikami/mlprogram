@@ -240,7 +240,6 @@ synthesizer:
     metric:
       type: mlprogram.metrics.Iou
   threshold: 0.9
-  n_output_if_empty: 0
 
 transform:
     type: mlprogram.utils.Sequence
