@@ -4,7 +4,7 @@ import random
 import numpy as np
 import os
 import tempfile
-import logging
+import logging as L
 import cProfile
 import torch
 from torch import multiprocessing
@@ -12,8 +12,9 @@ from torch.autograd.profiler import profile
 from typing import Optional, Any
 from mlprogram.entrypoint.parse import parse_config, load_config
 from mlprogram import distributed
+from mlprogram.utils import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.Logger(__name__)
 
 
 def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
@@ -103,6 +104,8 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
 
 def launch(config_file: str, option: Optional[str], tmpdir: str,
            rank: Optional[int], n_process: Optional[int]):
+    logging.set_level(L.INFO)
+
     logger.info(f"Launch config file: {config_file}")
     configs = load_config(config_file)
     if option == "test":
