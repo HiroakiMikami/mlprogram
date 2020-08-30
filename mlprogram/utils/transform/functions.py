@@ -1,77 +1,53 @@
-import torch
 import numpy as np
 
-from mlprogram.utils.data import ListDataset
-from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.ast.action import ActionSequence
-from mlprogram.ast.evaluator import Evaluator
-from typing import List, Callable, Tuple, Any, Optional
+from mlprogram.interpreters import Interpreter
+from typing import Any, Optional, Dict, Callable, TypeVar, Generic
+
+Code = TypeVar("Code")
 
 
-class TransformCode:
-    def __init__(self,
-                 to_action_sequence: Callable[[Any],
-                                              Optional[ActionSequence]]):
-        self.to_action_sequence = to_action_sequence
+class NormalizeGroudTruth(Generic[Code]):
+    def __init__(self, normalize: Callable[[Code], Optional[Code]]):
+        self.normalize = normalize
 
-    def __call__(self, code: Any) -> Optional[Evaluator]:
-        action_sequence = self.to_action_sequence(code)
-        if action_sequence is None:
-            return None
-        evaluator = Evaluator(options=action_sequence.options)
-        for action in action_sequence.sequence:
-            evaluator.eval(action)
-        return evaluator
-
-
-class TransformGroundTruth:
-    def __init__(self,
-                 action_sequence_encoder: ActionSequenceEncoder):
-
-        self.action_sequence_encoder = action_sequence_encoder
-
-    def __call__(self, evaluator: Evaluator, query_for_synth: List[str]) \
-            -> Optional[torch.Tensor]:
-        a = self.action_sequence_encoder.encode_action(evaluator,
-                                                       query_for_synth)
-        if a is None:
-            return None
-        if np.any(a[-1, :].numpy() != -1):
-            return None
-        ground_truth = a[1:-1, 1:]
-        return ground_truth
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        gts = []
+        for gt in entry["ground_truth"]:
+            norm_gt = self.normalize(gt)
+            if norm_gt is None:
+                norm_gt = gt
+            gts.append(norm_gt)
+        entry["ground_truth"] = gts
+        return entry
 
 
-class TransformDataset:
-    def __init__(self,
-                 transform_input: Callable[[Any], Tuple[List[str], Any]],
-                 transform_code: Callable[[Any], Optional[Evaluator]],
-                 transform_evaluator: Callable[[Evaluator, List[str]],
-                                               Optional[Any]],
-                 transform_ground_truth: Callable[[Evaluator, List[str]],
-                                                  Optional[torch.Tensor]]):
-        self.transform_input = transform_input
-        self.transform_code = transform_code
-        self.transform_evaluator = transform_evaluator
-        self.transform_ground_truth = transform_ground_truth
+class EvaluateGroundTruth:
+    def __init__(self, interpreter: Interpreter, reference: bool = False):
+        self.interpreter = interpreter
+        self.reference = reference
 
-    def __call__(self, dataset: torch.utils.data.Dataset) \
-            -> torch.utils.data.Dataset:
-        entries = []
-        for group in dataset:
-            for entry in group:
-                query_for_synth, input_tensor = \
-                    self.transform_input(entry.input)
-                evaluator = self.transform_code(entry.ground_truth)
-                if evaluator is None:
-                    continue
-                tmp = self.transform_evaluator(
-                    evaluator, query_for_synth)
-                ground_truth = self.transform_ground_truth(
-                    evaluator, query_for_synth)
-                if ground_truth is None or tmp is None:
-                    continue
-                action_sequence, query = tmp
-                entries.append((input_tensor, action_sequence, query,
-                                ground_truth))
-        return ListDataset(entries)
+    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        gts = entry["ground_truth"]
+        input = []
+        for gt in gts:
+            if self.reference:
+                results = self.interpreter.eval_references(gt)
+                input.append(results[gt.statements[-1].reference])
+            else:
+                input.append(self.interpreter.eval(gt))
+
+        entry["input"] = input
+        return entry
+
+
+class RandomChoice:
+    def __init__(self, rng: Optional[np.random.RandomState] = None):
+        self.rng = \
+            rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
+
+    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        output = {}
+        for key, value in entry.items():
+            idx = self.rng.randint(0, len(value))
+            output[key] = value[idx]
+        return output

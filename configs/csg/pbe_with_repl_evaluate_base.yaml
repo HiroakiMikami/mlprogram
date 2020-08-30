@@ -1,0 +1,38 @@
+imports:
+    - "pbe_with_repl_base.yaml"
+
+output_dir: "output/output"
+
+encoder:
+  type: mlprogram.utils.load
+  file:
+    type: os.path.join
+    args:
+      - "@/output_dir"
+      - "encoder.pt"
+
+synthesizer:
+  type: mlprogram.synthesizers.FilteredSynthesizer
+  synthesizer: "@/evaluate_synthesizer"
+  score:
+    type: mlprogram.metrics.TestCaseResult
+    interpreter: "@/interpreter"
+    reference: True
+    use_input: True
+    metric:
+      type: mlprogram.metrics.Iou
+  threshold: 0.9
+
+main:
+  type: mlprogram.entrypoint.evaluate
+  workspace_dir: "output/workspace"
+  input_dir: "@/output_dir"
+  output_dir: "@/output_dir"
+  test_dataset: "@/test_dataset"
+  valid_dataset: "@/valid_dataset"
+  model: "@/model"
+  synthesizer: "@/synthesizer"
+  metrics: {}
+  main_metric: "generation"
+  top_n: []
+  device: "@/device"

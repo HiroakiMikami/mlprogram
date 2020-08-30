@@ -47,7 +47,10 @@ class PointerNet(nn.Module):
         mask = value.mask.reshape([1, Lv, N]).expand(
             [Lk, Lv, N])  # (Lk, Lv, N)
         xi = self.v(trans).reshape([Lk, Lv, N])  # (Lk, Lv, N)
+        exp_xi_sum = torch.sum(torch.exp(xi) * mask.to(xi.dtype),
+                               dim=1, keepdim=True)
+        exp_xi_sum = torch.where(exp_xi_sum == 0, torch.ones_like(exp_xi_sum),
+                                 exp_xi_sum)
         scores = xi - \
-            torch.log(torch.sum(torch.exp(xi) * mask.to(xi.dtype),
-                                dim=1, keepdim=True))
+            torch.log(exp_xi_sum)
         return scores.permute([0, 2, 1])  # (Lk, N, Lv)

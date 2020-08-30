@@ -2,19 +2,20 @@ from setuptools import setup, find_packages
 import sys
 
 requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex",
-            "gin-config @ git+https://github.com/google/gin-config.git"]
+            "pytorch-pfn-extras", "tqdm", "pyyaml"]
 
 if sys.version_info.major == 3 and sys.version_info.minor < 7:
     requires.append("dataclasses")
 
 extras = {
-    "test": ["flake8", "autopep8", "fairseq", "mypy"],
+    "test": ["flake8", "autopep8", "fairseq", "mypy", "timeout-decorator"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }
 
 setup(
     name="mlprogram",
+    version="0.1.0",
     install_requires=requires,
     test_requires=extras["test"],
     colab_requires=extras["colab"],

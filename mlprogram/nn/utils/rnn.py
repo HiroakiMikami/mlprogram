@@ -33,6 +33,13 @@ def pad_sequence(sequences: List[torch.FloatTensor],
     PaddedSequenceWithMask
         The padded tensor and its mask tensor
     """
+    data = torch.nn.utils.rnn.pad_sequence(sequences,
+                                           padding_value=padding_value)
+    L, B = data.shape[:2]
+    mask = torch.zeros(L, B, device=data.device)
+    for i in range(B):
+        mask[:len(sequences[i]), i] = 1
+    return PaddedSequenceWithMask(data, mask)
     return pad_packed_sequence(
         torch.nn.utils.rnn.pack_sequence(sequences, enforce_sorted=False),
         padding_value=padding_value)

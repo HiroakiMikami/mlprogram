@@ -25,6 +25,7 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
         self.assertEqual((1, 5, 5), weight.shape)
 
     def test_dependency(self):
+        torch.manual_seed(0)
         block = ActionSequenceReaderBlock(2, 3, 1, 3, 0.0, 0)
         in0 = torch.rand(3, 3)
         depth = torch.randint(3, [3, 1])
@@ -42,6 +43,7 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
                                     weight1.detach().numpy()))
 
     def test_mask(self):
+        torch.manual_seed(0)
         block = ActionSequenceReaderBlock(2, 3, 1, 3, 0.0, 0)
         in00 = torch.rand(5, 3)
         in01 = torch.rand(7, 3)
@@ -73,11 +75,17 @@ class TestActionSequenceReader(unittest.TestCase):
         in1 = torch.zeros(5, 4, 3).long()
         in1 = pad_sequence([in1], 0)
         adj = torch.Tensor(1, 5, 5)
-        out = reader((in0, in1, depth, adj))
+        out = reader({
+            "previous_actions": in0,
+            "previous_action_rules": in1,
+            "depthes": depth,
+            "adjacency_matrix": adj
+        })["action_features"]
         self.assertEqual((5, 1, 3), out.data.shape)
         self.assertEqual((5, 1), out.mask.shape)
 
     def test_mask(self):
+        torch.manual_seed(0)
         reader = ActionSequenceReader(1, 1, 1, 3, 2, 3, 1, 3, 0.0, 5)
         in00 = torch.zeros(5, 3).long()
         in01 = torch.zeros(7, 3).long()
@@ -85,10 +93,18 @@ class TestActionSequenceReader(unittest.TestCase):
         in10 = torch.zeros(5, 4, 3).long()
         in11 = torch.zeros(7, 4, 3).long()
         adj = torch.randint(1, [2, 7, 7]).bool().long()
-        out0 = reader((pad_sequence([in00, in01], 0),
-                       pad_sequence([in10, in11], 0), depth, adj))
-        out1 = reader((pad_sequence([in00], 0), pad_sequence([in10], 0),
-                       depth[:5, :1], adj[:1, :5, :5]))
+        out0 = reader({
+            "previous_actions": pad_sequence([in00, in01], 0),
+            "previous_action_rules": pad_sequence([in10, in11], 0),
+            "depthes": depth,
+            "adjacency_matrix": adj
+        })["action_features"]
+        out1 = reader({
+            "previous_actions": pad_sequence([in00], 0),
+            "previous_action_rules": pad_sequence([in10], 0),
+            "depthes": depth[:5, :1],
+            "adjacency_matrix": adj[:1, :5, :5]
+        })["action_features"]
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
         self.assertTrue(np.allclose(out0.detach().numpy(),

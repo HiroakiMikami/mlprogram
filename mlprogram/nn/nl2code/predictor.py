@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Dict, Any, cast
 
 from mlprogram.nn.nl2code import ActionSequenceReader
 from mlprogram.nn import PointerNet
@@ -35,7 +35,7 @@ class Predictor(nn.Module):
             EmbeddingInverse(self._reader._token_embed.num_embeddings)
         self._l_rule = nn.Linear(hidden_size, embedding_size)
         self._l_token = nn.Linear(hidden_size + query_size, embedding_size)
-        self._l_generate = nn.Linear(hidden_size, 2)
+        self._l_generate = nn.Linear(hidden_size, 3)
         self._pointer_net = PointerNet(
             hidden_size + query_size, query_size, att_hidden_size)
         nn.init.xavier_uniform_(self._l_rule.weight)
@@ -45,45 +45,45 @@ class Predictor(nn.Module):
         nn.init.xavier_uniform_(self._l_generate.weight)
         nn.init.zeros_(self._l_generate.bias)
 
-    def forward(self, nl_feature: PaddedSequenceWithMask,
-                feature: Tuple[PaddedSequenceWithMask,
-                               PaddedSequenceWithMask]) \
-            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask,
-                     PaddedSequenceWithMask]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------
-        nl_feature: PaddedSequenceWithMask
+        reference_features: PaddedSequenceWithMask
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
-        feature:
-            output: PaddedSequenceWithMask
+        action_features: PaddedSequenceWithMask
                 Packed sequence containing the output hidden states.
-            contexts: PaddedSequenceWithMask
+        action_contexts: PaddedSequenceWithMask
                 Packed sequence containing the context vectors.
 
         Returns
         -------
-        rule_prob: PaddedSequenceWithMask
+        rule_probs: PaddedSequenceWithMask
             (L_ast, N, rule_size) where L_ast is the sequence length,
             N is the batch_size.
-        token_prob: PaddedSequenceWithMask
+        token_probs: PaddedSequenceWithMask
            (L_ast, N, token_size) where L_ast is the sequence length,
             N is the batch_size.
-        copy_prob: PaddedSequenceWithMask
+        reference_probs: PaddedSequenceWithMask
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
-        L_q, B, _ = nl_feature.data.shape
-        output, contexts = feature
+        reference_features = cast(PaddedSequenceWithMask,
+                                  inputs["reference_features"])
+        action_features = cast(PaddedSequenceWithMask,
+                               inputs["action_features"])
+        action_contexts = cast(PaddedSequenceWithMask,
+                               inputs["action_contexts"])
+        L_q, B, _ = reference_features.data.shape
 
         # Decode embeddings
         # (L_a, B, hidden_size + query_size)
-        dc = torch.cat([output.data, contexts.data], dim=2)
+        dc = torch.cat([action_features.data, action_contexts.data], dim=2)
 
         # Calculate probabilities
         # (L_a, B, embedding_size)
-        rule_pred = torch.tanh(self._l_rule(output.data))
+        rule_pred = torch.tanh(self._l_rule(action_features.data))
         rule_pred = self._rule_embed_inv(
             rule_pred,
             self._reader._rule_embed)  # (L_a, B, num_rules + 1)
@@ -97,18 +97,31 @@ class Predictor(nn.Module):
         token_pred = torch.softmax(
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
-        copy_pred = self._pointer_net(dc, nl_feature)  # (L_a, B, query_length)
-        copy_pred = torch.exp(copy_pred)
-        copy_pred = copy_pred * \
-            nl_feature.mask.permute(1, 0).view(1, B, L_q).to(copy_pred.dtype)
+        # (L_a, B, query_length)
+        reference_pred = self._pointer_net(dc, reference_features)
+        reference_pred = torch.exp(reference_pred)
+        reference_pred = reference_pred * \
+            reference_features.mask.permute(1, 0).view(1, B, L_q)\
+            .to(reference_pred.dtype)
 
         generate_pred = torch.softmax(
-            self._l_generate(output.data), dim=2)  # (L_a, B, 2)
-        token, copy = torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
+            self._l_generate(action_features.data), dim=2)  # (L_a, B, 2)
+        rule, token, reference = \
+            torch.split(generate_pred, 1, dim=2)  # (L_a, B, 1)
 
+        rule_pred = rule * rule_pred
         token_pred = token * token_pred  # (L_a, B, num_tokens)
-        copy_pred = copy * copy_pred  # (L_a, B, query_length)
+        reference_pred = reference * reference_pred  # (L_a, B, query_length)
 
-        return (PaddedSequenceWithMask(rule_pred, output.mask),
-                PaddedSequenceWithMask(token_pred, output.mask),
-                PaddedSequenceWithMask(copy_pred, output.mask))
+        if self.training:
+            inputs["rule_probs"] = \
+                PaddedSequenceWithMask(rule_pred, action_features.mask)
+            inputs["token_probs"] = \
+                PaddedSequenceWithMask(token_pred, action_features.mask)
+            inputs["reference_probs"] = \
+                PaddedSequenceWithMask(reference_pred, action_features.mask)
+        else:
+            inputs["rule_probs"] = rule_pred[-1, :, :]
+            inputs["token_probs"] = token_pred[-1, :, :]
+            inputs["reference_probs"] = reference_pred[-1, :, :]
+        return inputs

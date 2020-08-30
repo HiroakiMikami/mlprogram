@@ -1,0 +1,7 @@
+imports:
+    - "pbe_with_repl_train_base.yaml"
+
+option:
+  type: select
+  key: small
+  options: "@/options"

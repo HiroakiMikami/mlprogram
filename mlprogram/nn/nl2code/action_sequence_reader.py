@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Dict, cast, Any
 
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn import EmbeddingWithMask
@@ -39,39 +39,37 @@ class ActionSequenceReader(nn.Module):
         nn.init.normal_(self._token_embed.weight, std=0.01)
         nn.init.normal_(self._node_type_embed.weight, std=0.01)
 
-    def forward(self,
-                action_sequence: Tuple[PaddedSequenceWithMask,
-                                       PaddedSequenceWithMask]) \
-            -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask]:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------
-        action_sequence:
-            action: rnn.PackedSequenceWithMask
-                The input sequence of action. Each action is represented by
-                the tuple of (ID of the node types, ID of the parent-action's
-                rule, the index of the parent action).
-                The padding value should be -1.
-            previous_action: rnn.PackedSequenceWithMask
-                The input sequence of previous action. Each action is
-                represented by the tuple of (ID of the applied rule, ID of
-                the inserted token, the index of the word copied from
-                the query).
-                The padding value should be -1.
+        actions: rnn.PackedSequenceWithMask
+            The input sequence of action. Each action is represented by
+            the tuple of (ID of the node types, ID of the parent-action's
+            rule, the index of the parent action).
+            The padding value should be -1.
+        previous_actions: rnn.PackedSequenceWithMask
+            The input sequence of previous action. Each action is
+            represented by the tuple of (ID of the applied rule, ID of
+            the inserted token, the index of the word copied from
+            the query).
+            The padding value should be -1.
 
         Returns
         -------
-        feature: rnn.PackedSequenceWithMask
+        action_features: rnn.PackedSequenceWithMask
             The embeddings of action sequence
-        parent_index: PaddedSequenceWithMask
+        parent_indexes: PaddedSequenceWithMask
             The indexes of the parent nodes
         """
-        action, previous_action = action_sequence
-        L_a, B, _ = action.data.shape
+        actions = cast(PaddedSequenceWithMask, inputs["actions"])
+        previous_actions = cast(PaddedSequenceWithMask,
+                                inputs["previous_actions"])
+        L_a, B, _ = actions.data.shape
         node_types, parent_rule, parent_index = torch.split(
-            action.data, 1, dim=2)  # (L_a, B, 1)
+            actions.data, 1, dim=2)  # (L_a, B, 1)
         prev_rules, prev_tokens, _ = torch.split(
-            previous_action.data, 1, dim=2)  # (L_a, B, 1)
+            previous_actions.data, 1, dim=2)  # (L_a, B, 1)
 
         # Change the padding value
         node_types = node_types + \
@@ -100,5 +98,8 @@ class ActionSequenceReader(nn.Module):
         feature = torch.cat(
             [prev_action_embed, node_type_embed, parent_rule_embed],
             dim=2)  # (L_a, B, input_size)
-        return PaddedSequenceWithMask(feature, action.mask), \
-            PaddedSequenceWithMask(parent_index, action.mask)
+        inputs["action_features"] = \
+            PaddedSequenceWithMask(feature, actions.mask)
+        inputs["parent_indexes"] = \
+            PaddedSequenceWithMask(parent_index, actions.mask)
+        return inputs

@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Tuple, Dict, Any, cast
 
 from mlprogram.nn import TreeConvolution
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
     import index_embeddings, position_embeddings, gelu, lne_to_nel, nel_to_lne
-from .gating import Gating
-from .embedding \
+from mlprogram.nn.treegen.gating import Gating
+from mlprogram.nn.treegen.embedding \
     import ActionEmbedding, ActionSignatureEmbedding, ElementEmbedding
 
 
@@ -116,44 +116,44 @@ class ActionSequenceReader(nn.Module):
                                      hidden_size),
             max_arity + 1, hidden_size, rule_embed_size)
 
-    def forward(self,
-                action_sequence: Tuple[PaddedSequenceWithMask,
-                                       PaddedSequenceWithMask,
-                                       torch.Tensor, torch.Tensor]) -> \
-            PaddedSequenceWithMask:
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parameters
         ----------
-        action_sequence
-            previous_aciton: rnn.PaddedSequenceWithMask
-                The previous action sequence.
-                The encoded tensor with the shape of
-                (len(action_sequence) + 1, 3). Each action will be encoded by
-                the tuple of (ID of the applied rule, ID of the inserted token,
-                the index of the word copied from the query).
-                The padding value should be -1.
-            rule_previous_action: rnn.PaddedSequenceWithMask
-                The rule of previous action sequence.
-                The shape of each sequence is
-                (action_length, max_arity + 1, 3).
-            depth: torch.Tensor
-                The depth of actions. The shape is (L, B) where L is the
-                sequence length, B is the batch size.
-            adjacency_matrix: torch.Tensor
-                The adjacency matrix. The shape is (B, L, L) where B is the
-                batch size, L is the sequence length.
+        previous_acitons: rnn.PaddedSequenceWithMask
+            The previous action sequence.
+            The encoded tensor with the shape of
+            (len(action_sequence) + 1, 3). Each action will be encoded by
+            the tuple of (ID of the applied rule, ID of the inserted token,
+            the index of the word copied from the query).
+            The padding value should be -1.
+        previous_action_rules: rnn.PaddedSequenceWithMask
+            The rule of previous action sequence.
+            The shape of each sequence is
+            (action_length, max_arity + 1, 3).
+        depthes: torch.Tensor
+            The depth of actions. The shape is (L, B) where L is the
+            sequence length, B is the batch size.
+        adjacency_matrix: torch.Tensor
+            The adjacency matrix. The shape is (B, L, L) where B is the
+            batch size, L is the sequence length.
 
         Returns
         -------
-        PaddedSequenceWithMask
+        action_features: PaddedSequenceWithMask
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        previous_action, rule_previous_action, depth, adjacency_matrix = \
-            action_sequence
-        e_action = self.action_embed(previous_action.data)
-        e_rule_action = self.elem_embed(rule_previous_action.data)
-        input = PaddedSequenceWithMask(e_action, previous_action.mask)
+        previous_actions = cast(PaddedSequenceWithMask,
+                                inputs["previous_actions"])
+        rule_previous_actions = cast(
+            PaddedSequenceWithMask, inputs["previous_action_rules"])
+        depthes = cast(torch.Tensor, inputs["depthes"])
+        adjacency_matrix = cast(torch.Tensor, inputs["adjacency_matrix"])
+        e_action = self.action_embed(previous_actions.data)
+        e_rule_action = self.elem_embed(rule_previous_actions.data)
+        input = PaddedSequenceWithMask(e_action, previous_actions.mask)
         for block in self.blocks:
-            input, _ = block(input, depth, e_rule_action, adjacency_matrix)
-        return input
+            input, _ = block(input, depthes, e_rule_action, adjacency_matrix)
+        inputs["action_features"] = input
+        return inputs

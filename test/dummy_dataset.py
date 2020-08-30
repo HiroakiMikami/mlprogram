@@ -1,7 +1,6 @@
-from typing import List
-from mlprogram.gin import workspace
-from mlprogram.ast.ast import AST, Node, Leaf, Field
-from mlprogram.utils.data import ListDataset, Entry
+from typing import List, Union
+from mlprogram.asts import AST, Node, Leaf, Field, Root
+from mlprogram.utils.data import ListDataset
 
 
 # Definition of dummy language
@@ -15,7 +14,9 @@ Name and Number are subtypes of Value
 """
 
 
-def is_subtype(subtype: str, basetype: str) -> bool:
+def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
+    if isinstance(basetype, Root):
+        return True
     if subtype == basetype:
         return True
     if subtype in set(["Name", "Number", "List"]) and basetype == "Value":
@@ -31,8 +32,12 @@ def number(value: int):
     return Leaf("number", str(value))
 
 
-def Name(value: str):
-    return Node("Name", [Field("value", "string", string(value))])
+def Name(value: Union[str, List[str]]):
+    if isinstance(value, list):
+        return Node("Name", [Field("value", "string",
+                                   list(map(string, value)))])
+    else:
+        return Node("Name", [Field("value", "string", string(value))])
 
 
 def Number(value: int):
@@ -50,26 +55,19 @@ def FunctionCall(name: str, args: List[AST]):
 
 
 # Dataset
-traindata = [
-    [Entry("x is assigned the value of 0", Assign("x", Number(0)))],
-    [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
-    [Entry("dump the value of xy and x",
-           FunctionCall("print", [Name("xy"), Name("x")]))]
-]
-test_dataset = ListDataset([
-    [Entry("x is assigned the value of 4", Assign("x", Number(4)))],
-    [Entry("dump the value of xy", FunctionCall("print", [Name("xy")]))],
-    [Entry("dump the value of xy and x",
-           FunctionCall("print", [Name("xy"), Name("x")]))]
+train_dataset = ListDataset([
+    {"input": ["x is assigned the value of 0"],
+     "ground_truth": [Assign("x", Number(0))]},
+    {"input": ["dump the value of xy"],
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"])])]},
+    {"input": ["dump the value of xy and x"],
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"]), Name("x")])]}
 ])
-
-
-def prepare_dataset(dataset_path: str, num_repeat: int) -> None:
-    dataset = []
-    for _ in range(num_repeat):
-        dataset.extend(traindata)
-    workspace.put(dataset_path, {
-        "train": ListDataset(dataset),
-        "test": test_dataset,
-        "valid": test_dataset
-    })
+test_dataset = ListDataset([
+    {"input": ["x is assigned the value of 4"],
+     "ground_truth": [Assign("x", Number(4))]},
+    {"input": ["dump the value of xy"],
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"])])]},
+    {"input": ["dump the value of xy and x"],
+     "ground_truth": [FunctionCall("print", [Name(["x", "y"]), Name("x")])]}
+])

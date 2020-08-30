@@ -1,14 +1,28 @@
-NL2Prog
+mlprogram
 ===
 
-This repository is a library for synthesizing programs from natural language queries.
-It provides 1) language-independent data structure for AST, 2) implementations of some NL-to-program DNNs, and 3) utilities for three commonly used datasets.
+This repository is the library of deep learning techniques for programming.
+It provides 1) implementation to handle grammars of programming languages, 2) utilities for commonly used datasets, and 3) reimplementations of some algorithms.
 
-
-Notice (Dec/7/2019)
+Notice (Sep/x/2020)
 ---
 
-I rewrote the implementation from scratch. The previous one is in the [v0.0.0 tag](https://github.com/HiroakiMikami/NL2Prog/tree/v0.0.0).
+I rewrote the implementation significantly. I uses [pytorch-pfn-extras](https://github.com/pfnet/pytorch-pfn-extras) instead of [gin-config](https://github.com/google/gin-config) as a config system.
+
+
+Purpose
+---
+
+This repository aims at providing the utilities of deep learning methods for programming. 
+Many papers have recently proposed deep learning methods for programming, such as programming by examples and auto repairing. But many methods require complex and error-prone algorithms. For example, beam search decoding with a programming language grammar is complex and unique to this task. I want to make my experiments easy by creating well-tested implementations of such algorithms.
+
+
+Warning
+---
+
+The implementation is highly experimental, and I may change it significantly.
+
+The reproduced algorithms may be different from the authors' implementations. For example, the original implementation of NL2Code uses the grammar of Python 2.7.x while this repository uses the grammar of running Python version.
 
 
 Implemented Papers
@@ -16,17 +30,10 @@ Implemented Papers
 
 ### NL2Code
 
-`nl2code_train.gin` and `nl2code_eval.gin` in `configs` directory show the usage of [NL2Code](https://arxiv.org/abs/1704.01696).
+[NL2Code](https://arxiv.org/abs/1704.01696) creates programs (ASTs) from natural language descriptions. It encodes the structure of ASTs 
+There is no big known issue.
 
-```bash
-$ python tools/launch.py --config-file configs/hearthstone/nl2code_train.gin  # Train NL2Code with GPU
-$ python tools/launch.py --config-file configs/hearthstone/nl2code_evaluate.gin  # Train NL2Code with GPU
-```
-
-
-I noticed that there are some differences between this implementation and the official one.
-The followings summarize the differences.
-
+<!--
 #### 1. version of Python
 The original implementation used Python 2.x, but this repository uses Python 3.x (I tested with the Python 3.7.4).
 
@@ -39,56 +46,50 @@ Dropout used in this repository and the original one is different. I tested drop
 #### 4. maximum length of query and action sequences
 The original implementation limits the length of the query and action sequence because Theano employes Define-and-Run style.
 This implementation does not set the maximum length because of PyTorch Define-by-Run style.
+-->
 
 
 ### TreeGen
 
-`treegen_train.gin` and `treegen_eval.gin` in `configs` directory show the usage of [TreeGen](https://arxiv.org/abs/1911.09983).
-
-```bash
-$ python tools/launch.py --config-file configs/hearthstone/treegen_train.gin  # Train TreeGen with GPU
-$ python tools/launch.py --config-file configs/hearthstone/treegen_evaluate.gin  # Train TreeGen with GPU
-```
-
-
-TreeGen is faster than NL2Code during training, however, there are the following 2 problems:
+[TreeGen](https://arxiv.org/abs/1911.09983) creates programs (ASTs) from natural language descriptions. It uses the Transformer as a DNN model.
+There are the two known issues:
 
 * The loss sometimes becomes NaN in the final phase of the training
 * The result when using Hearthstone dataset is worse than the reported value.
 
 
-Performance
+### Write, Execute, Assess: Program Synthesis with a REPL
+
+[PbE with REPL](http://arxiv.org/abs/1906.04604) creates programs (ASTs) from input/output examples. It uses reinforcement learning for better generalization.
+There are many known issues in the implementation. The most crucial one is that RL training is very unstable. I cannot improve model performance by using RL.
+
+
+Usage Examples
 ---
 
-The details of the training results are shown in `result/` directory.
+`tools/launch.py` is the launcher script and `configs` directory contains the examples.
 
-### Django
+### Train/Evaluate NL2Code with Hearthstone Dataset
 
-|Paper  |Top-1 Acc|Top-1 BLEU|
-|:---   |---:     |---:      |
-|NL2Code|42.1%    |82.6%     |
+It requires CUDA enabled GPU.
 
-### Hearthstone
-
-|Paper  |Top-1 Acc|Top-1 BLEU|
-|:---   |---:     |---:      |
-|NL2Code|4.5%     |78.8%     |
-|TreeGen|1.5%     |63.3%     |
-
-### NL2Bash
-
-|Paper   |Top-1 Acc|Top-1 BLEU|Top-3 Acc|Top-3 BLEU|
-|:---    |---:     |---:      |---:     |---:      |
-|NL2Code |9.5%     |57.8%     |15.6%    |65.7%     |
+```bash
+$ python tools/launch.py --config configs/nl2code/nl2code_train.yaml
+$ python tools/launch.py --config configs/nl2code/nl2code_evaluate.yaml
+```
 
 
-References
+### Run Job in Colab
+
+`tools/colab_gpu.ipynb` and `tools/colab_cpu.ipynb` can be used to launch jobs in Colab.
+
+
+Reference
 ---
 
-* [A Syntactic Neural Model for General-Purpose Code Generation, ACL2017](https://arxiv.org/abs/1704.01696)
-* [TreeGen: A Tree-Based Transformer Architecture for Code Generation](https://arxiv.org/abs/1911.09983)
 * [the official GitHub repository of NL2Code](https://github.com/pcyin/NL2code/)
 * [the official GitHub repository of TreeGen](https://github.com/zysszy/TreeGen)
+* [the official GitHub repository of PbE with REPL](https://github.com/flxsosa/ProgramSearch)
 * [Learning to Generate Pseudo-code from Source Code Using Statistical Machine Translation, ACE2-15](https://ieeexplore.ieee.org/document/7372045)
 * [Latent Predictor Networks for Code Generation](https://arxiv.org/abs/1603.06744)
 * [nl2bash](https://github.com/TellinaTool/nl2bash)

@@ -1,0 +1,134 @@
+imports:
+  - "treegen_base.yaml"
+
+output_dir: "output/output"
+
+dataset:
+  type: mlprogram.datasets.hearthstone.download
+train_dataset: "@/dataset.train"
+
+words:
+  type: mlprogram.utils.data.get_words
+  dataset: "@/train_dataset"
+  extract_query:
+    type: mlprogram.datasets.hearthstone.TokenizeQuery
+chars:
+  type: mlprogram.utils.data.get_characters
+  dataset: "@/train_dataset"
+  extract_query:
+    type: mlprogram.datasets.hearthstone.TokenizeQuery
+samples:
+  type: mlprogram.utils.data.get_samples
+  dataset: "@/train_dataset"
+  to_action_sequence: "@/to_action_sequence"
+
+encoder:
+  word_encoder:
+    type: mlprogram.utils.save
+    file:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "word_encoder.pt"
+    obj:
+      type: torchnlp.encoders.LabelEncoder
+      sample: "@/words"
+      min_occurrences: 3
+  char_encoder:
+    type: mlprogram.utils.save
+    file:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "char_encoder.pt"
+    obj:
+      type: torchnlp.encoders.LabelEncoder
+      sample: "@/chars"
+      min_occurrences: 0
+  action_sequence_encoder:
+    type: mlprogram.utils.save
+    file:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "action_sequence_encoder.pt"
+    obj:
+      type: mlprogram.encoders.ActionSequenceEncoder
+      samples: "@/samples"
+      token_threshold: 0
+
+transform:
+  type: mlprogram.utils.Sequence
+  funcs:
+    type: collections.OrderedDict
+    items:
+      - - "random choice"
+        - type: mlprogram.utils.transform.RandomChoice
+      - - "transform_input"
+        - type: mlprogram.utils.transform.treegen.TransformQuery
+          extract_query:
+            type: mlprogram.datasets.hearthstone.TokenizeQuery
+          word_encoder: "@/encoder.word_encoder"
+          char_encoder: "@/encoder.char_encoder"
+          max_word_length: 128
+      - - "transform_code"
+        - type: mlprogram.utils.transform.action_sequence.TransformCode
+          to_action_sequence: "@/to_action_sequence"
+      - - "transform_action_sequence"
+        - type: mlprogram.utils.transform.treegen.TransformActionSequence
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+          max_arity: 128
+          max_depth: 128
+          train: true
+      - - "transform_ground_truth"
+        - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+
+optimizer:
+  type: torch.optim.Optimizer
+  optimizer_cls:
+    type: fairseq.optim.Adafactor
+  model: "@/model"
+
+main:
+  type: mlprogram.entrypoint.train_supervised
+  workspace_dir: "output/workspace"
+  output_dir: "@/output_dir"
+  dataset: "@/train_dataset"
+  model: "@/model"
+  optimizer: "@/optimizer"
+  loss:
+    type: torch.nn.Sequential
+    modules:
+      type: collections.OrderedDict
+      items:
+        - - "loss"
+          - type: mlprogram.nn.action_sequence.Loss
+        - - "pick"
+          - type: mlprogram.nn.Pick
+            key: "action_sequence_loss"
+  score:
+    type: torch.nn.Sequential
+    modules:
+      type: collections.OrderedDict
+      items:
+        - - "loss"
+          - type: mlprogram.nn.action_sequence.Accuracy
+        - - "pick"
+          - type: mlprogram.nn.Pick
+            key: "action_sequence_accuracy"
+  collate:
+    type: mlprogram.utils.Compose
+    funcs:
+      type: collections.OrderedDict
+      items:
+        - - "transform"
+          - type: mlprogram.utils.Map
+            func: "@/transform"
+        - - "collate"
+          - "@/collate"
+  batch_size: 1
+  length:
+    type: mlprogram.entrypoint.train.Epoch
+    n: 25
+  device: "@/device"

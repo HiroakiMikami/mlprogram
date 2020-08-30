@@ -1,38 +1,68 @@
 import torch
-from dataclasses import dataclass
-from typing import List, Any, Callable
+from typing import List, Any, Callable, TypeVar, Generic
 
-
-@dataclass
-class Entry:
-    input: Any
-    ground_truth: Any
-
-    def __hash__(self) -> int:
-        return hash(self.input) ^ hash(self.ground_truth)
-
-    def __eq__(self, rhs: Any) -> bool:
-        if isinstance(rhs, Entry):
-            return self.input == rhs.input and \
-                self.ground_truth == rhs.ground_truth
-        else:
-            return False
-
-
-Group = List[Entry]
+V0 = TypeVar("V0")
+V1 = TypeVar("V1")
 
 
 class ListDataset(torch.utils.data.Dataset):
-    def __init__(self, elems: List[Any],
-                 transform: Callable[[Any], Any] = None):
+    def __init__(self, elems: List[Any]):
         self.elems = elems
-        self.transform = None
 
     def __len__(self) -> int:
         return len(self.elems)
 
     def __getitem__(self, idx) -> Any:
-        item = self.elems[idx]
-        if self.transform is not None:
-            return self.transform(item)
-        return item
+        return self.elems[idx]
+
+
+class TransformedDataset(torch.utils.data.Dataset, Generic[V0, V1]):
+    def __init__(self, dataset: torch.utils.data.Dataset,
+                 transform: Callable[[V0], V1]):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __getitem__(self, index: int) -> V1:
+        if isinstance(index, int):
+            return self.transform(self.dataset[index])
+        else:
+            return [self.transform(entry) for entry in self.dataset[index]]
+
+
+class TransformedIterableDataset(torch.utils.data.IterableDataset,
+                                 Generic[V0, V1]):
+    def __init__(self, dataset: torch.utils.data.IterableDataset,
+                 transform: Callable[[V0], V1]):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __iter__(self):
+        class InternalIterator:
+            def __init__(self, parent):
+                self.transform = parent.transform
+                self.iter = iter(parent.dataset)
+
+            def __next__(self) -> V1:
+                return self.transform(next(self.iter))
+        return InternalIterator(self)
+
+
+def to_map_style_dataset(dataset: torch.utils.data.IterableDataset, n: int) \
+        -> ListDataset:
+    elems = []
+    for i, x in enumerate(dataset):
+        if i == n:
+            break
+        elems.append(x)
+    return ListDataset(elems)
+
+
+def transform(dataset: torch.utils.data.Dataset,
+              transform: Callable[[V0], V1]) -> torch.utils.data.Dataset:
+    if hasattr(dataset, "__len__"):
+        return TransformedDataset(dataset, transform)
+    else:
+        return TransformedIterableDataset(dataset, transform)

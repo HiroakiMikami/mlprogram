@@ -26,7 +26,9 @@ class TestActionSequenceReader(unittest.TestCase):
         prev_action = rnn.pad_sequence(
             [prev_action0, prev_action1])  # (2, 2, 3)
 
-        feature, index = reader((action, prev_action))
+        data = reader({"actions": action, "previous_actions": prev_action})
+        feature = data["action_features"]
+        index = data["parent_indexes"]
         self.assertTrue(np.array_equal(
             [[1, 1], [0, 1]], feature.mask.numpy()))
         self.assertEqual((2, 2, 8), feature.data.shape)

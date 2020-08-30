@@ -1,0 +1,101 @@
+imports:
+    - "pbe_with_repl_base.yaml"
+
+output_dir: "output/output"
+
+encoder:
+  type: mlprogram.utils.save
+  file:
+    type: os.path.join
+    args:
+      - "@/output_dir"
+      - "encoder.pt"
+  obj:
+    type: mlprogram.encoders.ActionSequenceEncoder
+    samples:
+      type: mlprogram.languages.csg.get_samples
+      dataset: "@/dataset"
+      to_action_sequence: "@/to_action_sequence"
+    token_threshold: 0
+
+optimizer:
+    type: torch.optim.Optimizer
+    optimizer_cls:
+      type: torch.optim.Adam
+    model: "@/model"
+
+collate_fn:
+    type: mlprogram.utils.Sequence
+    funcs:
+        type: collections.OrderedDict
+        items:
+            - - "to_episode"
+              - type: mlprogram.utils.Map
+                func:
+                    type: mlprogram.utils.Compose
+                    funcs:
+                        type: collections.OrderedDict
+                        items:
+                            - - "choice"
+                              - type: mlprogram.utils.transform.RandomChoice
+                            - - "to_episode"
+                              - "@/to_episode"
+            - - "flatten"
+              - type: mlprogram.utils.Flatten
+            - - "transform"
+              - type: mlprogram.utils.Map
+                func: "@/transform"
+            - - "collate"
+              - "@/collate"
+
+batch_size: 32
+
+loss_fn:
+  type: torch.nn.Sequential
+  modules:
+    type: collections.OrderedDict
+    items:
+      - - "loss"
+        - type: mlprogram.nn.action_sequence.Loss
+          reduction: "sum"
+      - - "normalize"
+        - type: mlprogram.nn.Apply
+          in_keys:
+            - - "action_sequence_loss"
+              - "lhs"
+          out_key: action_sequence_loss
+          module:
+            type: mlprogram.nn.Div
+          constants:
+            rhs: "@/batch_size"
+      - - "pick"
+        - type: mlprogram.nn.Pick
+          key: action_sequence_loss
+main:
+  type: mlprogram.entrypoint.train_supervised
+  workspace_dir: "output/workspace_pretraining"
+  output_dir: "@/output_dir"
+  dataset: "@/train_dataset"
+  model: "@/model"
+  optimizer: "@/optimizer"
+  loss: "@/loss_fn"
+  score:
+    type: torch.nn.Sequential
+    modules:
+      type: collections.OrderedDict
+      items:
+        - - "loss"
+          - type: mlprogram.nn.action_sequence.Accuracy
+        - - "pick"
+          - type: mlprogram.nn.Pick
+            key: "action_sequence_accuracy"
+  collate: "@/collate_fn"
+  batch_size: "@/batch_size"
+  length:
+    type: mlprogram.entrypoint.train.Iteration
+    n: "@/option.n_pretrain_iteration"
+  interval:
+    type: mlprogram.entrypoint.train.Iteration
+    n: 1000
+  num_models: 0
+  device: "@/device"

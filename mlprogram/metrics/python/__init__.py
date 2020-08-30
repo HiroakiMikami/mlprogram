@@ -1,3 +1,1 @@
-from .bleu import Bleu
-
-__all__ = ["Bleu"]
+from mlprogram.metrics.python.bleu import Bleu  # noqa
