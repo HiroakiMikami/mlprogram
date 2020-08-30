@@ -15,6 +15,7 @@ extras = {
 
 setup(
     name="mlprogram",
+    version="0.1.0",
     install_requires=requires,
     test_requires=extras["test"],
     colab_requires=extras["colab"],
