@@ -4,7 +4,7 @@ mlprogram
 This repository is the library of deep learning techniques for programming.
 It provides 1) implementation to handle grammars of programming languages, 2) utilities for commonly used datasets, and 3) reimplementations of some algorithms.
 
-Notice (Sep/x/2020)
+Notice (Aug/30/2020)
 ---
 
 I rewrote the implementation significantly. I uses [pytorch-pfn-extras](https://github.com/pfnet/pytorch-pfn-extras) instead of [gin-config](https://github.com/google/gin-config) as a config system.
