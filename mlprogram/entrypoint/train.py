@@ -199,10 +199,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
                         f"Skip {manager.updater.iteration} th batch")
                     continue
                 with manager.run_iteration():
-                    logger.debug("batch:")
-                    for key, value in batch.items():
-                        if isinstance(value, torch.Tensor):
-                            logger.debug(f"\t{key}: {value.shape}")
                     with logger.block("forward"):
                         output = model(batch)
                         bloss = loss(output)
@@ -357,10 +353,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 with manager.run_iteration():
                     with logger.block("collate"):
                         batch2 = collate(rollouts)
-                    logger.debug("batch:")
-                    for key, value in batch2.items():
-                        if isinstance(value, torch.Tensor):
-                            logger.debug(f"\t{key}: {value.shape}")
                     with logger.block("forward"):
                         model.train()
                         output = model(batch2)
