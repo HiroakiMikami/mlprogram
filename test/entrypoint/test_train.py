@@ -300,24 +300,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_model=True)
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_3")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
-
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
-            with open(os.path.join(output, "log.json")) as file:
-                log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "optimizer.pt")))
+            self.assertFalse(os.path.exists(os.path.join(ws, "log")))
 
     def test_pretrained_optimizer(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -345,24 +328,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_optimizer=True)
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_3")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
-
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
-            with open(os.path.join(output, "log.json")) as file:
-                log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "optimizer.pt")))
+            self.assertFalse(os.path.exists(os.path.join(ws, "log")))
 
 
 if __name__ == "__main__":

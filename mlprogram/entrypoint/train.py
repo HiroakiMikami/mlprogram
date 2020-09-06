@@ -1,4 +1,5 @@
 import numpy as np
+import traceback
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -7,7 +8,6 @@ from pytorch_pfn_extras.training import extensions
 from typing import Callable, Any, Union, Optional, List
 import os
 import shutil
-from math import isnan, isinf
 from mlprogram.utils import TopKModel
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
@@ -72,6 +72,10 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         extensions=[],
         iters_per_epoch=iter_per_epoch,
     )
+    manager.extend(
+        extensions.FailOnNonNumber(),
+        trigger=Trigger(interval_iter, n_iter)
+    )
     if distributed.is_main_process():
         log_reporter = \
             extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
@@ -105,27 +109,6 @@ def process_group(device: torch.device) -> Optional[torch.distributed.group]:
             return distributed.groups["world_nccl"]
         else:
             return distributed.groups["world_gloo"]
-
-
-class StopTrainingException(Exception):
-    pass
-
-
-def abort_if_loss_is_nan(log_reporter):
-    stop = torch.tensor(0)
-    if distributed.is_main_process():
-        if len(log_reporter.log) != 0:
-            log_loss = log_reporter.log[-1]["loss"]
-
-            if isnan(log_loss) or isinf(log_loss):
-                logger.info("Stop training")
-                stop = torch.tensor(1)
-    if distributed.is_initialized():
-        torch.distributed.broadcast(stop, src=0,
-                                    group=distributed.groups["world_gloo"])
-
-    if stop.item() == 1:
-        raise StopTrainingException()
 
 
 def all_reduce(model: nn.Module, group: torch.distributed.group):
@@ -234,15 +217,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
                         logger.debug("Update top-K model: score={log_score}")
                         top_k_model.save(log_score,
                                          f"{manager.updater.iteration}", model)
-
-                abort_if_loss_is_nan(log_reporter)
-    except StopTrainingException:  # noqa
-        pass
+    except RuntimeError as e:  # noqa
+        logger.critical(traceback.format_exc())
 
     logger.info("Copy log to output_dir")
-    os.makedirs(output_dir, exist_ok=True)
-    shutil.copyfile(os.path.join(workspace_dir, "log"),
-                    os.path.join(output_dir, "log.json"))
+    if os.path.exists(os.path.join(workspace_dir, "log")):
+        os.makedirs(output_dir, exist_ok=True)
+        shutil.copyfile(os.path.join(workspace_dir, "log"),
+                        os.path.join(output_dir, "log.json"))
 
     logger.info("Copy models to output_dir")
     out_model_dir = os.path.join(output_dir, "model")
@@ -394,15 +376,14 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         logger.debug("Update top-K model: score={log_score}")
                         top_k_model.save(log_score,
                                          f"{manager.updater.iteration}", model)
-
-                abort_if_loss_is_nan(log_reporter)
-    except StopTrainingException:  # noqa
-        pass
+    except RuntimeError as e:  # noqa
+        logger.critical(traceback.format_exc())
 
     logger.info("Copy log to output_dir")
-    os.makedirs(output_dir, exist_ok=True)
-    shutil.copyfile(os.path.join(workspace_dir, "log"),
-                    os.path.join(output_dir, "log.json"))
+    if os.path.exists(os.path.join(workspace_dir, "log")):
+        os.makedirs(output_dir, exist_ok=True)
+        shutil.copyfile(os.path.join(workspace_dir, "log"),
+                        os.path.join(output_dir, "log.json"))
 
     logger.info("Copy models to output_dir")
     out_model_dir = os.path.join(output_dir, "model")
