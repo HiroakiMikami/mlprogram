@@ -74,5 +74,5 @@ main:
   interval:
     type: mlprogram.entrypoint.train.Iteration
     n: 1000
-  num_models: 3
+  n_model: 3
   device: "@/device"

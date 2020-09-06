@@ -153,7 +153,7 @@ class TestNL2Code(unittest.TestCase):
                 loss_fn, lambda args: -loss_fn(args),
                 lambda x: collate(transform(x)),
                 1, Epoch(100), interval=Epoch(10),
-                num_models=1
+                n_model=1
             )
         return qencoder, aencoder
 

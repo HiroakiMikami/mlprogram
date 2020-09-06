@@ -174,7 +174,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      batch_size: int,
                      length: Length,
                      interval: Optional[Length] = None,
-                     num_models: int = 3,
+                     n_model: int = 3,
                      device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -195,7 +195,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
     # Initialize extensions manager
     manager = \
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer, workspace_dir, num_models)
+                                  model, optimizer, workspace_dir, n_model)
 
     logger.info("Start training")
     try:
@@ -255,7 +255,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     n_rollout: int,
                     length: Length,
                     interval: Optional[Length] = None,
-                    num_models: int = 3,
+                    n_model: int = 3,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
                     device: torch.device = torch.device("cpu")) \
@@ -291,7 +291,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     # Initialize extensions manager
     manager = \
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer, workspace_dir, num_models)
+                                  model, optimizer, workspace_dir, n_model)
 
     logger.info("Start training")
     try:

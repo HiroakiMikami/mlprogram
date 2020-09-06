@@ -251,7 +251,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 ])),
                 collate_fn,
                 1, Epoch(100), interval=Epoch(10),
-                num_models=0
+                n_model=0
             )
         return encoder, train_dataset
 
@@ -336,7 +336,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 collate_fn,
                 1, 1,
                 Epoch(30), interval=Epoch(10),
-                num_models=1,
+                n_model=1,
                 use_pretrained_model=True,
                 use_pretrained_optimizer=False)
 
