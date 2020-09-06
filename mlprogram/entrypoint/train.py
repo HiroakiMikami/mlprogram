@@ -77,8 +77,12 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
             extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
         manager.extend(log_reporter)
         manager.extend(extensions.ProgressBar())
-        manager.extend(extensions.PrintReport(),
-                       trigger=Trigger(interval_iter, n_iter))
+        manager.extend(extensions.PrintReport(entries=[
+            "loss", "score",
+            "iteration", "epoch",
+            "time.iteration", "gpu.time.iteration", "elapsed_time"
+        ]),
+            trigger=Trigger(interval_iter, n_iter))
     else:
         log_reporter = None
     if distributed.is_initialized():
@@ -191,7 +195,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                                     shuffle=True, num_workers=0,
                                     collate_fn=collate)
             model.train()
-            for batch in logger.iterable_block("iteration", loader):
+            for batch in logger.iterable_block("iteration", loader, True):
                 if manager.updater.iteration >= n_iter:
                     break
                 if len(batch) == 0:
@@ -199,10 +203,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
                         f"Skip {manager.updater.iteration} th batch")
                     continue
                 with manager.run_iteration():
-                    logger.debug("batch:")
-                    for key, value in batch.items():
-                        if isinstance(value, torch.Tensor):
-                            logger.debug(f"\t{key}: {value.shape}")
                     with logger.block("forward"):
                         output = model(batch)
                         bloss = loss(output)
@@ -220,6 +220,12 @@ def train_supervised(workspace_dir: str, output_dir: str,
                         "loss": bloss.item(),
                         "score": s.item()
                     })
+                    logger.dump_eplased_time_log()
+                    if device.type == "cuda":
+                        ppe.reporting.report({
+                            "gpu.max_memory_allocated":
+                                torch.cuda.max_memory_allocated(device)
+                        })
 
                 if distributed.is_main_process():
                     if len(log_reporter.log) != 0:
@@ -323,7 +329,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                     shuffle=True, num_workers=0,
                                     collate_fn=lambda x: x)
             model.train()
-            for samples in logger.iterable_block("iteration", loader):
+            for samples in logger.iterable_block("iteration", loader, True):
                 if manager.updater.iteration >= n_iter:
                     break
                 # Rollout
@@ -357,10 +363,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 with manager.run_iteration():
                     with logger.block("collate"):
                         batch2 = collate(rollouts)
-                    logger.debug("batch:")
-                    for key, value in batch2.items():
-                        if isinstance(value, torch.Tensor):
-                            logger.debug(f"\t{key}: {value.shape}")
                     with logger.block("forward"):
                         model.train()
                         output = model(batch2)
@@ -378,6 +380,12 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         "loss": bloss.item(),
                         "score": np.mean(scores)
                     })
+                    logger.dump_eplased_time_log()
+                    if device.type == "cuda":
+                        ppe.reporting.report({
+                            "gpu.max_memory_allocated":
+                                torch.cuda.max_memory_allocated(device)
+                        })
 
                 if distributed.is_main_process():
                     if len(log_reporter.log) != 0:

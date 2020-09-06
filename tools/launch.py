@@ -48,6 +48,10 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
                     value["max_step_size"] = 2
                     if value["type"] == "mlprogram.synthesizers.SMC":
                         value["initial_particle_size"] = 1
+                elif value["type"] in set([
+                    "mlprogram.synthesizers.SynthesizerWithTimeout"
+                ]):
+                    value["timeout_sec"] = 0.5
                 value = {k: modify_config_for_test(v, tmpdir)
                          for k, v in value.items()}
             elif isinstance(value, dict):
