@@ -8,11 +8,11 @@ from pytorch_pfn_extras.training import extensions
 from typing import Callable, Any, Union, Optional, List
 import os
 import shutil
-from mlprogram.utils import TopKModel
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils import logging
 from mlprogram import distributed
+from mlprogram.pytorch_pfn_extras import SaveTopKModel
 from dataclasses import dataclass
 
 logger = logging.Logger(__name__)
@@ -64,7 +64,9 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                               iter_per_epoch: int,
                               model: nn.Module,
                               optimizer: torch.optim.Optimizer,
-                              workspace_dir: str):
+                              workspace_dir: str, n_model: int):
+    model_dir = os.path.join(workspace_dir, "model")
+
     logger.info("Prepare pytorch-pfn-extras")
     manager = ppe.training.ExtensionsManager(
         model, optimizer, n_iter / iter_per_epoch,
@@ -77,9 +79,8 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         trigger=Trigger(interval_iter, n_iter)
     )
     if distributed.is_main_process():
-        log_reporter = \
-            extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
-        manager.extend(log_reporter)
+        manager.extend(extensions.LogReport(
+            trigger=Trigger(interval_iter, n_iter)))
         manager.extend(extensions.ProgressBar())
         manager.extend(extensions.PrintReport(entries=[
             "loss", "score",
@@ -87,8 +88,8 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
             trigger=Trigger(interval_iter, n_iter))
-    else:
-        log_reporter = None
+        manager.extend(SaveTopKModel(model_dir, n_model, "score", model),
+                       trigger=Trigger(interval_iter, n_iter))
     if distributed.is_initialized():
         snapshot = extensions.snapshot(autoload=True, n_retains=1,
                                        saver_rank=0)
@@ -98,7 +99,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
     else:
         snapshot = extensions.snapshot(autoload=True, n_retains=1)
     manager.extend(snapshot, trigger=Trigger(interval_iter, n_iter))
-    return log_reporter, manager
+    return manager
 
 
 def create_dataloader(dataset: torch.utils.data.Dataset,
@@ -142,8 +143,9 @@ def all_reduce(model: nn.Module, group: torch.distributed.group):
         p /= size
 
 
-def save_results(workspace_dir: str, output_dir: str, model_dir: str,
+def save_results(workspace_dir: str, output_dir: str,
                  model: nn.Module, optimizer: torch.optim.Optimizer) -> None:
+    model_dir = os.path.join(workspace_dir, "model")
     logger.info("Copy log to output_dir")
     if os.path.exists(os.path.join(workspace_dir, "log")):
         os.makedirs(output_dir, exist_ok=True)
@@ -191,16 +193,10 @@ def train_supervised(workspace_dir: str, output_dir: str,
     interval_iter = calc_interval_iter(interval, iter_per_epoch)
 
     # Initialize extensions manager
-    log_reporter, manager = \
+    manager = \
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer, workspace_dir)
+                                  model, optimizer, workspace_dir, num_models)
 
-    # Prepare TopKModel
-    model_dir = os.path.join(workspace_dir, "model")
-    os.makedirs(model_dir, exist_ok=True)
-    top_k_model = TopKModel(num_models, model_dir)
-
-    log_score = 0.0
     logger.info("Start training")
     try:
         while manager.updater.iteration < n_iter:
@@ -239,18 +235,10 @@ def train_supervised(workspace_dir: str, output_dir: str,
                             "gpu.max_memory_allocated":
                                 torch.cuda.max_memory_allocated(device)
                         })
-
-                if distributed.is_main_process():
-                    if len(log_reporter.log) != 0:
-                        log_score = log_reporter.log[-1]["score"]
-                    if manager.updater.iteration % interval_iter == 0:
-                        logger.debug("Update top-K model: score={log_score}")
-                        top_k_model.save(log_score,
-                                         f"{manager.updater.iteration}", model)
     except RuntimeError as e:  # noqa
         logger.critical(traceback.format_exc())
 
-    save_results(workspace_dir, output_dir, model_dir, model, optimizer)
+    save_results(workspace_dir, output_dir, model, optimizer)
 
 
 def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
@@ -301,16 +289,10 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
         optimizer.load_state_dict(state_dict)
 
     # Initialize extensions manager
-    log_reporter, manager = \
+    manager = \
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer, workspace_dir)
+                                  model, optimizer, workspace_dir, num_models)
 
-    # Prepare TopKModel
-    model_dir = os.path.join(workspace_dir, "model")
-    os.makedirs(model_dir, exist_ok=True)
-    top_k_model = TopKModel(num_models, model_dir)
-
-    log_score = 0.0
     logger.info("Start training")
     try:
         while manager.updater.iteration < n_iter:
@@ -375,15 +357,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                             "gpu.max_memory_allocated":
                                 torch.cuda.max_memory_allocated(device)
                         })
-
-                if distributed.is_main_process():
-                    if len(log_reporter.log) != 0:
-                        log_score = log_reporter.log[-1]["score"]
-                    if manager.updater.iteration % interval_iter == 0:
-                        logger.debug("Update top-K model: score={log_score}")
-                        top_k_model.save(log_score,
-                                         f"{manager.updater.iteration}", model)
     except RuntimeError as e:  # noqa
         logger.critical(traceback.format_exc())
 
-    save_results(workspace_dir, output_dir, model_dir, model, optimizer)
+    save_results(workspace_dir, output_dir, model, optimizer)
