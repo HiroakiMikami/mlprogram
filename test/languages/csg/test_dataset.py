@@ -1,5 +1,6 @@
 import unittest
 import torch
+import numpy as np
 from mlprogram.interpreters import Reference as R
 from mlprogram.languages.csg import Dataset
 
@@ -11,8 +12,9 @@ class TestDataset(unittest.TestCase):
             break
 
     def test_multiprocess_loader(self):
-        torch.manual_seed(1)
-        dataset = Dataset(2, 1, 1, 1, 45)
+        torch.manual_seed(0)
+        np.random.seed(0)
+        dataset = Dataset(2, 1, 2, 1, 45)
         loader = torch.utils.data.DataLoader(dataset, 2, num_workers=2,
                                              collate_fn=lambda x: x)
         samples = []
