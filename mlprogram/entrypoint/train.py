@@ -82,7 +82,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
             "iteration", "epoch",
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
-                       trigger=Trigger(interval_iter, n_iter))
+            trigger=Trigger(interval_iter, n_iter))
     else:
         log_reporter = None
     if distributed.is_initialized():
