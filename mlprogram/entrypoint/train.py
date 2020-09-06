@@ -80,7 +80,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         manager.extend(extensions.PrintReport(entries=[
             "loss", "score",
             "iteration", "epoch",
-            "time.iteration", "elapsed_time"
+            "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
                        trigger=Trigger(interval_iter, n_iter))
     else:
@@ -195,7 +195,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                                     shuffle=True, num_workers=0,
                                     collate_fn=collate)
             model.train()
-            for batch in logger.iterable_block("iteration", loader):
+            for batch in logger.iterable_block("iteration", loader, True):
                 if manager.updater.iteration >= n_iter:
                     break
                 if len(batch) == 0:
@@ -221,6 +221,11 @@ def train_supervised(workspace_dir: str, output_dir: str,
                         "score": s.item()
                     })
                     logger.dump_eplased_time_log()
+                    if device.type == "cuda":
+                        ppe.reporting.report({
+                            "gpu.max_memory_allocated":
+                                torch.cuda.max_memory_allocated(device)
+                        })
 
                 if distributed.is_main_process():
                     if len(log_reporter.log) != 0:
@@ -324,7 +329,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                     shuffle=True, num_workers=0,
                                     collate_fn=lambda x: x)
             model.train()
-            for samples in logger.iterable_block("iteration", loader):
+            for samples in logger.iterable_block("iteration", loader, True):
                 if manager.updater.iteration >= n_iter:
                     break
                 # Rollout
@@ -376,6 +381,11 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         "score": np.mean(scores)
                     })
                     logger.dump_eplased_time_log()
+                    if device.type == "cuda":
+                        ppe.reporting.report({
+                            "gpu.max_memory_allocated":
+                                torch.cuda.max_memory_allocated(device)
+                        })
 
                 if distributed.is_main_process():
                     if len(log_reporter.log) != 0:
