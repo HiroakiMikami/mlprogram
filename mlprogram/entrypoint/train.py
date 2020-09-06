@@ -77,7 +77,11 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
             extensions.LogReport(trigger=Trigger(interval_iter, n_iter))
         manager.extend(log_reporter)
         manager.extend(extensions.ProgressBar())
-        manager.extend(extensions.PrintReport(),
+        manager.extend(extensions.PrintReport(entries=[
+            "loss", "score",
+            "iteration", "epoch",
+            "time.iteration", "elapsed_time"
+        ]),
                        trigger=Trigger(interval_iter, n_iter))
     else:
         log_reporter = None
@@ -216,6 +220,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                         "loss": bloss.item(),
                         "score": s.item()
                     })
+                    logger.dump_eplased_time_log()
 
                 if distributed.is_main_process():
                     if len(log_reporter.log) != 0:
@@ -370,6 +375,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         "loss": bloss.item(),
                         "score": np.mean(scores)
                     })
+                    logger.dump_eplased_time_log()
 
                 if distributed.is_main_process():
                     if len(log_reporter.log) != 0:
