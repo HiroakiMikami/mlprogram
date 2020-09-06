@@ -1,7 +1,6 @@
 import logging
 import torch
-import numpy as np
-from typing import Callable, Iterable, Dict, Optional, List
+from typing import Callable, Iterable, Dict, Optional, Tuple
 from contextlib import contextmanager
 from torch.autograd.profiler import record_function
 from pytorch_pfn_extras.reporting import report
@@ -23,17 +22,17 @@ class Logger(object):
     def __init__(self, name: str):
         self.name = name
         self.logger = logging.getLogger(name)
-        self.elapsed_time_log: Dict[str, List[float]] = {}
-        self.gpu_elapsed_time_log: Dict[str, List[float]] = {}
+        self.elapsed_time_log: Dict[str, Tuple[int, float]] = {}
+        self.gpu_elapsed_time_log: Dict[str, Tuple[int, float]] = {}
 
     def dump_eplased_time_log(self) -> None:
         report({
-            f"time.{tag}": np.mean(time)
-            for tag, time in self.elapsed_time_log.items()
+            f"time.{tag}": time / n
+            for tag, (n, time) in self.elapsed_time_log.items()
         })
         report({
-            f"gpu.time.{tag}": np.mean(time)
-            for tag, time in self.gpu_elapsed_time_log.items()
+            f"gpu.time.{tag}": time / n
+            for tag, (n, time) in self.gpu_elapsed_time_log.items()
         })
         self.elapsed_time_log = {}
         self.gpu_elapsed_time_log = {}
@@ -54,15 +53,18 @@ class Logger(object):
         finally:
             self.debug(f"finish {tag}")
             if time_tag not in self.elapsed_time_log:
-                self.elapsed_time_log[time_tag] = []
+                self.elapsed_time_log[time_tag] = (0, 0.0)
             if monitor_gpu_utils and time_tag not in self.gpu_elapsed_time_log:
-                self.gpu_elapsed_time_log[time_tag] = []
+                self.gpu_elapsed_time_log[time_tag] = (0, 0.0)
             elapsed_time = time.time() - begin
-            self.elapsed_time_log[time_tag].append(elapsed_time)
+            n, t = self.elapsed_time_log[time_tag]
+            self.elapsed_time_log[time_tag] = (n + 1, t + elapsed_time)
             if monitor_gpu_utils:
                 torch.cuda.synchronize()
                 gpu_elapsed_time = time.time() - begin
-                self.gpu_elapsed_time_log[time_tag].append(gpu_elapsed_time)
+                n, t = self.gpu_elapsed_time_log[time_tag]
+                self.gpu_elapsed_time_log[time_tag] = \
+                    (n + 1, t + gpu_elapsed_time)
 
     def function_block(self, tag: str,
                        monitor_gpu_utils: bool = False) \
