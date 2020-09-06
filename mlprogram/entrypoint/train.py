@@ -101,7 +101,25 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
     return log_reporter, manager
 
 
-def process_group(device: torch.device) -> Optional[torch.distributed.group]:
+def create_dataloader(dataset: torch.utils.data.Dataset,
+                      batch_size: int, n_worker: int, collate_fn: Callable) \
+        -> torch.utils.data.DataLoader:
+    if hasattr(dataset, "__len__"):
+        is_iterable = False
+    else:
+        is_iterable = True
+    if is_iterable:
+        return DataLoader(dataset, batch_size=batch_size,
+                          shuffle=False, num_workers=n_worker,
+                          collate_fn=collate_fn)
+    else:
+        return DataLoader(dataset, batch_size=batch_size,
+                          shuffle=True, num_workers=n_worker,
+                          collate_fn=collate_fn)
+
+
+def get_world_process_group(device: torch.device) \
+        -> Optional[torch.distributed.group]:
     if not distributed.is_initialized():
         return None
     else:
@@ -124,6 +142,26 @@ def all_reduce(model: nn.Module, group: torch.distributed.group):
         p /= size
 
 
+def save_results(workspace_dir: str, output_dir: str, model_dir: str,
+                 model: nn.Module, optimizer: torch.optim.Optimizer) -> None:
+    logger.info("Copy log to output_dir")
+    if os.path.exists(os.path.join(workspace_dir, "log")):
+        os.makedirs(output_dir, exist_ok=True)
+        shutil.copyfile(os.path.join(workspace_dir, "log"),
+                        os.path.join(output_dir, "log.json"))
+
+    logger.info("Copy models to output_dir")
+    out_model_dir = os.path.join(output_dir, "model")
+    if os.path.exists(out_model_dir):
+        shutil.rmtree(out_model_dir)
+    shutil.copytree(model_dir, out_model_dir)
+
+    logger.info("Dump the last model")
+    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+    torch.save(optimizer.state_dict(),
+               os.path.join(output_dir, "optimizer.pt"))
+
+
 def train_supervised(workspace_dir: str, output_dir: str,
                      dataset: torch.utils.data.Dataset,
                      model: nn.Module,
@@ -143,13 +181,11 @@ def train_supervised(workspace_dir: str, output_dir: str,
     model.to(device)
     model.train()
 
-    group = process_group(device)
+    group = get_world_process_group(device)
 
     if hasattr(dataset, "__len__"):
-        is_iterable = False
         iter_per_epoch = len(dataset) // batch_size
     else:
-        is_iterable = True
         iter_per_epoch = 1
     n_iter = calc_n_iter(length, iter_per_epoch)
     interval_iter = calc_interval_iter(interval, iter_per_epoch)
@@ -169,14 +205,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
     try:
         while manager.updater.iteration < n_iter:
             # TODO num_workers > 0 causes the RuntimeError
-            if is_iterable:
-                loader = DataLoader(dataset, batch_size=batch_size,
-                                    shuffle=False, num_workers=0,
-                                    collate_fn=collate)
-            else:
-                loader = DataLoader(dataset, batch_size=batch_size,
-                                    shuffle=True, num_workers=0,
-                                    collate_fn=collate)
+            loader = create_dataloader(dataset, batch_size, 0, collate)
+
             model.train()
             for batch in logger.iterable_block("iteration", loader, True):
                 if manager.updater.iteration >= n_iter:
@@ -220,22 +250,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
     except RuntimeError as e:  # noqa
         logger.critical(traceback.format_exc())
 
-    logger.info("Copy log to output_dir")
-    if os.path.exists(os.path.join(workspace_dir, "log")):
-        os.makedirs(output_dir, exist_ok=True)
-        shutil.copyfile(os.path.join(workspace_dir, "log"),
-                        os.path.join(output_dir, "log.json"))
-
-    logger.info("Copy models to output_dir")
-    out_model_dir = os.path.join(output_dir, "model")
-    if os.path.exists(out_model_dir):
-        shutil.rmtree(out_model_dir)
-    shutil.copytree(model_dir, out_model_dir)
-
-    logger.info("Dump the last model")
-    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-    torch.save(optimizer.state_dict(),
-               os.path.join(output_dir, "optimizer.pt"))
+    save_results(workspace_dir, output_dir, model_dir, model, optimizer)
 
 
 def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
@@ -263,13 +278,11 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     model.to(device)
     model.train()
 
-    group = process_group(device)
+    group = get_world_process_group(device)
 
     if hasattr(dataset, "__len__"):
-        is_iterable = False
         iter_per_epoch = len(dataset) // batch_size
     else:
-        is_iterable = True
         iter_per_epoch = 1
     n_iter = calc_n_iter(length, iter_per_epoch)
     interval_iter = calc_interval_iter(interval, iter_per_epoch)
@@ -302,14 +315,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     try:
         while manager.updater.iteration < n_iter:
             # TODO num_workers > 0 causes the RuntimeError
-            if is_iterable:
-                loader = DataLoader(dataset, batch_size=batch_size,
-                                    shuffle=False, num_workers=0,
-                                    collate_fn=lambda x: x)
-            else:
-                loader = DataLoader(dataset, batch_size=batch_size,
-                                    shuffle=True, num_workers=0,
-                                    collate_fn=lambda x: x)
+            loader = create_dataloader(dataset, batch_size, 0, lambda x: x)
+
             model.train()
             for samples in logger.iterable_block("iteration", loader, True):
                 if manager.updater.iteration >= n_iter:
@@ -379,19 +386,4 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     except RuntimeError as e:  # noqa
         logger.critical(traceback.format_exc())
 
-    logger.info("Copy log to output_dir")
-    if os.path.exists(os.path.join(workspace_dir, "log")):
-        os.makedirs(output_dir, exist_ok=True)
-        shutil.copyfile(os.path.join(workspace_dir, "log"),
-                        os.path.join(output_dir, "log.json"))
-
-    logger.info("Copy models to output_dir")
-    out_model_dir = os.path.join(output_dir, "model")
-    if os.path.exists(out_model_dir):
-        shutil.rmtree(out_model_dir)
-    shutil.copytree(model_dir, out_model_dir)
-
-    logger.info("Dump the last model")
-    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-    torch.save(optimizer.state_dict(),
-               os.path.join(output_dir, "optimizer.pt"))
+    save_results(workspace_dir, output_dir, model_dir, model, optimizer)
