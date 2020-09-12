@@ -51,6 +51,10 @@ class LazyActionSequence(object):
         return str(self.__call__())
 
 
+def return_none(x):
+    return None
+
+
 class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                             Generic[V]):
     def __init__(self,
@@ -67,7 +71,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                  rng: Optional[np.random.RandomState] = None
                  ):
         self.encoder = encoder
-        self.get_token_type = get_token_type or (lambda x: None)
+        self.get_token_type = get_token_type or return_none
         self.is_subtype = is_subtype
         self.transform_input = transform_input
         self.transform_action_sequence = transform_action_sequence

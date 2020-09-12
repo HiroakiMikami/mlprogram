@@ -1,6 +1,7 @@
 import unittest
 from collections import OrderedDict
 from dummy_dataset import is_subtype, train_dataset, test_dataset
+from dummy_dataset import get_token_type
 import logging
 import sys
 import tempfile
@@ -88,7 +89,7 @@ class TestNL2Code(unittest.TestCase):
         return BeamSearch(
             5, 20,
             ActionSequenceSampler(
-                aencoder, lambda x: None, is_subtype, transform_input,
+                aencoder, get_token_type, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, aencoder, to_action_sequence):
@@ -115,7 +116,8 @@ class TestNL2Code(unittest.TestCase):
                 model,
                 self.prepare_synthesizer(model, qencoder, aencoder),
                 {"accuracy": Accuracy()},
-                (5, "accuracy"), top_n=[5]
+                (5, "accuracy"), top_n=[5],
+                n_process=1
             )
         results = torch.load(os.path.join(dir, "results.pt"))
         return results["valid"]

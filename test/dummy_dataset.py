@@ -24,6 +24,10 @@ def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
     return False
 
 
+def get_token_type(x):
+    return None
+
+
 def string(value: str):
     return Leaf("string", value)
 

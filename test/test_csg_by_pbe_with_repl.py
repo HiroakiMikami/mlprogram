@@ -191,7 +191,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 self.prepare_synthesizer(model, encoder, interpreter,
                                          rollout=False),
                 {},
-                "generation", top_n=[]
+                "generation", top_n=[],
+                n_process=1
             )
         results = torch.load(os.path.join(dir, "results.pt"))
         return results["valid"]
