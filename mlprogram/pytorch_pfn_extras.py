@@ -29,4 +29,4 @@ class SaveTopKModel(extension.Extension):
 
         logger.debug("Update top-K model: score={score}")
         self.top_k_model.save(score,
-                              f"{manager.updater.iteration}", self.model)
+                              f"{manager.iteration}", self.model)

@@ -37,8 +37,8 @@ class Trigger:
         self.n_iter = n_iter
 
     def __call__(self, manager):
-        return (manager.updater.iteration == self.n_iter) or \
-            (manager.updater.iteration % self.interval == 0)
+        return (manager.iteration == self.n_iter) or \
+            (manager.iteration % self.interval == 0)
 
 
 def calc_n_iter(length: Length, iter_per_epoch: int) -> int:
@@ -199,17 +199,17 @@ def train_supervised(workspace_dir: str, output_dir: str,
 
     logger.info("Start training")
     try:
-        while manager.updater.iteration < n_iter:
+        while manager.iteration < n_iter:
             # TODO num_workers > 0 causes the RuntimeError
             loader = create_dataloader(dataset, batch_size, 0, collate)
 
             model.train()
             for batch in logger.iterable_block("iteration", loader, True):
-                if manager.updater.iteration >= n_iter:
+                if manager.iteration >= n_iter:
                     break
                 if len(batch) == 0:
                     logger.warning(
-                        f"Skip {manager.updater.iteration} th batch")
+                        f"Skip {manager.iteration} th batch")
                     continue
                 with manager.run_iteration():
                     with logger.block("forward"):
@@ -295,13 +295,13 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
     logger.info("Start training")
     try:
-        while manager.updater.iteration < n_iter:
+        while manager.iteration < n_iter:
             # TODO num_workers > 0 causes the RuntimeError
             loader = create_dataloader(dataset, batch_size, 0, lambda x: x)
 
             model.train()
             for samples in logger.iterable_block("iteration", loader, True):
-                if manager.updater.iteration >= n_iter:
+                if manager.iteration >= n_iter:
                     break
                 # Rollout
                 rollouts = []

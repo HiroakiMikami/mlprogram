@@ -91,6 +91,9 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                     value["workspace_dir"] = \
                         f"{tmpdir}/workspace.{random.randint(0, 100)}"
                     value["output_dir"] = f"{tmpdir}/output"
+                    if "n_process" in value:
+                        # This prevent "Too many open files" error
+                        value["n_process"] = 1
                 value = {k: modify_config_for_test(v, tmpdir)
                          for k, v in value.items()}
             elif isinstance(value, dict):

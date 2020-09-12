@@ -3,6 +3,11 @@ imports:
 
 output_dir: "output/output"
 
+device:
+  type: torch.device
+  type_str: "cpu"
+  index: 0
+
 encoder:
   type: mlprogram.utils.load
   file:
@@ -24,3 +29,4 @@ main:
   main_metric: "generation"
   top_n: []
   device: "@/device"
+  n_process: 4

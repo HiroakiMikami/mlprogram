@@ -3,6 +3,7 @@ from collections import OrderedDict
 import sys
 import logging
 from dummy_dataset import is_subtype, train_dataset, test_dataset
+from dummy_dataset import get_token_type
 import tempfile
 import os
 import numpy as np
@@ -104,7 +105,7 @@ class TestTreeGen(unittest.TestCase):
         return BeamSearch(
             5, 20,
             ActionSequenceSampler(
-                aencoder, lambda x: None, is_subtype, transform_input,
+                aencoder, get_token_type, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, cencoder, aencoder, to_action_sequence):
@@ -132,7 +133,8 @@ class TestTreeGen(unittest.TestCase):
                 self.prepare_synthesizer(
                     model, qencoder, cencoder, aencoder),
                 {"accuracy": Accuracy()},
-                (5, "accuracy"), top_n=[5]
+                (5, "accuracy"), top_n=[5],
+                n_process=1
             )
         results = torch.load(os.path.join(dir, "results.pt"))
         return results["valid"]

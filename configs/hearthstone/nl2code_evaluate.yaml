@@ -1,6 +1,11 @@
 imports:
   - "nl2code_base.yaml"
 
+device:
+  type: torch.device
+  type_str: "cpu"
+  index: 0
+
 output_dir: "output/output"
 
 normalize_dataset:
@@ -94,3 +99,4 @@ main:
   top_n:
     - 1
   device: "@/device"
+  n_process: 4
