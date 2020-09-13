@@ -66,6 +66,8 @@ types = {
         mlprogram.entrypoint.train_supervised,
     "mlprogram.entrypoint.train_REINFORCE":
         mlprogram.entrypoint.train_REINFORCE,
+    "mlprogram.entrypoint.EvaluateSynthesizer":
+        mlprogram.entrypoint.EvaluateSynthesizer,
     "mlprogram.entrypoint.evaluate": mlprogram.entrypoint.evaluate,
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,

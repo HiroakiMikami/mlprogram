@@ -8,6 +8,7 @@ import torch
 from torch import nn
 import os
 import shutil
+from pytorch_pfn_extras.reporting import report
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
@@ -137,8 +138,14 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
         total = {n: {name: value / len(inputs)
                      for name, value in metric.items()}
                  for n, metric in total.items()}
-        return EvaluationResult(results, total,
-                                np.mean(generated), np.mean(times))
+        r = EvaluationResult(results, total,
+                             np.mean(generated), np.mean(times))
+        for n, m in total.items():
+            for name, value in m.items():
+                report({f"{name}@{n}", value})
+        report("generation_rate", r.generation_rate)
+        report("generation_time", r.generation_time)
+        return r
 
 
 def evaluate(input_dir: str, workspace_dir: str, output_dir: str,

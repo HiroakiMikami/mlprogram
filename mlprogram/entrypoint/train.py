@@ -1,9 +1,9 @@
-import numpy as np
 import traceback
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import pytorch_pfn_extras as ppe
+from pytorch_pfn_extras.training import extension
 from pytorch_pfn_extras.training import extensions
 from typing import Callable, Any, Union, Optional, List
 import os
@@ -41,6 +41,15 @@ class Trigger:
             (manager.iteration % self.interval == 0)
 
 
+class Call(extension.Extension):
+    def __init__(self, f: Callable[[], None]):
+        super().__init__()
+        self.f = f
+
+    def __call__(self, manager):
+        self.f()
+
+
 def calc_n_iter(length: Length, iter_per_epoch: int) -> int:
     if isinstance(length, Epoch):
         n_iter = length.n * iter_per_epoch
@@ -64,6 +73,8 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                               iter_per_epoch: int,
                               model: nn.Module,
                               optimizer: torch.optim.Optimizer,
+                              evaluate: Callable[[], None],
+                              metric: str, maximize: bool,
                               workspace_dir: str, n_model: int):
     model_dir = os.path.join(workspace_dir, "model")
 
@@ -82,13 +93,15 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         manager.extend(extensions.LogReport(
             trigger=Trigger(interval_iter, n_iter)))
         manager.extend(extensions.ProgressBar())
+        manager.extend(Call(evaluate), trigger=Trigger(interval_iter, n_iter))
         manager.extend(extensions.PrintReport(entries=[
-            "loss", "score",
+            "loss", metric,
             "iteration", "epoch",
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
             trigger=Trigger(interval_iter, n_iter))
-        manager.extend(SaveTopKModel(model_dir, n_model, "score", model),
+        manager.extend(SaveTopKModel(model_dir, n_model, metric, model,
+                                     maximize=maximize),
                        trigger=Trigger(interval_iter, n_iter))
     if distributed.is_initialized():
         snapshot = extensions.snapshot(autoload=True, n_retains=1,
@@ -169,11 +182,13 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      model: nn.Module,
                      optimizer: torch.optim.Optimizer,
                      loss: Callable[[Any], torch.Tensor],
-                     score: Callable[[Any], torch.Tensor],
+                     evaluate: Callable[[], None],
+                     metric: str,
                      collate: Callable[[List[Any]], Any],
                      batch_size: int,
                      length: Length,
                      interval: Optional[Length] = None,
+                     maximize: bool = True,
                      n_model: int = 3,
                      device: torch.device = torch.device("cpu")) \
         -> None:
@@ -195,7 +210,9 @@ def train_supervised(workspace_dir: str, output_dir: str,
     # Initialize extensions manager
     manager = \
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer, workspace_dir, n_model)
+                                  model, optimizer,
+                                  evaluate, metric, maximize,
+                                  workspace_dir, n_model)
 
     logger.info("Start training")
     try:
@@ -215,7 +232,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     with logger.block("forward"):
                         output = model(batch)
                         bloss = loss(output)
-                        s = score(output)
                     with logger.block("backward"):
                         model.zero_grad()
                         bloss.backward()
@@ -225,6 +241,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     with logger.block("optimizer.step"):
                         optimizer.step()
 
+                    ppe.reporting.report({"loss": bloss.item()})
                     logger.dump_elapsed_time_log()
                     if device.type == "cuda":
                         ppe.reporting.report({
@@ -243,14 +260,16 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     model: nn.Module,
                     optimizer: torch.optim.Optimizer,
                     loss: Callable[[Any], torch.Tensor],
-                    score: Metric,
-                    reward: Callable[[float], float],
+                    evaluate: Callable[[], None],
+                    metric: str,
+                    reward: Metric,
                     rollout_transform: Callable[[Any], Any],
                     collate: Callable[[List[Any]], Any],
                     batch_size: int,
                     n_rollout: int,
                     length: Length,
                     interval: Optional[Length] = None,
+                    maximize: bool = True,
                     n_model: int = 3,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
@@ -287,7 +306,9 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     # Initialize extensions manager
     manager = \
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer, workspace_dir, n_model)
+                                  model, optimizer,
+                                  evaluate, metric, maximize,
+                                  workspace_dir, n_model)
 
     logger.info("Start training")
     try:
@@ -301,7 +322,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     break
                 # Rollout
                 rollouts = []
-                scores = []
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
                         input = rollout_transform(sample)
@@ -311,14 +331,13 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                             n_required_output=n_rollout)):
                             if not rollout.is_finished:
                                 continue
-                            s = score(sample, rollout.output)
                             for _ in range(rollout.num):
                                 output = {key: value
                                           for key, value in input.items()}
                                 output["ground_truth"] = rollout.output
-                                output["reward"] = torch.tensor(reward(s))
+                                output["reward"] = torch.tensor(
+                                    reward(sample, rollout.output))
                                 rollouts.append(output)
-                                scores.append(s)
                 if len(rollouts) == 0:
                     logger.warning("No rollout")
                     continue
@@ -343,10 +362,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     with logger.block("optimizer.step"):
                         optimizer.step()
 
-                    ppe.reporting.report({
-                        "loss": bloss.item(),
-                        "score": np.mean(scores)
-                    })
+                    ppe.reporting.report({"loss": bloss.item()})
                     logger.dump_elapsed_time_log()
                     if device.type == "cuda":
                         ppe.reporting.report({
