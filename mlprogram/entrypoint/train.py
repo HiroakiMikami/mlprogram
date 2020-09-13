@@ -93,19 +93,18 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         manager.extend(extensions.LogReport(
             trigger=Trigger(interval_iter, n_iter)))
         manager.extend(extensions.ProgressBar())
+        if evaluate is not None:
+            manager.extend(Call(evaluate),
+                           trigger=Trigger(interval_iter, n_iter))
+        manager.extend(SaveTopKModel(model_dir, 1, metric, model,
+                                     maximize=maximize),
+                       trigger=Trigger(interval_iter, n_iter))
         manager.extend(extensions.PrintReport(entries=[
             "loss", metric,
             "iteration", "epoch",
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
-            trigger=Trigger(interval_iter, n_iter))
-        if evaluate is not None:
-            manager.extend(Call(evaluate),
-                           trigger=Trigger(interval_iter, n_iter))
-
-        manager.extend(SaveTopKModel(model_dir, 1, metric, model,
-                                     maximize=maximize),
-                       trigger=Trigger(interval_iter, n_iter))
+            trigger=Trigger(100, n_iter))
     if distributed.is_initialized():
         snapshot = extensions.snapshot(autoload=True, n_retains=1,
                                        saver_rank=0)
