@@ -2,7 +2,7 @@ import time
 from dataclasses import dataclass
 import multiprocessing as mp
 from typing \
-    import List, Dict, TypeVar, Generic, Mapping, Any, Optional, Tuple, Union
+    import List, Dict, TypeVar, Generic, Mapping, Any, Optional, Tuple
 import numpy as np
 import torch
 from torch import nn
@@ -140,40 +140,33 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
                  for n, metric in total.items()}
         r = EvaluationResult(results, total,
                              np.mean(generated), np.mean(times))
-        for n, m in total.items():
-            for name, value in m.items():
-                report({f"{name}@{n}", value})
-        report("generation_rate", r.generation_rate)
-        report("generation_time", r.generation_time)
+        for n, metric in total.items():
+            for name, value in metric.items():
+                report({f"{name}@{n}": value})
+        report({"generation_rate": r.generation_rate})
+        report({"generation_time": r.generation_time})
         return r
 
 
 def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
-             test_dataset: torch.utils.data.Dataset,
              valid_dataset: torch.utils.data.Dataset,
              model: nn.Module,
              synthesizer: Synthesizer,
              metrics: Mapping[str, Metric],
-             main_metric: Union[Tuple[int, str], str],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
              n_process: Optional[int] = None,
              n_samples: Optional[int] = None) \
         -> None:
-    if isinstance(main_metric, str):
-        assert main_metric == "generation"
     os.makedirs(workspace_dir, exist_ok=True)
 
     if n_samples is not None:
-        test_dataset = ListDataset(test_dataset[:n_samples])
         valid_dataset = ListDataset(valid_dataset[:n_samples])
 
     logger.info("Prepare model")
     model.to(device)
 
-    test_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
-        test_dataset, synthesizer, metrics, top_n, n_process)
-    valid_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
+    evaluate_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
         valid_dataset, synthesizer, metrics, top_n, n_process)
 
     # Move parameters to shared memory
@@ -182,64 +175,31 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
             v.share_memory_()
 
     model_dir = os.path.join(input_dir, "model")
-    results_path = os.path.join(workspace_dir, "results.pt")
-    if os.path.exists(results_path):
-        logger.info(f"Load results from {results_path}")
-        results = torch.load(results_path)
-    else:
-        results = {"test": {}}
-    logger.info("Find the best model using test dataset")
-    for name in os.listdir(model_dir):
-        if name in results:
-            continue
-        path = os.path.join(model_dir, name)
-        state_dict = \
-            torch.load(path, map_location=torch.device("cpu"))["model"]
-        logger.info(f"Start evaluation (test dataset): {name}")
-        model.load_state_dict(state_dict)
+    result_path = os.path.join(workspace_dir, "result.pt")
+    if len(os.listdir(model_dir)) != 1:
+        logger.warning(f"There are multiple models in {model_dir}")
+    pathes = []
+    for model_path in os.listdir(model_dir):
+        model_path = os.path.join(model_dir, model_path)
+        score = \
+            torch.load(model_path, map_location=torch.device("cpu"))["score"]
+        pathes.append((score, model_path))
+    pathes.sort(key=lambda x: -x[0])
+    model_path = pathes[0][1]
 
-        result: EvaluationResult = test_synthesizer()
-        logger.info(f"{name}")
-        logger.info(f"{result.metrics}")
-        logger.info(f"generation rate: {result.generation_rate}")
-        logger.info(f"generation time: {result.generation_time}")
-        results["test"][name] = result
-        torch.save(results, results_path)
+    logger.info(f"Start evaluation (valid dataset): {model_path}")
+    model_path = os.path.join(model_dir, model_path)
+    state_dict = \
+        torch.load(model_path, map_location=torch.device("cpu"))["model"]
+    model.load_state_dict(state_dict)
 
-    logger.info("Find best model")
-    best_model: Optional[str] = None
-    if isinstance(main_metric, str):
-        if main_metric == "generation":
-            best_score0 = (-1.0, 0.0)
-            for name, result in results["test"].items():
-                m0 = (result.generation_rate, -result.generation_time)
-                if best_score0 < m0:
-                    best_model = name
-                    best_score0 = m0
-    else:
-        best_score1 = -1.0
-        for name, result in results["test"].items():
-            m1 = result.metrics[main_metric[0]][main_metric[1]]
-            if best_score1 < m1:
-                best_model = name
-                best_score1 = m1
-
-    if best_model is not None:
-        logger.info(f"Start evaluation (valid dataset): {best_model}")
-        path = os.path.join(model_dir, best_model)
-        state_dict = \
-            torch.load(path, map_location=torch.device("cpu"))["model"]
-        model.load_state_dict(state_dict)
-
-        logger.info("Start evaluation using valid dataset")
-        result = valid_synthesizer()
-        logger.info(f"{result.metrics}")
-        logger.info(f"generation rate: {result.generation_rate}")
-        logger.info(f"generation time: {result.generation_time}")
-        results["best_model"] = best_model
-        results["valid"] = result
-        torch.save(results, results_path)
+    logger.info("Start evaluation using valid dataset")
+    result = evaluate_synthesizer()
+    logger.info(f"{result.metrics}")
+    logger.info(f"generation rate: {result.generation_rate}")
+    logger.info(f"generation time: {result.generation_time}")
+    torch.save(result, result_path)
 
     logger.info("Copy log to output_dir")
     os.makedirs(output_dir, exist_ok=True)
-    shutil.copyfile(results_path, os.path.join(output_dir, "results.pt"))
+    shutil.copyfile(result_path, os.path.join(output_dir, "result.pt"))
