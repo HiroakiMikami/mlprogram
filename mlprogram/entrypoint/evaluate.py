@@ -77,57 +77,68 @@ class EvaluateSample(Generic[Input, Code]):
             len(candidates) != 0, end - begin)
 
 
-@logger.function_block("evaluate_synthesizer")
-def evaluate_synthesizer(dataset: torch.utils.data.Dataset,
-                         synthesizer: Synthesizer[Dict[str, Any], Code],
-                         metrics: Mapping[str, Metric],
-                         top_n: List[int] = [1, 3],
-                         n_process: Optional[int] = None
-                         ) -> EvaluationResult[Input, Code, GroundTruth]:
-    results: List[Result[Input, Code, GroundTruth]] = []
-    total = {}
-    generated = []
-    times = []
-    for n in top_n:
-        t = {}
-        for name in metrics.keys():
-            t[name] = 0.0
-        total[n] = t
-    evaluate_sample = \
-        EvaluateSample[Dict[str, Any], Code](synthesizer, metrics, top_n)
-    inputs = []
-    for group in dataset:
-        for input in group["input"]:
-            inputs.append((input, group))
+class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
+    def __init__(self, dataset: torch.utils.data.Dataset,
+                 synthesizer: Synthesizer[Dict[str, Any], Code],
+                 metrics: Mapping[str, Metric], top_n: List[int] = [1, 3],
+                 n_process: Optional[int] = None):
+        super().__init__()
+        self.dataset = dataset
+        self.synthesizer = synthesizer
+        self.metrics = metrics
+        self.top_n = top_n
+        self.n_process = n_process
 
-    if n_process is None:
-        logger.info(f"Evalute with {len(inputs)} samples")
-        results = [evaluate_sample(elem)
-                   for elem in logger.iterable_block("evaluate_sample",
-                                                     inputs)]
-    else:
-        logger.info(
-            f"Evalute with {len(inputs)} samples using {n_process} processes")
-        with ctx.Pool(processes=n_process) as pool:
-            list(pool.map(evaluate_sample, inputs))
-        results = [evaluate_sample(elem)
-                   for elem in logger.iterable_block("evaluate_sample",
-                                                     inputs)]
+    @logger.function_block("__call__")
+    def __call__(self) -> EvaluationResult[Input, Code, GroundTruth]:
+        results: List[Result[Input, Code, GroundTruth]] = []
+        total = {}
+        generated = []
+        times = []
+        for n in self.top_n:
+            t = {}
+            for name in self.metrics.keys():
+                t[name] = 0.0
+            total[n] = t
+        evaluate_sample = \
+            EvaluateSample[Dict[str, Any], Code](
+                self.synthesizer, self.metrics, self.top_n)
+        inputs = []
+        for group in self.dataset:
+            for input in group["input"]:
+                inputs.append((input, group))
 
-    logger.info("Summarize results")
-    for result in results:
-        generated.append(1.0 if result.generated else 0.0)
-        if result.generated:
-            times.append(result.time)
-        for n in top_n:
-            m = result.metrics[n]
-            for name in metrics.keys():
-                total[n][name] += \
-                    m[name] if m[name] is not None else 0
+        if self.n_process is None:
+            logger.info(f"Evalute with {len(inputs)} samples")
+            results = [evaluate_sample(elem)
+                       for elem in logger.iterable_block("evaluate_sample",
+                                                         inputs)]
+        else:
+            logger.info(
+                f"Evalute with {len(inputs)} samples "
+                f"using {self.n_process} processes")
+            with ctx.Pool(processes=self.n_process) as pool:
+                list(pool.map(evaluate_sample, inputs))
+            results = [evaluate_sample(elem)
+                       for elem in logger.iterable_block("evaluate_sample",
+                                                         inputs)]
 
-    total = {n: {name: value / len(inputs) for name, value in metric.items()}
-             for n, metric in total.items()}
-    return EvaluationResult(results, total, np.mean(generated), np.mean(times))
+        logger.info("Summarize results")
+        for result in results:
+            generated.append(1.0 if result.generated else 0.0)
+            if result.generated:
+                times.append(result.time)
+            for n in self.top_n:
+                m = result.metrics[n]
+                for name in self.metrics.keys():
+                    total[n][name] += \
+                        m[name] if m[name] is not None else 0
+
+        total = {n: {name: value / len(inputs)
+                     for name, value in metric.items()}
+                 for n, metric in total.items()}
+        return EvaluationResult(results, total,
+                                np.mean(generated), np.mean(times))
 
 
 def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
@@ -153,6 +164,11 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     logger.info("Prepare model")
     model.to(device)
 
+    test_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
+        test_dataset, synthesizer, metrics, top_n, n_process)
+    valid_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
+        valid_dataset, synthesizer, metrics, top_n, n_process)
+
     # Move parameters to shared memory
     if n_process is not None:
         for k, v in model.state_dict().items():
@@ -175,9 +191,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         logger.info(f"Start evaluation (test dataset): {name}")
         model.load_state_dict(state_dict)
 
-        result: EvaluationResult = evaluate_synthesizer(
-            test_dataset, synthesizer, metrics=metrics, top_n=top_n,
-            n_process=n_process)
+        result: EvaluationResult = test_synthesizer()
         logger.info(f"{name}")
         logger.info(f"{result.metrics}")
         logger.info(f"generation rate: {result.generation_rate}")
@@ -211,10 +225,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         model.load_state_dict(state_dict)
 
         logger.info("Start evaluation using valid dataset")
-        result = evaluate_synthesizer(valid_dataset,
-                                      synthesizer,
-                                      metrics=metrics, top_n=top_n,
-                                      n_process=n_process)
+        result = valid_synthesizer()
         logger.info(f"{result.metrics}")
         logger.info(f"generation rate: {result.generation_rate}")
         logger.info(f"generation time: {result.generation_time}")

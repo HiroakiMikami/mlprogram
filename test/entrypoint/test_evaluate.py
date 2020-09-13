@@ -6,7 +6,7 @@ import torch
 from mlprogram.entrypoint import evaluate
 from mlprogram.utils.data import ListDataset
 from mlprogram.metrics import Accuracy, Bleu
-from mlprogram.entrypoint.evaluate import evaluate_synthesizer, Result
+from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
 from mlprogram.synthesizers import Result as DecoderResult
 
 
@@ -53,8 +53,8 @@ class TestEvaluateSynthesizer(unittest.TestCase):
             "input": ["query0", "query1", "query2"],
             "ground_truth": ["c0", "c1", "c4"]
         }])
-        results = evaluate_synthesizer(dataset, synthesize,
-                                       metrics={"accuracy": accuracy})
+        results = EvaluateSynthesizer(dataset, synthesize,
+                                      metrics={"accuracy": accuracy})()
 
         self.assertEqual(
             results.metrics,
@@ -88,9 +88,9 @@ class TestEvaluateSynthesizer(unittest.TestCase):
             "input": ["query0", "query1", "query2"],
             "ground_truth": ["c0", "c1", "c4"]
         }])
-        results = evaluate_synthesizer(dataset, synthesize,
-                                       metrics={"accuracy": accuracy},
-                                       n_process=2)
+        results = EvaluateSynthesizer(dataset, synthesize,
+                                      metrics={"accuracy": accuracy},
+                                      n_process=2)()
 
         self.assertEqual(
             results.metrics,
