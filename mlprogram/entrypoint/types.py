@@ -88,6 +88,7 @@ types = {
     "mlprogram.datasets.nl2bash.TokenizeToken":
         mlprogram.datasets.nl2bash.TokenizeToken,
 
+    "mlprogram.metrics.transform": mlprogram.metrics.transform,
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
     "mlprogram.metrics.Iou": mlprogram.metrics.Iou,
