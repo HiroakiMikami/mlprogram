@@ -7,7 +7,6 @@ parse:
   type: mlprogram.languages.bash.Parse
   tokenize:
     type: mlprogram.languages.bash.TokenizeToken
-
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
@@ -18,6 +17,25 @@ to_action_sequence:
       - - "ast_to_action_sequence"
         - type: mlprogram.actions.AstToActionSequence
 
+normalize_dataset:
+  type: mlprogram.utils.transform.NormalizeGroundTruth
+  normalize:
+    type: mlprogram.utils.Sequence
+    funcs:
+      type: collections.OrderedDict
+      items:
+        - - parse
+          - "@/parse"
+        - - unparse
+          - type: mlprogram.languages.bash.Unparse
+test_dataset:
+  type: mlprogram.utils.data.transform
+  dataset: "@/dataset.test"
+  transform: "@/normalize_dataset"
+valid_dataset:
+  type: mlprogram.utils.data.transform
+  dataset: "@/dataset.valid"
+  transform: "@/normalize_dataset"
 
 action_sequence_reader:
   type: mlprogram.nn.nl2code.ActionSequenceReader
@@ -118,3 +136,35 @@ collate:
     use_pad_sequence: true
     dim: 0
     padding_value: -1
+
+synthesizer:
+  type: mlprogram.synthesizers.BeamSearch
+  beam_size: 15
+  max_step_size: 350
+  sampler:
+    type: mlprogram.samplers.transform
+    sampler:
+      type: mlprogram.samplers.ActionSequenceSampler
+      encoder: "@/encoder.action_sequence_encoder"
+      get_token_type: null
+      is_subtype:
+        type: mlprogram.languages.bash.IsSubtype
+      transform_input:
+        type: mlprogram.utils.transform.nl2code.TransformQuery
+        extract_query:
+          type: mlprogram.datasets.nl2bash.TokenizeQuery
+        word_encoder: "@/encoder.word_encoder"
+      transform_action_sequence:
+        type: mlprogram.utils.transform.nl2code.TransformActionSequence
+        action_sequence_encoder: "@/encoder.action_sequence_encoder"
+        train: false
+      collate: "@/collate"
+      module: "@/model"
+    transform:
+      type: mlprogram.languages.bash.Unparse
+
+metrics:
+  accuracy:
+    type: mlprogram.metrics.Accuracy
+  bleu:
+    type: mlprogram.metrics.Bleu

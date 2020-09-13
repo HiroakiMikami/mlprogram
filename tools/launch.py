@@ -21,7 +21,7 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
     if isinstance(configs, dict):
         out = {}
         for key, value in configs.items():
-            if key == "device":
+            if key == "device" and isinstance(value, dict):
                 value["type_str"] = "cpu"
             elif key == "output_dir":
                 value = f"{tmpdir}/output"
@@ -39,6 +39,10 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
                     }
                     value["workspace_dir"] = \
                         f"{tmpdir}/workspace.{random.randint(0, 100)}"
+                elif value["type"] in set([
+                    "mlprogram.entrypoint.EvaluateSynthesizer"
+                ]):
+                    value["n_samples"] = 1
                 elif value["type"] in set(["mlprogram.entrypoint.evaluate"]):
                     value["n_samples"] = 1
                     value["workspace_dir"] = \
@@ -52,11 +56,9 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
                     "mlprogram.synthesizers.SynthesizerWithTimeout"
                 ]):
                     value["timeout_sec"] = 0.5
-                value = {k: modify_config_for_test(v, tmpdir)
-                         for k, v in value.items()}
+                value = modify_config_for_test(value, tmpdir)
             elif isinstance(value, dict):
-                value = {k: modify_config_for_test(v, tmpdir)
-                         for k, v in value.items()}
+                value = modify_config_for_test(value, tmpdir)
             elif isinstance(value, list):
                 value = [modify_config_for_test(x, tmpdir) for x in value]
             else:
@@ -94,15 +96,13 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                     if "n_process" in value:
                         # This prevent "Too many open files" error
                         value["n_process"] = 1
-                value = {k: modify_config_for_test(v, tmpdir)
-                         for k, v in value.items()}
+                value = modify_config_for_profile(value, tmpdir)
             elif isinstance(value, dict):
-                value = {k: modify_config_for_test(v, tmpdir)
-                         for k, v in value.items()}
+                value = modify_config_for_profile(value, tmpdir)
             elif isinstance(value, list):
-                value = [modify_config_for_test(x, tmpdir) for x in value]
+                value = [modify_config_for_profile(x, tmpdir) for x in value]
             else:
-                value = modify_config_for_test(value, tmpdir)
+                value = modify_config_for_profile(value, tmpdir)
             out[key] = value
         return out
     else:

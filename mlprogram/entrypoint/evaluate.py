@@ -82,9 +82,12 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
     def __init__(self, dataset: torch.utils.data.Dataset,
                  synthesizer: Synthesizer[Dict[str, Any], Code],
                  metrics: Mapping[str, Metric], top_n: List[int] = [1, 3],
-                 n_process: Optional[int] = None):
+                 n_process: Optional[int] = None,
+                 n_samples: Optional[int] = None):
         super().__init__()
         self.dataset = dataset
+        if n_samples is not None:
+            self.dataset = ListDataset(self.dataset[:n_samples])
         self.synthesizer = synthesizer
         self.metrics = metrics
         self.top_n = top_n
@@ -160,14 +163,11 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
 
-    if n_samples is not None:
-        valid_dataset = ListDataset(valid_dataset[:n_samples])
-
     logger.info("Prepare model")
     model.to(device)
 
     evaluate_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
-        valid_dataset, synthesizer, metrics, top_n, n_process)
+        valid_dataset, synthesizer, metrics, top_n, n_process, n_samples)
 
     # Move parameters to shared memory
     if n_process is not None:

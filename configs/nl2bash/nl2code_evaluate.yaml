@@ -8,27 +8,8 @@ device:
 
 output_dir: "output/output"
 
-normalize_dataset:
-  type: mlprogram.utils.transform.NormalizeGroundTruth
-  normalize:
-    type: mlprogram.utils.Sequence
-    funcs:
-      type: collections.OrderedDict
-      items:
-        - - parse
-          - "@/parse"
-        - - unparse
-          - type: mlprogram.languages.bash.Unparse
 dataset:
   type: mlprogram.datasets.nl2bash.download
-test_dataset:
-  type: mlprogram.utils.data.transform
-  dataset: "@/dataset.test"
-  transform: "@/normalize_dataset"
-valid_dataset:
-  type: mlprogram.utils.data.transform
-  dataset: "@/dataset.valid"
-  transform: "@/normalize_dataset"
 
 encoder:
   word_encoder:
@@ -46,57 +27,17 @@ encoder:
         - "@/output_dir"
         - "action_sequence_encoder.pt"
 
-transform:
-  transform_input:
-    type: mlprogram.utils.transform.nl2code.TransformQuery
-    extract_query:
-      type: mlprogram.datasets.nl2bash.TokenizeQuery
-    word_encoder: "@/encoder.word_encoder"
-  transform_action_sequence:
-    type: mlprogram.utils.transform.nl2code.TransformActionSequence
-    action_sequence_encoder: "@/encoder.action_sequence_encoder"
-    train: false
-
-synthesizer:
-  type: mlprogram.synthesizers.BeamSearch
-  beam_size: 15
-  max_step_size: 350
-  sampler:
-    type: mlprogram.samplers.transform
-    sampler:
-      type: mlprogram.samplers.ActionSequenceSampler
-      encoder: "@/encoder.action_sequence_encoder"
-      get_token_type: null
-      is_subtype:
-        type: mlprogram.languages.bash.IsSubtype
-      transform_input: "@/transform.transform_input"
-      transform_action_sequence: "@/transform.transform_action_sequence"
-      collate: "@/collate"
-      module: "@/model"
-    transform:
-      type: mlprogram.languages.bash.Unparse
-
-# Metrics
-metrics:
-  accuracy:
-    type: mlprogram.metrics.Accuracy
-  bleu:
-    type: mlprogram.metrics.Bleu
-
 main:
   type: mlprogram.entrypoint.evaluate
   workspace_dir: "output/workspace"
   input_dir: "@/output_dir"
   output_dir: "@/output_dir"
-  test_dataset: "@/test_dataset"
   valid_dataset: "@/valid_dataset"
   model: "@/model"
   synthesizer: "@/synthesizer"
   metrics: "@/metrics"
-  main_metric:
-    - 1
-    - "bleu"
   top_n:
     - 1
+    - 3
   device: "@/device"
   n_process: 4
