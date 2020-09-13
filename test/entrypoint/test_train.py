@@ -94,14 +94,46 @@ class TestTrainSupervised(unittest.TestCase):
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(
+                os.path.exists(os.path.join(output, "optimizer.pt")))
+
+    def test_skip_evaluation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_supervised(ws, output,
+                             self.prepare_dataset(),
+                             model,
+                             self.prepare_optimizer(model),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             None, "key",
+                             self.collate, 1, Epoch(2))
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_6")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(0, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(2, len(log))
+            self.assertEqual(0, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(
                 os.path.exists(os.path.join(output, "optimizer.pt")))
@@ -172,14 +204,14 @@ class TestTrainSupervised(unittest.TestCase):
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
 
     def test_iterable_dataset(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -202,14 +234,14 @@ class TestTrainSupervised(unittest.TestCase):
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
 
 
 class TestTrainREINFORCE(unittest.TestCase):
@@ -264,14 +296,14 @@ class TestTrainREINFORCE(unittest.TestCase):
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
             self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(os.path.exists(
                 os.path.join(output, "optimizer.pt")))

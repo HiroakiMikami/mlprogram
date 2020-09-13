@@ -73,9 +73,9 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                               iter_per_epoch: int,
                               model: nn.Module,
                               optimizer: torch.optim.Optimizer,
-                              evaluate: Callable[[], None],
+                              evaluate: Optional[Callable[[], None]],
                               metric: str, maximize: bool,
-                              workspace_dir: str, n_model: int):
+                              workspace_dir: str):
     model_dir = os.path.join(workspace_dir, "model")
 
     logger.info("Prepare pytorch-pfn-extras")
@@ -93,14 +93,17 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         manager.extend(extensions.LogReport(
             trigger=Trigger(interval_iter, n_iter)))
         manager.extend(extensions.ProgressBar())
-        manager.extend(Call(evaluate), trigger=Trigger(interval_iter, n_iter))
         manager.extend(extensions.PrintReport(entries=[
             "loss", metric,
             "iteration", "epoch",
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
             trigger=Trigger(interval_iter, n_iter))
-        manager.extend(SaveTopKModel(model_dir, n_model, metric, model,
+        if evaluate is not None:
+            manager.extend(Call(evaluate),
+                           trigger=Trigger(interval_iter, n_iter))
+
+        manager.extend(SaveTopKModel(model_dir, 1, metric, model,
                                      maximize=maximize),
                        trigger=Trigger(interval_iter, n_iter))
     if distributed.is_initialized():
@@ -182,14 +185,13 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      model: nn.Module,
                      optimizer: torch.optim.Optimizer,
                      loss: Callable[[Any], torch.Tensor],
-                     evaluate: Callable[[], None],
+                     evaluate: Optional[Callable[[], None]],
                      metric: str,
                      collate: Callable[[List[Any]], Any],
                      batch_size: int,
                      length: Length,
                      interval: Optional[Length] = None,
                      maximize: bool = True,
-                     n_model: int = 3,
                      device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -212,7 +214,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
                                   model, optimizer,
                                   evaluate, metric, maximize,
-                                  workspace_dir, n_model)
+                                  workspace_dir)
 
     logger.info("Start training")
     try:
@@ -260,7 +262,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     model: nn.Module,
                     optimizer: torch.optim.Optimizer,
                     loss: Callable[[Any], torch.Tensor],
-                    evaluate: Callable[[], None],
+                    evaluate: Optional[Callable[[], None]],
                     metric: str,
                     reward: Metric,
                     rollout_transform: Callable[[Any], Any],
@@ -270,7 +272,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     length: Length,
                     interval: Optional[Length] = None,
                     maximize: bool = True,
-                    n_model: int = 3,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
                     device: torch.device = torch.device("cpu")) \
@@ -308,7 +309,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
         create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
                                   model, optimizer,
                                   evaluate, metric, maximize,
-                                  workspace_dir, n_model)
+                                  workspace_dir)
 
     logger.info("Start training")
     try:
