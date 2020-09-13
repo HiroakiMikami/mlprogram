@@ -100,7 +100,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
                                      maximize=maximize),
                        trigger=Trigger(interval_iter, n_iter))
         manager.extend(extensions.PrintReport(entries=[
-            "loss", metric,
+            "loss",
             "iteration", "epoch",
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
