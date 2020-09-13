@@ -225,11 +225,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     with logger.block("optimizer.step"):
                         optimizer.step()
 
-                    ppe.reporting.report({
-                        "loss": bloss.item(),
-                        "score": s.item()
-                    })
-                    logger.dump_eplased_time_log()
+                    logger.dump_elapsed_time_log()
                     if device.type == "cuda":
                         ppe.reporting.report({
                             "gpu.max_memory_allocated":
@@ -351,7 +347,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         "loss": bloss.item(),
                         "score": np.mean(scores)
                     })
-                    logger.dump_eplased_time_log()
+                    logger.dump_elapsed_time_log()
                     if device.type == "cuda":
                         ppe.reporting.report({
                             "gpu.max_memory_allocated":

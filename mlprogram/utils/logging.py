@@ -25,7 +25,7 @@ class Logger(object):
         self.elapsed_time_log: Dict[str, Tuple[int, float]] = {}
         self.gpu_elapsed_time_log: Dict[str, Tuple[int, float]] = {}
 
-    def dump_eplased_time_log(self) -> None:
+    def dump_elapsed_time_log(self) -> None:
         report({
             f"time.{tag}": time / n
             for tag, (n, time) in self.elapsed_time_log.items()
