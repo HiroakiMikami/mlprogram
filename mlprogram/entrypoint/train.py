@@ -91,7 +91,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
     )
     if distributed.is_main_process():
         manager.extend(extensions.LogReport(
-            trigger=Trigger(interval_iter, n_iter)))
+            trigger=Trigger(100, n_iter)))
         manager.extend(extensions.ProgressBar())
         if evaluate is not None:
             manager.extend(Call(evaluate),
