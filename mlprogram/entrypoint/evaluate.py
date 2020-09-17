@@ -150,11 +150,16 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
                  for n, metric in total.items()}
         r = EvaluationResult(results, total,
                              np.mean(generated), np.mean(times))
+        # report
         for n, metric in total.items():
             for name, value in metric.items():
                 report({f"{name}@{n}": value})
         report({"generation_rate": r.generation_rate})
         report({"generation_time": r.generation_time})
+        # logging
+        logger.info(f"{r.metrics}")
+        logger.info(f"generation rate: {r.generation_rate}")
+        logger.info(f"generation time: {r.generation_time}")
         return r
 
 
@@ -194,17 +199,13 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     pathes.sort(key=lambda x: -x[0])
     model_path = pathes[0][1]
 
-    logger.info(f"Start evaluation (valid dataset): {model_path}")
+    logger.info(f"Start evaluation: {model_path}")
     model_path = os.path.join(model_dir, model_path)
     state_dict = \
         torch.load(model_path, map_location=torch.device("cpu"))["model"]
     model.load_state_dict(state_dict)
 
-    logger.info("Start evaluation using valid dataset")
     result = evaluate_synthesizer()
-    logger.info(f"{result.metrics}")
-    logger.info(f"generation rate: {result.generation_rate}")
-    logger.info(f"generation time: {result.generation_time}")
     torch.save(result, result_path)
 
     logger.info("Copy log to output_dir")
