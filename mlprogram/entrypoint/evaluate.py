@@ -6,6 +6,7 @@ from typing \
 import numpy as np
 import torch
 from torch import nn
+from tqdm import tqdm
 import os
 import shutil
 from pytorch_pfn_extras.reporting import report
@@ -54,9 +55,11 @@ class EvaluateSample(Generic[Input, Code]):
         self.metrics = metrics
         self.top_n = top_n
 
-    def __call__(self, elem: Tuple[Input, Dict[str, Any]]) -> Result:
-        input, group = elem
+    def __call__(self, elem: Tuple[int, Tuple[Input, Dict[str, Any]]]) \
+            -> Result:
+        i, (input, group) = elem
         begin = time.time()
+        logger.debug(f"Start evaluation of {i}-th sample")
         with logger.block("synthesizer"):
             candidates = list(self.synthesizer({"input": input}))
         end = time.time()
@@ -71,6 +74,7 @@ class EvaluateSample(Generic[Input, Code]):
                     for name, f in self.metrics.items():
                         m[name] = max(m[name], f(group, c.output))
                 ms[n] = m
+        logger.debug(f"Finish evaluation of {i}-th sample")
         return Result(
             input,
             {key: value for key, value in group.items() if key != "input"},
@@ -95,7 +99,6 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
 
     @logger.function_block("__call__")
     def __call__(self) -> EvaluationResult[Input, Code, GroundTruth]:
-        results: List[Result[Input, Code, GroundTruth]] = []
         total = {}
         generated = []
         times = []
@@ -111,20 +114,25 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
             for input in group["input"]:
                 inputs.append((input, group))
 
+        results: List[Result[Input, Code, GroundTruth]] = []
         if self.n_process is None:
             logger.info(f"Evalute with {len(inputs)} samples")
-            results = [evaluate_sample(elem)
-                       for elem in logger.iterable_block("evaluate_sample",
-                                                         inputs)]
+            results = [
+                evaluate_sample(elem)
+                for elem in tqdm(
+                    logger.iterable_block("evaluate_sample",
+                                          enumerate(inputs)))]
         else:
             logger.info(
                 f"Evalute with {len(inputs)} samples "
                 f"using {self.n_process} processes")
+            results = []
             with ctx.Pool(processes=self.n_process) as pool:
-                list(pool.map(evaluate_sample, inputs))
-            results = [evaluate_sample(elem)
-                       for elem in logger.iterable_block("evaluate_sample",
-                                                         inputs)]
+                with tqdm(total=len(inputs)) as _t:
+                    for _r in pool.imap_unordered(evaluate_sample,
+                                                  enumerate(inputs)):
+                        _t.update(1)
+                        results.append(_r)
 
         logger.info("Summarize results")
         for result in results:

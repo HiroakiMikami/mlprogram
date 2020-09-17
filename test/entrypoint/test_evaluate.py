@@ -99,6 +99,7 @@ class TestEvaluateSynthesizer(unittest.TestCase):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
+        results.results.sort(key=lambda x: x.query)
         self.assertEqual(
             Result("query0", {"ground_truth": ["c0", "c1", "c4"]},
                    ["c0", "c1", "c2"],
