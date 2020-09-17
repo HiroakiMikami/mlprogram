@@ -27,4 +27,4 @@ main:
   metrics: {}
   top_n: []
   device: "@/device"
-  n_process: 4
+  n_process: 2

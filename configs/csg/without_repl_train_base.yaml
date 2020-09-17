@@ -62,7 +62,7 @@ main:
     synthesizer: "@/synthesizer"
     metrics: {}
     top_n: []
-    n_process: 4
+    n_process: 2
   metric: "generation_rate"
   maximize: True
   collate: "@/collate_fn"

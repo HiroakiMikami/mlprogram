@@ -46,4 +46,4 @@ main:
   top_n:
     - 1
   device: "@/device"
-  n_process: 4
+  n_process: 2

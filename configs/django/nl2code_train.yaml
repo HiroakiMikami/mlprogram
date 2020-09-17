@@ -94,7 +94,7 @@ main:
     metrics: "@/metrics"
     top_n:
       - 1
-    n_process: 4
+    n_process: 2
   metric: "bleu@1"
   maximize: True
   collate:
