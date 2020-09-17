@@ -192,7 +192,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         logger.warning(f"There are multiple models in {model_dir}")
     pathes = []
     for model_path in os.listdir(model_dir):
-        model_path = os.path.join(model_dir, model_path)
+        model_path = os.path.join(model_dir, os.path.basename(model_path))
         score = \
             torch.load(model_path, map_location=torch.device("cpu"))["score"]
         pathes.append((score, model_path))
@@ -200,7 +200,6 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     model_path = pathes[0][1]
 
     logger.info(f"Start evaluation: {model_path}")
-    model_path = os.path.join(model_dir, model_path)
     state_dict = \
         torch.load(model_path, map_location=torch.device("cpu"))["model"]
     model.load_state_dict(state_dict)
