@@ -93,14 +93,14 @@ class TestTrainSupervised(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(
@@ -125,14 +125,14 @@ class TestTrainSupervised(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(0, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(0, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(
@@ -203,14 +203,14 @@ class TestTrainSupervised(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
 
     def test_iterable_dataset(self):
@@ -233,14 +233,14 @@ class TestTrainSupervised(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
 
 
@@ -295,14 +295,14 @@ class TestTrainREINFORCE(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
+            self.assertEqual(1, len(log))
             self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(os.path.exists(
