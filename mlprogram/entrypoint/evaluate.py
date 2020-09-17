@@ -104,9 +104,8 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
             for name in self.metrics.keys():
                 t[name] = 0.0
             total[n] = t
-        evaluate_sample = \
-            EvaluateSample[Dict[str, Any], Code](
-                self.synthesizer, self.metrics, self.top_n)
+        evaluate_sample: EvaluateSample[Dict[str, Any], Code] = \
+            EvaluateSample(self.synthesizer, self.metrics, self.top_n)
         inputs = []
         for group in self.dataset:
             for input in group["input"]:
