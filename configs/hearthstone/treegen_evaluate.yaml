@@ -1,11 +1,6 @@
 imports:
 - "treegen_base.yaml"
 
-device:
-  type: torch.device
-  type_str: "cpu"
-  index: 0
-
 output_dir: "output/output"
 
 dataset:
