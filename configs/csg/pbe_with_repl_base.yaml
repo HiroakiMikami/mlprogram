@@ -8,6 +8,7 @@ options:
         resolution: 4
         n_evaluate_dataset: 30
         timeout_sec: 5
+        interval_iter: 3000
     large:
         n_pretrain_iteration: 156250
         n_train_iteration: 281250
@@ -17,6 +18,7 @@ options:
         resolution: 1
         n_evaluate_dataset: 30
         timeout_sec: 120
+        interval_iter: 50000
 
 device:
     type: torch.device

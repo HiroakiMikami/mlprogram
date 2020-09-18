@@ -72,5 +72,5 @@ main:
     n: "@/option.n_pretrain_iteration"
   interval:
     type: mlprogram.entrypoint.train.Iteration
-    n: 1000
+    n: "@/option.interval_iter"
   device: "@/device"

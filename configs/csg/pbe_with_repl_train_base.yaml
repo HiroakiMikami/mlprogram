@@ -148,6 +148,6 @@ main:
     n: "@/option.n_train_iteration"
   interval:
     type: mlprogram.entrypoint.train.Iteration
-    n: 1000
+    n: "@/option.interval_iter"
   use_pretrained_model: true
   device: "@/device"

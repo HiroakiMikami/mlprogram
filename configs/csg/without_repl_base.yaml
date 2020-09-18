@@ -7,6 +7,7 @@ options:
         resolution: 4
         n_evaluate_dataset: 30
         timeout_sec: 5
+        interval_iter: 5000
     large:
         n_pretrain_iteration: 437500
         train_max_object: 13
@@ -15,6 +16,7 @@ options:
         resolution: 1
         n_evaluate_dataset: 30
         timeout_sec: 120
+        interval_iter: 50000
 
 device:
     type: torch.device
