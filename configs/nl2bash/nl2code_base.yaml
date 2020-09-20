@@ -6,7 +6,7 @@ device:
 parse:
   type: mlprogram.languages.bash.Parse
   tokenize:
-    type: mlprogram.languages.bash.TokenizeToken
+    type: mlprogram.datasets.nl2bash.TokenizeToken
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:

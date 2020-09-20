@@ -4,7 +4,8 @@ imports:
 output_dir: "output/output"
 
 dataset:
-  type: mlprogram.datasets.nl2bash.download
+  type: mlprogram.datasets.nl2bash.load
+  path: ./datasets/nl2bash.json
 train_dataset: "@/dataset.train"
 
 words:
@@ -88,7 +89,7 @@ main:
           - type: mlprogram.nn.Pick
             key: "action_sequence_loss"
   evaluate:
-    type: mlprogram.entrypoint.evaluate
+    type: mlprogram.entrypoint.EvaluateSynthesizer
     dataset: "@/test_dataset"
     synthesizer: "@/synthesizer"
     metrics: "@/metrics"

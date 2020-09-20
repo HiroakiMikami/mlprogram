@@ -9,7 +9,8 @@ device:
 output_dir: "output/output"
 
 dataset:
-  type: mlprogram.datasets.nl2bash.download
+  type: mlprogram.datasets.nl2bash.load
+  path: ./datasets/nl2bash.json
 
 encoder:
   word_encoder:
