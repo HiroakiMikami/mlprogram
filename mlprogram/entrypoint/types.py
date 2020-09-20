@@ -5,6 +5,7 @@ import mlprogram.entrypoint
 import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
+import mlprogram.datasets.deepfix
 import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
@@ -87,6 +88,8 @@ types = {
         mlprogram.datasets.nl2bash.TokenizeQuery,
     "mlprogram.datasets.nl2bash.TokenizeToken":
         mlprogram.datasets.nl2bash.TokenizeToken,
+    "mlprogram.datasets.deepfix.download":
+        mlprogram.datasets.deepfix.download,
 
     "mlprogram.metrics.transform": mlprogram.metrics.transform,
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
