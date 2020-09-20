@@ -5,6 +5,7 @@ import mlprogram.entrypoint
 import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
+import mlprogram.datasets.deepfix
 import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
@@ -16,6 +17,7 @@ import mlprogram.actions
 import mlprogram.synthesizers
 import mlprogram.utils
 import mlprogram.utils.data
+import mlprogram.utils.random
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
 import mlprogram.encoders
@@ -87,6 +89,8 @@ types = {
         mlprogram.datasets.nl2bash.TokenizeQuery,
     "mlprogram.datasets.nl2bash.TokenizeToken":
         mlprogram.datasets.nl2bash.TokenizeToken,
+    "mlprogram.datasets.deepfix.download":
+        mlprogram.datasets.deepfix.download,
 
     "mlprogram.metrics.transform": mlprogram.metrics.transform,
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
@@ -111,6 +115,8 @@ types = {
     "mlprogram.utils.Pick": mlprogram.utils.Pick,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
+
+    "mlprogram.utils.random.random_split": mlprogram.utils.random.random_split,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
