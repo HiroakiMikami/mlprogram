@@ -247,7 +247,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 ])),
                 None, "score",
                 collate_fn,
-                1, Epoch(100), interval=Epoch(10)
+                1, Epoch(100), evaluation_interval=Epoch(10),
+                snapshot_interval=Epoch(100)
             )
         return encoder, train_dataset
 
@@ -338,7 +339,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 RandomChoice(rng=np.random.RandomState(0)),
                 collate_fn,
                 1, 1,
-                Epoch(30), interval=Epoch(30),
+                Epoch(30), evaluation_interval=Epoch(30),
+                snapshot_interval=Epoch(30),
                 use_pretrained_model=True,
                 use_pretrained_optimizer=False)
 

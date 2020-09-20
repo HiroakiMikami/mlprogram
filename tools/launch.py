@@ -33,7 +33,11 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
                         "type": "mlprogram.entrypoint.train.Iteration",
                         "n": 2
                     }
-                    value["interval"] = {
+                    value["evaluation_interval"] = {
+                        "type": "mlprogram.entrypoint.train.Iteration",
+                        "n": 2
+                    }
+                    value["snapshot_interval"] = {
                         "type": "mlprogram.entrypoint.train.Iteration",
                         "n": 2
                     }
@@ -81,7 +85,11 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                         "type": "mlprogram.entrypoint.train.Iteration",
                         "n": 2
                     }
-                    value["interval"] = {
+                    value["evaluation_interval"] = {
+                        "type": "mlprogram.entrypoint.train.Iteration",
+                        "n": 2
+                    }
+                    value["snapshot_interval"] = {
                         "type": "mlprogram.entrypoint.train.Iteration",
                         "n": 2
                     }

@@ -131,7 +131,10 @@ main:
   length:
     type: mlprogram.entrypoint.train.Epoch
     n: 25
-  interval:
+  evaluation_interval:
+    type: mlprogram.entrypoint.train.Epoch
+    n: 10
+  snapshot_interval:
     type: mlprogram.entrypoint.train.Epoch
     n: 10
   device: "@/device"

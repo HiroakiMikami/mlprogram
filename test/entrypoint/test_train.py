@@ -196,7 +196,7 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              MockEvaluate("key"), "key",
                              self.collate, 1, Iteration(2),
-                             interval=Iteration(1))
+                             evaluation_interval=Iteration(1))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_2")))
             self.assertTrue(os.path.exists(os.path.join(ws, "log")))
@@ -226,7 +226,7 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              MockEvaluate("key"), "key",
                              self.collate, 1, Iteration(2),
-                             interval=Iteration(1))
+                             evaluation_interval=Iteration(1))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_2")))
             self.assertTrue(os.path.exists(os.path.join(ws, "log")))

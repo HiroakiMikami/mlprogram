@@ -86,7 +86,10 @@ main:
   length:
     type: mlprogram.entrypoint.train.Iteration
     n: "@/option.n_pretrain_iteration"
-  interval:
+  evaluation_interval:
+    type: mlprogram.entrypoint.train.Iteration
+    n: 1000
+  snapshot_interval:
     type: mlprogram.entrypoint.train.Iteration
     n: 1000
   device: "@/device"

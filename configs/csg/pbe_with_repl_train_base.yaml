@@ -124,7 +124,6 @@ main:
     synthesizer: "@/synthesizer"
     metrics: {}
     top_n: []
-    n_process: 2
   metric: "generation_rate"
   reward:
     type: mlprogram.metrics.transform
@@ -146,8 +145,11 @@ main:
   length:
     type: mlprogram.entrypoint.train.Iteration
     n: "@/option.n_train_iteration"
-  interval:
+  evaluation_interval:
     type: mlprogram.entrypoint.train.Iteration
     n: "@/option.interval_iter"
+  snapshot_interval:
+    type: mlprogram.entrypoint.train.Iteration
+    n: 1000
   use_pretrained_model: true
   device: "@/device"

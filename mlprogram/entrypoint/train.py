@@ -69,7 +69,8 @@ def calc_interval_iter(interval: Optional[Length], iter_per_epoch: int) -> int:
     return interval_iter
 
 
-def create_extensions_manager(n_iter: int, interval_iter: int,
+def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
+                              snapshot_interval_iter: int,
                               iter_per_epoch: int,
                               model: nn.Module,
                               optimizer: torch.optim.Optimizer,
@@ -87,7 +88,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
     )
     manager.extend(
         extensions.FailOnNonNumber(),
-        trigger=Trigger(interval_iter, n_iter)
+        trigger=Trigger(evaluation_interval_iter, n_iter)
     )
     if distributed.is_main_process():
         manager.extend(extensions.LogReport(
@@ -95,10 +96,10 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         manager.extend(extensions.ProgressBar())
         if evaluate is not None:
             manager.extend(Call(evaluate),
-                           trigger=Trigger(interval_iter, n_iter))
+                           trigger=Trigger(evaluation_interval_iter, n_iter))
         manager.extend(SaveTopKModel(model_dir, 1, metric, model,
                                      maximize=maximize),
-                       trigger=Trigger(interval_iter, n_iter))
+                       trigger=Trigger(evaluation_interval_iter, n_iter))
         manager.extend(extensions.PrintReport(entries=[
             "loss",
             "iteration", "epoch",
@@ -113,7 +114,7 @@ def create_extensions_manager(n_iter: int, interval_iter: int,
         snapshot._local_rank = distributed.rank()
     else:
         snapshot = extensions.snapshot(autoload=True, n_retains=1)
-    manager.extend(snapshot, trigger=Trigger(interval_iter, n_iter))
+    manager.extend(snapshot, trigger=Trigger(snapshot_interval_iter, n_iter))
     return manager
 
 
@@ -189,7 +190,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      collate: Callable[[List[Any]], Any],
                      batch_size: int,
                      length: Length,
-                     interval: Optional[Length] = None,
+                     evaluation_interval: Optional[Length] = None,
+                     snapshot_interval: Optional[Length] = None,
                      maximize: bool = True,
                      device: torch.device = torch.device("cpu")) \
         -> None:
@@ -206,14 +208,19 @@ def train_supervised(workspace_dir: str, output_dir: str,
     else:
         iter_per_epoch = 1
     n_iter = calc_n_iter(length, iter_per_epoch)
-    interval_iter = calc_interval_iter(interval, iter_per_epoch)
+    evaluation_interval_iter = \
+        calc_interval_iter(evaluation_interval, iter_per_epoch)
+    snapshot_interval_iter = \
+        calc_interval_iter(snapshot_interval, iter_per_epoch)
 
     # Initialize extensions manager
     manager = \
-        create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer,
-                                  evaluate, metric, maximize,
-                                  workspace_dir)
+        create_extensions_manager(
+            n_iter, evaluation_interval_iter, snapshot_interval_iter,
+            iter_per_epoch,
+            model, optimizer,
+            evaluate, metric, maximize,
+            workspace_dir)
 
     logger.info("Start training")
     try:
@@ -269,7 +276,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     batch_size: int,
                     n_rollout: int,
                     length: Length,
-                    interval: Optional[Length] = None,
+                    evaluation_interval: Optional[Length] = None,
+                    snapshot_interval: Optional[Length] = None,
                     maximize: bool = True,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
@@ -288,7 +296,10 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     else:
         iter_per_epoch = 1
     n_iter = calc_n_iter(length, iter_per_epoch)
-    interval_iter = calc_interval_iter(interval, iter_per_epoch)
+    evaluation_interval_iter = \
+        calc_interval_iter(evaluation_interval, iter_per_epoch)
+    snapshot_interval_iter = \
+        calc_interval_iter(snapshot_interval, iter_per_epoch)
 
     if use_pretrained_model:
         logger.info("Load pretrained model")
@@ -305,10 +316,12 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
     # Initialize extensions manager
     manager = \
-        create_extensions_manager(n_iter, interval_iter, iter_per_epoch,
-                                  model, optimizer,
-                                  evaluate, metric, maximize,
-                                  workspace_dir)
+        create_extensions_manager(
+            n_iter, evaluation_interval_iter, snapshot_interval_iter,
+            iter_per_epoch,
+            model, optimizer,
+            evaluate, metric, maximize,
+            workspace_dir)
 
     logger.info("Start training")
     try:
