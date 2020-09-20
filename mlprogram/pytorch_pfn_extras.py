@@ -10,23 +10,20 @@ logger = logging.Logger(__name__)
 
 class SaveTopKModel(extension.Extension):
     def __init__(self, model_dir: str, n_model: int, key: str,
-                 model: nn.Module):
+                 model: nn.Module, maximize: bool = True):
         super().__init__()
         os.makedirs(model_dir, exist_ok=True)
         self.key = key
+        self.maximize = maximize
         self.top_k_model = TopKModel(n_model, model_dir)
         self.model = model
 
     def __call__(self, manager: training.ExtensionsManager) -> None:
-        # Find LogReport (TODO)
-        score = None
-        for _ext in manager._extensions.values():
-            ext = _ext.extension
-            if isinstance(ext, training.extensions.LogReport):
-                score = ext.log[-1][self.key]
-        if score is None:
+        if self.key in manager.observation:
             score = manager.observation[self.key]
+            logger.debug("Update top-K model: score={score}")
 
-        logger.debug("Update top-K model: score={score}")
-        self.top_k_model.save(score,
-                              f"{manager.iteration}", self.model)
+            if not self.maximize:
+                score = -score
+            self.top_k_model.save(score,
+                                  f"{manager.iteration}", self.model)

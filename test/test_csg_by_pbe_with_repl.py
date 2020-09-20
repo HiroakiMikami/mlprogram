@@ -11,6 +11,7 @@ import torch
 import torch.optim as optim
 from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
+from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer, Reshape
 from mlprogram.synthesizers \
@@ -25,7 +26,7 @@ from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform \
     import EvaluateGroundTruth, RandomChoice
 import mlprogram.nn
-from mlprogram.nn.action_sequence import Loss, Accuracy
+from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
 from mlprogram.nn.pbe_with_repl import Encoder
 import mlprogram.nn.action_sequence as a_s
@@ -186,16 +187,14 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             model = self.prepare_model(encoder)
             eval(
                 dir, tmpdir, dir,
-                dataset, dataset,
+                dataset,
                 model,
                 self.prepare_synthesizer(model, encoder, interpreter,
                                          rollout=False),
-                {},
-                "generation", top_n=[],
+                {}, top_n=[],
                 n_process=1
             )
-        results = torch.load(os.path.join(dir, "results.pt"))
-        return results["valid"]
+        return torch.load(os.path.join(dir, "result.pt"))
 
     def pretrain(self, output_dir):
         dataset = Dataset(2, 1, 2, 1, 45, reference=True, seed=1)
@@ -246,13 +245,10 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                          constants={"rhs": 1})),
                     ("pick", mlprogram.nn.Pick("action_sequence_loss"))
                 ])),
-                torch.nn.Sequential(OrderedDict([
-                    ("accuracy", Accuracy()),
-                    ("pick", mlprogram.nn.Pick("action_sequence_accuracy"))
-                ])),
+                None, "score",
                 collate_fn,
-                1, Epoch(100), interval=Epoch(10),
-                n_model=0
+                1, Epoch(100), evaluation_interval=Epoch(10),
+                snapshot_interval=Epoch(100)
             )
         return encoder, train_dataset
 
@@ -330,14 +326,21 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                          constants={"rhs": 1})),
                     ("pick", mlprogram.nn.Pick("loss"))
                 ])),
-                metrics.TestCaseResult(interpreter, reference=True,
-                                       metric=metrics.Iou()),
-                Threshold(0.9, dtype="float"),
+                EvaluateSynthesizer(
+                    train_dataset,
+                    self.prepare_synthesizer(model, encoder, interpreter,
+                                             rollout=False),
+                    {}, top_n=[]),
+                "generation_rate",
+                metrics.transform(
+                    metrics.TestCaseResult(interpreter, reference=True,
+                                           metric=metrics.Iou()),
+                    Threshold(0.9, dtype="float")),
                 RandomChoice(rng=np.random.RandomState(0)),
                 collate_fn,
                 1, 1,
-                Epoch(30), interval=Epoch(10),
-                n_model=1,
+                Epoch(30), evaluation_interval=Epoch(30),
+                snapshot_interval=Epoch(30),
                 use_pretrained_model=True,
                 use_pretrained_optimizer=False)
 
@@ -348,8 +351,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
-            results = self.evaluate(dataset, encoder, tmpdir)
-        self.assertLessEqual(0.9, results.generation_rate)
+            result = self.evaluate(dataset, encoder, tmpdir)
+        self.assertLessEqual(0.9, result.generation_rate)
 
 
 if __name__ == "__main__":

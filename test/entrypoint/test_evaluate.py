@@ -6,7 +6,7 @@ import torch
 from mlprogram.entrypoint import evaluate
 from mlprogram.utils.data import ListDataset
 from mlprogram.metrics import Accuracy, Bleu
-from mlprogram.entrypoint.evaluate import evaluate_synthesizer, Result
+from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
 from mlprogram.synthesizers import Result as DecoderResult
 
 
@@ -53,8 +53,8 @@ class TestEvaluateSynthesizer(unittest.TestCase):
             "input": ["query0", "query1", "query2"],
             "ground_truth": ["c0", "c1", "c4"]
         }])
-        results = evaluate_synthesizer(dataset, synthesize,
-                                       metrics={"accuracy": accuracy})
+        results = EvaluateSynthesizer(dataset, synthesize,
+                                      metrics={"accuracy": accuracy})()
 
         self.assertEqual(
             results.metrics,
@@ -88,9 +88,9 @@ class TestEvaluateSynthesizer(unittest.TestCase):
             "input": ["query0", "query1", "query2"],
             "ground_truth": ["c0", "c1", "c4"]
         }])
-        results = evaluate_synthesizer(dataset, synthesize,
-                                       metrics={"accuracy": accuracy},
-                                       n_process=2)
+        results = EvaluateSynthesizer(dataset, synthesize,
+                                      metrics={"accuracy": accuracy},
+                                      n_process=2)()
 
         self.assertEqual(
             results.metrics,
@@ -99,6 +99,7 @@ class TestEvaluateSynthesizer(unittest.TestCase):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
+        results.results.sort(key=lambda x: x.query)
         self.assertEqual(
             Result("query0", {"ground_truth": ["c0", "c1", "c4"]},
                    ["c0", "c1", "c2"],
@@ -121,9 +122,7 @@ class TestEvaluateSynthesizer(unittest.TestCase):
 
 class TestEvaluate(unittest.TestCase):
     def prepare_dataset(self):
-        return {"test": ListDataset([{"input": ["query"],
-                                      "ground_truth": ["name0"]}]),
-                "valid": ListDataset([{"input": ["query"],
+        return {"valid": ListDataset([{"input": ["query"],
                                        "ground_truth": ["name0"]}])}
 
     def prepare_model(self):
@@ -139,29 +138,40 @@ class TestEvaluate(unittest.TestCase):
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
-            torch.save({"model": {"score": 0.5, "name": "tmp"}},
+            torch.save({"score": 1.0, "model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
-            torch.save({"model": {"score": 1.0, "name": "tmp"}},
-                       os.path.join(input, "model", "1"))
             dataset = self.prepare_dataset()
             model = self.prepare_model()
-            evaluate(input, ws, output, dataset["test"], dataset["valid"],
+            evaluate(input, ws, output, dataset["valid"],
                      model, self.prepare_synthesizer(model),
                      {
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
-            }, (1, "bleu"))
-            self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
-            results = torch.load(os.path.join(ws, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0", "1"]), set(results["test"].keys()))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "results.pt")))
-            results = torch.load(os.path.join(output, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0", "1"]), set(results["test"].keys()))
+            })
+            self.assertTrue(os.path.exists(os.path.join(ws, "result.pt")))
+            self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
+
+    def test_multiple_models(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input = os.path.join(tmpdir, "input")
+            ws = os.path.join(tmpdir, "workspace")
+            output = os.path.join(tmpdir, "output")
+            os.makedirs(input)
+            os.makedirs(os.path.join(input, "model"))
+            torch.save({"score": 0.5, "model": {"score": 0.5, "name": "tmp"}},
+                       os.path.join(input, "model", "0"))
+            torch.save({"score": 1.0, "model": {"score": 1.0, "name": "tmp"}},
+                       os.path.join(input, "model", "1"))
+            dataset = self.prepare_dataset()
+            model = self.prepare_model()
+            evaluate(input, ws, output, dataset["valid"],
+                     model, self.prepare_synthesizer(model),
+                     {
+                "accuracy": Accuracy(),
+                "bleu": Bleu(),
+            })
+            self.assertTrue(os.path.exists(os.path.join(ws, "result.pt")))
+            self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
 
     def test_multiprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -170,73 +180,18 @@ class TestEvaluate(unittest.TestCase):
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
-            torch.save({"model": {"score": 0.5, "name": "tmp"}},
-                       os.path.join(input, "model", "0"))
-            torch.save({"model": {"score": 1.0, "name": "tmp"}},
-                       os.path.join(input, "model", "1"))
-            dataset = self.prepare_dataset()
-            model = self.prepare_model()
-            evaluate(input, ws, output, dataset["test"], dataset["valid"],
-                     model, self.prepare_synthesizer(model),
-                     {
-                "accuracy": Accuracy(),
-                "bleu": Bleu(),
-            }, (1, "bleu"), n_process=2)
-            self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
-            results = torch.load(os.path.join(ws, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0", "1"]), set(results["test"].keys()))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "results.pt")))
-            results = torch.load(os.path.join(output, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0", "1"]), set(results["test"].keys()))
-
-    def test_resume(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            input = os.path.join(tmpdir, "input")
-            ws = os.path.join(tmpdir, "workspace")
-            output = os.path.join(tmpdir, "output")
-            os.makedirs(input)
-            os.makedirs(os.path.join(input, "model"))
-            torch.save({"model": {"score": 0.5, "name": "tmp"}},
+            torch.save({"score": 0.5, "model": {"score": 0.5, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
             dataset = self.prepare_dataset()
             model = self.prepare_model()
-            evaluate(input, ws, output, dataset["test"], dataset["valid"],
+            evaluate(input, ws, output, dataset["valid"],
                      model, self.prepare_synthesizer(model),
                      {
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
-            }, (1, "bleu"))
-            self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
-            results = torch.load(os.path.join(ws, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0"]), set(results["test"].keys()))
-
-            torch.save({"model": {"score": 1.0, "name": "tmp"}},
-                       os.path.join(input, "model", "1"))
-            dataset = self.prepare_dataset()
-            evaluate(input, ws, output, dataset["test"], dataset["valid"],
-                     model, self.prepare_synthesizer(model),
-                     {
-                "accuracy": Accuracy(),
-                "bleu": Bleu(),
-            }, (1, "bleu"))
-            self.assertTrue(os.path.exists(os.path.join(ws, "results.pt")))
-            results = torch.load(os.path.join(ws, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0", "1"]), set(results["test"].keys()))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "results.pt")))
-            results = torch.load(os.path.join(output, "results.pt"))
-            self.assertEqual(set(["test", "best_model", "valid"]),
-                             set(results.keys()))
-            self.assertEqual(set(["0", "1"]), set(results["test"].keys()))
+            }, n_process=2)
+            self.assertTrue(os.path.exists(os.path.join(ws, "result.pt")))
+            self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
 
 
 if __name__ == "__main__":

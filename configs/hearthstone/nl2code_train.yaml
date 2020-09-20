@@ -87,16 +87,16 @@ main:
         - - "pick"
           - type: mlprogram.nn.Pick
             key: "action_sequence_loss"
-  score:
-    type: torch.nn.Sequential
-    modules:
-      type: collections.OrderedDict
-      items:
-        - - "loss"
-          - type: mlprogram.nn.action_sequence.Accuracy
-        - - "pick"
-          - type: mlprogram.nn.Pick
-            key: "action_sequence_accuracy"
+  evaluate:
+    type: mlprogram.entrypoint.EvaluateSynthesizer
+    dataset: "@/test_dataset"
+    synthesizer: "@/synthesizer"
+    metrics: "@/metrics"
+    top_n:
+      - 1
+    n_process: 2
+  metric: "bleu@1"
+  maximize: True
   collate:
     type: mlprogram.utils.Compose
     funcs:
@@ -111,4 +111,10 @@ main:
   length:
     type: mlprogram.entrypoint.train.Epoch
     n: 50
+  evaluation_interval:
+    type: mlprogram.entrypoint.train.Epoch
+    n: 10
+  snapshot_interval:
+    type: mlprogram.entrypoint.train.Epoch
+    n: 10
   device: "@/device"

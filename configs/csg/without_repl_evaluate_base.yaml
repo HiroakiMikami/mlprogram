@@ -21,12 +21,10 @@ main:
   workspace_dir: "output/workspace"
   input_dir: "@/output_dir"
   output_dir: "@/output_dir"
-  test_dataset: "@/test_dataset"
   valid_dataset: "@/valid_dataset"
   model: "@/model"
   synthesizer: "@/synthesizer"
   metrics: {}
-  main_metric: "generation"
   top_n: []
   device: "@/device"
-  n_process: 4
+  n_process: 2

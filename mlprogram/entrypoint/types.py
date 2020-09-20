@@ -66,6 +66,8 @@ types = {
         mlprogram.entrypoint.train_supervised,
     "mlprogram.entrypoint.train_REINFORCE":
         mlprogram.entrypoint.train_REINFORCE,
+    "mlprogram.entrypoint.EvaluateSynthesizer":
+        mlprogram.entrypoint.EvaluateSynthesizer,
     "mlprogram.entrypoint.evaluate": mlprogram.entrypoint.evaluate,
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,
@@ -86,6 +88,7 @@ types = {
     "mlprogram.datasets.nl2bash.TokenizeToken":
         mlprogram.datasets.nl2bash.TokenizeToken,
 
+    "mlprogram.metrics.transform": mlprogram.metrics.transform,
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
     "mlprogram.metrics.Iou": mlprogram.metrics.Iou,

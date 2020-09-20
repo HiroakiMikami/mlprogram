@@ -7,6 +7,7 @@ import torch
 from torch import nn
 from torch import optim
 
+from pytorch_pfn_extras.reporting import report
 from mlprogram.entrypoint.train import Epoch, Iteration
 from mlprogram.entrypoint import train_supervised, train_REINFORCE
 from mlprogram.utils.data import ListDataset
@@ -23,12 +24,8 @@ class MockSynthesizer:
             yield Result({"output": query["value"]}, 0, True, 1)
 
 
-def score(sample, output):
+def reward(sample, output):
     return sample["value"] == output["output"]
-
-
-def reward(score):
-    return score > 0.5
 
 
 class DummyModel(nn.Module):
@@ -39,6 +36,14 @@ class DummyModel(nn.Module):
     def forward(self, kwargs):
         kwargs["value"] = self.m(kwargs["value"])
         return kwargs
+
+
+class MockEvaluate(object):
+    def __init__(self, key):
+        self.key = key
+
+    def __call__(self):
+        report({self.key: 0.0})
 
 
 class TestTrainSupervised(unittest.TestCase):
@@ -80,8 +85,7 @@ class TestTrainSupervised(unittest.TestCase):
                              self.prepare_optimizer(model),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
@@ -89,15 +93,47 @@ class TestTrainSupervised(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(
+                os.path.exists(os.path.join(output, "optimizer.pt")))
+
+    def test_skip_evaluation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_supervised(ws, output,
+                             self.prepare_dataset(),
+                             model,
+                             self.prepare_optimizer(model),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             None, "key",
+                             self.collate, 1, Epoch(2))
+            self.assertTrue(os.path.exists(
+                os.path.join(ws, "snapshot_iter_6")))
+            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(1, len(log))
+            self.assertEqual(0, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            self.assertTrue(isinstance(log, list))
+            self.assertEqual(1, len(log))
+            self.assertEqual(0, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(
                 os.path.exists(os.path.join(output, "optimizer.pt")))
@@ -112,8 +148,7 @@ class TestTrainSupervised(unittest.TestCase):
                              model, self.prepare_optimizer(model),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
@@ -129,8 +164,7 @@ class TestTrainSupervised(unittest.TestCase):
                              model, optimizer,
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(1))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -140,8 +174,7 @@ class TestTrainSupervised(unittest.TestCase):
                              model, optimizer,
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_6")))
@@ -161,25 +194,24 @@ class TestTrainSupervised(unittest.TestCase):
                              self.prepare_optimizer(model),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
                              self.collate, 1, Iteration(2),
-                             interval=Iteration(1))
+                             evaluation_interval=Iteration(1))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_2")))
             self.assertTrue(os.path.exists(os.path.join(ws, "log")))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
 
     def test_iterable_dataset(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -192,25 +224,24 @@ class TestTrainSupervised(unittest.TestCase):
                              self.prepare_optimizer(model),
                              lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                          kwargs["target"]),
-                             lambda kwargs: nn.MSELoss()(kwargs["value"],
-                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
                              self.collate, 1, Iteration(2),
-                             interval=Iteration(1))
+                             evaluation_interval=Iteration(1))
             self.assertTrue(os.path.exists(
                 os.path.join(ws, "snapshot_iter_2")))
             self.assertTrue(os.path.exists(os.path.join(ws, "log")))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
 
 
 class TestTrainREINFORCE(unittest.TestCase):
@@ -253,7 +284,8 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                         kwargs["target"]
                                                         ) * kwargs["reward"],
-                            score, reward,
+                            MockEvaluate("key"), "key",
+                            reward,
                             lambda x: x,
                             self.collate,
                             1, 1, Epoch(2))
@@ -263,15 +295,15 @@ class TestTrainREINFORCE(unittest.TestCase):
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(ws, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
 
             self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
             self.assertTrue(isinstance(log, list))
-            self.assertEqual(2, len(log))
-            self.assertEqual(2, len(os.listdir(os.path.join(output, "model"))))
+            self.assertEqual(1, len(log))
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
             self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
             self.assertTrue(os.path.exists(
                 os.path.join(output, "optimizer.pt")))
@@ -295,7 +327,8 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                         kwargs["target"]
                                                         ) * kwargs["reward"],
-                            score, reward,
+                            MockEvaluate("key"), "key",
+                            reward,
                             lambda x: x,
                             self.collate,
                             1, 1, Epoch(2),
@@ -321,9 +354,8 @@ class TestTrainREINFORCE(unittest.TestCase):
                             lambda kwargs: nn.MSELoss()(kwargs["value"],
                                                         kwargs["target"]
                                                         ) * kwargs["reward"],
-                            lambda sample, output:
-                                sample["value"] == output["output"],
-                            lambda score: score > 0.5,
+                            MockEvaluate("key"), "key",
+                            reward,
                             lambda x: x,
                             self.collate,
                             1, 1, Epoch(2),

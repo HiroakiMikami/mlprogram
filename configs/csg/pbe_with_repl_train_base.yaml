@@ -118,16 +118,25 @@ main:
   model: "@/model"
   optimizer: "@/optimizer"
   loss: "@/loss_fn"
-  score:
-    type: mlprogram.metrics.TestCaseResult
-    interpreter: "@/interpreter"
-    reference: true
-    metric:
-      type: mlprogram.metrics.Iou
+  evaluate:
+    type: mlprogram.entrypoint.EvaluateSynthesizer
+    dataset: "@/test_dataset"
+    synthesizer: "@/synthesizer"
+    metrics: {}
+    top_n: []
+  metric: "generation_rate"
   reward:
-    type: mlprogram.utils.Threshold
-    threshold: 0.9
-    dtype: "float"
+    type: mlprogram.metrics.transform
+    metric:
+      type: mlprogram.metrics.TestCaseResult
+      interpreter: "@/interpreter"
+      reference: true
+      metric:
+        type: mlprogram.metrics.Iou
+    transform:
+      type: mlprogram.utils.Threshold
+      threshold: 0.9
+      dtype: "float"
   rollout_transform:
     type: mlprogram.utils.transform.RandomChoice
   collate: "@/collate_fn"
@@ -136,7 +145,10 @@ main:
   length:
     type: mlprogram.entrypoint.train.Iteration
     n: "@/option.n_train_iteration"
-  interval:
+  evaluation_interval:
+    type: mlprogram.entrypoint.train.Iteration
+    n: "@/option.interval_iter"
+  snapshot_interval:
     type: mlprogram.entrypoint.train.Iteration
     n: 1000
   use_pretrained_model: true

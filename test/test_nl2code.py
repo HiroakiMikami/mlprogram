@@ -13,6 +13,7 @@ import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
 import mlprogram.nn
 from mlprogram.entrypoint import evaluate as eval, train_supervised
+from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.torch import Optimizer
 from mlprogram.actions import AstToActionSequence
@@ -112,15 +113,13 @@ class TestNL2Code(unittest.TestCase):
             model = self.prepare_model(qencoder, aencoder)
             eval(
                 dir, tmpdir, dir,
-                test_dataset, test_dataset,
-                model,
+                test_dataset, model,
                 self.prepare_synthesizer(model, qencoder, aencoder),
                 {"accuracy": Accuracy()},
-                (5, "accuracy"), top_n=[5],
+                top_n=[5],
                 n_process=1
             )
-        results = torch.load(os.path.join(dir, "results.pt"))
-        return results["valid"]
+        return torch.load(os.path.join(dir, "result.pt"))
 
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -152,10 +151,16 @@ class TestNL2Code(unittest.TestCase):
             train_supervised(
                 tmpdir, output_dir,
                 train_dataset, model, optimizer,
-                loss_fn, lambda args: -loss_fn(args),
+                loss_fn,
+                EvaluateSynthesizer(
+                    test_dataset,
+                    self.prepare_synthesizer(model, qencoder, aencoder),
+                    {"accuracy": Accuracy()}, top_n=[5]
+                ),
+                "accuracy@5",
                 lambda x: collate(transform(x)),
-                1, Epoch(100), interval=Epoch(10),
-                n_model=1
+                1, Epoch(100), evaluation_interval=Epoch(100),
+                snapshot_interval=Epoch(100)
             )
         return qencoder, aencoder
 
