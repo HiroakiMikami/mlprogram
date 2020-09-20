@@ -17,6 +17,7 @@ import mlprogram.actions
 import mlprogram.synthesizers
 import mlprogram.utils
 import mlprogram.utils.data
+import mlprogram.utils.random
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
 import mlprogram.encoders
@@ -114,6 +115,8 @@ types = {
     "mlprogram.utils.Pick": mlprogram.utils.Pick,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
+
+    "mlprogram.utils.random.random_split": mlprogram.utils.random.random_split,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
