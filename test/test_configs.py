@@ -6,6 +6,8 @@ import sys
 from typing import List, Tuple
 from tools.launch import launch_multiprocess
 
+logger = logging.getLogger(__name__)
+
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
@@ -35,14 +37,15 @@ class ConfigTest(unittest.TestCase):
              0)
         ])
 
-    # TODO skip this dataset because nl2bash.download failed
-    """
     def test_nl2bash_nl2code(self):
-        self.run([
-            os.path.join("configs", "nl2bash", "nl2code_train.yaml"),
-            os.path.join("configs", "nl2bash", "nl2code_evaluate.yaml")
+        if not os.path.exists(os.path.join("datasets", "nl2bash.json")):
+            logger.warning("nl2bash dataset is not downloaded. Skip this test")
+            self.skipTest("nl2bash dataset is not downloaded. Skip this test")
+            return
+        self.launch_config([
+            (os.path.join("configs", "nl2bash", "nl2code_train.yaml"), 0),
+            (os.path.join("configs", "nl2bash", "nl2code_evaluate.yaml"), 0)
         ])
-    """
 
     def test_csg_small_pbe_without_repl(self):
         self.launch_config([
