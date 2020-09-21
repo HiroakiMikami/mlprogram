@@ -13,6 +13,7 @@ import mlprogram.metrics.python
 import mlprogram.languages.python
 import mlprogram.languages.bash
 import mlprogram.languages.csg
+import mlprogram.languages.c
 import mlprogram.actions
 import mlprogram.synthesizers
 import mlprogram.utils
@@ -216,7 +217,9 @@ types = {
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
     "mlprogram.utils.transform.csg.TransformCanvas":
-        mlprogram.utils.transform.csg.TransformCanvas
+        mlprogram.utils.transform.csg.TransformCanvas,
+
+    "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer
 }
 
 types.update(torch_types)
