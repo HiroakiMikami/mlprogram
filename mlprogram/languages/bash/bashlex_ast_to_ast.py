@@ -1,6 +1,6 @@
 import bashlex
 from typing import Union, Any, Callable, List
-import mlprogram.asts as A
+import mlprogram.languages.ast as A
 
 
 def bashlex_ast_to_ast(script: str,

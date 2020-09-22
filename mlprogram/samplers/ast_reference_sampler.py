@@ -4,7 +4,7 @@ from torch import nn
 from typing \
     import TypeVar, Generic, Generator, Optional, Dict, Any, Callable, \
     List, Set, Tuple
-from mlprogram.asts import AST, Node, Leaf
+from mlprogram.languages.ast import AST, Node, Leaf
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement

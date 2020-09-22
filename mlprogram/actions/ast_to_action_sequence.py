@@ -1,5 +1,5 @@
 from typing import List
-from mlprogram.asts import AST, Node, Leaf, Field, Root
+from mlprogram.languages.ast import AST, Node, Leaf, Field, Root
 from mlprogram.actions import Action, NodeType, NodeConstraint
 from mlprogram.actions import ApplyRule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule

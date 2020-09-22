@@ -50,7 +50,7 @@ SOFTWARE.
 
 import re
 from typing import Optional, Callable, List
-from mlprogram.asts import AST
+from mlprogram.languages.ast import AST
 from mlprogram.languages.python import Parser as BaseParser
 
 p_elif = re.compile(r'^elif\s?')

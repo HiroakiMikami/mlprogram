@@ -2,15 +2,15 @@ import unittest
 from mlprogram.actions \
     import ApplyRule, ExpandTreeRule, NodeType, \
     NodeConstraint, GenerateToken, CloseVariadicFieldRule
-from mlprogram import asts
-from mlprogram.asts import Root
+from mlprogram.languages import ast
+from mlprogram.languages.ast import Root
 from mlprogram.actions import AstToActionSequence
 
 
 class TestAstToSequence(unittest.TestCase):
     def test_leaf(self):
         f = AstToActionSequence()
-        seq = f(asts.Leaf("str", "t0 t1"))
+        seq = f(ast.Leaf("str", "t0 t1"))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(
                 NodeType(None, NodeConstraint.Node, False),
@@ -22,9 +22,9 @@ class TestAstToSequence(unittest.TestCase):
         )
 
         f = AstToActionSequence()
-        seq = f(asts.Node("value", [asts.Field("name", "str",
-                                               [asts.Leaf("str", "t0"),
-                                                asts.Leaf("str", "t1")])]))
+        seq = f(ast.Node("value", [ast.Field("name", "str",
+                                             [ast.Leaf("str", "t0"),
+                                              ast.Leaf("str", "t1")])]))
         self.assertEqual(
             [ApplyRule(ExpandTreeRule(
                 NodeType(None, NodeConstraint.Node, False),
@@ -42,9 +42,9 @@ class TestAstToSequence(unittest.TestCase):
         )
 
     def test_node(self):
-        a = asts.Node(
+        a = ast.Node(
             "def",
-            [asts.Field("name", "literal", asts.Leaf("str", "foo"))])
+            [ast.Field("name", "literal", ast.Leaf("str", "foo"))])
         f = AstToActionSequence()
         seq = f(a)
         self.assertEqual(
@@ -62,8 +62,8 @@ class TestAstToSequence(unittest.TestCase):
         )
 
     def test_node_with_variadic_fields(self):
-        a = asts.Node("list", [asts.Field("elems", "literal", [
-            asts.Node("str", []), asts.Node("str", [])])])
+        a = ast.Node("list", [ast.Field("elems", "literal", [
+            ast.Node("str", []), ast.Node("str", [])])])
         f = AstToActionSequence()
         seq = f(a)
         self.assertEqual(

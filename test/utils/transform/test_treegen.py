@@ -3,7 +3,7 @@ import numpy as np
 from torchnlp.encoders import LabelEncoder
 from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
-from mlprogram.asts import Node, Field, Leaf
+from mlprogram.languages.ast import Node, Field, Leaf
 from mlprogram.actions import AstToActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform.action_sequence import TransformCode

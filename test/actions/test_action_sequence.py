@@ -5,7 +5,7 @@ from mlprogram.actions import ActionSequence, InvalidActionException
 from mlprogram.actions \
     import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
     GenerateToken, CloseVariadicFieldRule
-from mlprogram.asts import Node, Leaf, Field, Root
+from mlprogram.languages.ast import Node, Leaf, Field, Root
 
 
 class Testaction_sequence(unittest.TestCase):

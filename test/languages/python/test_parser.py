@@ -3,7 +3,7 @@ import ast
 
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.languages.python import Parser
-from mlprogram.asts import Node
+from mlprogram.languages.ast import Node
 
 
 class TestParser(unittest.TestCase):
