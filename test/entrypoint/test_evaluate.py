@@ -148,8 +148,9 @@ class TestEvaluate(unittest.TestCase):
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
             })
-            self.assertTrue(os.path.exists(os.path.join(ws, "result.pt")))
             self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "result_metrics.json")))
 
     def test_multiple_models(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -170,8 +171,9 @@ class TestEvaluate(unittest.TestCase):
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
             })
-            self.assertTrue(os.path.exists(os.path.join(ws, "result.pt")))
             self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "result_metrics.json")))
 
     def test_multiprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -190,8 +192,9 @@ class TestEvaluate(unittest.TestCase):
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
             }, n_process=2)
-            self.assertTrue(os.path.exists(os.path.join(ws, "result.pt")))
             self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
+            self.assertTrue(os.path.exists(
+                os.path.join(output, "result_metrics.json")))
 
 
 if __name__ == "__main__":

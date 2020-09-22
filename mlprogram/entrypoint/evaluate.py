@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 import os
-import shutil
+import json
 from pytorch_pfn_extras.reporting import report
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
@@ -187,7 +187,6 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
             v.share_memory_()
 
     model_dir = os.path.join(input_dir, "model")
-    result_path = os.path.join(workspace_dir, "result.pt")
     if len(os.listdir(model_dir)) != 1:
         logger.warning(f"There are multiple models in {model_dir}")
     pathes = []
@@ -205,8 +204,17 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     model.load_state_dict(state_dict)
 
     result = evaluate_synthesizer()
-    torch.save(result, result_path)
 
-    logger.info("Copy log to output_dir")
+    logger.info("Save result to output_dir")
     os.makedirs(output_dir, exist_ok=True)
-    shutil.copyfile(result_path, os.path.join(output_dir, "result.pt"))
+    torch.save(result, os.path.join(output_dir, "result.pt"))
+    with open(os.path.join(output_dir, "result_metrics.json"),
+              "w") as file:
+        json.dump(
+            {
+                "metrics": result.metrics,
+                "generation_rate": result.generation_rate,
+                "generation_time": result.generation_time
+            },
+            file
+        )
