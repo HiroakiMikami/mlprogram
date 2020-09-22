@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from typing import List, Dict
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

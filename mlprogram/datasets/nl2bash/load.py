@@ -2,7 +2,7 @@ import json
 from typing import Dict
 
 from mlprogram.utils.data import ListDataset
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

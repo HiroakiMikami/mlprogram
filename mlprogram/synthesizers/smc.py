@@ -2,7 +2,7 @@ from typing \
     import TypeVar, Generic, Optional, Generator, Dict, Callable, cast
 from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import Result, Synthesizer
-from mlprogram.utils import logging
+from mlprogram import logging
 import math
 import numpy as np
 

@@ -3,7 +3,7 @@ from torch import multiprocessing
 import os
 from collections import OrderedDict
 from typing import Generic, TypeVar, Optional, Any, List, Callable, Dict
-from mlprogram.utils import logging
+from mlprogram import logging
 from mlprogram.distributed import is_main_process
 
 logger = logging.Logger(__name__)

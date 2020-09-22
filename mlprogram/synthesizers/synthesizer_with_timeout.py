@@ -1,7 +1,7 @@
 import time
 from typing import TypeVar, Generic, Generator, Optional
 from mlprogram.synthesizers import Synthesizer, Result
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

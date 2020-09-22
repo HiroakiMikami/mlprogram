@@ -1,7 +1,7 @@
 import requests
 from typing import Callable, Tuple, List, Dict, Any
 
-from mlprogram.utils import logging
+from mlprogram import logging
 from mlprogram.utils.data import ListDataset
 from mlprogram.datasets.django.format_annotations import format_annotations
 

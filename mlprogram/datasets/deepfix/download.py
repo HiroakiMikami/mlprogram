@@ -7,7 +7,7 @@ import sqlite3
 from shutil import copyfileobj
 from typing import Callable
 
-from mlprogram.utils import logging
+from mlprogram import logging
 from mlprogram.utils.data import ListDataset
 
 logger = logging.Logger(__name__)

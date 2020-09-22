@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 from pycparser.c_lexer import CLexer
 from pycparser.ply.lex import LexToken
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

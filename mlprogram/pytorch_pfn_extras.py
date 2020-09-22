@@ -3,7 +3,7 @@ from torch import nn
 from pytorch_pfn_extras import training
 from pytorch_pfn_extras.training import extension
 from mlprogram.utils import TopKModel
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 
