@@ -204,7 +204,7 @@ sampler:
                     - - "add_reference"
                       - type: mlprogram.utils.transform.action_sequence.AddEmptyReference
                     - - "transform_canvas"
-                      - type: mlprogram.utils.transform.csg.TransformCanvas
+                      - type: mlprogram.languages.csg.transform.TransformCanvas
                         targets: ["input"]
         transform_action_sequence:
             type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
@@ -253,7 +253,7 @@ transform:
             - - "add_reference"
               - type: mlprogram.utils.transform.action_sequence.AddEmptyReference
             - - "transform_canvas"
-              - type: mlprogram.utils.transform.csg.TransformCanvas
+              - type: mlprogram.languages.csg.transform.TransformCanvas
                 targets: ["input"]
             - - "transform_code"
               - type: mlprogram.utils.transform.action_sequence.TransformCode

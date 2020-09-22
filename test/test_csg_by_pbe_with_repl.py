@@ -35,7 +35,7 @@ from mlprogram.languages.csg import get_samples, IsSubtype, GetTokenType
 from mlprogram.languages.csg import Interpreter, ToAst, ToCsgAst, Dataset
 from mlprogram.utils.data \
     import to_map_style_dataset, transform as data_transform
-from mlprogram.utils.transform.csg import TransformCanvas
+from mlprogram.languages.csg.transform import TransformCanvas
 from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder

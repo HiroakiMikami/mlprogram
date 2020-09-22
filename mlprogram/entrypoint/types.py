@@ -13,6 +13,7 @@ import mlprogram.languages.python
 import mlprogram.languages.python.metrics
 import mlprogram.languages.bash
 import mlprogram.languages.csg
+import mlprogram.languages.csg.transform
 import mlprogram.languages.c
 import mlprogram.actions
 import mlprogram.synthesizers
@@ -30,8 +31,6 @@ import mlprogram.utils.transform.treegen
 
 import mlprogram.nn.pbe_with_repl
 import mlprogram.utils.transform.pbe_with_repl
-
-import mlprogram.utils.transform.csg
 
 from mlprogram.entrypoint.numpy import types as numpy_types
 from mlprogram.entrypoint.torch import types as torch_types
@@ -215,8 +214,8 @@ types = {
         mlprogram.languages.csg.GetTokenType,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
-    "mlprogram.utils.transform.csg.TransformCanvas":
-        mlprogram.utils.transform.csg.TransformCanvas,
+    "mlprogram.languages.csg.transform.TransformCanvas":
+        mlprogram.languages.csg.transform.TransformCanvas,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
     "mlprogram.languages.c.Tokenizer": mlprogram.languages.c.Tokenizer
