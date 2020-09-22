@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from mlprogram.utils.random import split
+from mlprogram.random import split
 
 
 class TestSplit(unittest.TestCase):

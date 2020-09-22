@@ -18,7 +18,6 @@ import mlprogram.actions
 import mlprogram.synthesizers
 import mlprogram.utils
 import mlprogram.utils.data
-import mlprogram.utils.random
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
 import mlprogram.encoders
