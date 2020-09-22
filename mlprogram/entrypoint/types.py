@@ -115,8 +115,6 @@ types = {
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
 
-    "mlprogram.utils.random.random_split": mlprogram.utils.random.random_split,
-
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
     "mlprogram.synthesizers.FilteredSynthesizer":
@@ -140,6 +138,8 @@ types = {
     "mlprogram.utils.data.get_samples": mlprogram.utils.data.get_samples,
     "mlprogram.utils.data.to_map_style_dataset":
         mlprogram.utils.data.to_map_style_dataset,
+    "mlprogram.utils.data.random.random_split":
+        mlprogram.utils.data.random.random_split,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
     "mlprogram.actions.AstToActionSequence":
