@@ -1,5 +1,5 @@
 import unittest
-from mlprogram.metrics.python import Bleu
+from mlprogram.languages.python.metrics import Bleu
 
 
 class TestBleu(unittest.TestCase):

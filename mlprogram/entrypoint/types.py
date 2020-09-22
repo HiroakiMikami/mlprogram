@@ -9,8 +9,8 @@ import mlprogram.datasets.deepfix
 import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
-import mlprogram.metrics.python
 import mlprogram.languages.python
+import mlprogram.languages.python.metrics
 import mlprogram.languages.bash
 import mlprogram.languages.csg
 import mlprogram.languages.c
@@ -97,11 +97,13 @@ types = {
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
     "mlprogram.metrics.Iou": mlprogram.metrics.Iou,
     "mlprogram.metrics.TestCaseResult": mlprogram.metrics.TestCaseResult,
-    "mlprogram.metrics.python.Bleu": mlprogram.metrics.python.Bleu,
 
     "mlprogram.languages.python.Parser": mlprogram.languages.python.Parser,
     "mlprogram.languages.python.IsSubtype":
         mlprogram.languages.python.IsSubtype,
+    "mlprogram.languages.python.metrics.Bleu":
+        mlprogram.languages.python.metrics.Bleu,
+
     "mlprogram.languages.bash.Parser": mlprogram.languages.bash.Parser,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
