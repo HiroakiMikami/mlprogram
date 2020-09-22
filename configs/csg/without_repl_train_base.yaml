@@ -64,6 +64,7 @@ main:
     top_n: []
     n_process: 2
   metric: "generation_rate"
+  threshold: 1.0
   maximize: True
   collate: "@/collate_fn"
   batch_size: "@/batch_size"

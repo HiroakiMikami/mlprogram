@@ -106,6 +106,27 @@ class TestTrainSupervised(unittest.TestCase):
             self.assertTrue(
                 os.path.exists(os.path.join(output, "optimizer.pt")))
 
+    def test_threshold(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = self.prepare_model()
+            train_supervised(ws, output,
+                             self.prepare_dataset(),
+                             model,
+                             self.prepare_optimizer(model),
+                             lambda kwargs: nn.MSELoss()(kwargs["value"],
+                                                         kwargs["target"]),
+                             MockEvaluate("key"), "key",
+                             self.collate, 1, Epoch(2),
+                             threshold=0.0)
+            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+
+            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
+            self.assertTrue(
+                os.path.exists(os.path.join(output, "optimizer.pt")))
+
     def test_skip_evaluation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = os.path.join(tmpdir, "ws")

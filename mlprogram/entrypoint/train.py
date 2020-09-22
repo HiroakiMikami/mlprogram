@@ -13,6 +13,7 @@ from mlprogram.synthesizers import Synthesizer
 from mlprogram import logging
 from mlprogram import distributed
 from mlprogram.pytorch_pfn_extras import SaveTopKModel
+from mlprogram.pytorch_pfn_extras import StopByThreshold
 from dataclasses import dataclass
 
 logger = logging.Logger(__name__)
@@ -76,6 +77,7 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
                               optimizer: torch.optim.Optimizer,
                               evaluate: Optional[Callable[[], None]],
                               metric: str, maximize: bool,
+                              threshold: Optional[float],
                               workspace_dir: str):
     model_dir = os.path.join(workspace_dir, "model")
 
@@ -106,6 +108,11 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
             trigger=Trigger(100, n_iter))
+    if threshold is not None:
+        manager.extend(
+            StopByThreshold(metric, threshold, maximize=maximize),
+            trigger=Trigger(evaluation_interval_iter, n_iter)
+        )
     if distributed.is_initialized():
         snapshot = extensions.snapshot(autoload=True, n_retains=1,
                                        saver_rank=0)
@@ -193,6 +200,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      evaluation_interval: Optional[Length] = None,
                      snapshot_interval: Optional[Length] = None,
                      maximize: bool = True,
+                     threshold: Optional[float] = None,
                      device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -219,7 +227,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
             n_iter, evaluation_interval_iter, snapshot_interval_iter,
             iter_per_epoch,
             model, optimizer,
-            evaluate, metric, maximize,
+            evaluate, metric, maximize, threshold,
             workspace_dir)
 
     logger.info("Start training")
@@ -279,6 +287,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     evaluation_interval: Optional[Length] = None,
                     snapshot_interval: Optional[Length] = None,
                     maximize: bool = True,
+                    threshold: Optional[float] = None,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
                     device: torch.device = torch.device("cpu")) \
@@ -320,7 +329,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
             n_iter, evaluation_interval_iter, snapshot_interval_iter,
             iter_per_epoch,
             model, optimizer,
-            evaluate, metric, maximize,
+            evaluate, metric, maximize, threshold,
             workspace_dir)
 
     logger.info("Start training")

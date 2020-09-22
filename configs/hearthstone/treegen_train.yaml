@@ -116,6 +116,7 @@ main:
       - 1
     n_process: 2
   metric: "bleu@1"
+  threshold: 1.0
   maximize: True
   collate:
     type: mlprogram.utils.Compose

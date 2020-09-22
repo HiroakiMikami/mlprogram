@@ -98,6 +98,7 @@ main:
       - 3
     n_process: 2
   metric: "bleu@3"
+  threshold: 1.0
   collate:
     type: mlprogram.utils.Compose
     funcs:
