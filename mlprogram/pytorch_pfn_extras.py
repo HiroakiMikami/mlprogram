@@ -1,8 +1,9 @@
+import torch
 import os
 from torch import nn
 from pytorch_pfn_extras import training
 from pytorch_pfn_extras.training import extension
-from mlprogram.utils import TopKModel
+from mlprogram.utils import TopKElement
 from mlprogram import logging
 
 logger = logging.Logger(__name__)
@@ -15,8 +16,16 @@ class SaveTopKModel(extension.Extension):
         os.makedirs(model_dir, exist_ok=True)
         self.key = key
         self.maximize = maximize
-        self.top_k_model = TopKModel(n_model, model_dir)
+        self.models = TopKElement(n_model, lambda path: os.remove(path))
+        self.model_dir = model_dir
         self.model = model
+
+        logger.info("Load saved top-k models")
+        for model in os.listdir(model_dir):
+            logger.debug(f"Load {model} and add to top-k model")
+            path = os.path.join(model_dir, model)
+            score = torch.load(path, map_location="cpu")["score"]
+            self.models.add(score, path)
 
     def __call__(self, manager: training.ExtensionsManager) -> None:
         if self.key in manager.observation:
@@ -25,5 +34,8 @@ class SaveTopKModel(extension.Extension):
 
             if not self.maximize:
                 score = -score
-            self.top_k_model.save(score,
-                                  f"{manager.iteration}", self.model)
+            path = os.path.join(self.model_dir,
+                                f"model_{manager.iteration}.pt")
+            result = {"score": score, "model": self.model.state_dict()}
+            torch.save(result, path)
+            self.models.add(score, path)
