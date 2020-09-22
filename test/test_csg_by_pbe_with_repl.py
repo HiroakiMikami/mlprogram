@@ -242,7 +242,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                      Apply(
                          [("action_sequence_loss", "lhs")],
                          "action_sequence_loss",
-                         mlprogram.nn.Div(),
+                         mlprogram.nn.Function(mlprogram.utils.Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(
@@ -300,7 +300,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                                  [("reward", "lhs"),
                                   ("action_sequence_loss", "rhs")],
                                  "action_sequence_loss",
-                                 mlprogram.nn.Mul()))
+                                 mlprogram.nn.Function(mlprogram.utils.Mul())))
                      ]))),
                     ("value",
                      torch.nn.Sequential(OrderedDict([
@@ -325,7 +325,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                      Apply(
                          [("loss", "lhs")],
                          "loss",
-                         mlprogram.nn.Div(),
+                         mlprogram.nn.Function(mlprogram.utils.Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(mlprogram.utils.Pick("loss")))

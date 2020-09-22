@@ -146,7 +146,7 @@ class TestTreeGen(unittest.TestCase):
                 ("loss", Loss()),
                 ("pick",
                  mlprogram.nn.Function(
-                     mlprogram.utilsPick("action_sequence_loss")))
+                     mlprogram.utils.Pick("action_sequence_loss")))
             ]))
 
             collate = Collate(

@@ -7,4 +7,3 @@ from mlprogram.nn.mlp import MLP  # noqa
 from mlprogram.nn.apply import Apply  # noqa
 from mlprogram.nn.aggregated_loss import AggregatedLoss # noqa
 from mlprogram.nn.function import Function  # noqa
-from mlprogram.nn.primitives import Add, Sub, Mul, Div, IntDiv, Neg  # noqa

@@ -65,7 +65,9 @@ loss_fn:
               - "lhs"
           out_key: action_sequence_loss
           module:
-            type: mlprogram.nn.Div
+            type: mlprogram.nn.Function
+            f:
+              type: mlprogram.utils.Div
           constants:
             rhs: "@/batch_size"
       - - "pick"
