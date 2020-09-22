@@ -4,7 +4,7 @@ import numpy as np
 import ast
 from mlprogram.actions import AstToActionSequence
 from mlprogram.utils import Query, Token
-from mlprogram.languages.python import to_ast
+from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.utils.data \
     import ListDataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions

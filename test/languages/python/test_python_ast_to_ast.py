@@ -4,7 +4,7 @@ import ast as python_ast
 import mlprogram.asts as ast
 
 from mlprogram.languages.python.python_ast_to_ast import base_ast_type
-from mlprogram.languages.python import to_ast
+from mlprogram.languages.python.python_ast_to_ast import to_ast
 
 
 class TestBaseAstType(unittest.TestCase):
