@@ -105,8 +105,10 @@ main:
         - - "loss"
           - type: mlprogram.nn.action_sequence.Loss
         - - "pick"
-          - type: mlprogram.nn.Pick
-            key: "action_sequence_loss"
+          - type: mlprogram.nn.Function
+            f:
+              type: mlprogram.utils.Pick
+              key: "action_sequence_loss"
   evaluate:
     type: mlprogram.entrypoint.EvaluateSynthesizer
     dataset: "@/test_dataset"

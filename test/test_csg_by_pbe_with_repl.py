@@ -136,7 +136,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 torch.nn.Sequential(OrderedDict([
                     ("encoder", model.encoder),
                     ("value", model.value),
-                    ("pick", mlprogram.nn.Pick("value"))
+                    ("pick",
+                     mlprogram.nn.Function(mlprogram.utils.Pick("value")))
                 ])))
 
             synthesizer = SynthesizerWithTimeout(
@@ -241,9 +242,11 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                      Apply(
                          [("action_sequence_loss", "lhs")],
                          "action_sequence_loss",
-                         mlprogram.nn.Div(),
+                         mlprogram.nn.Function(mlprogram.utils.Div()),
                          constants={"rhs": 1})),
-                    ("pick", mlprogram.nn.Pick("action_sequence_loss"))
+                    ("pick",
+                     mlprogram.nn.Function(
+                         mlprogram.utils.Pick("action_sequence_loss")))
                 ])),
                 None, "score",
                 collate_fn,
@@ -297,7 +300,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                                  [("reward", "lhs"),
                                   ("action_sequence_loss", "rhs")],
                                  "action_sequence_loss",
-                                 mlprogram.nn.Mul()))
+                                 mlprogram.nn.Function(mlprogram.utils.Mul())))
                      ]))),
                     ("value",
                      torch.nn.Sequential(OrderedDict([
@@ -322,9 +325,10 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                      Apply(
                          [("loss", "lhs")],
                          "loss",
-                         mlprogram.nn.Div(),
+                         mlprogram.nn.Function(mlprogram.utils.Div()),
                          constants={"rhs": 1})),
-                    ("pick", mlprogram.nn.Pick("loss"))
+                    ("pick",
+                     mlprogram.nn.Function(mlprogram.utils.Pick("loss")))
                 ])),
                 EvaluateSynthesizer(
                     train_dataset,

@@ -112,6 +112,12 @@ types = {
     "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
     "mlprogram.utils.Threshold": mlprogram.utils.Threshold,
     "mlprogram.utils.Pick": mlprogram.utils.Pick,
+    "mlprogram.utils.Add": mlprogram.utils.Add,
+    "mlprogram.utils.Sub": mlprogram.utils.Sub,
+    "mlprogram.utils.Mul": mlprogram.utils.Mul,
+    "mlprogram.utils.Div": mlprogram.utils.Div,
+    "mlprogram.utils.IntDiv": mlprogram.utils.IntDiv,
+    "mlprogram.utils.Neg": mlprogram.utils.Neg,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
 
@@ -177,13 +183,7 @@ types = {
 
     "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
-    "mlprogram.nn.Pick": mlprogram.nn.Pick,
-    "mlprogram.nn.Add": mlprogram.nn.Add,
-    "mlprogram.nn.Sub": mlprogram.nn.Sub,
-    "mlprogram.nn.Mul": mlprogram.nn.Mul,
-    "mlprogram.nn.Div": mlprogram.nn.Div,
-    "mlprogram.nn.IntDiv": mlprogram.nn.IntDiv,
-    "mlprogram.nn.Neg": mlprogram.nn.Neg,
+    "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
     "mlprogram.nn.MLP": mlprogram.nn.MLP,
     "mlprogram.nn.action_sequence.ActionSequenceReader":

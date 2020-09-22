@@ -334,8 +334,10 @@ evaluate_synthesizer:
                         - - "value"
                           - "@/model.value"
                         - - "pick"
-                          - type: mlprogram.nn.Pick
-                            key: "value"
+                          - type: mlprogram.nn.Function
+                            f: 
+                                type: mlprogram.utils.Pick
+                                key: "value"
             batch_size: 1
         to_key:
             type: mlprogram.utils.Pick

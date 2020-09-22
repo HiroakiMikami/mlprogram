@@ -1,14 +1,9 @@
 import unittest
 
-from mlprogram.nn import Add, Mul, Sub, Div, IntDiv, Neg
+from mlprogram.utils import Add, Mul, Sub, Div, IntDiv, Neg
 
 
 class TestAdd(unittest.TestCase):
-    def test_parameters(self):
-        op = Add()
-        params = dict(op.named_parameters())
-        self.assertEqual(0, len(params))
-
     def test_happy_path(self):
         op = Add()
         out = op(10, 20)
@@ -21,11 +16,6 @@ class TestAdd(unittest.TestCase):
 
 
 class TestMul(unittest.TestCase):
-    def test_parameters(self):
-        op = Mul()
-        params = dict(op.named_parameters())
-        self.assertEqual(0, len(params))
-
     def test_happy_path(self):
         op = Mul()
         out = op(10, 20)
@@ -38,11 +28,6 @@ class TestMul(unittest.TestCase):
 
 
 class TestSub(unittest.TestCase):
-    def test_parameters(self):
-        op = Sub()
-        params = dict(op.named_parameters())
-        self.assertEqual(0, len(params))
-
     def test_happy_path(self):
         op = Sub()
         out = op(10, 20)
@@ -50,11 +35,6 @@ class TestSub(unittest.TestCase):
 
 
 class TestDiv(unittest.TestCase):
-    def test_parameters(self):
-        op = Div()
-        params = dict(op.named_parameters())
-        self.assertEqual(0, len(params))
-
     def test_happy_path(self):
         op = Div()
         out = op(10, 20)
@@ -62,11 +42,6 @@ class TestDiv(unittest.TestCase):
 
 
 class TestIntDiv(unittest.TestCase):
-    def test_parameters(self):
-        op = IntDiv()
-        params = dict(op.named_parameters())
-        self.assertEqual(0, len(params))
-
     def test_happy_path(self):
         op = IntDiv()
         out = op(10, 20)
@@ -74,11 +49,6 @@ class TestIntDiv(unittest.TestCase):
 
 
 class TestNeg(unittest.TestCase):
-    def test_parameters(self):
-        op = Neg()
-        params = dict(op.named_parameters())
-        self.assertEqual(0, len(params))
-
     def test_happy_path(self):
         op = Neg()
         out = op(10)

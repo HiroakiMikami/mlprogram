@@ -1,8 +1,5 @@
-from torch import nn
-
-
-class Add(nn.Module):
-    def forward(self, *args, **kwargs):
+class Add(object):
+    def __call__(self, *args, **kwargs):
         args = list(args) + [arg for arg in kwargs.values()]
         assert len(args) > 0
         value = args[0]
@@ -11,8 +8,8 @@ class Add(nn.Module):
         return value
 
 
-class Mul(nn.Module):
-    def forward(self, *args, **kwargs):
+class Mul(object):
+    def __call__(self, *args, **kwargs):
         args = list(args) + [arg for arg in kwargs.values()]
         assert len(args) > 0
         value = args[0]
@@ -21,21 +18,21 @@ class Mul(nn.Module):
         return value
 
 
-class Sub(nn.Module):
-    def forward(self, lhs, rhs):
+class Sub(object):
+    def __call__(self, lhs, rhs):
         return lhs - rhs
 
 
-class Div(nn.Module):
-    def forward(self, lhs, rhs):
+class Div(object):
+    def __call__(self, lhs, rhs):
         return lhs / rhs
 
 
-class IntDiv(nn.Module):
-    def forward(self, lhs, rhs):
+class IntDiv(object):
+    def __call__(self, lhs, rhs):
         return lhs // rhs
 
 
-class Neg(nn.Module):
-    def forward(self, value):
+class Neg(object):
+    def __call__(self, value):
         return -value
