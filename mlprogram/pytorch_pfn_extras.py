@@ -3,7 +3,7 @@ import os
 from torch import nn
 from pytorch_pfn_extras import training
 from pytorch_pfn_extras.training import extension
-from mlprogram.utils import TopKElement
+from mlprogram.collections import TopKElement
 from mlprogram import logging
 
 logger = logging.Logger(__name__)

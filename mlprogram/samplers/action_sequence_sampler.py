@@ -13,7 +13,8 @@ from mlprogram.actions import ActionSequence
 from mlprogram.asts import AST, Node
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
-from mlprogram.utils import TopKElement, Token
+from mlprogram.collections import TopKElement
+from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
 from mlprogram import logging
 
