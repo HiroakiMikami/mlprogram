@@ -4,11 +4,12 @@ import mlprogram.asts as A
 from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
-class Parse:
+class Parser(object):
     def __init__(self, tokenize: Callable[[str], List[str]]):
+        super().__init__()
         self.tokenize = tokenize
 
-    def __call__(self, script: str) -> Optional[A.AST]:
+    def parse(self, script: str) -> Optional[A.AST]:
         try:
             script = script.replace('”', '"').replace('“', '"')
             return bashlex_ast_to_ast(script, bashlex.parse(script)[0],
@@ -16,9 +17,7 @@ class Parse:
         except Exception as e:  # noqa
             return None
 
-
-class Unparse:
-    def __call__(self, ast: A.AST) -> Optional[str]:
+    def unparse(self, ast: A.AST) -> Optional[str]:
         def value_to_str(ast: Union[A.AST, List[A.AST]]) -> Optional[str]:
             try:
                 if isinstance(ast, A.Node):

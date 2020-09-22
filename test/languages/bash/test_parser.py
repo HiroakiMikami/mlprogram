@@ -1,11 +1,11 @@
 import unittest
 
 from mlprogram.asts import Node, Leaf, Field
-from mlprogram.languages.bash import Parse, Unparse
+from mlprogram.languages.bash import Parser
 
 
-class TestParse(unittest.TestCase):
-    def test_simple_case(self):
+class TestParser(unittest.TestCase):
+    def test_parse(self):
         self.assertEqual(
             Node("Command",
                  [Field("parts", "Node", [
@@ -15,16 +15,15 @@ class TestParse(unittest.TestCase):
                                                      [Leaf("str", "x=10")])])]
                                            )])
                  ])]),
-            Parse(lambda x: [x])("x=10")
+            Parser(lambda x: [x]).parse("x=10")
         )
 
-    def test_invalid_case(self):
-        self.assertEqual(None, Parse(lambda x: [x])("foobar`"))
+    def test_parse_invalid_code(self):
+        self.assertEqual(None, Parser(lambda x: [x]).parse("foobar`"))
 
-
-class TestUnparse(unittest.TestCase):
-    def test_simple_case(self):
-        self.assertEqual("x=10", Unparse()(Parse(lambda x: [x])("x=10")))
+    def test_unparse(self):
+        parser = Parser(lambda x: [x])
+        self.assertEqual("x=10", parser.unparse(parser.parse("x=10")))
 
 
 if __name__ == "__main__":

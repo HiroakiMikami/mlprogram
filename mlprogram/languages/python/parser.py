@@ -6,14 +6,15 @@ from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.languages.python.ast_to_python_ast import to_python_ast
 
 
-class Parse:
+class Parser(object):
     def __init__(self, tokenize: Callable[[str], List[str]],
                  mode: str = "single"):
+        super().__init__()
         assert mode in set(["single", "eval", "exec"])
         self.mode = mode
         self.tokenize = tokenize
 
-    def __call__(self, code: str) -> Optional[AST]:
+    def parse(self, code: str) -> Optional[AST]:
         try:
             past = python_ast.parse(code)
             if self.mode == "exec":
@@ -27,9 +28,7 @@ class Parse:
         except:  # noqa
             return None
 
-
-class Unparse:
-    def __call__(self, ast: AST) -> Optional[str]:
+    def unparse(self, ast: AST) -> Optional[str]:
         unparser = transpyle.python.unparser.NativePythonUnparser()
 
         try:

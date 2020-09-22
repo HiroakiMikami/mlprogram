@@ -74,7 +74,7 @@ types = {
     "mlprogram.entrypoint.evaluate": mlprogram.entrypoint.evaluate,
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,
-    "mlprogram.datasets.django.Parse": mlprogram.datasets.django.Parse,
+    "mlprogram.datasets.django.Parser": mlprogram.datasets.django.Parser,
     "mlprogram.datasets.django.TokenizeToken":
         mlprogram.datasets.django.TokenizeToken,
     "mlprogram.datasets.django.TokenizeQuery":
@@ -100,12 +100,10 @@ types = {
     "mlprogram.metrics.TestCaseResult": mlprogram.metrics.TestCaseResult,
     "mlprogram.metrics.python.Bleu": mlprogram.metrics.python.Bleu,
 
-    "mlprogram.languages.python.Parse": mlprogram.languages.python.Parse,
-    "mlprogram.languages.python.Unparse": mlprogram.languages.python.Unparse,
+    "mlprogram.languages.python.Parser": mlprogram.languages.python.Parser,
     "mlprogram.languages.python.IsSubtype":
         mlprogram.languages.python.IsSubtype,
-    "mlprogram.languages.bash.Parse": mlprogram.languages.bash.Parse,
-    "mlprogram.languages.bash.Unparse": mlprogram.languages.bash.Unparse,
+    "mlprogram.languages.bash.Parser": mlprogram.languages.bash.Parser,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
     "mlprogram.utils.Compose": mlprogram.utils.Compose,

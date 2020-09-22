@@ -48,11 +48,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import ast
 import re
 from typing import Optional, Callable, List
 from mlprogram.asts import AST
-from mlprogram.languages.python import to_ast
+from mlprogram.languages.python import Parser as BaseParser
 
 p_elif = re.compile(r'^elif\s?')
 p_else = re.compile(r'^else\s?')
@@ -62,11 +61,11 @@ p_finally = re.compile(r'^finally\s?')
 p_decorator = re.compile(r'^@.*')
 
 
-class Parse:
+class Parser(BaseParser):
     def __init__(self, tokenize: Callable[[str], List[str]]):
-        self.tokenize = tokenize
+        super().__init__(tokenize)
 
-    def __call__(self, code: str) -> Optional[AST]:
+    def parse(self, code: str) -> Optional[AST]:
         """
         Return the AST of the code
 
@@ -102,8 +101,6 @@ class Parse:
             if code[-1] == ':':
                 code = code + 'pass'
 
-            return to_ast(
-                ast.parse(code).body[0],
-                tokenize=self.tokenize)
+            return super().parse(code)
         except:  # noqa
             return None
