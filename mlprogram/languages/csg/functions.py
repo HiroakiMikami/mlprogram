@@ -7,8 +7,8 @@ from mlprogram.languages.csg import Dataset
 from mlprogram.encoders import Samples
 from mlprogram.actions \
     import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
-from mlprogram.asts import AST, Node, Field, Leaf, Root
-from mlprogram.utils import logging
+from mlprogram.languages.ast import AST, Node, Field, Leaf, Root
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

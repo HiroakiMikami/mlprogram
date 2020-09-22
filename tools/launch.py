@@ -12,7 +12,7 @@ from torch.autograd.profiler import profile
 from typing import Optional, Any
 from mlprogram.entrypoint.parse import parse_config, load_config
 from mlprogram import distributed
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

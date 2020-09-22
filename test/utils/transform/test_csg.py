@@ -1,7 +1,7 @@
 import unittest
 import torch
 import numpy as np
-from mlprogram.utils.transform.csg import TransformCanvas
+from mlprogram.languages.csg.transform import TransformCanvas
 
 
 class TestTransformCanvas(unittest.TestCase):

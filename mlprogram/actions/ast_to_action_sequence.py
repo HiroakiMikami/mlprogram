@@ -1,11 +1,11 @@
 from typing import List
-from mlprogram.asts import AST, Node, Leaf, Field, Root
+from mlprogram.languages.ast import AST, Node, Leaf, Field, Root
 from mlprogram.actions import Action, NodeType, NodeConstraint
 from mlprogram.actions import ApplyRule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
 from mlprogram.actions import GenerateToken
 from mlprogram.actions import ActionSequence
-from mlprogram.utils import logging
+from mlprogram import logging
 
 
 logger = logging.Logger(__name__)

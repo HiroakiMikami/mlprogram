@@ -13,7 +13,7 @@ from pytorch_pfn_extras.reporting import report
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
-from mlprogram.utils import logging
+from mlprogram import logging
 
 
 logger = logging.Logger(__name__)

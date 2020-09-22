@@ -168,5 +168,5 @@ metrics:
   accuracy:
     type: mlprogram.metrics.Accuracy
   bleu:
-    type: mlprogram.metrics.python.Bleu
+    type: mlprogram.languages.python.metrics.Bleu
 

@@ -10,7 +10,7 @@ import os
 import shutil
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils import logging
+from mlprogram import logging
 from mlprogram import distributed
 from mlprogram.pytorch_pfn_extras import SaveTopKModel
 from dataclasses import dataclass

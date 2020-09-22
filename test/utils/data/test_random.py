@@ -1,6 +1,6 @@
 import unittest
 import torch
-from mlprogram.utils.random import random_split
+from mlprogram.utils.data import random_split
 
 
 class TestRandomSplit(unittest.TestCase):

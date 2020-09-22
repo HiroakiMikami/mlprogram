@@ -3,7 +3,7 @@ import torch.nn as nn
 import unittest
 from typing import List, Dict, Any
 from mlprogram.synthesizers import Synthesizer, Result
-from mlprogram.asts import AST, Node, Leaf, Field
+from mlprogram.languages.ast import AST, Node, Leaf, Field
 from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
 from mlprogram.interpreters import Reference

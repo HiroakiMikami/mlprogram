@@ -251,7 +251,7 @@ subsampler:
                   - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
                     interpreter: "@/interpreter"
                 - - "transform_canvas"
-                  - type: mlprogram.utils.transform.csg.TransformCanvas
+                  - type: mlprogram.languages.csg.transform.TransformCanvas
                     targets: ["variables"]
     transform_action_sequence:
         type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
@@ -272,7 +272,7 @@ sampler:
     type: mlprogram.samplers.AstReferenceSampler
     synthesizer: "@/subsynthesizer"
     transform_input:
-        type: mlprogram.utils.transform.csg.TransformCanvas
+        type: mlprogram.languages.csg.transform.TransformCanvas
         targets: ["input"]
     collate: "@/collate"
     encoder: "@/model.encode_input"
@@ -321,7 +321,7 @@ evaluate_synthesizer:
                           - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
                             interpreter: "@/interpreter"
                         - - "transform_canvas"
-                          - type: mlprogram.utils.transform.csg.TransformCanvas
+                          - type: mlprogram.languages.csg.transform.TransformCanvas
                             targets: ["variables"]
             collate: "@/collate"
             value_network:
@@ -357,7 +357,7 @@ transform:
               - type: mlprogram.utils.transform.pbe_with_repl.EvaluateCode
                 interpreter: "@/interpreter"
             - - "transform_canvas"
-              - type: mlprogram.utils.transform.csg.TransformCanvas
+              - type: mlprogram.languages.csg.transform.TransformCanvas
                 targets: ["input", "variables"]
             - - "transform_code"
               - type: mlprogram.utils.transform.action_sequence.TransformCode

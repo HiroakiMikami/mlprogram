@@ -2,7 +2,7 @@ from typing \
     import TypeVar, Generic, Optional, List, Generator, Callable, Tuple
 from mlprogram.samplers.sampler \
     import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram.utils import logging
+from mlprogram import logging
 
 
 Input = TypeVar("Input")

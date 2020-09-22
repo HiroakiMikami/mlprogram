@@ -9,16 +9,16 @@ import mlprogram.datasets.deepfix
 import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
-import mlprogram.metrics.python
 import mlprogram.languages.python
+import mlprogram.languages.python.metrics
 import mlprogram.languages.bash
 import mlprogram.languages.csg
+import mlprogram.languages.csg.transform
 import mlprogram.languages.c
 import mlprogram.actions
 import mlprogram.synthesizers
 import mlprogram.utils
 import mlprogram.utils.data
-import mlprogram.utils.random
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
 import mlprogram.encoders
@@ -31,8 +31,6 @@ import mlprogram.utils.transform.treegen
 
 import mlprogram.nn.pbe_with_repl
 import mlprogram.utils.transform.pbe_with_repl
-
-import mlprogram.utils.transform.csg
 
 from mlprogram.entrypoint.numpy import types as numpy_types
 from mlprogram.entrypoint.torch import types as torch_types
@@ -98,11 +96,13 @@ types = {
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
     "mlprogram.metrics.Iou": mlprogram.metrics.Iou,
     "mlprogram.metrics.TestCaseResult": mlprogram.metrics.TestCaseResult,
-    "mlprogram.metrics.python.Bleu": mlprogram.metrics.python.Bleu,
 
     "mlprogram.languages.python.Parser": mlprogram.languages.python.Parser,
     "mlprogram.languages.python.IsSubtype":
         mlprogram.languages.python.IsSubtype,
+    "mlprogram.languages.python.metrics.Bleu":
+        mlprogram.languages.python.metrics.Bleu,
+
     "mlprogram.languages.bash.Parser": mlprogram.languages.bash.Parser,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
@@ -114,8 +114,6 @@ types = {
     "mlprogram.utils.Pick": mlprogram.utils.Pick,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
-
-    "mlprogram.utils.random.random_split": mlprogram.utils.random.random_split,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
@@ -140,6 +138,8 @@ types = {
     "mlprogram.utils.data.get_samples": mlprogram.utils.data.get_samples,
     "mlprogram.utils.data.to_map_style_dataset":
         mlprogram.utils.data.to_map_style_dataset,
+    "mlprogram.utils.data.random.random_split":
+        mlprogram.utils.data.random.random_split,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
     "mlprogram.actions.AstToActionSequence":
@@ -214,8 +214,8 @@ types = {
         mlprogram.languages.csg.GetTokenType,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
-    "mlprogram.utils.transform.csg.TransformCanvas":
-        mlprogram.utils.transform.csg.TransformCanvas,
+    "mlprogram.languages.csg.transform.TransformCanvas":
+        mlprogram.languages.csg.transform.TransformCanvas,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
     "mlprogram.languages.c.Tokenizer": mlprogram.languages.c.Tokenizer

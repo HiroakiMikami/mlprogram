@@ -3,7 +3,7 @@ import tempfile
 import subprocess
 import os
 import json
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

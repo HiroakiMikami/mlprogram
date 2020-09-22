@@ -1,7 +1,7 @@
 import torch
 import os
 from typing import Optional
-from mlprogram.utils import logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

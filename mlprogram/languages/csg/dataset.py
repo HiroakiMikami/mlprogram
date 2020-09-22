@@ -11,7 +11,7 @@ from mlprogram.languages.csg import AST, Reference
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
 from mlprogram.languages.csg import Union, Difference
-from mlprogram.utils import logging
+from mlprogram import logging
 
 
 logger = logging.Logger(__name__)
