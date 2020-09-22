@@ -177,7 +177,8 @@ class TestTreeGen(unittest.TestCase):
                 "accuracy@5",
                 lambda x: collate(transform(x)),
                 1, Epoch(100), evaluation_interval=Epoch(100),
-                snapshot_interval=Epoch(100)
+                snapshot_interval=Epoch(100),
+                threshold=1.0
             )
         return encoder
 

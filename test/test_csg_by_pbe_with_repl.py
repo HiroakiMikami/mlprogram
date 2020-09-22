@@ -342,7 +342,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 Epoch(30), evaluation_interval=Epoch(30),
                 snapshot_interval=Epoch(30),
                 use_pretrained_model=True,
-                use_pretrained_optimizer=False)
+                use_pretrained_optimizer=False,
+                threshold=0.9)
 
     def test(self):
         torch.manual_seed(0)

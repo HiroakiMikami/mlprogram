@@ -125,6 +125,7 @@ main:
     metrics: {}
     top_n: []
   metric: "generation_rate"
+  threshold: 1.0
   reward:
     type: mlprogram.metrics.transform
     metric:

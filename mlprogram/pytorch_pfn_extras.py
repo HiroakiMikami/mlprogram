@@ -39,3 +39,28 @@ class SaveTopKModel(extension.Extension):
             result = {"score": score, "model": self.model.state_dict()}
             torch.save(result, path)
             self.models.add(score, path)
+
+
+class StopByThreshold(extension.Extension):
+    def __init__(self, key: str, threshold: float,
+                 maximize: bool = True):
+        super().__init__()
+        self.key = key
+
+        self.threshold = threshold
+
+        self.maximize = maximize
+
+    def __call__(self, manager: training.ExtensionsManager) -> None:
+        if self.key in manager.observation:
+            score = manager.observation[self.key]
+
+            threshold = self.threshold
+            if not self.maximize:
+                score = -score
+                threshold = -threshold
+            if score >= threshold:
+                logger.info(
+                    f"{self.key} exceeds the threshold {self.threshold}")
+                raise RuntimeError(
+                    f"{self.key} exceeds the threshold {self.threshold}")
