@@ -177,7 +177,7 @@ types = {
 
     "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
-    "mlprogram.nn.Pick": mlprogram.nn.Pick,
+    "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.Add": mlprogram.nn.Add,
     "mlprogram.nn.Sub": mlprogram.nn.Sub,
     "mlprogram.nn.Mul": mlprogram.nn.Mul,

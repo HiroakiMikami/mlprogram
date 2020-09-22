@@ -105,8 +105,10 @@ loss_fn:
           constants:
             "rhs": "@/batch_size"
       - - "pick"
-        - type: mlprogram.nn.Pick
-          key: loss
+        - type: mlprogram.nn.Function
+          f:
+            type: mlprogram.utils.Pick
+            key: loss
 
 main:
   type: mlprogram.entrypoint.train_REINFORCE

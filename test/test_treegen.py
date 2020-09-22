@@ -144,7 +144,9 @@ class TestTreeGen(unittest.TestCase):
             to_action_sequence = AstToActionSequence()
             loss_fn = nn.Sequential(OrderedDict([
                 ("loss", Loss()),
-                ("pick", mlprogram.nn.Pick("action_sequence_loss"))
+                ("pick",
+                 mlprogram.nn.Function(
+                     mlprogram.utilsPick("action_sequence_loss")))
             ]))
 
             collate = Collate(

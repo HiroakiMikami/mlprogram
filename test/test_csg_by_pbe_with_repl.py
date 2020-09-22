@@ -136,7 +136,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 torch.nn.Sequential(OrderedDict([
                     ("encoder", model.encoder),
                     ("value", model.value),
-                    ("pick", mlprogram.nn.Pick("value"))
+                    ("pick",
+                     mlprogram.nn.Function(mlprogram.utils.Pick("value")))
                 ])))
 
             synthesizer = SynthesizerWithTimeout(
@@ -243,7 +244,9 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                          "action_sequence_loss",
                          mlprogram.nn.Div(),
                          constants={"rhs": 1})),
-                    ("pick", mlprogram.nn.Pick("action_sequence_loss"))
+                    ("pick",
+                     mlprogram.nn.Function(
+                         mlprogram.utils.Pick("action_sequence_loss")))
                 ])),
                 None, "score",
                 collate_fn,
@@ -324,7 +327,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                          "loss",
                          mlprogram.nn.Div(),
                          constants={"rhs": 1})),
-                    ("pick", mlprogram.nn.Pick("loss"))
+                    ("pick",
+                     mlprogram.nn.Function(mlprogram.utils.Pick("loss")))
                 ])),
                 EvaluateSynthesizer(
                     train_dataset,

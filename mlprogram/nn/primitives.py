@@ -1,4 +1,5 @@
 from torch import nn
+# TODO move these classes to utils/functions
 
 
 class Add(nn.Module):

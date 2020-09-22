@@ -46,8 +46,10 @@ loss_fn:
         - type: mlprogram.nn.action_sequence.Loss
           reduction: "mean"
       - - "pick"
-        - type: mlprogram.nn.Pick
-          key: action_sequence_loss
+        - type: mlprogram.nn.Function
+          f:
+            type: mlprogram.utils.Pick
+            key: action_sequence_loss
 main:
   type: mlprogram.entrypoint.train_supervised
   workspace_dir: "output/workspace_training"
