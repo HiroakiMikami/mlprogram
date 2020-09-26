@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import unittest
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
-from mlprogram.utils import Token
+from mlprogram.languages import Token
 from mlprogram.languages import Leaf
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
@@ -50,7 +50,8 @@ class TestToEpisode(unittest.TestCase):
             retval[1]["code"]
         )
         self.assertEqual(1, retval[1]["ground_truth"])
-        self.assertEqual([Token(None, Reference(0))], retval[1]["reference"])
+        self.assertEqual([Token(None, Reference(0), Reference(0))],
+                         retval[1]["reference"])
 
     def test_remove_unused_reference(self):
         f = ToEpisode(to_ast=lambda x: Leaf("", Reference(0)),
@@ -98,14 +99,15 @@ class TestToEpisode(unittest.TestCase):
             retval[2]["code"]
         )
         self.assertEqual(2, retval[2]["ground_truth"])
-        self.assertEqual([Token(None, Reference(1))], retval[2]["reference"])
+        self.assertEqual([Token(None, Reference(1), Reference(1))],
+                         retval[2]["reference"])
 
 
 class TestEvaluateCode(unittest.TestCase):
     def test_happy_path(self):
         f = EvaluateCode(MockInterpreter())
         output = f({
-            "reference": [Token(None, Reference(1))],
+            "reference": [Token(None, Reference(1), Reference(1))],
             "code": SequentialProgram(
                 [Statement(Reference(0), "0"), Statement(Reference(1), "1")]
             )

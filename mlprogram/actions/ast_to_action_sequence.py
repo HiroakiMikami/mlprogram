@@ -1,5 +1,6 @@
 from typing import List
 from mlprogram.languages import AST, Node, Leaf, Field, Root
+from mlprogram.languages import Token
 from mlprogram.actions import Action, NodeType, NodeConstraint
 from mlprogram.actions import ApplyRule, ExpandTreeRule
 from mlprogram.actions import CloseVariadicFieldRule
@@ -64,7 +65,11 @@ class AstToActionSequence:
                         seq.extend(to_sequence(field.value))
                 return seq
             elif isinstance(node, Leaf):
-                return [GenerateToken(node.value)]
+                node_type = node.get_type_name()
+                assert not isinstance(node_type, Root)
+
+                return [GenerateToken(Token(node_type, node.value,
+                                            node.value))]
             else:
                 logger.critical(f"Invalid type of node: {type(node)}")
                 raise InvalidNodeException(str(type(node)))

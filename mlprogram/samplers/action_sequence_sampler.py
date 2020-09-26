@@ -14,7 +14,6 @@ from mlprogram.languages import AST, Node
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.collections import TopKElement
-from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
 from mlprogram import logging
 
@@ -52,15 +51,10 @@ class LazyActionSequence(object):
         return str(self.__call__())
 
 
-def return_none(x):
-    return None
-
-
 class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                             Generic[V]):
     def __init__(self,
                  encoder: ActionSequenceEncoder,
-                 get_token_type: Optional[Callable[[V], Optional[str]]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
                  transform_input: Callable[[Dict[str, Any]], Dict[str, Any]],
@@ -72,7 +66,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                  rng: Optional[np.random.RandomState] = None
                  ):
         self.encoder = encoder
-        self.get_token_type = get_token_type or return_none
         self.is_subtype = is_subtype
         self.transform_input = transform_input
         self.transform_action_sequence = transform_action_sequence
@@ -178,19 +171,18 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 # Generate token
-                if len(state.state["reference"]) == 0:
-                    ref_ids = torch.tensor([]).long()
-                else:
-                    ref_ids = self.encoder._token_encoder.batch_encode(
-                        [token.value for token in state.state["reference"]]
-                    )
+                ref_ids = self.encoder.batch_encode_raw_value(
+                    [x.raw_value for x in state.state["reference"]]
+                )
                 tokens = list(self.encoder._token_encoder.vocab) + \
                     state.state["reference"]
                 # the score will be merged into predefined token
-                for i, ref_id in enumerate(ref_ids):
-                    # merge token and reference pred
-                    token_pred[ref_id] += reference_pred[i]
-                reference_pred[ref_ids != 0] = 0.0
+                for i, ids in enumerate(ref_ids):
+                    for ref_id in ids:
+                        # merge token and reference pred
+                        token_pred[ref_id] += reference_pred[i]
+                        if ref_id != 0:
+                            reference_pred[i] = 0.0
                 pred = torch.cat([token_pred, reference_pred], dim=0)
 
                 # CloseVariadicFieldRule is a candidate if variadic fields
@@ -209,11 +201,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         if isinstance(token, ApplyRule):
                             action: Action = token
                         else:
-                            if isinstance(token, Token):
-                                t = token.type_name
-                                token = token.value
-                            else:
-                                t = self.get_token_type(token)
+                            t = token.kind
                             if t is not None and \
                                     not self.is_subtype(t,
                                                         head_field.type_name):
@@ -232,9 +220,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     if isinstance(token, ApplyRule):
                         action = token
                     else:
-                        if isinstance(token, Token):
-                            t = token.type_name
-                            token = token.value
                         action = GenerateToken(token)
 
                     if p == 0.0:

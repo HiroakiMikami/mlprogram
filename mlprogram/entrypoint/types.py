@@ -120,6 +120,7 @@ types = {
     "mlprogram.utils.Neg": mlprogram.utils.Neg,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
+    "mlprogram.utils.share_memory": mlprogram.utils.share_memory,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
@@ -209,8 +210,6 @@ types = {
     "mlprogram.languages.csg.Parser": mlprogram.languages.csg.Parser,
     "mlprogram.languages.csg.Dataset": mlprogram.languages.csg.Dataset,
     "mlprogram.languages.csg.Interpreter": mlprogram.languages.csg.Interpreter,
-    "mlprogram.languages.csg.GetTokenType":
-        mlprogram.languages.csg.GetTokenType,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
     "mlprogram.languages.csg.transform.TransformCanvas":

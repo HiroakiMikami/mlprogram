@@ -4,7 +4,8 @@ from torchnlp.encoders import LabelEncoder
 from typing import Callable, List, Any, Optional, Dict, TypeVar, Generic, cast
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Query, Token
+from mlprogram.languages import Token
+from mlprogram.utils import Query
 
 Input = TypeVar("Input")
 
@@ -35,7 +36,7 @@ class TransformActionSequence:
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str]], entry["reference"])
+        reference = cast(List[Token[str, str]], entry["reference"])
         # TODO use type in encoding action sequence
         a = self.action_sequence_encoder.encode_action(
             action_sequence, list(map(lambda x: x.value, reference)))

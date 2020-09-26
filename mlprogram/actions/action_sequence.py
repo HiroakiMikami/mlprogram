@@ -211,9 +211,13 @@ class ActionSequence:
         def generate(head: int, node_type: Optional[NodeType] = None) -> AST:
             action = self._action_sequence[head]
             if isinstance(action, GenerateToken):
-                assert node_type is not None
-                assert node_type.type_name is not None
-                return Leaf(node_type.type_name, action.token)
+                token = action.token
+                if token.kind is None:
+                    assert node_type is not None
+                    assert node_type.type_name is not None
+                    return Leaf(node_type.type_name, token.value)
+                else:
+                    return Leaf(token.kind, token.value)
             elif isinstance(action, ApplyRule):
                 # The head action should apply ExpandTreeRule
                 rule = cast(ExpandTreeRule, action.rule)

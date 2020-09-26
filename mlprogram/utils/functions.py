@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from torch import multiprocessing
 import os
 from collections import OrderedDict
@@ -107,3 +108,9 @@ def save(obj: V, file: str) -> V:
 def load(file: str) -> Any:
     logger.info(f"Load data from {file}")
     return torch.load(file)
+
+
+def share_memory(model: nn.Module):
+    for k, v in model.state_dict().items():
+        v.share_memory_()
+    return model

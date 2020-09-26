@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 import ast
 from mlprogram.actions import AstToActionSequence
-from mlprogram.utils import Query, Token
+from mlprogram.utils import Query
+from mlprogram.languages import Token
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.utils.data \
     import ListDataset, get_samples, get_words, \
@@ -12,7 +13,7 @@ from mlprogram.utils.data \
 
 def tokenize_query(str: str) -> Query:
     return Query(
-        list(map(lambda x: Token(None, x), str.split(" "))),
+        list(map(lambda x: Token(None, x, x), str.split(" "))),
         str.split(" "))
 
 
@@ -49,7 +50,13 @@ class TestGetSamples(unittest.TestCase):
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, to_action_sequence)
-        self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
+        self.assertEqual([
+            Token("str", "y", "y"),
+            Token("str", "x", "x"),
+            Token("int", "1", "1"),
+            Token("str", "f", "f"),
+            Token("str", "x", "x")
+        ], d.tokens)
         self.assertEqual(12, len(d.rules))
         self.assertEqual(28, len(d.node_types))
 

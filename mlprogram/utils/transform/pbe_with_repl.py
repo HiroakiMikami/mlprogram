@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, cast, Callable, Optional, Set
-from mlprogram.utils import Token
+from mlprogram.languages import Token
 from mlprogram.languages import AST, Node, Leaf
 from mlprogram.interpreters import Interpreter, SequentialProgram, Reference
 
@@ -41,7 +41,7 @@ class ToEpisode:
                   if key not in set(["input", "ground_truth"])}
             xs["input"] = input
             xs["ground_truth"] = gt_refs[ref]
-            xs["reference"] = [Token(None, r) for r in rs]
+            xs["reference"] = [Token(None, r, r) for r in rs]
             xs["code"] = SequentialProgram(ground_truth.statements[:(i + 1)])
             retval.append(xs)
             refs.add(ref)

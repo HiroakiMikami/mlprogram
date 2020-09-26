@@ -1,8 +1,10 @@
 import torch
 from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Optional, Union, cast, Generic, TypeVar
+from typing import Dict
 from dataclasses import dataclass
 
+from mlprogram.languages import Token
 from mlprogram.actions import NodeType
 from mlprogram.actions import ApplyRule, GenerateToken
 from mlprogram.actions import Rule, ExpandTreeRule
@@ -40,7 +42,7 @@ class Unknown:
 class Samples(Generic[V]):
     rules: List[Rule]
     node_types: List[NodeType]
-    tokens: List[V]
+    tokens: List[Token[str, V]]
 
 
 class ActionSequenceEncoder:
@@ -57,6 +59,14 @@ class ActionSequenceEncoder:
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,
                                            unknown_index=0)
+        self.raw_value_to_idx: Dict[str, List[int]] = {}
+        for token in self._token_encoder.vocab:
+            if not isinstance(token, Token):
+                continue
+            idx = self._token_encoder.encode(token)
+            if token.raw_value not in self.raw_value_to_idx:
+                self.raw_value_to_idx[token.raw_value] = []
+            self.raw_value_to_idx[token.raw_value].append(idx)
 
     def decode(self, tensor: torch.LongTensor, query: List[str]) \
             -> Optional[ActionSequence]:
@@ -95,7 +105,7 @@ class ActionSequenceEncoder:
                 index = int(tensor[i, 2].numpy())
                 if index >= len(query):
                     return None
-                token = query[index]
+                token = Token(None, query[index], query[index])
                 retval.eval(GenerateToken(token))
             else:
                 return None
@@ -149,10 +159,11 @@ class ActionSequenceEncoder:
                     action[i, 2] = encoded_token
 
                 # Unknown token
-                if token in query:
-                    action[i, 3] = query.index(cast(str, token))
+                if token.raw_value in query:
+                    # TODO
+                    action[i, 3] = query.index(cast(str, token.raw_value))
 
-                if encoded_token == 0 and token not in query:
+                if encoded_token == 0 and token.raw_value not in query:
                     return None
 
         head = action_sequence.head
@@ -166,6 +177,18 @@ class ActionSequenceEncoder:
                 head_rule.children[head.field][1])
 
         return action
+
+    def encode_raw_value(self, text: str) -> List[int]:
+        if text in self.raw_value_to_idx:
+            return self.raw_value_to_idx[text]
+        else:
+            return [self._token_encoder.encode(Unknown()).item()]
+
+    def batch_encode_raw_value(self, texts: List[str]) -> List[List[int]]:
+        return [
+            self.encode_raw_value(text)
+            for text in texts
+        ]
 
     def encode_parent(self, action_sequence) -> torch.Tensor:
         """
@@ -296,8 +319,8 @@ class ActionSequenceEncoder:
                 if encoded_token != 0:
                     retval[i, 1, 1] = encoded_token
 
-                if token in query:
-                    retval[i, 1, 2] = query.index(cast(str, token))
+                if token.raw_value in query:
+                    retval[i, 1, 2] = query.index(cast(str, token.raw_value))
 
         return retval
 

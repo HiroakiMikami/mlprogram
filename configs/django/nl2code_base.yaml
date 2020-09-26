@@ -46,43 +46,45 @@ action_sequence_reader:
   embedding_size: 128
 
 model:
-  type: torch.nn.Sequential
-  modules:
-    type: collections.OrderedDict
-    items:
-      - - "encoder"
-        - type: mlprogram.nn.nl2code.NLReader
-          num_words: "@/encoder.word_encoder.vocab_size"
-          embedding_dim: 128
-          hidden_size: 256
-          dropout: 0.2
-      - - "decoder"
-        - type: torch.nn.Sequential
-          modules:
-            type: collections.OrderedDict
-            items:
-              - - "action_sequence_reader"
-                - "@/action_sequence_reader"
-              - - "decoder"
-                - type: mlprogram.nn.nl2code.Decoder
-                  query_size: 256
-                  input_size:
-                    type: add
-                    x:
-                      type: mul
-                      x: 2
-                      y: 128
-                    y: 64
-                  hidden_size: 256
-                  att_hidden_size: 50
-                  dropout: 0.2
-              - - "predictor"
-                - type: mlprogram.nn.nl2code.Predictor
-                  reader: "@/action_sequence_reader"
-                  embedding_size: 128
-                  query_size: 256
-                  hidden_size: 256
-                  att_hidden_size: 50
+  type: mlprogram.utils.share_memory
+  model:
+    type: torch.nn.Sequential
+    modules:
+      type: collections.OrderedDict
+      items:
+        - - "encoder"
+          - type: mlprogram.nn.nl2code.NLReader
+            num_words: "@/encoder.word_encoder.vocab_size"
+            embedding_dim: 128
+            hidden_size: 256
+            dropout: 0.2
+        - - "decoder"
+          - type: torch.nn.Sequential
+            modules:
+              type: collections.OrderedDict
+              items:
+                - - "action_sequence_reader"
+                  - "@/action_sequence_reader"
+                - - "decoder"
+                  - type: mlprogram.nn.nl2code.Decoder
+                    query_size: 256
+                    input_size:
+                      type: add
+                      x:
+                        type: mul
+                        x: 2
+                        y: 128
+                      y: 64
+                    hidden_size: 256
+                    att_hidden_size: 50
+                    dropout: 0.2
+                - - "predictor"
+                  - type: mlprogram.nn.nl2code.Predictor
+                    reader: "@/action_sequence_reader"
+                    embedding_size: 128
+                    query_size: 256
+                    hidden_size: 256
+                    att_hidden_size: 50
 
 collate:
   type: mlprogram.utils.data.Collate
@@ -147,7 +149,6 @@ synthesizer:
     sampler:
       type: mlprogram.samplers.ActionSequenceSampler
       encoder: "@/encoder.action_sequence_encoder"
-      get_token_type: null
       is_subtype:
         type: mlprogram.languages.python.IsSubtype
       transform_input:

@@ -1,8 +1,12 @@
 from dataclasses import dataclass
 from mlprogram.languages import Root
+from mlprogram.languages import Token
 from typing \
     import Tuple, Union, List, Any, TypeVar, Generic, Optional
 from enum import Enum
+
+
+Value = TypeVar("Value")
 
 
 class NodeConstraint(Enum):
@@ -125,11 +129,8 @@ class ApplyRule:
             return False
 
 
-V = TypeVar("V")
-
-
 @dataclass
-class GenerateToken(Generic[V]):
+class GenerateToken(Generic[Value]):
     """
     The action to generate a token
 
@@ -138,7 +139,7 @@ class GenerateToken(Generic[V]):
     token:
         The value (token) to be generated
     """
-    token: V
+    token: Token[str, Value]
 
     def __str__(self) -> str:
         return f"Generate {self.token}"

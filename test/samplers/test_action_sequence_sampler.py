@@ -7,9 +7,9 @@ from mlprogram.samplers \
     import ActionSequenceSampler, SamplerState
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 from mlprogram.languages import Root
+from mlprogram.languages import Token
 from mlprogram.actions \
     import NodeConstraint, NodeType, ExpandTreeRule
-from mlprogram.utils import Token
 from mlprogram.utils.data import Collate, CollateOptions
 from math import log
 
@@ -34,19 +34,12 @@ def is_subtype(arg0, arg1):
     return False
 
 
-def get_token_type(token):
-    try:
-        int(token)
-        return "Int"
-    except:  # noqa
-        return "Str"
-
-
 def create_encoder():
     return ActionSequenceEncoder(Samples(
         [Root2X, Root2Y, X2Y_list, Ysub2Str],
         [R, X, Y, Ysub, Y_list, Str],
-        ["x", "1"]), 0)
+        [Token("Str", "x", "x"),
+         Token("Int", "1", "1")]), 0)
 
 
 collate = Collate(torch.device("cpu"),
@@ -54,7 +47,7 @@ collate = Collate(torch.device("cpu"),
                   length=CollateOptions(False, 0, -1))
 
 
-def create_transform_input(reference: List[Token[str]]):
+def create_transform_input(reference: List[Token[str, str]]):
     def transform_input(kwargs):
         kwargs["reference"] = reference
         kwargs["input"] = torch.zeros((1,))
@@ -102,7 +95,6 @@ class TestActionSequenceSampler(unittest.TestCase):
     def test_initialize(self):
         sampler = ActionSequenceSampler(
             create_encoder(),
-            get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
             collate,
@@ -136,7 +128,6 @@ class TestActionSequenceSampler(unittest.TestCase):
         reference_prob = torch.tensor([[[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(),
-            get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
             collate,
@@ -190,7 +181,6 @@ class TestActionSequenceSampler(unittest.TestCase):
         reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(),
-            get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
             collate,
@@ -248,7 +238,6 @@ class TestActionSequenceSampler(unittest.TestCase):
         reference_prob = torch.tensor([[[]], [[]], [[]]])
         sampler = ActionSequenceSampler(
             create_encoder(),
-            get_token_type,
             is_subtype,
             create_transform_input([]), transform_action_sequence,
             collate,
@@ -305,9 +294,9 @@ class TestActionSequenceSampler(unittest.TestCase):
             torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.1, 0.1]]])
         sampler = ActionSequenceSampler(
             create_encoder(),
-            get_token_type,
             is_subtype,
-            create_transform_input([Token("Str", "x"), Token("Str", "x")]),
+            create_transform_input([Token("Str", "x", "x"),
+                                    Token(None, "x", "x")]),
             transform_action_sequence,
             collate,
             Module(encoder_module,

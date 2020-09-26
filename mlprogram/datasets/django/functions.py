@@ -1,7 +1,8 @@
 import re
 from nltk import tokenize
 from typing import Dict, List
-from mlprogram.utils import Query, Token
+from mlprogram.languages import Token
+from mlprogram.utils import Query
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
@@ -47,16 +48,16 @@ class TokenizeQuery:
         query_for_dnn = []
         for word in tokenizer.tokenize(query):
             if word in mappings:
-                reference.append(Token[str](None, mappings[word]))
+                reference.append(Token[str, str](None, word, mappings[word]))
             else:
-                reference.append(Token[str](None, word))
+                reference.append(Token[str, str](None, word, word))
             query_for_dnn.append(word)
 
             vars = list(filter(lambda x: len(x) > 0,
                                word.split('.')))  # split by '.'
             if len(vars) > 1:
                 for v in vars:
-                    reference.append(Token(None, v))
+                    reference.append(Token(None, v, v))
                     query_for_dnn.append(v)
         return Query(reference, query_for_dnn)
 

@@ -1,17 +1,8 @@
 import unittest
-from mlprogram.interpreters import Reference as R
 from mlprogram.actions import AstToActionSequence
-from mlprogram.languages.csg import GetTokenType, IsSubtype
+from mlprogram.languages.csg import IsSubtype
 from mlprogram.languages.csg import Parser
 from mlprogram.languages.csg import get_samples, Dataset
-
-
-class TestGetTokenType(unittest.TestCase):
-    def test_csg_type(self):
-        self.assertEqual("CSG", GetTokenType()(R("0")))
-
-    def test_number(self):
-        self.assertEqual("int", GetTokenType()(0))
 
 
 class TestIsSubType(unittest.TestCase):
@@ -34,7 +25,7 @@ class TestGetSamples(unittest.TestCase):
         samples = get_samples(dataset, to_action_sequence)
         self.assertEqual(7, len(samples.rules))
         self.assertEqual(12, len(samples.node_types))
-        self.assertEqual(8, len(samples.tokens))
+        self.assertEqual(9, len(samples.tokens))
 
     def test_reference(self):
         dataset = Dataset(1, 1, 1, 1, 45, reference=True)
@@ -45,7 +36,7 @@ class TestGetSamples(unittest.TestCase):
         samples = get_samples(dataset, to_action_sequence)
         self.assertEqual(7, len(samples.rules))
         self.assertEqual(12, len(samples.node_types))
-        self.assertEqual(8, len(samples.tokens))
+        self.assertEqual(9, len(samples.tokens))
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import unittest
 from mlprogram.actions \
     import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
     NodeConstraint, CloseVariadicFieldRule
+from mlprogram.languages import Token
 
 
 class TestNodeType(unittest.TestCase):
@@ -41,17 +42,22 @@ class TestRule(unittest.TestCase):
                 NodeType("foo", NodeConstraint.Node, False),
                 [("f0", NodeType("bar", NodeConstraint.Node, False))]))
         self.assertEqual(
-            GenerateToken("foo"), GenerateToken("foo"))
+            GenerateToken(Token("", "foo", "foo")),
+            GenerateToken(Token("", "foo", "foo")))
         self.assertNotEqual(
             ExpandTreeRule(NodeType("foo", NodeConstraint.Node, False), [
                 ("f0", NodeType("bar", NodeConstraint.Node, False))]),
             ExpandTreeRule(NodeType("foo", NodeConstraint.Node, False), []))
         self.assertNotEqual(
-            GenerateToken("foo"), GenerateToken("bar"))
+            GenerateToken(Token("", "foo", "foo")),
+            GenerateToken(Token("", "bar", "bar")))
         self.assertNotEqual(
-            ExpandTreeRule(NodeType("foo", NodeConstraint.Node, False), [
-                ("f0", NodeType("bar", NodeConstraint.Node, False))]),
-            GenerateToken("foo"))
+            ExpandTreeRule(
+                NodeType("foo", NodeConstraint.Node, False),
+                [
+                    ("f0", NodeType("bar", NodeConstraint.Node, False))
+                ]),
+            GenerateToken(Token("", "foo", "foo")))
         self.assertNotEqual(
             0,
             ExpandTreeRule(
@@ -70,7 +76,8 @@ class TestAction(unittest.TestCase):
                                             [("elem0", t1),
                                              ("elem1", t2)]))))
 
-        self.assertEqual("Generate foo", str(GenerateToken("foo")))
+        self.assertEqual("Generate foo/bar:kind",
+                         str(GenerateToken(Token("kind", "bar", "foo"))))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,8 @@ from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.actions import AstToActionSequence
-from mlprogram.utils import Query, Token
+from mlprogram.utils import Query
+from mlprogram.languages import Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
@@ -37,7 +38,6 @@ from mlprogram.metrics import Accuracy
 from nl2code_dummy_dataset import is_subtype
 from nl2code_dummy_dataset import train_dataset
 from nl2code_dummy_dataset import test_dataset
-from nl2code_dummy_dataset import get_token_type
 from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
@@ -45,7 +45,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 def tokenize_query(str: str) -> Query:
     return Query(
-        list(map(lambda x: Token(None, x), str.split(" "))),
+        list(map(lambda x: Token(None, x, x), str.split(" "))),
         str.split(" "))
 
 
@@ -110,7 +110,7 @@ class TestTreeGen(unittest.TestCase):
         return BeamSearch(
             5, 20,
             ActionSequenceSampler(
-                aencoder, get_token_type, is_subtype, transform_input,
+                aencoder, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, cencoder, aencoder, to_action_sequence):

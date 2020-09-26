@@ -6,6 +6,7 @@ from mlprogram.actions \
     import Rule, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
+from mlprogram.languages import Token
 from mlprogram.utils import Query
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
@@ -44,7 +45,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
                 ) -> Samples:
     rules: List[Rule] = []
     node_types = []
-    tokens: List[str] = []  # TODO V
+    tokens: List[Token] = []
 
     for group in dataset:
         for gt in group["ground_truth"]:

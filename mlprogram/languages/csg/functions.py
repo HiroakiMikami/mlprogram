@@ -1,5 +1,6 @@
 from typing import Union as U, Optional, Callable, List
 from mlprogram.interpreters import Reference as R
+from mlprogram.languages import Token
 from mlprogram.languages.csg import AST as csgAST
 from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
 from mlprogram.languages.csg import Union, Difference, Reference
@@ -8,14 +9,6 @@ from mlprogram.encoders import Samples
 from mlprogram.actions \
     import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
 from mlprogram.languages import Root
-
-
-class GetTokenType:
-    def __call__(self, value: U[int, R]) -> Optional[str]:
-        if isinstance(value, R):
-            return "CSG"
-        else:
-            return "int"
 
 
 class IsSubtype:
@@ -39,9 +32,9 @@ def get_samples(dataset: Dataset,
     node_types = []
     srule = set()
     sntype = set()
-    tokens = dataset.size_candidates
-    tokens.extend(dataset.length_candidates)
-    tokens.extend(dataset.degree_candidates)
+    tokens = [Token("size", x, x) for x in dataset.size_candidates]
+    tokens.extend([Token("length", x, x) for x in dataset.length_candidates])
+    tokens.extend([Token("degree", x, x) for x in dataset.degree_candidates])
 
     if dataset.reference:
         xs = [

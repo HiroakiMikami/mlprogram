@@ -104,52 +104,54 @@ interpreter:
     height: "@/option.size"
     resolution: "@/option.resolution"
 model:
-    type: torch.nn.Sequential
-    modules:
-        type: collections.OrderedDict
-        items:
-            - - "encoder"
-              - type: mlprogram.nn.Apply
-                in_keys:
-                    - ["processed_input", "x"]
-                out_key: "input_feature"
-                module:
-                    type: mlprogram.nn.CNN2d
-                    in_channel: 1
-                    out_channel: 16
-                    hidden_channel: 32
-                    n_conv_per_block: 2
-                    n_block: 2
-                    pool: 2
-            - - "decoder"
-              - type: torch.nn.Sequential
-                modules:
-                    type: collections.OrderedDict
-                    items:
-                        - - "action_sequence_reader"
-                          - type: mlprogram.nn.action_sequence.ActionSequenceReader
-                            n_rule: "@/encoder._rule_encoder.vocab_size"
-                            n_token: "@/encoder._token_encoder.vocab_size"
-                            hidden_size: 256
-                        - - "decoder"
-                          - type: mlprogram.nn.action_sequence.RnnDecoder
-                            input_feature_size:
-                                type: mul
-                                x: 16
-                                y:
+    type: mlprogram.utils.share_memory
+    model:
+        type: torch.nn.Sequential
+        modules:
+            type: collections.OrderedDict
+            items:
+                - - "encoder"
+                  - type: mlprogram.nn.Apply
+                    in_keys:
+                        - ["processed_input", "x"]
+                    out_key: "input_feature"
+                    module:
+                        type: mlprogram.nn.CNN2d
+                        in_channel: 1
+                        out_channel: 16
+                        hidden_channel: 32
+                        n_conv_per_block: 2
+                        n_block: 2
+                        pool: 2
+                - - "decoder"
+                  - type: torch.nn.Sequential
+                    modules:
+                        type: collections.OrderedDict
+                        items:
+                            - - "action_sequence_reader"
+                              - type: mlprogram.nn.action_sequence.ActionSequenceReader
+                                n_rule: "@/encoder._rule_encoder.vocab_size"
+                                n_token: "@/encoder._token_encoder.vocab_size"
+                                hidden_size: 256
+                            - - "decoder"
+                              - type: mlprogram.nn.action_sequence.RnnDecoder
+                                input_feature_size:
                                     type: mul
-                                    x: "@/n_feature_pixel"
-                                    y: "@/n_feature_pixel"
-                            action_feature_size: 256
-                            output_feature_size: 512
-                            dropout: 0.1
-                        - - "predictor"
-                          - type: mlprogram.nn.action_sequence.Predictor
-                            feature_size: 512
-                            reference_feature_size: 1
-                            rule_size: "@/encoder._rule_encoder.vocab_size"
-                            token_size: "@/encoder._token_encoder.vocab_size"
-                            hidden_size: 512
+                                    x: 16
+                                    y:
+                                        type: mul
+                                        x: "@/n_feature_pixel"
+                                        y: "@/n_feature_pixel"
+                                action_feature_size: 256
+                                output_feature_size: 512
+                                dropout: 0.1
+                            - - "predictor"
+                              - type: mlprogram.nn.action_sequence.Predictor
+                                feature_size: 512
+                                reference_feature_size: 1
+                                rule_size: "@/encoder._rule_encoder.vocab_size"
+                                token_size: "@/encoder._token_encoder.vocab_size"
+                                hidden_size: 512
 
 collate:
     type: mlprogram.utils.data.Collate
@@ -195,8 +197,6 @@ sampler:
     sampler:
         type: mlprogram.samplers.ActionSequenceSampler
         encoder: "@/encoder"
-        get_token_type:
-            type: mlprogram.languages.csg.GetTokenType
         is_subtype:
             type: mlprogram.languages.csg.IsSubtype
         transform_input:

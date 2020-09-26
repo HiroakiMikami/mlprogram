@@ -6,6 +6,7 @@ from mlprogram.languages import Root
 from mlprogram.languages import Node
 from mlprogram.languages import Field
 from mlprogram.languages import Leaf
+from mlprogram.languages import Token
 from mlprogram.actions import AstToActionSequence
 
 
@@ -19,7 +20,7 @@ class TestAstToSequence(unittest.TestCase):
                 [("root", NodeType(Root(),
                                    NodeConstraint.Token, False))
                  ])),
-                GenerateToken("t0 t1")],
+                GenerateToken(Token("str", "t0 t1", "t0 t1"))],
             seq.action_sequence
         )
 
@@ -37,8 +38,8 @@ class TestAstToSequence(unittest.TestCase):
                  NodeType("value", NodeConstraint.Node, False),
                  [("name", NodeType("str", NodeConstraint.Token, True))]
              )),
-             GenerateToken("t0"),
-             GenerateToken("t1"),
+             GenerateToken(Token("str", "t0", "t0")),
+             GenerateToken(Token("str", "t1", "t1")),
              ApplyRule(CloseVariadicFieldRule())],
             seq.action_sequence
         )
@@ -59,7 +60,7 @@ class TestAstToSequence(unittest.TestCase):
                  NodeType("def", NodeConstraint.Node, False),
                  [("name",
                    NodeType("literal", NodeConstraint.Token, False))])),
-             GenerateToken("foo")],
+             GenerateToken(Token("str", "foo", "foo"))],
             seq.action_sequence
         )
 
