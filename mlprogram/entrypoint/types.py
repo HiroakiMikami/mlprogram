@@ -218,7 +218,7 @@ types = {
         mlprogram.languages.csg.transform.TransformCanvas,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
-    "mlprogram.languages.c.Tokenizer": mlprogram.languages.c.Tokenizer
+    "mlprogram.languages.c.Lexer": mlprogram.languages.c.Lexer
 }
 
 types.update(torch_types)

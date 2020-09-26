@@ -6,7 +6,7 @@ import unittest
 from mlprogram.samplers \
     import ActionSequenceSampler, SamplerState
 from mlprogram.encoders import Samples, ActionSequenceEncoder
-from mlprogram.languages.ast import Root
+from mlprogram.languages import Root
 from mlprogram.actions \
     import NodeConstraint, NodeType, ExpandTreeRule
 from mlprogram.utils import Token

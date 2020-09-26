@@ -1,6 +1,6 @@
 from typing import Union
 
-from mlprogram.languages.ast import Root
+from mlprogram.languages import Root
 
 
 class IsSubtype:

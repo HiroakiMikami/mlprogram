@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, cast, Callable, Optional, Set
 from mlprogram.utils import Token
-from mlprogram.languages.ast import AST, Node, Leaf
+from mlprogram.languages import AST, Node, Leaf
 from mlprogram.interpreters import Interpreter, SequentialProgram, Reference
 
 

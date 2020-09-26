@@ -1,6 +1,6 @@
 import bashlex
 from typing import Optional, cast, Callable, List, Union
-import mlprogram.languages.ast as A
+import mlprogram.languages as A
 from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
