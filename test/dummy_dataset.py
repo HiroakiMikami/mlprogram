@@ -1,5 +1,5 @@
 from typing import List, Union
-from mlprogram.languages.ast import AST, Node, Leaf, Field, Root
+from mlprogram.languages import AST, Node, Leaf, Field, Root
 from mlprogram.utils.data import ListDataset
 
 

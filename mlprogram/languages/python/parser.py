@@ -1,7 +1,7 @@
 import ast as python_ast
 import transpyle
 from typing import Optional, Callable, List
-from mlprogram.languages.ast import AST
+from mlprogram.languages import AST
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.languages.python.ast_to_python_ast import to_python_ast
 

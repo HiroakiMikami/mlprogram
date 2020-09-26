@@ -5,7 +5,7 @@ from copy import deepcopy
 from mlprogram.actions.action \
     import Action, ApplyRule, Rule, ExpandTreeRule, NodeConstraint, NodeType, \
     GenerateToken, CloseVariadicFieldRule
-from mlprogram.languages.ast import AST, Node, Leaf, Field, Root
+from mlprogram.languages import AST, Node, Leaf, Field, Root
 from mlprogram import logging
 
 

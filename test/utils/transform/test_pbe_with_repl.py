@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
 from mlprogram.utils import Token
-from mlprogram.languages.ast import Leaf
+from mlprogram.languages import Leaf
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
 from mlprogram.interpreters import SequentialProgram
