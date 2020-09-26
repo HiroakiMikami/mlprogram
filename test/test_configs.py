@@ -5,6 +5,7 @@ import logging
 import sys
 from typing import List, Tuple
 from tools.launch import launch_multiprocess
+from test_case_utils import integration_test
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
 class ConfigTest(unittest.TestCase):
+    @integration_test
     def launch_config(self, configs: List[Tuple[str, int]]):
         with tempfile.TemporaryDirectory() as tmpdir:
             for config, n_process in configs:

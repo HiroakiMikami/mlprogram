@@ -1,7 +1,5 @@
 import unittest
 from collections import OrderedDict
-from dummy_dataset import is_subtype, train_dataset, test_dataset
-from dummy_dataset import get_token_type
 import logging
 import sys
 import tempfile
@@ -15,7 +13,7 @@ import mlprogram.nn
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.torch import Optimizer
+from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.actions import AstToActionSequence
 from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
@@ -32,6 +30,12 @@ from mlprogram.utils.transform.nl2code \
 from mlprogram.nn.action_sequence import Loss
 import mlprogram.nn.nl2code as nl2code
 from mlprogram.metrics import Accuracy
+
+from nl2code_dummy_dataset import is_subtype
+from nl2code_dummy_dataset import train_dataset
+from nl2code_dummy_dataset import test_dataset
+from nl2code_dummy_dataset import get_token_type
+from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -167,6 +171,7 @@ class TestNL2Code(unittest.TestCase):
             )
         return qencoder, aencoder
 
+    @integration_test
     def test(self):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -272,7 +272,7 @@ subsynthesizer:
         type: mlprogram.utils.Pick
         key: "action_sequence"
 sampler:
-    type: mlprogram.samplers.AstReferenceSampler
+    type: mlprogram.samplers.SequentialProgramSampler
     synthesizer: "@/subsynthesizer"
     transform_input:
         type: mlprogram.languages.csg.transform.TransformCanvas

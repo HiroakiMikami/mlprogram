@@ -20,9 +20,9 @@ Input = TypeVar("Input")
 Code = TypeVar("Code")
 
 
-class AstReferenceSampler(Sampler[Input, SequentialProgram[Code],
-                                  Dict[str, Any]],
-                          Generic[Input, Code]):
+class SequentialProgramSampler(Sampler[Input, SequentialProgram[Code],
+                                       Dict[str, Any]],
+                               Generic[Input, Code]):
     def __init__(self,
                  synthesizer: Synthesizer[Dict[str, Any], AST],
                  transform_input: Callable[[Input], Dict[str, Any]],
