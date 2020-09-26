@@ -1,15 +1,18 @@
 import bashlex
 from typing import Optional, cast, Callable, List, Union
-import mlprogram.languages as A
+from mlprogram.languages import Parser as BaseParser
+from mlprogram.languages import AST
+from mlprogram.languages import Node
+from mlprogram.languages import Leaf
 from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
-class Parser(object):
+class Parser(BaseParser[str]):
     def __init__(self, tokenize: Callable[[str], List[str]]):
         super().__init__()
         self.tokenize = tokenize
 
-    def parse(self, script: str) -> Optional[A.AST]:
+    def parse(self, script: str) -> Optional[AST]:
         try:
             script = script.replace('”', '"').replace('“', '"')
             return bashlex_ast_to_ast(script, bashlex.parse(script)[0],
@@ -17,10 +20,10 @@ class Parser(object):
         except Exception as e:  # noqa
             return None
 
-    def unparse(self, ast: A.AST) -> Optional[str]:
-        def value_to_str(ast: Union[A.AST, List[A.AST]]) -> Optional[str]:
+    def unparse(self, ast: AST) -> Optional[str]:
+        def value_to_str(ast: Union[AST, List[AST]]) -> Optional[str]:
             try:
-                if isinstance(ast, A.Node):
+                if isinstance(ast, Node):
                     # Node
                     n = ast.type_name
                     if n == "Operator":
@@ -112,7 +115,7 @@ class Parser(object):
                         elems = [token for token in elems if token is not None]
                         body = "".join(
                             [token for token in elems if token is not None])
-                        name = value_to_str(cast(A.AST, ast.fields[0].value))
+                        name = value_to_str(cast(AST, ast.fields[0].value))
                         if name is None:
                             return None
                         return f"function {name}()" + "{" + body + "}"
@@ -146,7 +149,7 @@ class Parser(object):
                         if t is None:
                             return None
 
-                        if cast(A.AST,
+                        if cast(AST,
                                 ast.fields[1].value).get_type_name() != "None":
                             heredoc = value_to_str(ast.fields[1].value)
                         else:
@@ -154,7 +157,7 @@ class Parser(object):
                         if heredoc is None:
                             return None
 
-                        if cast(A.AST,
+                        if cast(AST,
                                 ast.fields[2].value).get_type_name() != "None":
                             input = value_to_str(ast.fields[2].value)
                         else:
@@ -162,7 +165,7 @@ class Parser(object):
                         if input is None:
                             return None
 
-                        if cast(A.AST,
+                        if cast(AST,
                                 ast.fields[3].value).get_type_name() != "None":
                             output = value_to_str(ast.fields[3].value)
                         else:
@@ -195,7 +198,7 @@ class Parser(object):
                         return ""
                     else:
                         assert(False)
-                elif isinstance(ast, A.Leaf):
+                elif isinstance(ast, Leaf):
                     # Token
                     return ast.value
                 elif isinstance(ast, list):
