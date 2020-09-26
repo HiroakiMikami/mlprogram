@@ -1,7 +1,5 @@
 import unittest
 from collections import OrderedDict
-from dummy_dataset import is_subtype, train_dataset, test_dataset
-from dummy_dataset import get_token_type
 import logging
 import sys
 import tempfile
@@ -32,6 +30,12 @@ from mlprogram.utils.transform.nl2code \
 from mlprogram.nn.action_sequence import Loss
 import mlprogram.nn.nl2code as nl2code
 from mlprogram.metrics import Accuracy
+
+from test.nl2code_dummy_dataset import is_subtype
+from test.nl2code_dummy_dataset import train_dataset
+from test.nl2code_dummy_dataset import test_dataset
+from test.nl2code_dummy_dataset import get_token_type
+from test.test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -167,6 +171,7 @@ class TestNL2Code(unittest.TestCase):
             )
         return qencoder, aencoder
 
+    @integration_test
     def test(self):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:

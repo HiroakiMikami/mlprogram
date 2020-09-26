@@ -40,6 +40,7 @@ from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
+from test.test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -349,6 +350,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 use_pretrained_optimizer=False,
                 threshold=0.9)
 
+    @integration_test
     def test(self):
         torch.manual_seed(0)
         np.random.seed(0)

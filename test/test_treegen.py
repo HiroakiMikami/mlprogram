@@ -2,8 +2,6 @@ import unittest
 from collections import OrderedDict
 import sys
 import logging
-from dummy_dataset import is_subtype, train_dataset, test_dataset
-from dummy_dataset import get_token_type
 import tempfile
 import os
 import numpy as np
@@ -35,6 +33,12 @@ from mlprogram.utils.transform.treegen \
 from mlprogram.nn.action_sequence import Loss, Predictor
 from mlprogram.nn import treegen
 from mlprogram.metrics import Accuracy
+
+from test.nl2code_dummy_dataset import is_subtype
+from test.nl2code_dummy_dataset import train_dataset
+from test.nl2code_dummy_dataset import test_dataset
+from test.nl2code_dummy_dataset import get_token_type
+from test.test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -184,6 +188,7 @@ class TestTreeGen(unittest.TestCase):
             )
         return encoder
 
+    @integration_test
     def test(self):
         torch.manual_seed(1)
         np.random.seed(1)
