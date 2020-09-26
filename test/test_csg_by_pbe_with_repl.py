@@ -32,7 +32,7 @@ from mlprogram.nn.pbe_with_repl import Encoder
 import mlprogram.nn.action_sequence as a_s
 from mlprogram import metrics
 from mlprogram.languages.csg import get_samples, IsSubtype, GetTokenType
-from mlprogram.languages.csg import Interpreter, ToAst, ToCsgAst, Dataset
+from mlprogram.languages.csg import Interpreter, Parser, Dataset
 from mlprogram.utils.data \
     import to_map_style_dataset, transform as data_transform
 from mlprogram.languages.csg.transform import TransformCanvas
@@ -114,7 +114,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             TransformCanvas(["input"]),
             collate,
             model.encode_input,
-            to_code=ToCsgAst(),
+            to_code=Parser().unparse,
             rng=np.random.RandomState(0))
         if rollout:
             sampler = FilteredSampler(
@@ -157,7 +157,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
 
     def to_episode(self, encoder, interpreter, to_action_sequence,
                    reinforce=False):
-        to_episode = ToEpisode(ToAst(), remove_used_reference=True)
+        to_episode = ToEpisode(Parser().parse, remove_used_reference=True)
         if reinforce:
             return to_episode
         return Sequence(
@@ -203,7 +203,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = Sequence(OrderedDict([
-                ("to_ast", ToAst()),
+                ("to_ast", Parser().parse),
                 ("to_sequence", AstToActionSequence())
             ]))
             interpreter = self.interpreter()
@@ -258,7 +258,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
     def reinforce(self, train_dataset, encoder, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             to_action_sequence = Sequence(OrderedDict([
-                ("to_ast", ToAst()),
+                ("to_ast", Parser().parse),
                 ("to_sequence", AstToActionSequence())
             ]))
             interpreter = self.interpreter()

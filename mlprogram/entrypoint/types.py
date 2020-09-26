@@ -206,8 +206,7 @@ types = {
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
     "mlprogram.nn.pbe_with_repl.Encoder": mlprogram.nn.pbe_with_repl.Encoder,
 
-    "mlprogram.languages.csg.ToAst": mlprogram.languages.csg.ToAst,
-    "mlprogram.languages.csg.ToCsgAst": mlprogram.languages.csg.ToCsgAst,
+    "mlprogram.languages.csg.Parser": mlprogram.languages.csg.Parser,
     "mlprogram.languages.csg.Dataset": mlprogram.languages.csg.Dataset,
     "mlprogram.languages.csg.Interpreter": mlprogram.languages.csg.Interpreter,
     "mlprogram.languages.csg.GetTokenType":

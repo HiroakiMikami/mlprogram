@@ -25,13 +25,16 @@ device:
     type_str: "cuda"
     index: 0
 
+parser:
+    type: mlprogram.languages.csg.Parser
+
 to_action_sequence:
     type: mlprogram.utils.Sequence
     funcs:
         type: collections.OrderedDict
         items:
             - - "to_ast"
-              - type: mlprogram.languages.csg.ToAst
+              - "@/parser.parse"
             - - "to_sequence"
               - type: mlprogram.actions.AstToActionSequence
 
@@ -276,8 +279,7 @@ sampler:
         targets: ["input"]
     collate: "@/collate"
     encoder: "@/model.encode_input"
-    to_code:
-        type: mlprogram.languages.csg.ToCsgAst
+    to_code: "@/parser.unparse"
 train_synthesizer:
     type: mlprogram.synthesizers.SMC
     max_step_size:
@@ -346,8 +348,7 @@ evaluate_synthesizer:
 
 to_episode:
     type: mlprogram.utils.transform.pbe_with_repl.ToEpisode
-    to_ast:
-        type: mlprogram.languages.csg.ToAst
+    to_ast: "@/parser.parse"
     remove_used_reference: true
 
 transform:

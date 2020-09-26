@@ -8,3 +8,5 @@ from mlprogram.languages.token import Token  # noqa
 from mlprogram.languages.token_sequence import TokenSequence  # noqa
 
 from mlprogram.languages.lexer import Lexer  # noqa
+
+from mlprogram.languages.parser import Parser  # noqa
