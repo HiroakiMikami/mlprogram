@@ -3,7 +3,7 @@ set -u
 
 test_type=${1:-"unit"}
 OLD_PYTHONPATH=${PYTHONPATH:-""}
-export PYTHONPATH=$(dirname $0)/../:$PYTHONPATH
+export PYTHONPATH=$(dirname $0)/../:${PYTHONPATH:-""}
 
 if [ $test_type = "all" ]
 then

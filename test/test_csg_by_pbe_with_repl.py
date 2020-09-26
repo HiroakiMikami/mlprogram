@@ -13,12 +13,13 @@ from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.torch import Optimizer, Reshape
+from mlprogram.entrypoint.modules.torch import Optimizer, Reshape
 from mlprogram.synthesizers \
     import SMC, FilteredSynthesizer, SynthesizerWithTimeout
 from mlprogram.actions import AstToActionSequence
-from mlprogram.samplers \
-    import ActionSequenceSampler, AstReferenceSampler, SamplerWithValueNetwork
+from mlprogram.samplers import ActionSequenceSampler
+from mlprogram.samplers import SequentialProgramSampler
+from mlprogram.samplers import SamplerWithValueNetwork
 from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
@@ -40,7 +41,7 @@ from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
-from test.test_case_utils import integration_test
+from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -110,7 +111,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             rng=np.random.RandomState(0)
         )
 
-        sampler = AstReferenceSampler(
+        sampler = SequentialProgramSampler(
             subsynthesizer,
             TransformCanvas(["input"]),
             collate,

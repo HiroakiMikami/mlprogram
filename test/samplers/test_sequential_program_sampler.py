@@ -10,7 +10,7 @@ from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
 from mlprogram.interpreters import SequentialProgram
 from mlprogram.samplers \
-    import AstReferenceSampler, SamplerState, DuplicatedSamplerState
+    import SequentialProgramSampler, SamplerState, DuplicatedSamplerState
 
 
 class MockSynthesizer(Synthesizer[Dict[str, Any], AST]):
@@ -27,14 +27,14 @@ class MockEncoder(nn.Module):
         return x
 
 
-class TestAstReferenceSampler(unittest.TestCase):
+class TestSequentialProgramSampler(unittest.TestCase):
     def test_create_output(self):
         asts = [
             Node("def", [Field("name", "str", Leaf("str", "f"))]),
             Node("int", [Field("value", "int", Leaf("int", "10"))]),
             Node("float", [Field("value", "float", Leaf("float", "10.0"))]),
         ]
-        sampler = AstReferenceSampler(
+        sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),
@@ -74,7 +74,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             Node("int", [Field("value", "int", Leaf("int", "10"))]),
             Node("float", [Field("value", "float", Leaf("float", "10.0"))]),
         ]
-        sampler = AstReferenceSampler(
+        sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),
@@ -127,7 +127,7 @@ class TestAstReferenceSampler(unittest.TestCase):
             Node("def",
                  [Field("name", "str", Leaf("String", Reference("v0")))]),
         ]
-        sampler = AstReferenceSampler(
+        sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
             lambda x: {"x": x},
             Collate(torch.device("cpu")),

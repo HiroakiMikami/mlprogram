@@ -32,11 +32,11 @@ import mlprogram.utils.transform.treegen
 import mlprogram.nn.pbe_with_repl
 import mlprogram.utils.transform.pbe_with_repl
 
-from mlprogram.entrypoint.numpy import types as numpy_types
-from mlprogram.entrypoint.torch import types as torch_types
-from mlprogram.entrypoint.torchnlp import types as torchnlp_types
+from mlprogram.entrypoint.modules.numpy import types as numpy_types
+from mlprogram.entrypoint.modules.torch import types as torch_types
+from mlprogram.entrypoint.modules.torchnlp import types as torchnlp_types
 try:
-    from mlprogram.entrypoint.fairseq import types as fairseq_types
+    from mlprogram.entrypoint.modules.fairseq import types as fairseq_types
 except:  # noqa
     fairseq_types = {}
     pass
@@ -130,8 +130,8 @@ types = {
     "mlprogram.samplers.transform": mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,
-    "mlprogram.samplers.AstReferenceSampler":
-        mlprogram.samplers.AstReferenceSampler,
+    "mlprogram.samplers.SequentialProgramSampler":
+        mlprogram.samplers.SequentialProgramSampler,
     "mlprogram.samplers.SamplerWithValueNetwork":
         mlprogram.samplers.SamplerWithValueNetwork,
     "mlprogram.samplers.FilteredSampler":

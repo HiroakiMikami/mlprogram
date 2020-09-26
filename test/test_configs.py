@@ -5,7 +5,7 @@ import logging
 import sys
 from typing import List, Tuple
 from tools.launch import launch_multiprocess
-from test.test_case_utils import integration_test
+from test_case_utils import integration_test
 
 logger = logging.getLogger(__name__)
 

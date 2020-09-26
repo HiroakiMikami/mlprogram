@@ -1,7 +1,7 @@
 import unittest
 import os
 import tempfile
-from mlprogram.entrypoint.parse import load_config
+from mlprogram.entrypoint.configs import load_config
 
 
 class TestLoadConfig(unittest.TestCase):

@@ -10,7 +10,7 @@ import torch
 from torch import multiprocessing
 from torch.autograd.profiler import profile
 from typing import Optional, Any
-from mlprogram.entrypoint.parse import parse_config, load_config
+from mlprogram.entrypoint.configs import parse_config, load_config
 from mlprogram import distributed
 from mlprogram import logging
 
