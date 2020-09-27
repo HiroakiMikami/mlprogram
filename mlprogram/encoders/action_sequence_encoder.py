@@ -79,7 +79,7 @@ class ActionSequenceEncoder:
             The encoded tensor with the shape of
             (len(action_sequence), 3). Each action will be encoded by the tuple
             of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
+            the index of the word copied from the reference).
             The padding value should be -1.
         reference
 
@@ -131,7 +131,7 @@ class ActionSequenceEncoder:
             (len(action_sequence) + 1, 4). Each action will be encoded by
             the tuple of (ID of the node types, ID of the applied rule,
             ID of the inserted token, the index of the word copied from
-            the query. The padding value should be -1.
+            the reference. The padding value should be -1.
             None if the action sequence cannot be encoded.
         """
         reference_value = [token.raw_value for token in reference]
@@ -288,7 +288,7 @@ class ActionSequenceEncoder:
         ----------
         action_sequence: action_sequence
             The action_sequence containing action sequence to be encoded
-        query: List[str]]
+        reference
         max_arity: int
 
         Returns
@@ -298,7 +298,7 @@ class ActionSequenceEncoder:
             (len(action_sequence), max_arity + 1, 3).
             [:, 0, 0] encodes the parent node type. [:, i, 0] encodes
             the node type of (i - 1)-th child node. [:, i, 1] encodes
-            the token of (i - 1)-th child node. [:, i, 2] encodes the query
+            the token of (i - 1)-th child node. [:, i, 2] encodes the reference
             index of (i - 1)-th child node.
             The padding value is -1.
         """

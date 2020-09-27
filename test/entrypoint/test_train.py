@@ -18,10 +18,10 @@ class MockSynthesizer:
     def __init__(self, model):
         self.model = model
 
-    def __call__(self, query, n_required_output=None):
+    def __call__(self, input, n_required_output=None):
         n_required_output = n_required_output or 1
         for _ in range(n_required_output):
-            yield Result({"output": query["value"]}, 0, True, 1)
+            yield Result({"output": input["value"]}, 0, True, 1)
 
 
 def reward(sample, output):

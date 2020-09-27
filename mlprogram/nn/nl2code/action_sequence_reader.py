@@ -52,7 +52,7 @@ class ActionSequenceReader(nn.Module):
             The input sequence of previous action. Each action is
             represented by the tuple of (ID of the applied rule, ID of
             the inserted token, the index of the word copied from
-            the query).
+            the reference).
             The padding value should be -1.
 
         Returns

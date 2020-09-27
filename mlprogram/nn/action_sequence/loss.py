@@ -22,11 +22,11 @@ class Loss(nn.Module):
             The probabilities of gen-token. The shape is (L_a, B, num_tokens).
         reference_probs: PaddedSequenceWithMask
             The probabilities of reference-token. The shape is
-            (L_a, B, query_length).
+            (L_a, B, reference_length).
         ground_truth_actions: PaddedSequenceWithMask
             The input sequence of action. Each action is represented by
             the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
+            the index of the word copied from the reference).
             The padding value should be -1.
         """
         rule_probs = cast(PaddedSequenceWithMask, inputs["rule_probs"])
@@ -37,7 +37,7 @@ class Loss(nn.Module):
                                     inputs["ground_truth_actions"])
         L_a, B, num_rules = rule_probs.data.shape
         _, _, num_tokens = token_probs.data.shape
-        _, _, query_length = reference_probs.data.shape
+        _, _, reference_length = reference_probs.data.shape
 
         gt_rule, gt_token, gt_reference = torch.split(
             ground_truth_actions.data, 1, dim=2)  # (L_a, B, 1)
@@ -48,7 +48,7 @@ class Loss(nn.Module):
         rule = gt_rule + (gt_rule == -1).long() * (num_rules + 1)
         token = gt_token + (gt_token == -1).long() * (num_tokens + 1)
         reference = gt_reference + \
-            (gt_reference == -1).long() * (query_length) + 1
+            (gt_reference == -1).long() * (reference_length) + 1
 
         device = gt_rule.device
 
@@ -59,10 +59,10 @@ class Loss(nn.Module):
         token = torch.eye(num_tokens + 1,
                           device=device)[gt_token]
         token = token[:, :, :-1]  # (L_a, B, num_tokens)
-        # (L_a, B, query_length + 1)
-        reference = torch.eye(query_length + 1,
+        # (L_a, B, reference_length + 1)
+        reference = torch.eye(reference_length + 1,
                               device=device)[gt_reference]
-        # (L_a, B, query_length)
+        # (L_a, B, reference_length)
         reference = reference[:, :, :-1]
 
         rule_prob_tensor = rule_probs.data * rule  # (L_a, B, num_rules)
@@ -70,7 +70,7 @@ class Loss(nn.Module):
         token_prob_tensor = token_probs.data * token  # (L_a, B, num_tokens)
         token_prob_tensor = torch.sum(token_prob_tensor, dim=2)  # (L_a, B)
         reference_prob_tensor = \
-            reference_probs.data * reference  # (L_a, B, query_length)
+            reference_probs.data * reference  # (L_a, B, reference_length)
         reference_prob_tensor = \
             torch.sum(reference_prob_tensor, dim=2)  # (L_a, B)
 

@@ -47,8 +47,8 @@ class TestTokenizeToken(unittest.TestCase):
         self.assertEqual(["test"], TokenizeToken()("test"))
 
     def test_subtokens(self):
-        query = TokenizeToken()('foo.bar')
-        self.assertEqual(["foo", ".", "bar"], query)
+        tokens = TokenizeToken()('foo.bar')
+        self.assertEqual(["foo", ".", "bar"], tokens)
 
 
 if __name__ == "__main__":

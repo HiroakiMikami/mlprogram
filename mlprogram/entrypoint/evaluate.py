@@ -30,7 +30,7 @@ DecoderInput = TypeVar("DecoderInput")
 
 @dataclass
 class Result(Generic[Input, Code, GroundTruth]):
-    query: Input
+    input: Input
     data: Dict[str, Any]
     candidates: List[Code]
     metrics: Dict[int, Dict[str, float]]
