@@ -19,7 +19,7 @@ class TestEncoder(unittest.TestCase):
     def test_encode_raw_value(self):
         encoder = ActionSequenceEncoder(
             Samples([], [],
-                    [Token("", "foo", "foo"), Token("x", "foo", "foo")]),
+                    [("", "foo"), ("x", "foo")]),
             0)
         self.assertEqual([1, 2], encoder.encode_raw_value("foo"))
         self.assertEqual([0], encoder.encode_raw_value("bar"))
@@ -44,13 +44,13 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, True)],
-                    [Token("", "f", "f"), Token("", "2", "2")]),
+                    [("", "f"), ("", "2")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
-        action_sequence.eval(GenerateToken(Token("", "2", "2")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
+        action_sequence.eval(GenerateToken("", "2"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action = encoder.encode_action(action_sequence,
                                        [Token("", "1", "1"),
@@ -88,13 +88,13 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, False)],
-                    [Token("", "f", "f"), Token("", "2", "2")]),
+                    [("", "f"), ("", "2")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
-        action_sequence.eval(GenerateToken(Token("", "2", "2")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
+        action_sequence.eval(GenerateToken("", "2"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         parent = encoder.encode_parent(action_sequence)
 
@@ -130,12 +130,12 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, False)],
-                    [Token("", "f", "f"), Token("", "2", "2")]),
+                    [("", "f"), ("", "2")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
         d, m = encoder.encode_tree(action_sequence)
 
         self.assertTrue(np.array_equal(
@@ -166,7 +166,7 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, False),
                      NodeType("expr", NodeConstraint.Node, False)],
-                    [Token("", "f", "f")]),
+                    [("", "f")]),
             0)
         action_sequence = ActionSequence()
         action = encoder.encode_action(action_sequence, [Token("", "1", "1")])
@@ -208,12 +208,12 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, True)],
-                    [Token("", "f", "f")]),
+                    [("", "f")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         self.assertEqual(None, encoder.encode_action(action_sequence,
@@ -225,7 +225,7 @@ class TestEncoder(unittest.TestCase):
         encoder = ActionSequenceEncoder(
             Samples([none],
                     [NodeType("value", NodeConstraint.Node, False)],
-                    [Token("", "f", "f")]),
+                    [("", "f")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(none))
@@ -267,18 +267,18 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, False)],
-                    [Token("", "f", "f")]),
+                    [("", "f")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         expected_action_sequence = ActionSequence()
         expected_action_sequence.eval(ApplyRule(funcdef))
-        expected_action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        expected_action_sequence.eval(GenerateToken(Token(None, "1", "1")))
+        expected_action_sequence.eval(GenerateToken("", "f"))
+        expected_action_sequence.eval(GenerateToken("", "1"))
         expected_action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         result = encoder.decode(encoder.encode_action(
@@ -307,7 +307,7 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, False),
                      NodeType("expr", NodeConstraint.Node, False)],
-                    [Token("", "f", "f")]),
+                    [("", "f")]),
             0)
         self.assertEqual(None,
                          encoder.decode(torch.LongTensor([[-1, -1, -1]]), []))
@@ -332,16 +332,16 @@ class TestEncoder(unittest.TestCase):
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, False),
                      NodeType("expr", NodeConstraint.Node, True)],
-                    [Token("", "f", "f"), Token("", "2", "2")]),
+                    [("", "f"), ("", "2")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
-        action_sequence.eval(GenerateToken(Token("", "2", "2")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
+        action_sequence.eval(GenerateToken("", "2"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
+        action_sequence.eval(GenerateToken("", "f"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action = encoder.encode_each_action(
@@ -381,16 +381,16 @@ class TestEncoder(unittest.TestCase):
                     [NodeType("def", NodeConstraint.Node, False),
                      NodeType("value", NodeConstraint.Token, True),
                      NodeType("expr", NodeConstraint.Node, True)],
-                    [Token("", "f", "f"), Token("", "2", "2")]),
+                    [("", "f"), ("", "2")]),
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(funcdef))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
-        action_sequence.eval(GenerateToken(Token("", "1", "1")))
-        action_sequence.eval(GenerateToken(Token("", "2", "2")))
+        action_sequence.eval(GenerateToken("", "f"))
+        action_sequence.eval(GenerateToken("", "1"))
+        action_sequence.eval(GenerateToken("", "2"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(expr))
-        action_sequence.eval(GenerateToken(Token("", "f", "f")))
+        action_sequence.eval(GenerateToken("", "f"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         path = encoder.encode_path(action_sequence, 2)

@@ -38,8 +38,8 @@ def create_encoder():
     return ActionSequenceEncoder(Samples(
         [Root2X, Root2Y, X2Y_list, Ysub2Str],
         [R, X, Y, Ysub, Y_list, Str],
-        [Token("Str", "x", "x"),
-         Token("Int", "1", "1")]), 0)
+        [("Str", "x"),
+         ("Int", "1")]), 0)
 
 
 collate = Collate(torch.device("cpu"),

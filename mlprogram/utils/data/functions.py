@@ -2,6 +2,7 @@ import torch
 from torch.nn import functional as F
 from dataclasses import dataclass
 from typing import Callable, Sequence, Any, Optional, Union, Dict, List
+from typing import Tuple
 from mlprogram.actions \
     import Rule, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
@@ -44,7 +45,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
                 ) -> Samples:
     rules: List[Rule] = []
     node_types = []
-    tokens: List[Token] = []
+    tokens: List[Tuple[str, str]] = []
 
     for group in dataset:
         for gt in group["ground_truth"]:
@@ -60,8 +61,8 @@ def get_samples(dataset: torch.utils.data.Dataset,
                         for _, child in rule.children:
                             node_types.append(child)
                 else:
-                    token = action.token
-                    tokens.append(token)
+                    assert action.kind is not None
+                    tokens.append((action.kind, action.value))
 
     return Samples(rules, node_types, tokens)
 

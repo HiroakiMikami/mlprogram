@@ -1,6 +1,7 @@
 import torch
 from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Optional, Union, cast, Generic, TypeVar
+from typing import Tuple
 from typing import Dict
 from dataclasses import dataclass
 
@@ -42,7 +43,7 @@ class Unknown:
 class Samples(Generic[V]):
     rules: List[Rule]
     node_types: List[NodeType]
-    tokens: List[Token[str, V]]
+    tokens: List[Tuple[str, V]]
 
 
 class ActionSequenceEncoder:
@@ -59,14 +60,12 @@ class ActionSequenceEncoder:
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,
                                            unknown_index=0)
-        self.raw_value_to_idx: Dict[str, List[int]] = {}
-        for token in self._token_encoder.vocab:
-            if not isinstance(token, Token):
-                continue
-            idx = self._token_encoder.encode(token)
-            if token.raw_value not in self.raw_value_to_idx:
-                self.raw_value_to_idx[token.raw_value] = []
-            self.raw_value_to_idx[token.raw_value].append(idx)
+        self.value_to_idx: Dict[str, List[int]] = {}
+        for kind, value in self._token_encoder.vocab[len(reserved_labels):]:
+            idx = self._token_encoder.encode((kind, value))
+            if value not in self.value_to_idx:
+                self.value_to_idx[value] = []
+            self.value_to_idx[value].append(idx)
 
     def decode(self, tensor: torch.LongTensor, reference: List[Token]) \
             -> Optional[ActionSequence]:
@@ -98,14 +97,15 @@ class ActionSequenceEncoder:
                 retval.eval(ApplyRule(rule))
             elif tensor[i, 1] > 0:
                 # GenerateToken
-                token = self._token_encoder.decode(tensor[i, 1])
-                retval.eval(GenerateToken(token))
+                kind, value = self._token_encoder.decode(tensor[i, 1])
+                retval.eval(GenerateToken(kind, value))
             elif tensor[i, 2] >= 0:
                 # GenerateToken (Copy)
                 index = int(tensor[i, 2].numpy())
                 if index >= len(reference):
                     return None
-                retval.eval(GenerateToken(reference[index]))
+                token = reference[index]
+                retval.eval(GenerateToken(token.kind, token.raw_value))
             else:
                 return None
 
@@ -153,20 +153,20 @@ class ActionSequenceEncoder:
                 rule = a.rule
                 action[i, 1] = self._rule_encoder.encode(rule)
             else:
-                token = a.token
-                encoded_token = int(self._token_encoder.encode(token).numpy())
+                encoded_token = \
+                    int(self._token_encoder.encode((a.kind, a.value)).numpy())
 
                 if encoded_token != 0:
                     action[i, 2] = encoded_token
 
                 # Unknown token
-                if token.raw_value in reference_value:
+                if a.value in reference_value:
                     # TODO use kind in reference
                     action[i, 3] = \
-                        reference_value.index(cast(str, token.raw_value))
+                        reference_value.index(cast(str, a.value))
 
                 if encoded_token == 0 and \
-                        token.raw_value not in reference_value:
+                        a.value not in reference_value:
                     return None
 
         head = action_sequence.head
@@ -182,8 +182,8 @@ class ActionSequenceEncoder:
         return action
 
     def encode_raw_value(self, text: str) -> List[int]:
-        if text in self.raw_value_to_idx:
-            return self.raw_value_to_idx[text]
+        if text in self.value_to_idx:
+            return self.value_to_idx[text]
         else:
             return [self._token_encoder.encode(Unknown()).item()]
 
@@ -318,16 +318,18 @@ class ActionSequenceEncoder:
                             self._node_type_encoder.encode(child)
             else:
                 gentoken: GenerateToken = action
-                token = gentoken.token
-                encoded_token = int(self._token_encoder.encode(token).numpy())
+                kind = gentoken.kind
+                value = gentoken.value
+                encoded_token = \
+                    int(self._token_encoder.encode((kind, value)).numpy())
 
                 if encoded_token != 0:
                     retval[i, 1, 1] = encoded_token
 
-                if token.raw_value in reference_value:
+                if value in reference_value:
                     # TODO use kind in reference
                     retval[i, 1, 2] = \
-                        reference_value.index(cast(str, token.raw_value))
+                        reference_value.index(cast(str, value))
 
         return retval
 

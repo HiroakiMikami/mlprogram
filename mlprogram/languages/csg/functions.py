@@ -1,6 +1,5 @@
 from typing import Union as U, Optional, Callable, List
 from mlprogram.interpreters import Reference as R
-from mlprogram.languages import Token
 from mlprogram.languages.csg import AST as csgAST
 from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
 from mlprogram.languages.csg import Union, Difference, Reference
@@ -32,9 +31,9 @@ def get_samples(dataset: Dataset,
     node_types = []
     srule = set()
     sntype = set()
-    tokens = [Token("size", x, x) for x in dataset.size_candidates]
-    tokens.extend([Token("length", x, x) for x in dataset.length_candidates])
-    tokens.extend([Token("degree", x, x) for x in dataset.degree_candidates])
+    tokens = [("size", x) for x in dataset.size_candidates]
+    tokens.extend([("length", x) for x in dataset.length_candidates])
+    tokens.extend([("degree", x) for x in dataset.degree_candidates])
 
     if dataset.reference:
         xs = [

@@ -5,8 +5,8 @@ device:
 
 parser:
   type: mlprogram.languages.python.Parser
-  split_token:
-    type: mlprogram.datasets.hearthstone.SplitToken
+  split_value:
+    type: mlprogram.datasets.hearthstone.SplitValue
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:

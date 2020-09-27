@@ -68,7 +68,7 @@ class TestTransformGroundTruth(unittest.TestCase):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, to_action_sequence)
-        d.tokens = ["y", "1"]
+        d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = TransformCode(to_action_sequence)({
             "ground_truth": "y = x + 1"
@@ -130,7 +130,7 @@ class TestTransformActionSequenceForRnnDecoder(unittest.TestCase):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, to_action_sequence)
-        d.tokens = ["y", "1"]
+        d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequenceForRnnDecoder(aencoder)
         action_sequence = TransformCode(to_action_sequence)({

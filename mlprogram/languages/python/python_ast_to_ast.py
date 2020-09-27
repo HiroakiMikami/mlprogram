@@ -27,7 +27,7 @@ def base_ast_type(node: PythonAST) \
 
 
 def to_ast(target: PythonAST,
-           split_token: Callable[[Token], List[Token]]) -> ast.AST:
+           split_value: Callable[[Token], List[Token]]) -> ast.AST:
     """
     Return the AST corresponding to the Python AST
 
@@ -48,7 +48,7 @@ def to_ast(target: PythonAST,
                 value = target.decode()
             else:
                 value = str(target)
-            tokens = split_token(Token(None, value, value))
+            tokens = split_value(Token(None, value, value))
             return list(map(
                 lambda token: ast.Leaf(type(target).__name__, token.value),
                 tokens))

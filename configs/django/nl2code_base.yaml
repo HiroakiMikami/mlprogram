@@ -5,8 +5,8 @@ device:
 
 parser:
   type: mlprogram.datasets.django.Parser
-  split_token:
-    type: mlprogram.datasets.django.SplitToken
+  split_value:
+    type: mlprogram.datasets.django.SplitValue
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:

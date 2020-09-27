@@ -9,7 +9,7 @@ from mlprogram.languages import Token
 
 def bashlex_ast_to_ast(script: str,
                        bashlex_ast: Union[Any, bashlex.ast.node],
-                       split_token: Callable[[Token], List[Token]]) \
+                       split_value: Callable[[Token], List[Token]]) \
         -> AST:
     """
     Convert the bash command into AST
@@ -20,7 +20,7 @@ def bashlex_ast_to_ast(script: str,
 
         def to_leaf_value(self, t: str, value: str) -> List[Leaf]:
             return [Leaf(t, token.value)
-                    for token in split_token(Token(None, value, value))]
+                    for token in split_value(Token(None, value, value))]
 
         def visitoperator(self, n, op):
             # Node(type_name="Operator", fileds={"op": Leaf(op)})
@@ -31,7 +31,7 @@ def bashlex_ast_to_ast(script: str,
 
         def visitlist(self, n, parts):
             # Node(type_name="List", fileds={"parts": [...]})
-            parts = [bashlex_ast_to_ast(script, p, split_token) for p in parts]
+            parts = [bashlex_ast_to_ast(script, p, split_value) for p in parts]
             self.value = Node("List", [Field("parts", "Node", parts)])
             return False
 
@@ -44,7 +44,7 @@ def bashlex_ast_to_ast(script: str,
 
         def visitpipeline(self, n, parts):
             # Node(type_name="Pipeline", fields={"parts": [...]})
-            parts = [bashlex_ast_to_ast(script, p, split_token) for p in parts]
+            parts = [bashlex_ast_to_ast(script, p, split_value) for p in parts]
             self.value = Node("Pipeline",
                               [Field("parts", "Node", parts)])
             return False
@@ -52,9 +52,9 @@ def bashlex_ast_to_ast(script: str,
         def visitcompound(self, n, list, redirects):
             # Node(type_name="Compound", fileds={"list":[**list],
             #                                    "redirects":[**redicects]})
-            list = [bashlex_ast_to_ast(script, x, split_token) for x in list]
+            list = [bashlex_ast_to_ast(script, x, split_value) for x in list]
             redirects = [bashlex_ast_to_ast(
-                script, x, split_token) for x in redirects]
+                script, x, split_value) for x in redirects]
             self.value = Node("Compound", [
                 Field("list", "Node", list),
                 Field("redirects", "Node", redirects)])
@@ -62,38 +62,38 @@ def bashlex_ast_to_ast(script: str,
 
         def visitif(self, node, parts):
             # Node(type_name="If", fields={"parts":[...]})
-            parts = [bashlex_ast_to_ast(script, x, split_token) for x in parts]
+            parts = [bashlex_ast_to_ast(script, x, split_value) for x in parts]
             self.value = Node("If", [Field("parts", "Node", parts)])
             return False
 
         def visitfor(self, node, parts):
             # Node(type_name="For", fields={"parts":[...]})
-            parts = [bashlex_ast_to_ast(script, x, split_token) for x in parts]
+            parts = [bashlex_ast_to_ast(script, x, split_value) for x in parts]
             self.value = Node("For", [Field("parts", "Node", parts)])
             return False
 
         def visitwhile(self, node, parts):
             # Node(type_name="While", fields={"parts":[...]})
-            parts = [bashlex_ast_to_ast(script, x, split_token) for x in parts]
+            parts = [bashlex_ast_to_ast(script, x, split_value) for x in parts]
             self.value = Node("While", [Field("parts", "Node", parts)])
             return False
 
         def visituntil(self, node, parts):
             # Node(type_name="Until", fields={"parts":[...]})
-            parts = [bashlex_ast_to_ast(script, x, split_token) for x in parts]
+            parts = [bashlex_ast_to_ast(script, x, split_value) for x in parts]
             self.value = Node("Until", [Field("parts", "Node", parts)])
             return False
 
         def visitcommand(self, n, parts):
             # Node(type_name="Command", fields={"parts":[...]})
-            parts = [bashlex_ast_to_ast(script, x, split_token) for x in parts]
+            parts = [bashlex_ast_to_ast(script, x, split_value) for x in parts]
             self.value = Node("Command", [Field("parts", "Node", parts)])
             return False
 
         def visitfunction(self, n, name, body, parts):
             # Node(type_name="Funtion", fields={"name":Leaf(name),
             #                                   "body":[...]}
-            body = [bashlex_ast_to_ast(script, x, split_token) for x in body]
+            body = [bashlex_ast_to_ast(script, x, split_value) for x in body]
             self.value = Node("Function", [
                 Field("name", "str", self.to_leaf_value("str", name)),
                 Field("body", "Node", body)])
@@ -120,7 +120,7 @@ def bashlex_ast_to_ast(script: str,
                             [Field(
                                 "value", "str",
                                 self.to_leaf_value("str", text))]))
-                children.append(bashlex_ast_to_ast(script, part, split_token))
+                children.append(bashlex_ast_to_ast(script, part, split_value))
                 prev = children[-1].type_name
                 offset = end
             if offset != n.pos[1]:
@@ -176,13 +176,13 @@ def bashlex_ast_to_ast(script: str,
             #                                    "heredoc": heredoc or NoneNode
             #                                    "input": input or NoneNode
             #                                    "output": output or NoneNode
-            heredoc = bashlex_ast_to_ast(script, heredoc, split_token) \
+            heredoc = bashlex_ast_to_ast(script, heredoc, split_value) \
                 if heredoc is not None \
                 else Node("None", [])
-            input = bashlex_ast_to_ast(script, input, split_token) \
+            input = bashlex_ast_to_ast(script, input, split_value) \
                 if input is not None \
                 else Node("None", [])
-            output = bashlex_ast_to_ast(script, output, split_token) \
+            output = bashlex_ast_to_ast(script, output, split_value) \
                 if output is not None \
                 else Node("None", [])
             self.value = Node("Redirect", [
@@ -208,7 +208,7 @@ def bashlex_ast_to_ast(script: str,
                               [Field(
                                   "command", "Node",
                                   bashlex_ast_to_ast(script, command,
-                                                     split_token)),
+                                                     split_value)),
                                Field("type", "str",
                                      self.to_leaf_value("str", t))])
             return False
@@ -220,7 +220,7 @@ def bashlex_ast_to_ast(script: str,
                               [Field(
                                   "command", "Node",
                                   bashlex_ast_to_ast(script, command,
-                                                     split_token))])
+                                                     split_value))])
             return False
     if isinstance(bashlex_ast, bashlex.ast.node):
         visitor = Visitor()

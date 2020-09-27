@@ -49,11 +49,11 @@ class TestGetSamples(unittest.TestCase):
         dataset = ListDataset(entries)
         d = get_samples(dataset, to_action_sequence)
         self.assertEqual([
-            Token("str", "y", "y"),
-            Token("str", "x", "x"),
-            Token("int", "1", "1"),
-            Token("str", "f", "f"),
-            Token("str", "x", "x")
+            ("str", "y"),
+            ("str", "x"),
+            ("int", "1"),
+            ("str", "f"),
+            ("str", "x")
         ], d.tokens)
         self.assertEqual(12, len(d.rules))
         self.assertEqual(28, len(d.node_types))

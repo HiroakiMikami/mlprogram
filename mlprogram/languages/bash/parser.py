@@ -9,15 +9,15 @@ from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
 class Parser(BaseParser[str]):
-    def __init__(self, split_token: Callable[[Token], List[Token]]):
+    def __init__(self, split_value: Callable[[Token], List[Token]]):
         super().__init__()
-        self.split_token = split_token
+        self.split_value = split_value
 
     def parse(self, script: str) -> Optional[AST]:
         try:
             script = script.replace('”', '"').replace('“', '"')
             return bashlex_ast_to_ast(script, bashlex.parse(script)[0],
-                                      self.split_token)
+                                      self.split_value)
         except Exception as e:  # noqa
             return None
 

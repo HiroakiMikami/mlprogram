@@ -6,6 +6,7 @@ from typing \
     cast, Dict, Any, Tuple
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Root
+from mlprogram.languages import Token
 from mlprogram.actions \
     import ExpandTreeRule, ApplyRule, NodeConstraint, \
     GenerateToken, Action, NodeType, CloseVariadicFieldRule
@@ -201,7 +202,10 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         if isinstance(token, ApplyRule):
                             action: Action = token
                         else:
-                            t = token.kind
+                            if isinstance(token, Token):
+                                t = token.kind
+                            else:
+                                t = token[0]
                             if t is not None and \
                                     not self.is_subtype(t,
                                                         head_field.type_name):
@@ -220,7 +224,7 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     if isinstance(token, ApplyRule):
                         action = token
                     else:
-                        action = GenerateToken(token)
+                        action = GenerateToken(token[0], token[1])
 
                     if p == 0.0:
                         continue

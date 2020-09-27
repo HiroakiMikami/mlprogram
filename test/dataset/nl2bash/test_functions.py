@@ -2,7 +2,7 @@ import unittest
 
 from mlprogram.languages import Token
 from mlprogram.datasets.nl2bash import TokenizeQuery
-from mlprogram.datasets.nl2bash import SplitToken
+from mlprogram.datasets.nl2bash import SplitValue
 from mlprogram.datasets.nl2bash.functions import get_subtokens
 
 
@@ -42,23 +42,15 @@ class TestTokenizeAnnotation(unittest.TestCase):
             reference)
 
 
-class TestSplitToken(unittest.TestCase):
+class TestSplitValue(unittest.TestCase):
     def test_simple_case(self):
-        self.assertEqual([Token(None, "test", "test")],
-                         SplitToken()(Token(None, "test", "test")))
+        self.assertEqual(["test"],
+                         SplitValue()("test"))
 
     def test_subtokens(self):
-        tokens = SplitToken()(Token(None, "foo.bar", 'foo.bar'))
-        self.assertEqual([
-            Token(None, "foo", "foo"),
-            Token(None, ".", "."),
-            Token(None, "bar", "bar")
-        ],
-            tokens)
-
-    def test_mapped_value(self):
-        self.assertEqual([Token(None, "foo.bar", "foo-bar")],
-                         SplitToken()(Token(None, "foo.bar", "foo-bar")))
+        tokens = SplitValue()("foo.bar")
+        self.assertEqual(["foo", ".", "bar"],
+                         tokens)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ import unittest
 
 from mlprogram.languages import Token
 from mlprogram.datasets.django import TokenizeQuery
-from mlprogram.datasets.django import SplitToken
+from mlprogram.datasets.django import SplitValue
 
 
 class TestTokenizeQuery(unittest.TestCase):
@@ -32,19 +32,14 @@ class TestTokenizeQuery(unittest.TestCase):
             reference)
 
 
-class TestSplitToken(unittest.TestCase):
+class TestSplitValue(unittest.TestCase):
     def test_simple_case(self):
-        self.assertEqual([Token(None, "test", "test")],
-                         SplitToken()(Token(None, "test", "test")))
+        self.assertEqual(["test"],
+                         SplitValue()("test"))
 
     def test_camel_case(self):
-        self.assertEqual([Token(None, "Foo", "Foo"),
-                          Token(None, "Bar", "Bar")],
-                         SplitToken(True)(Token(None, "FooBar", "FooBar")))
-
-    def mapped_value(self):
-        self.assertEqual([Token(None, "FooBar", "Foo.Bar")],
-                         SplitToken(True)(Token(None, "FooBar", "Foo.Bar")))
+        self.assertEqual(["Foo", "Bar"],
+                         SplitValue(True)("FooBar"))
 
 
 if __name__ == "__main__":

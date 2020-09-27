@@ -39,11 +39,9 @@ class TokenizeQuery:
         return reference
 
 
-class SplitToken:
-    def __call__(self, token: Token) -> List[Token]:
-        if token.value != token.raw_value:
-            return [token]
-        values = list(map(lambda x: x.value, get_subtokens(token.value)))
-        assert(token.value == "".join(values))
+class SplitValue:
+    def __call__(self, token: str) -> List[str]:
+        values = [x.value for x in get_subtokens(token)]
+        assert(token == "".join(values))
 
-        return [Token(token.kind, value, value) for value in values]
+        return values

@@ -36,7 +36,7 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(python_ast.dump(node), python_ast.dump(node2))
 
     def test_builtin_type(self):
-        def split_token(x: Token):
+        def split_value(x: Token):
             return [Token(x.kind, v, v) for v in x.value]
 
         node = python_ast.List()
@@ -48,7 +48,7 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(python_ast.dump(node),
                          python_ast.dump(to_python_ast(
                              to_ast(node,
-                                    split_token=split_token))))
+                                    split_value=split_value))))
 
     def test_variadic_args(self):
         node = python_ast.List()

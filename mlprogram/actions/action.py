@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from mlprogram.languages import Root
-from mlprogram.languages import Token
 from typing \
     import Tuple, Union, List, Any, TypeVar, Generic, Optional
 from enum import Enum
@@ -139,17 +138,18 @@ class GenerateToken(Generic[Value]):
     token:
         The value (token) to be generated
     """
-    token: Token[str, Value]
+    kind: Optional[str]
+    value: Value
 
     def __str__(self) -> str:
-        return f"Generate {self.token}"
+        return f"Generate {self.value}:{self.kind}"
 
     def __hash__(self) -> int:
-        return hash(self.token)
+        return hash((self.kind, self.value))
 
     def __eq__(self, rhs: Any) -> bool:
         if isinstance(rhs, GenerateToken):
-            return self.token == rhs.token
+            return self.kind == self.kind and self.value == rhs.value
         else:
             return False
 
