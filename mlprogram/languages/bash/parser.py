@@ -4,12 +4,11 @@ from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages import AST
 from mlprogram.languages import Node
 from mlprogram.languages import Leaf
-from mlprogram.languages import Token
 from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
 class Parser(BaseParser[str]):
-    def __init__(self, split_value: Callable[[Token], List[Token]]):
+    def __init__(self, split_value: Callable[[str], List[str]]):
         super().__init__()
         self.split_value = split_value
 

@@ -3,13 +3,12 @@ import transpyle
 from typing import Optional, Callable, List
 from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages import AST
-from mlprogram.languages import Token
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.languages.python.ast_to_python_ast import to_python_ast
 
 
 class Parser(BaseParser[str]):
-    def __init__(self, split_value: Callable[[Token], List[Token]],
+    def __init__(self, split_value: Callable[[str], List[str]],
                  mode: str = "single"):
         super().__init__()
         assert mode in set(["single", "eval", "exec"])

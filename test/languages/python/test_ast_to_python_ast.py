@@ -2,7 +2,6 @@ import unittest
 import ast as python_ast
 
 import mlprogram.languages as ast
-from mlprogram.languages import Token
 
 from mlprogram.languages.python.ast_to_python_ast import to_builtin_type
 from mlprogram.languages.python.ast_to_python_ast import to_python_ast
@@ -36,8 +35,8 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(python_ast.dump(node), python_ast.dump(node2))
 
     def test_builtin_type(self):
-        def split_value(x: Token):
-            return [Token(x.kind, v, v) for v in x.value]
+        def split_value(x):
+            return list(x)
 
         node = python_ast.List()
         ten = python_ast.Constant()

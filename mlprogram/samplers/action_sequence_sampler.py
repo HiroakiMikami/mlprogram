@@ -223,6 +223,8 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
 
                     if isinstance(token, ApplyRule):
                         action = token
+                    elif isinstance(token, Token):
+                        action = GenerateToken(token.kind, token.raw_value)
                     else:
                         action = GenerateToken(token[0], token[1])
 

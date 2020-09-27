@@ -2,7 +2,6 @@ import unittest
 import ast as python_ast
 
 import mlprogram.languages as ast
-from mlprogram.languages import Token
 
 from mlprogram.languages.python.python_ast_to_ast import base_ast_type
 from mlprogram.languages.python.python_ast_to_ast import to_ast
@@ -35,8 +34,8 @@ class TestToAST(unittest.TestCase):
                          to_ast(node, lambda x: [x]))
 
     def test_tokenize_builtin_type(self):
-        def split_value(x: Token):
-            return [Token(x.kind, v, v) for v in x.value]
+        def split_value(x):
+            return list(x)
 
         node = python_ast.List()
         ten = python_ast.Constant()

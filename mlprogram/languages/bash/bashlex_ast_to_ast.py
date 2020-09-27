@@ -4,12 +4,11 @@ from mlprogram.languages import AST
 from mlprogram.languages import Node
 from mlprogram.languages import Leaf
 from mlprogram.languages import Field
-from mlprogram.languages import Token
 
 
 def bashlex_ast_to_ast(script: str,
                        bashlex_ast: Union[Any, bashlex.ast.node],
-                       split_value: Callable[[Token], List[Token]]) \
+                       split_value: Callable[[str], List[str]]) \
         -> AST:
     """
     Convert the bash command into AST
@@ -19,8 +18,8 @@ def bashlex_ast_to_ast(script: str,
             self.value = []
 
         def to_leaf_value(self, t: str, value: str) -> List[Leaf]:
-            return [Leaf(t, token.value)
-                    for token in split_value(Token(None, value, value))]
+            return [Leaf(t, token)
+                    for token in split_value(value)]
 
         def visitoperator(self, n, op):
             # Node(type_name="Operator", fileds={"op": Leaf(op)})
