@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
 
-from mlprogram.utils import Query
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.languages import Node, Leaf, Field
 from mlprogram.languages import Token
@@ -12,10 +11,8 @@ from mlprogram.utils.transform.action_sequence \
     TransformActionSequenceForRnnDecoder
 
 
-def tokenize_query(query: str):
-    return Query(
-        list(map(lambda x: Token(None, x, x), query.split(" "))),
-        query.split(" "))
+def tokenize(query: str):
+    return list(map(lambda x: Token(None, x, x), query.split(" ")))
 
 
 def to_action_sequence(code: str):

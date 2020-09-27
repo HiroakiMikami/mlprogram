@@ -2,13 +2,12 @@ import re
 from nltk import tokenize
 from typing import Dict, List
 from mlprogram.languages import Token
-from mlprogram.utils import Query
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
 
 class TokenizeQuery:
-    def __call__(self, query: str) -> Query:
+    def __call__(self, query: str) -> List[Token]:
         """
         Tokenize query
 
@@ -18,7 +17,7 @@ class TokenizeQuery:
 
         Returns
         -------
-        Query
+        List[Token]
         """
         # Preprocess annotation
         def placeholder(id: int) -> str:
@@ -45,21 +44,18 @@ class TokenizeQuery:
             word_to_placeholder[str(w)] = p
 
         reference = []
-        query_for_dnn = []
         for word in tokenizer.tokenize(query):
             if word in mappings:
                 reference.append(Token[str, str](None, word, mappings[word]))
             else:
                 reference.append(Token[str, str](None, word, word))
-            query_for_dnn.append(word)
 
             vars = list(filter(lambda x: len(x) > 0,
                                word.split('.')))  # split by '.'
             if len(vars) > 1:
                 for v in vars:
                     reference.append(Token(None, v, v))
-                    query_for_dnn.append(v)
-        return Query(reference, query_for_dnn)
+        return reference
 
 
 class TokenizeToken:

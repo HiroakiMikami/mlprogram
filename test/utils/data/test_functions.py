@@ -2,8 +2,8 @@ import torch
 import unittest
 import numpy as np
 import ast
+from typing import List
 from mlprogram.actions import AstToActionSequence
-from mlprogram.utils import Query
 from mlprogram.languages import Token
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.utils.data \
@@ -11,10 +11,8 @@ from mlprogram.utils.data \
     get_characters, Collate, CollateOptions
 
 
-def tokenize_query(str: str) -> Query:
-    return Query(
-        list(map(lambda x: Token(None, x, x), str.split(" "))),
-        str.split(" "))
+def tokenize(str: str) -> List[Token]:
+    return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
 def to_action_sequence(code: str):
@@ -27,7 +25,7 @@ class TestGetWords(unittest.TestCase):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
-        words = get_words(dataset, tokenize_query)
+        words = get_words(dataset, tokenize)
         self.assertEqual(["foo", "bar", "test", "foo"], words)
 
 
@@ -36,7 +34,7 @@ class TestGetCharacters(unittest.TestCase):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
-        chars = get_characters(dataset, tokenize_query)
+        chars = get_characters(dataset, tokenize)
         self.assertEqual([
             "f", "o", "o",
             "b", "a", "r",

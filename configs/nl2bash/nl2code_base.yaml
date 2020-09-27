@@ -152,7 +152,7 @@ synthesizer:
         type: mlprogram.languages.bash.IsSubtype
       transform_input:
         type: mlprogram.utils.transform.nl2code.TransformQuery
-        extract_query:
+        extract_reference:
           type: mlprogram.datasets.nl2bash.TokenizeQuery
         word_encoder: "@/encoder.word_encoder"
       transform_action_sequence:

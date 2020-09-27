@@ -1,10 +1,9 @@
-from mlprogram.utils import Query
 from mlprogram.languages import Token
 from typing import Optional, List
 
 
 class TokenizeQuery:
-    def __call__(self, query: str) -> Query:
+    def __call__(self, query: str) -> List[Token]:
         """
         Tokenize query
 
@@ -14,7 +13,7 @@ class TokenizeQuery:
 
         Returns
         -------
-        Query
+        List[Token]
         """
         words = query.split(" ")
         reference = []
@@ -33,7 +32,7 @@ class TokenizeQuery:
                     value += f" {word}"
         if value is not None:
             reference.append(Token[str, str](None, value, value))
-        return Query(reference, list(map(lambda x: x.value, reference)))
+        return reference
 
 
 class TokenizeToken:

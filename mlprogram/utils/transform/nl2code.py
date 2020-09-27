@@ -5,24 +5,24 @@ from typing import Callable, List, Any, Optional, Dict, TypeVar, Generic, cast
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Token
-from mlprogram.utils import Query
 
 Input = TypeVar("Input")
 
 
 class TransformQuery(Generic[Input]):
-    def __init__(self, extract_query: Callable[[Input], Query],
+    def __init__(self, extract_reference: Callable[[Input], List[Token]],
                  word_encoder: LabelEncoder):
-        self.extract_query = extract_query
+        self.extract_reference = extract_reference
         self.word_encoder = word_encoder
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         input = cast(Input, entry["input"])
-        query = self.extract_query(input)
+        reference = self.extract_reference(input)
 
-        entry["reference"] = query.reference
-        entry["word_nl_query"] = \
-            self.word_encoder.batch_encode(query.query_for_dnn)
+        entry["reference"] = reference
+        entry["word_nl_query"] = self.word_encoder.batch_encode([
+            token.value for token in reference
+        ])
 
         return entry
 

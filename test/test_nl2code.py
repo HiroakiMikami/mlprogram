@@ -15,8 +15,6 @@ from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.actions import AstToActionSequence
-from mlprogram.languages import Token
-from mlprogram.utils import Query
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
@@ -35,20 +33,15 @@ from mlprogram.metrics import Accuracy
 from nl2code_dummy_dataset import is_subtype
 from nl2code_dummy_dataset import train_dataset
 from nl2code_dummy_dataset import test_dataset
+from nl2code_dummy_dataset import tokenize
 from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-def tokenize_query(str: str) -> Query:
-    return Query(
-        list(map(lambda x: Token(None, x, x), str.split(" "))),
-        str.split(" "))
-
-
 class TestNL2Code(unittest.TestCase):
     def prepare_encoder(self, dataset, to_action_sequence):
-        words = get_words(dataset, tokenize_query)
+        words = get_words(dataset, tokenize)
         samples = get_samples(dataset, to_action_sequence)
         qencoder = LabelEncoder(words, 2)
         aencoder = ActionSequenceEncoder(samples, 2)
@@ -75,7 +68,7 @@ class TestNL2Code(unittest.TestCase):
         return Optimizer(optim.Adam, model)
 
     def prepare_synthesizer(self, model, qencoder, aencoder):
-        transform_input = TransformQuery(tokenize_query, qencoder)
+        transform_input = TransformQuery(tokenize, qencoder)
         transform_action_sequence = TransformActionSequence(aencoder,
                                                             train=False)
         collate = Collate(
@@ -98,7 +91,7 @@ class TestNL2Code(unittest.TestCase):
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, aencoder, to_action_sequence):
-        tquery = TransformQuery(tokenize_query, qencoder)
+        tquery = TransformQuery(tokenize, qencoder)
         tcode = TransformCode(to_action_sequence)
         teval = TransformActionSequence(aencoder)
         tgt = TransformGroundTruth(aencoder)

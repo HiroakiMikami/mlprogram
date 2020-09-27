@@ -28,21 +28,18 @@ class TestGetSubtokens(unittest.TestCase):
 
 class TestTokenizeAnnotation(unittest.TestCase):
     def test_simple_case(self):
-        query = TokenizeQuery()("foo bar")
-        self.assertEqual(["foo", "bar"], query.query_for_dnn)
+        reference = TokenizeQuery()("foo bar")
         self.assertEqual([Token(None, "foo", "foo"),
                           Token(None, "bar", "bar")],
-                         query.reference)
+                         reference)
 
     def test_subtokens(self):
-        query = TokenizeQuery()('foo.bar')
-        self.assertEqual(["SUB_START", "foo", ".", "bar", "SUB_END"],
-                         query.query_for_dnn)
+        reference = TokenizeQuery()('foo.bar')
         self.assertEqual(
             [Token(None, "SUB_START", ""), Token(None, "foo", "foo"),
              Token(None, ".", "."),
              Token(None, "bar", "bar"), Token(None, "SUB_END", "")],
-            query.reference)
+            reference)
 
 
 class TestTokenizeToken(unittest.TestCase):

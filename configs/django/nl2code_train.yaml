@@ -10,7 +10,7 @@ train_dataset: "@/dataset.train"
 words:
   type: mlprogram.utils.data.get_words
   dataset: "@/train_dataset"
-  extract_query:
+  extract_reference:
     type: mlprogram.datasets.django.TokenizeQuery
 samples:
   type: mlprogram.utils.data.get_samples
@@ -50,7 +50,7 @@ transform:
         - type: mlprogram.utils.transform.RandomChoice
       - - "transform_input"
         - type: mlprogram.utils.transform.nl2code.TransformQuery
-          extract_query:
+          extract_reference:
             type: mlprogram.datasets.django.TokenizeQuery
           word_encoder: "@/encoder.word_encoder"
       - - "transform_code"

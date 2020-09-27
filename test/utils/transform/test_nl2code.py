@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
+from typing import List
 from torchnlp.encoders import LabelEncoder
-from mlprogram.utils import Query
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.languages import Node, Leaf, Field
 from mlprogram.languages import Token
@@ -12,10 +12,8 @@ from mlprogram.utils.transform.nl2code \
     import TransformQuery, TransformActionSequence
 
 
-def tokenize_query(str: str) -> Query:
-    return Query(
-        list(map(lambda x: Token(None, x, x), str.split(" "))),
-        str.split(" "))
+def tokenize(str: str) -> List[Token]:
+    return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
 def to_action_sequence(code: str):
@@ -38,12 +36,12 @@ def to_action_sequence(code: str):
 
 class TestTransformQuery(unittest.TestCase):
     def test_happy_path(self):
-        def tokenize_query(value: str):
-            return Query([Token(None, value, value)], [value + "dnn"])
+        def tokenize(value: str):
+            return [Token(None, value + "dnn", value)]
 
-        transform = TransformQuery(tokenize_query, LabelEncoder(["dnn"]))
+        transform = TransformQuery(tokenize, LabelEncoder(["dnn"]))
         result = transform({"input": ""})
-        self.assertEqual([Token(None, "", "")], result["reference"])
+        self.assertEqual([Token(None, "dnn", "")], result["reference"])
         self.assertEqual([1], result["word_nl_query"].numpy().tolist())
 
 

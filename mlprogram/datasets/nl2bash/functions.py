@@ -2,7 +2,6 @@ import re
 from nltk import tokenize
 from typing import List
 from mlprogram.languages import Token
-from mlprogram.utils import Query
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
@@ -13,7 +12,7 @@ def get_subtokens(token: str) -> List[Token[str, str]]:
 
 
 class TokenizeQuery:
-    def __call__(self, query: str) -> Query:
+    def __call__(self, query: str) -> List[Token]:
         """
         Tokenize query
 
@@ -23,7 +22,7 @@ class TokenizeQuery:
 
         Returns
         -------
-        Query
+        List[Token]
         """
 
         reference = []
@@ -37,7 +36,7 @@ class TokenizeQuery:
                 reference.append(Token[str, str](None, "SUB_START", ""))
                 reference.extend(subtokens)
                 reference.append(Token[str, str](None, "SUB_END", ""))
-        return Query(reference, list(map(lambda x: x.value, reference)))
+        return reference
 
 
 class TokenizeToken:

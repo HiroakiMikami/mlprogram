@@ -152,7 +152,7 @@ synthesizer:
         type: mlprogram.languages.python.IsSubtype
       transform_input:
         type: mlprogram.utils.transform.nl2code.TransformQuery
-        extract_query:
+        extract_reference:
           type: mlprogram.datasets.hearthstone.TokenizeQuery
         word_encoder: "@/encoder.word_encoder"
       transform_action_sequence:

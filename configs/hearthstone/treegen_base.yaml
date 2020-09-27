@@ -162,7 +162,7 @@ synthesizer:
         type: mlprogram.languages.python.IsSubtype
       transform_input:
         type: mlprogram.utils.transform.treegen.TransformQuery
-        extract_query:
+        extract_reference:
           type: mlprogram.datasets.hearthstone.TokenizeQuery
         word_encoder: "@/encoder.word_encoder"
         char_encoder: "@/encoder.char_encoder"

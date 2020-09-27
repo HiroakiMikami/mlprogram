@@ -10,12 +10,12 @@ train_dataset: "@/dataset.train"
 words:
   type: mlprogram.utils.data.get_words
   dataset: "@/train_dataset"
-  extract_query:
+  extract_reference:
     type: mlprogram.datasets.hearthstone.TokenizeQuery
 chars:
   type: mlprogram.utils.data.get_characters
   dataset: "@/train_dataset"
-  extract_query:
+  extract_reference:
     type: mlprogram.datasets.hearthstone.TokenizeQuery
 samples:
   type: mlprogram.utils.data.get_samples
@@ -66,7 +66,7 @@ transform:
         - type: mlprogram.utils.transform.RandomChoice
       - - "transform_input"
         - type: mlprogram.utils.transform.treegen.TransformQuery
-          extract_query:
+          extract_reference:
             type: mlprogram.datasets.hearthstone.TokenizeQuery
           word_encoder: "@/encoder.word_encoder"
           char_encoder: "@/encoder.char_encoder"
