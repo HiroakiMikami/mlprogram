@@ -73,21 +73,21 @@ types = {
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,
     "mlprogram.datasets.django.Parser": mlprogram.datasets.django.Parser,
-    "mlprogram.datasets.django.TokenizeToken":
-        mlprogram.datasets.django.TokenizeToken,
+    "mlprogram.datasets.django.SplitToken":
+        mlprogram.datasets.django.SplitToken,
     "mlprogram.datasets.django.TokenizeQuery":
         mlprogram.datasets.django.TokenizeQuery,
     "mlprogram.datasets.hearthstone.download":
         mlprogram.datasets.hearthstone.download,
     "mlprogram.datasets.hearthstone.TokenizeQuery":
         mlprogram.datasets.hearthstone.TokenizeQuery,
-    "mlprogram.datasets.hearthstone.TokenizeToken":
-        mlprogram.datasets.hearthstone.TokenizeToken,
+    "mlprogram.datasets.hearthstone.SplitToken":
+        mlprogram.datasets.hearthstone.SplitToken,
     "mlprogram.datasets.nl2bash.load": mlprogram.datasets.nl2bash.load,
     "mlprogram.datasets.nl2bash.TokenizeQuery":
         mlprogram.datasets.nl2bash.TokenizeQuery,
-    "mlprogram.datasets.nl2bash.TokenizeToken":
-        mlprogram.datasets.nl2bash.TokenizeToken,
+    "mlprogram.datasets.nl2bash.SplitToken":
+        mlprogram.datasets.nl2bash.SplitToken,
     "mlprogram.datasets.deepfix.download":
         mlprogram.datasets.deepfix.download,
 

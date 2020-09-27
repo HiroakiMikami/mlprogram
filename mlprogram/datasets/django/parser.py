@@ -51,6 +51,7 @@ SOFTWARE.
 import re
 from typing import Optional, Callable, List
 from mlprogram.languages import AST
+from mlprogram.languages import Token
 from mlprogram.languages.python import Parser as BaseParser
 
 p_elif = re.compile(r'^elif\s?')
@@ -62,8 +63,8 @@ p_decorator = re.compile(r'^@.*')
 
 
 class Parser(BaseParser):
-    def __init__(self, tokenize: Callable[[str], List[str]]):
-        super().__init__(tokenize)
+    def __init__(self, split_token: Callable[[Token], List[Token]]):
+        super().__init__(split_token)
 
     def parse(self, code: str) -> Optional[AST]:
         """

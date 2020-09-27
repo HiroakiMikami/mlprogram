@@ -2,6 +2,7 @@ import ast as python_ast
 from typing import List, Type, Union, Callable
 
 import mlprogram.languages as ast
+from mlprogram.languages import Token
 from mlprogram.languages.python import PythonAST
 from mlprogram.languages.python.utils import is_builtin_type, BuiltinType
 
@@ -26,7 +27,7 @@ def base_ast_type(node: PythonAST) \
 
 
 def to_ast(target: PythonAST,
-           tokenize: Callable[[str], List[str]]) -> ast.AST:
+           split_token: Callable[[Token], List[Token]]) -> ast.AST:
     """
     Return the AST corresponding to the Python AST
 
@@ -47,9 +48,9 @@ def to_ast(target: PythonAST,
                 value = target.decode()
             else:
                 value = str(target)
-            tokens = tokenize(value)
+            tokens = split_token(Token(None, value, value))
             return list(map(
-                lambda token: ast.Leaf(type(target).__name__, token),
+                lambda token: ast.Leaf(type(target).__name__, token.value),
                 tokens))
         assert isinstance(target, python_ast.AST)
         type_name = type(target).__name__

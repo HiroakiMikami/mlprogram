@@ -35,6 +35,6 @@ class TokenizeQuery:
         return reference
 
 
-class TokenizeToken:
-    def __call__(self, token: str) -> List[str]:
+class SplitToken:
+    def __call__(self, token: Token) -> List[Token]:
         return [token]

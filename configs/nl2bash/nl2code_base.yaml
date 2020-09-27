@@ -5,8 +5,8 @@ device:
 
 parser:
   type: mlprogram.languages.bash.Parser
-  tokenize:
-    type: mlprogram.datasets.nl2bash.TokenizeToken
+  split_token:
+    type: mlprogram.datasets.nl2bash.SplitToken
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:

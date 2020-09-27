@@ -4,19 +4,20 @@ from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages import AST
 from mlprogram.languages import Node
 from mlprogram.languages import Leaf
+from mlprogram.languages import Token
 from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 
 class Parser(BaseParser[str]):
-    def __init__(self, tokenize: Callable[[str], List[str]]):
+    def __init__(self, split_token: Callable[[Token], List[Token]]):
         super().__init__()
-        self.tokenize = tokenize
+        self.split_token = split_token
 
     def parse(self, script: str) -> Optional[AST]:
         try:
             script = script.replace('”', '"').replace('“', '"')
             return bashlex_ast_to_ast(script, bashlex.parse(script)[0],
-                                      self.tokenize)
+                                      self.split_token)
         except Exception as e:  # noqa
             return None
 

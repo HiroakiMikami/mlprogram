@@ -58,20 +58,25 @@ class TokenizeQuery:
         return reference
 
 
-class TokenizeToken:
+class SplitToken:
     def __init__(self, split_camel_case: bool = False):
         self.split_camel_case = split_camel_case
 
-    def __call__(self, value: str) -> List[str]:
+    def __call__(self, token: Token) -> List[Token]:
+        if token.value != token.raw_value:
+            return [token]
+
+        value = token.value
         if self.split_camel_case and re.search(
                 r"^[A-Z].*", value) and (" " not in value):
             # Camel Case
             words = re.findall(r"[A-Z][a-z]+", value)
             if "".join(words) == value:
-                return words
+                return [Token(token.kind, word, word) for word in words]
             else:
-                return [value]
+                return [token]
         else:
             # Divide by space
             words = re.split(r"( +)", value)
-            return [word for word in words if word != ""]
+            return [Token(token.kind, word, word)
+                    for word in words if word != ""]
