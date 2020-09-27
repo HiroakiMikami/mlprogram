@@ -52,7 +52,9 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken(Token("", "1", "1")))
         action_sequence.eval(GenerateToken(Token("", "2", "2")))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action = encoder.encode_action(action_sequence, ["1", "2"])
+        action = encoder.encode_action(action_sequence,
+                                       [Token("", "1", "1"),
+                                        Token("", "2", "2")])
 
         self.assertTrue(np.array_equal(
             [
@@ -167,7 +169,7 @@ class TestEncoder(unittest.TestCase):
                     [Token("", "f", "f")]),
             0)
         action_sequence = ActionSequence()
-        action = encoder.encode_action(action_sequence, ["1"])
+        action = encoder.encode_action(action_sequence, [Token("", "1", "1")])
         parent = encoder.encode_parent(action_sequence)
         d, m = encoder.encode_tree(action_sequence)
 
@@ -214,7 +216,8 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken(Token("", "1", "1")))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
-        self.assertEqual(None, encoder.encode_action(action_sequence, ["2"]))
+        self.assertEqual(None, encoder.encode_action(action_sequence,
+                                                     [Token("", "2", "2")]))
 
     def test_encode_completed_sequence(self):
         none = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
@@ -226,7 +229,7 @@ class TestEncoder(unittest.TestCase):
             0)
         action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(none))
-        action = encoder.encode_action(action_sequence, ["1"])
+        action = encoder.encode_action(action_sequence, [Token("", "1", "1")])
         parent = encoder.encode_parent(action_sequence)
 
         self.assertTrue(np.array_equal(
@@ -279,7 +282,8 @@ class TestEncoder(unittest.TestCase):
         expected_action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         result = encoder.decode(encoder.encode_action(
-            action_sequence, ["1"])[:-1, 1:], ["1"])
+            action_sequence, [Token(None, "1", "1")])[:-1, 1:],
+            [Token(None, "1", "1")])
         self.assertEqual(expected_action_sequence.action_sequence,
                          result.action_sequence)
 
@@ -340,7 +344,10 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken(Token("", "f", "f")))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
-        action = encoder.encode_each_action(action_sequence, ["1", "2"], 1)
+        action = encoder.encode_each_action(
+            action_sequence,
+            [Token("", "1", "1"), Token("", "2", "2")],
+            1)
 
         self.assertTrue(np.array_equal(
             np.array([

@@ -37,9 +37,8 @@ class TransformActionSequence:
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
         reference = cast(List[Token[str, str]], entry["reference"])
-        # TODO use type in encoding action sequence
         a = self.action_sequence_encoder.encode_action(
-            action_sequence, list(map(lambda x: x.value, reference)))
+            action_sequence, reference)
         p = self.action_sequence_encoder.encode_parent(action_sequence)
         if a is None:
             return None

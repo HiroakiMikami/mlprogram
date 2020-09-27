@@ -53,13 +53,11 @@ class TransformActionSequence:
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
         reference = cast(List[Token[str, str]], entry["reference"])
-        refs = list(map(lambda x: x.value, reference))
-        # TODO use type in encoding action sequence
         a = self.action_sequence_encoder.encode_action(
-            action_sequence, refs)
+            action_sequence, reference)
         rule_prev_action = \
             self.action_sequence_encoder.encode_each_action(
-                action_sequence, refs, self.max_arity)
+                action_sequence, reference, self.max_arity)
         path = \
             self.action_sequence_encoder.encode_path(
                 action_sequence, self.max_depth)
@@ -80,7 +78,7 @@ class TransformActionSequence:
             query = path
             rule_prev_action = \
                 self.action_sequence_encoder.encode_each_action(
-                    action_sequence, refs, self.max_arity)
+                    action_sequence, reference, self.max_arity)
 
         entry["previous_actions"] = prev_action
         entry["previous_action_rules"] = rule_prev_action

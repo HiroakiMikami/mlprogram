@@ -68,7 +68,7 @@ class ActionSequenceEncoder:
                 self.raw_value_to_idx[token.raw_value] = []
             self.raw_value_to_idx[token.raw_value].append(idx)
 
-    def decode(self, tensor: torch.LongTensor, query: List[str]) \
+    def decode(self, tensor: torch.LongTensor, reference: List[Token]) \
             -> Optional[ActionSequence]:
         """
         Return the action sequence corresponding to the tensor
@@ -81,7 +81,7 @@ class ActionSequenceEncoder:
             of (ID of the applied rule, ID of the inserted token,
             the index of the word copied from the query).
             The padding value should be -1.
-        query: List[str]
+        reference
 
         Returns
         -------
@@ -103,17 +103,17 @@ class ActionSequenceEncoder:
             elif tensor[i, 2] >= 0:
                 # GenerateToken (Copy)
                 index = int(tensor[i, 2].numpy())
-                if index >= len(query):
+                if index >= len(reference):
                     return None
-                token = Token(None, query[index], query[index])
-                retval.eval(GenerateToken(token))
+                retval.eval(GenerateToken(reference[index]))
             else:
                 return None
 
         return retval
 
     def encode_action(self,
-                      action_sequence: ActionSequence, query: List[str]) \
+                      action_sequence: ActionSequence,
+                      reference: List[Token]) \
             -> Optional[torch.Tensor]:
         """
         Return the tensor encoded the action sequence
@@ -122,7 +122,7 @@ class ActionSequenceEncoder:
         ----------
         action_sequence: action_sequence
             The action_sequence containing action sequence to be encoded
-        query: List[str]
+        reference
 
         Returns
         -------
@@ -134,6 +134,7 @@ class ActionSequenceEncoder:
             the query. The padding value should be -1.
             None if the action sequence cannot be encoded.
         """
+        reference_value = [token.raw_value for token in reference]
         action = \
             torch.ones(len(action_sequence.action_sequence) + 1, 4).long() \
             * -1
@@ -159,11 +160,13 @@ class ActionSequenceEncoder:
                     action[i, 2] = encoded_token
 
                 # Unknown token
-                if token.raw_value in query:
-                    # TODO
-                    action[i, 3] = query.index(cast(str, token.raw_value))
+                if token.raw_value in reference_value:
+                    # TODO use kind in reference
+                    action[i, 3] = \
+                        reference_value.index(cast(str, token.raw_value))
 
-                if encoded_token == 0 and token.raw_value not in query:
+                if encoded_token == 0 and \
+                        token.raw_value not in reference_value:
                     return None
 
         head = action_sequence.head
@@ -274,7 +277,8 @@ class ActionSequenceEncoder:
         return depth, m
 
     def encode_each_action(self,
-                           action_sequence: ActionSequence, query: List[str],
+                           action_sequence: ActionSequence,
+                           reference: List[Token],
                            max_arity: int) \
             -> torch.Tensor:
         """
@@ -299,6 +303,7 @@ class ActionSequenceEncoder:
             The padding value is -1.
         """
         L = len(action_sequence.action_sequence)
+        reference_value = [token.raw_value for token in reference]
         retval = torch.ones(L, max_arity + 1, 3).long() * -1
         for i, action in enumerate(action_sequence.action_sequence):
             if isinstance(action, ApplyRule):
@@ -319,8 +324,10 @@ class ActionSequenceEncoder:
                 if encoded_token != 0:
                     retval[i, 1, 1] = encoded_token
 
-                if token.raw_value in query:
-                    retval[i, 1, 2] = query.index(cast(str, token.raw_value))
+                if token.raw_value in reference_value:
+                    # TODO use kind in reference
+                    retval[i, 1, 2] = \
+                        reference_value.index(cast(str, token.raw_value))
 
         return retval
 
