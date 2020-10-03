@@ -231,6 +231,81 @@ class Testaction_sequence(unittest.TestCase):
         self.assertNotEqual(action_sequence.generate(),
                             action_sequence2.generate())
 
+    def test_create_leaf(self):
+        seq = ActionSequence.create(Leaf("str", "t0 t1"))
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType(None, NodeConstraint.Node, False),
+                [("root", NodeType(Root(),
+                                   NodeConstraint.Token, False))
+                 ])),
+                GenerateToken("str", "t0 t1")],
+            seq.action_sequence
+        )
+
+        seq = ActionSequence.create(Node("value", [
+            Field("name", "str",
+                  [Leaf("str", "t0"), Leaf("str", "t1")])]))
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType(None, NodeConstraint.Node, False),
+                [("root", NodeType(Root(),
+                                   NodeConstraint.Node, False))
+                 ])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("value", NodeConstraint.Node, False),
+                 [("name", NodeType("str", NodeConstraint.Token, True))]
+             )),
+             GenerateToken("str", "t0"),
+             GenerateToken("str", "t1"),
+             ApplyRule(CloseVariadicFieldRule())],
+            seq.action_sequence
+        )
+
+    def test_create_node(self):
+        a = Node(
+            "def",
+            [Field("name", "literal", Leaf("str", "foo"))])
+        seq = ActionSequence.create(a)
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType(None, NodeConstraint.Node, False),
+                [("root", NodeType(Root(),
+                                   NodeConstraint.Node, False))
+                 ])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("def", NodeConstraint.Node, False),
+                 [("name",
+                   NodeType("literal", NodeConstraint.Token, False))])),
+             GenerateToken("str", "foo")],
+            seq.action_sequence
+        )
+
+    def test_create_node_with_variadic_fields(self):
+        a = Node("list", [Field("elems", "literal", [
+            Node("str", []), Node("str", [])])])
+        seq = ActionSequence.create(a)
+        self.assertEqual(
+            [ApplyRule(ExpandTreeRule(
+                NodeType(None, NodeConstraint.Node, False),
+                [("root", NodeType(Root(),
+                                   NodeConstraint.Node, False))
+                 ])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("list", NodeConstraint.Node, False),
+                 [("elems",
+                   NodeType("literal",
+                            NodeConstraint.Node, True))])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("str", NodeConstraint.Node, False),
+                 [])),
+             ApplyRule(ExpandTreeRule(
+                 NodeType("str", NodeConstraint.Node, False),
+                 [])),
+             ApplyRule(CloseVariadicFieldRule())],
+            seq.action_sequence
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

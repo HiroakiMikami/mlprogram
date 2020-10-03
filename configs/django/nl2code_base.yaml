@@ -7,15 +7,6 @@ parser:
   type: mlprogram.datasets.django.Parser
   split_value:
     type: mlprogram.datasets.django.SplitValue
-to_action_sequence:
-  type: mlprogram.utils.Compose
-  funcs:
-    type: collections.OrderedDict
-    items:
-      - - "parse"
-        - "@/parser.parse"
-      - - "ast_to_action_sequence"
-        - type: mlprogram.actions.AstToActionSequence
 
 normalize_dataset:
   type: mlprogram.utils.transform.NormalizeGroundTruth

@@ -7,15 +7,6 @@ parser:
   type: mlprogram.languages.bash.Parser
   split_value:
     type: mlprogram.datasets.nl2bash.SplitValue
-to_action_sequence:
-  type: mlprogram.utils.Compose
-  funcs:
-    type: collections.OrderedDict
-    items:
-      - - "parse"
-        - "@/parser.parse"
-      - - "ast_to_action_sequence"
-        - type: mlprogram.actions.AstToActionSequence
 
 normalize_dataset:
   type: mlprogram.utils.transform.NormalizeGroundTruth

@@ -15,7 +15,7 @@ encoder:
     samples:
       type: mlprogram.languages.csg.get_samples
       dataset: "@/dataset"
-      to_action_sequence: "@/to_action_sequence"
+      parser: "@/parser"
     token_threshold: 0
 
 optimizer:

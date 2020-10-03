@@ -5,6 +5,7 @@ from typing import Callable, Sequence, Any, Optional, Union, Dict, List
 from typing import Tuple
 from mlprogram.actions \
     import Rule, ApplyRule, CloseVariadicFieldRule
+from mlprogram.languages import Parser
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
 from mlprogram.languages import Token
@@ -40,18 +41,17 @@ def get_characters(dataset: torch.utils.data.Dataset,
 
 
 def get_samples(dataset: torch.utils.data.Dataset,
-                to_action_sequence: Callable[[Any],
-                                             Optional[ActionSequence]]
-                ) -> Samples:
+                parser: Parser[Any]) -> Samples:
     rules: List[Rule] = []
     node_types = []
     tokens: List[Tuple[str, str]] = []
 
     for group in dataset:
         for gt in group["ground_truth"]:
-            action_sequence = to_action_sequence(gt)
-            if action_sequence is None:
+            ast = parser.parse(gt)
+            if ast is None:
                 continue
+            action_sequence = ActionSequence.create(ast)
             for action in action_sequence.action_sequence:
                 if isinstance(action, ApplyRule):
                     rule = action.rule

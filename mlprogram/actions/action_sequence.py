@@ -199,6 +199,50 @@ class ActionSequence:
             if not head_rule.children[head.field][1].is_variadic:
                 update_head()
 
+    def clone(self):
+        """
+        Generate and return the clone of this action_sequence
+
+        Returns
+        -------
+        action_sequence
+            The cloned action_sequence
+        """
+        action_sequence = ActionSequence()
+        for key, value in self._tree.children.items():
+            v = []
+            for src in value:
+                v.append(deepcopy(src))
+            action_sequence._tree.children[key] = v
+        action_sequence._tree.parent = deepcopy(self._tree.parent)
+        action_sequence._action_sequence = deepcopy(self._action_sequence)
+        action_sequence._head_action_index = self._head_action_index
+        action_sequence._head_children_index = \
+            deepcopy(self._head_children_index)
+
+        return action_sequence
+
+    def parent(self, index: int) -> Optional[Parent]:
+        return self._tree.parent[index]
+
+    @property
+    def action_sequence(self) -> List[Action]:
+        return self._action_sequence
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, ActionSequence):
+            return False
+        return self.action_sequence == other.action_sequence
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.action_sequence))
+
+    def __str__(self) -> str:
+        return f"{self.action_sequence}"
+
+    def __repr__(self) -> str:
+        return str(self.action_sequence)
+
     def generate(self) -> AST:
         """
         Generate AST from the action sequence
@@ -259,46 +303,63 @@ class ActionSequence:
             return generate(0)
         return generate(0)
 
-    def clone(self):
+    @staticmethod
+    def create(node: AST):
         """
-        Generate and return the clone of this action_sequence
+        Return the action sequence corresponding to this AST
+
+        Parameters
+        ----------
+        node: AST
 
         Returns
         -------
-        action_sequence
-            The cloned action_sequence
+        actionSequence
+            The corresponding action sequence
         """
+        def to_sequence(node: AST) -> List[Action]:
+            if isinstance(node, Node):
+                def to_node_type(field: Field) -> NodeType:
+                    if isinstance(field.value, list):
+                        if len(field.value) > 0 and \
+                                isinstance(field.value[0], Leaf):
+                            return NodeType(field.type_name,
+                                            NodeConstraint.Token, True)
+                        else:
+                            return NodeType(field.type_name,
+                                            NodeConstraint.Node, True)
+                    else:
+                        if isinstance(field.value, Leaf):
+                            return NodeType(field.type_name,
+                                            NodeConstraint.Token,
+                                            False)
+                        else:
+                            return NodeType(field.type_name,
+                                            NodeConstraint.Node, False)
+                children = list(
+                    map(lambda f: (f.name, to_node_type(f)), node.fields))
+
+                seq: List[Action] = [ApplyRule(ExpandTreeRule(
+                    NodeType(node.type_name, NodeConstraint.Node, False),
+                    children))]
+                for field in node.fields:
+                    if isinstance(field.value, list):
+                        for v in field.value:
+                            seq.extend(to_sequence(v))
+                        seq.append(ApplyRule(CloseVariadicFieldRule()))
+                    else:
+                        seq.extend(to_sequence(field.value))
+                return seq
+            elif isinstance(node, Leaf):
+                node_type = node.get_type_name()
+                assert not isinstance(node_type, Root)
+                assert node_type is not None
+                return [GenerateToken(node_type, node.value)]
+            else:
+                logger.critical(f"Invalid type of node: {type(node)}")
+                raise RuntimeError(f"Invalid type of node: {type(node)}")
         action_sequence = ActionSequence()
-        for key, value in self._tree.children.items():
-            v = []
-            for src in value:
-                v.append(deepcopy(src))
-            action_sequence._tree.children[key] = v
-        action_sequence._tree.parent = deepcopy(self._tree.parent)
-        action_sequence._action_sequence = deepcopy(self._action_sequence)
-        action_sequence._head_action_index = self._head_action_index
-        action_sequence._head_children_index = \
-            deepcopy(self._head_children_index)
-
+        node = Node(None, [Field("root", Root(), node)])
+        for action in to_sequence(node):
+            action_sequence.eval(action)
         return action_sequence
-
-    def parent(self, index: int) -> Optional[Parent]:
-        return self._tree.parent[index]
-
-    @property
-    def action_sequence(self) -> List[Action]:
-        return self._action_sequence
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ActionSequence):
-            return False
-        return self.action_sequence == other.action_sequence
-
-    def __hash__(self) -> int:
-        return hash(tuple(self.action_sequence))
-
-    def __str__(self) -> str:
-        return f"{self.action_sequence}"
-
-    def __repr__(self) -> str:
-        return str(self.action_sequence)

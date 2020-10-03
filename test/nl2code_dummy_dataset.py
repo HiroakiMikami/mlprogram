@@ -1,6 +1,9 @@
-from typing import List, Union
+from typing import List
+from typing import Union
+from typing import Optional
 from mlprogram.languages import AST, Node, Leaf, Field, Root
 from mlprogram.languages import Token
+from mlprogram.languages import Parser as BaseParser
 from mlprogram.utils.data import ListDataset
 
 
@@ -27,6 +30,14 @@ def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
 
 def tokenize(str: str) -> List[Token]:
     return list(map(lambda x: Token(None, x, x), str.split(" ")))
+
+
+class Parser(BaseParser[AST]):
+    def parse(self, x: AST) -> Optional[AST]:
+        return x
+
+    def unparse(self, x: AST) -> Optional[AST]:
+        return x
 
 
 def string(value: str):

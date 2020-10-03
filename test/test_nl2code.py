@@ -14,7 +14,6 @@ from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer
-from mlprogram.actions import AstToActionSequence
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
@@ -34,15 +33,16 @@ from nl2code_dummy_dataset import is_subtype
 from nl2code_dummy_dataset import train_dataset
 from nl2code_dummy_dataset import test_dataset
 from nl2code_dummy_dataset import tokenize
+from nl2code_dummy_dataset import Parser
 from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
 class TestNL2Code(unittest.TestCase):
-    def prepare_encoder(self, dataset, to_action_sequence):
+    def prepare_encoder(self, dataset, parser):
         words = get_words(dataset, tokenize)
-        samples = get_samples(dataset, to_action_sequence)
+        samples = get_samples(dataset, parser)
         qencoder = LabelEncoder(words, 2)
         aencoder = ActionSequenceEncoder(samples, 2)
         return qencoder, aencoder
@@ -90,9 +90,9 @@ class TestNL2Code(unittest.TestCase):
                 aencoder, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
-    def transform_cls(self, qencoder, aencoder, to_action_sequence):
+    def transform_cls(self, qencoder, aencoder, parser):
         tquery = TransformQuery(tokenize, qencoder)
-        tcode = TransformCode(to_action_sequence)
+        tcode = TransformCode(parser)
         teval = TransformActionSequence(aencoder)
         tgt = TransformGroundTruth(aencoder)
         return Sequence(
@@ -120,7 +120,6 @@ class TestNL2Code(unittest.TestCase):
 
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = AstToActionSequence()
             loss_fn = nn.Sequential(OrderedDict([
                 ("loss", Loss()),
                 ("pick",
@@ -142,9 +141,9 @@ class TestNL2Code(unittest.TestCase):
             ).collate
 
             qencoder, aencoder = \
-                self.prepare_encoder(train_dataset, to_action_sequence)
+                self.prepare_encoder(train_dataset, Parser())
             transform = Map(self.transform_cls(qencoder, aencoder,
-                                               to_action_sequence))
+                                               Parser()))
             model = self.prepare_model(qencoder, aencoder)
             optimizer = self.prepare_optimizer(model)
             train_supervised(

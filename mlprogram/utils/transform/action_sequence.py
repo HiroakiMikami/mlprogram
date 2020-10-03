@@ -1,6 +1,7 @@
 import torch
-from typing import Dict, Any, Optional, cast, List, TypeVar, Generic, Callable
+from typing import Dict, Any, Optional, cast, List, TypeVar, Generic
 from mlprogram.languages import Token
+from mlprogram.languages import Parser
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
 import numpy as np
@@ -17,16 +18,15 @@ class AddEmptyReference(object):
 
 
 class TransformCode(Generic[Code]):
-    def __init__(self,
-                 to_action_sequence: Callable[[Code],
-                                              Optional[ActionSequence]]):
-        self.to_action_sequence = to_action_sequence
+    def __init__(self, parser: Parser[Code]):
+        self.parser = parser
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         code = cast(Code, entry["ground_truth"])
-        seq = self.to_action_sequence(code)
-        if seq is None:
+        ast = self.parser.parse(code)
+        if ast is None:
             return None
+        seq = ActionSequence.create(ast)
         entry["action_sequence"] = seq
         return entry
 

@@ -1,5 +1,6 @@
-from typing import Union as U, Optional, Callable, List
+from typing import Union as U, List
 from mlprogram.interpreters import Reference as R
+from mlprogram.languages import Parser
 from mlprogram.languages.csg import AST as csgAST
 from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
 from mlprogram.languages.csg import Union, Difference, Reference
@@ -23,10 +24,7 @@ class IsSubtype:
         return subtype == basetype
 
 
-def get_samples(dataset: Dataset,
-                to_action_sequence: Callable[[csgAST],
-                                             Optional[ActionSequence]]
-                ) -> Samples:
+def get_samples(dataset: Dataset, parser: Parser[csgAST]) -> Samples:
     rules: List[Rule] = []
     node_types = []
     srule = set()
@@ -51,9 +49,10 @@ def get_samples(dataset: Dataset,
         ]
 
     for x in xs:
-        action_sequence = to_action_sequence(x)
-        if action_sequence is None:
+        ast = parser.parse(x)
+        if ast is None:
             continue
+        action_sequence = ActionSequence.create(ast)
         for action in action_sequence.action_sequence:
             if isinstance(action, ApplyRule):
                 rule = action.rule
