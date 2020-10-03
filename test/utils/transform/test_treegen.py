@@ -5,7 +5,7 @@ from torchnlp.encoders import LabelEncoder
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.languages import Node, Field, Leaf
 from mlprogram.languages import Token
-from mlprogram.actions import AstToActionSequence
+from mlprogram.languages import Parser
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform.action_sequence import TransformCode
 from mlprogram.utils.transform.treegen \
@@ -16,21 +16,24 @@ def tokenize(str: str) -> List[Token]:
     return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
-def to_action_sequence(code: str):
-    ast = Node("Assign",
-               [Field("name", "Name",
-                      Node("Name", [Field("id", "str", Leaf("str", "x"))])),
-                Field("value", "expr",
-                      Node("Op", [
-                           Field("op", "str", Leaf("str", "+")),
-                           Field("arg0", "expr",
-                                 Node("Name", [Field("id", "str",
-                                                     Leaf("str", "y"))])),
-                           Field("arg1", "expr",
-                                 Node("Number", [Field("value", "number",
-                                                       Leaf("number", "1"))]))]
-                           ))])
-    return AstToActionSequence()(ast)
+class MockParser(Parser[str]):
+    def parse(self, code):
+        ast = Node("Assign",
+                   [Field("name", "Name",
+                          Node("Name", [Field("id", "str",
+                                              Leaf("str", "x"))])),
+                    Field("value", "expr",
+                          Node("Op", [
+                              Field("op", "str", Leaf("str", "+")),
+                              Field("arg0", "expr",
+                                    Node("Name", [Field("id", "str",
+                                                        Leaf("str", "y"))])),
+                              Field("arg1", "expr",
+                                    Node("Number", [
+                                        Field("value", "number",
+                                              Leaf("number", "1"))]))]
+                               ))])
+        return ast
 
 
 class TestTransformQuery(unittest.TestCase):
@@ -54,10 +57,10 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_simple_case(self):
         entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, to_action_sequence)
+        d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
-            TransformCode(to_action_sequence)({
+            TransformCode(MockParser())({
                 "ground_truth": "y = x + 1"
             })["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3)
@@ -129,10 +132,10 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_eval(self):
         entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, to_action_sequence)
+        d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
-            TransformCode(to_action_sequence)({
+            TransformCode(MockParser())({
                 "ground_truth": "y = x + 1"
             })["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3, train=False)
@@ -206,11 +209,11 @@ class TestTransformActionSequence(unittest.TestCase):
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
-        d = get_samples(dataset, to_action_sequence)
+        d = get_samples(dataset, MockParser())
         d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
-            TransformCode(to_action_sequence)({
+            TransformCode(MockParser())({
                 "ground_truth": "y = x + 1"
             })["action_sequence"]
         transform = TransformActionSequence(aencoder, 3, 3)

@@ -26,16 +26,6 @@ device:
 parser:
     type: mlprogram.languages.csg.Parser
 
-to_action_sequence:
-    type: mlprogram.utils.Sequence
-    funcs:
-        type: collections.OrderedDict
-        items:
-            - - "to_ast"
-              - "@/parser.parse"
-            - - "to_sequence"
-              - type: mlprogram.actions.AstToActionSequence
-
 n_pixel:
     type: mul
     x: "@/option.size"
@@ -259,7 +249,7 @@ transform:
                 targets: ["input"]
             - - "transform_code"
               - type: mlprogram.utils.transform.action_sequence.TransformCode
-                to_action_sequence: "@/to_action_sequence"
+                parser: "@/parser"
             - - "transform_action_sequence"
               - type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
                 action_sequence_encoder: "@/encoder"

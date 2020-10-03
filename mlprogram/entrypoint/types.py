@@ -149,8 +149,6 @@ types = {
         mlprogram.utils.data.random.random_split,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
-    "mlprogram.actions.AstToActionSequence":
-        mlprogram.actions.AstToActionSequence,
     "mlprogram.utils.transform.RandomChoice":
         mlprogram.utils.transform.RandomChoice,
     "mlprogram.utils.transform.EvaluateGroundTruth":

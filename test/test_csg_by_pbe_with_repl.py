@@ -16,7 +16,6 @@ from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer, Reshape
 from mlprogram.synthesizers \
     import SMC, FilteredSynthesizer, SynthesizerWithTimeout
-from mlprogram.actions import AstToActionSequence
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.samplers import SequentialProgramSampler
 from mlprogram.samplers import SamplerWithValueNetwork
@@ -47,8 +46,8 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
 class TestCsgByPbeWithREPL(unittest.TestCase):
-    def prepare_encoder(self, dataset, to_action_sequence):
-        return ActionSequenceEncoder(get_samples(dataset, to_action_sequence),
+    def prepare_encoder(self, dataset, parser):
+        return ActionSequenceEncoder(get_samples(dataset, parser),
                                      0)
 
     def prepare_model(self, encoder: ActionSequenceEncoder):
@@ -157,8 +156,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
     def interpreter(self):
         return Interpreter(2, 2, 8)
 
-    def to_episode(self, encoder, interpreter, to_action_sequence,
-                   reinforce=False):
+    def to_episode(self, encoder, interpreter, reinforce=False):
         to_episode = ToEpisode(Parser().parse, remove_used_reference=True)
         if reinforce:
             return to_episode
@@ -169,9 +167,9 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             ])
         )
 
-    def transform(self, encoder, interpreter, to_action_sequence):
+    def transform(self, encoder, interpreter, parser):
         tcanvas = TransformCanvas(["input", "variables"])
-        tcode = TransformCode(to_action_sequence)
+        tcode = TransformCode(parser)
         taction = TransformActionSequenceForRnnDecoder(encoder)
         tgt = TransformGroundTruth(encoder)
         return Sequence(
@@ -204,15 +202,11 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
         train_dataset = to_map_style_dataset(dataset, 10)
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = Sequence(OrderedDict([
-                ("to_ast", Parser().parse),
-                ("to_sequence", AstToActionSequence())
-            ]))
             interpreter = self.interpreter()
             train_dataset = data_transform(
                 train_dataset,
                 EvaluateGroundTruth(interpreter, reference=True))
-            encoder = self.prepare_encoder(dataset, to_action_sequence)
+            encoder = self.prepare_encoder(dataset, Parser())
 
             collate = Collate(
                 torch.device("cpu"),
@@ -225,11 +219,10 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             )
             collate_fn = Sequence(OrderedDict([
                 ("to_episode", Map(self.to_episode(encoder,
-                                                   interpreter,
-                                                   to_action_sequence))),
+                                                   interpreter))),
                 ("flatten", Flatten()),
                 ("transform", Map(self.transform(
-                    encoder, interpreter, to_action_sequence))),
+                    encoder, interpreter, Parser()))),
                 ("collate", collate)
             ]))
 
@@ -259,10 +252,6 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
 
     def reinforce(self, train_dataset, encoder, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = Sequence(OrderedDict([
-                ("to_ast", Parser().parse),
-                ("to_sequence", AstToActionSequence())
-            ]))
             interpreter = self.interpreter()
 
             collate = Collate(
@@ -278,11 +267,10 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             collate_fn = Sequence(OrderedDict([
                 ("to_episode", Map(self.to_episode(encoder,
                                                    interpreter,
-                                                   to_action_sequence,
                                                    reinforce=True))),
                 ("flatten", Flatten()),
                 ("transform", Map(self.transform(
-                    encoder, interpreter, to_action_sequence))),
+                    encoder, interpreter, Parser()))),
                 ("collate", collate)
             ]))
 

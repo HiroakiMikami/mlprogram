@@ -15,7 +15,7 @@ words:
 samples:
   type: mlprogram.utils.data.get_samples
   dataset: "@/train_dataset"
-  to_action_sequence: "@/to_action_sequence"
+  parser: "@/parser"
 
 encoder:
   word_encoder:
@@ -55,7 +55,7 @@ transform:
           word_encoder: "@/encoder.word_encoder"
       - - "transform_code"
         - type: mlprogram.utils.transform.action_sequence.TransformCode
-          to_action_sequence: "@/to_action_sequence"
+          parser: "@/parser"
       - - "transform_action_sequence"
         - type: mlprogram.utils.transform.nl2code.TransformActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"

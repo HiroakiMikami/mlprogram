@@ -17,7 +17,6 @@ from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer
-from mlprogram.actions import AstToActionSequence
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
@@ -37,16 +36,17 @@ from nl2code_dummy_dataset import is_subtype
 from nl2code_dummy_dataset import train_dataset
 from nl2code_dummy_dataset import test_dataset
 from nl2code_dummy_dataset import tokenize
+from nl2code_dummy_dataset import Parser
 from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
 class TestTreeGen(unittest.TestCase):
-    def prepare_encoder(self, dataset, to_action_sequence):
+    def prepare_encoder(self, dataset, parser):
         words = get_words(dataset, tokenize)
         chars = get_characters(dataset, tokenize)
-        samples = get_samples(dataset, to_action_sequence)
+        samples = get_samples(dataset, parser)
 
         qencoder = LabelEncoder(words, 2)
         cencoder = LabelEncoder(chars, 0)
@@ -106,9 +106,9 @@ class TestTreeGen(unittest.TestCase):
                 aencoder, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
-    def transform_cls(self, qencoder, cencoder, aencoder, to_action_sequence):
+    def transform_cls(self, qencoder, cencoder, aencoder, parser):
         tquery = TransformQuery(tokenize, qencoder, cencoder, 10)
-        tcode = TransformCode(to_action_sequence)
+        tcode = TransformCode(parser)
         teval = TransformActionSequence(aencoder, 4, 4)
         tgt = TransformGroundTruth(aencoder)
         return Sequence(
@@ -138,7 +138,6 @@ class TestTreeGen(unittest.TestCase):
 
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            to_action_sequence = AstToActionSequence()
             loss_fn = nn.Sequential(OrderedDict([
                 ("loss", Loss()),
                 ("pick",
@@ -160,9 +159,9 @@ class TestTreeGen(unittest.TestCase):
                 ground_truth_actions=CollateOptions(True, 0, -1)
             ).collate
 
-            encoder = self.prepare_encoder(train_dataset, to_action_sequence)
+            encoder = self.prepare_encoder(train_dataset, Parser())
             model = self.prepare_model(*encoder)
-            transform = Map(self.transform_cls(*encoder, to_action_sequence))
+            transform = Map(self.transform_cls(*encoder, Parser()))
             train_supervised(
                 tmpdir, output_dir, train_dataset,
                 model, self.prepare_optimizer(model),
