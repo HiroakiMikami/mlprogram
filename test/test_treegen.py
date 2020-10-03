@@ -18,7 +18,6 @@ from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.actions import AstToActionSequence
-from mlprogram.utils import Query, Token
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
@@ -37,22 +36,16 @@ from mlprogram.metrics import Accuracy
 from nl2code_dummy_dataset import is_subtype
 from nl2code_dummy_dataset import train_dataset
 from nl2code_dummy_dataset import test_dataset
-from nl2code_dummy_dataset import get_token_type
+from nl2code_dummy_dataset import tokenize
 from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-def tokenize_query(str: str) -> Query:
-    return Query(
-        list(map(lambda x: Token(None, x), str.split(" "))),
-        str.split(" "))
-
-
 class TestTreeGen(unittest.TestCase):
     def prepare_encoder(self, dataset, to_action_sequence):
-        words = get_words(dataset, tokenize_query)
-        chars = get_characters(dataset, tokenize_query)
+        words = get_words(dataset, tokenize)
+        chars = get_characters(dataset, tokenize)
         samples = get_samples(dataset, to_action_sequence)
 
         qencoder = LabelEncoder(words, 2)
@@ -89,7 +82,7 @@ class TestTreeGen(unittest.TestCase):
                          model)
 
     def prepare_synthesizer(self, model, qencoder, cencoder, aencoder):
-        transform_input = TransformQuery(tokenize_query, qencoder,
+        transform_input = TransformQuery(tokenize, qencoder,
                                          cencoder, 10)
         transform_action_sequence = TransformActionSequence(aencoder, 4, 4,
                                                             train=False)
@@ -110,11 +103,11 @@ class TestTreeGen(unittest.TestCase):
         return BeamSearch(
             5, 20,
             ActionSequenceSampler(
-                aencoder, get_token_type, is_subtype, transform_input,
+                aencoder, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, cencoder, aencoder, to_action_sequence):
-        tquery = TransformQuery(tokenize_query, qencoder, cencoder, 10)
+        tquery = TransformQuery(tokenize, qencoder, cencoder, 10)
         tcode = TransformCode(to_action_sequence)
         teval = TransformActionSequence(aencoder, 4, 4)
         tgt = TransformGroundTruth(aencoder)

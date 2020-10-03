@@ -125,7 +125,7 @@ class ActionSequenceReader(nn.Module):
             The encoded tensor with the shape of
             (len(action_sequence) + 1, 3). Each action will be encoded by
             the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
+            the index of the word copied from the reference).
             The padding value should be -1.
         previous_action_rules: rnn.PaddedSequenceWithMask
             The rule of previous action sequence.

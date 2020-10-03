@@ -73,21 +73,21 @@ types = {
 
     "mlprogram.datasets.django.download": mlprogram.datasets.django.download,
     "mlprogram.datasets.django.Parser": mlprogram.datasets.django.Parser,
-    "mlprogram.datasets.django.TokenizeToken":
-        mlprogram.datasets.django.TokenizeToken,
+    "mlprogram.datasets.django.SplitValue":
+        mlprogram.datasets.django.SplitValue,
     "mlprogram.datasets.django.TokenizeQuery":
         mlprogram.datasets.django.TokenizeQuery,
     "mlprogram.datasets.hearthstone.download":
         mlprogram.datasets.hearthstone.download,
     "mlprogram.datasets.hearthstone.TokenizeQuery":
         mlprogram.datasets.hearthstone.TokenizeQuery,
-    "mlprogram.datasets.hearthstone.TokenizeToken":
-        mlprogram.datasets.hearthstone.TokenizeToken,
+    "mlprogram.datasets.hearthstone.SplitValue":
+        mlprogram.datasets.hearthstone.SplitValue,
     "mlprogram.datasets.nl2bash.load": mlprogram.datasets.nl2bash.load,
     "mlprogram.datasets.nl2bash.TokenizeQuery":
         mlprogram.datasets.nl2bash.TokenizeQuery,
-    "mlprogram.datasets.nl2bash.TokenizeToken":
-        mlprogram.datasets.nl2bash.TokenizeToken,
+    "mlprogram.datasets.nl2bash.SplitValue":
+        mlprogram.datasets.nl2bash.SplitValue,
     "mlprogram.datasets.deepfix.download":
         mlprogram.datasets.deepfix.download,
 
@@ -120,6 +120,7 @@ types = {
     "mlprogram.utils.Neg": mlprogram.utils.Neg,
     "mlprogram.utils.save": mlprogram.utils.save,
     "mlprogram.utils.load": mlprogram.utils.load,
+    "mlprogram.utils.share_memory": mlprogram.utils.share_memory,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
@@ -209,8 +210,6 @@ types = {
     "mlprogram.languages.csg.Parser": mlprogram.languages.csg.Parser,
     "mlprogram.languages.csg.Dataset": mlprogram.languages.csg.Dataset,
     "mlprogram.languages.csg.Interpreter": mlprogram.languages.csg.Interpreter,
-    "mlprogram.languages.csg.GetTokenType":
-        mlprogram.languages.csg.GetTokenType,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
     "mlprogram.languages.csg.transform.TransformCanvas":

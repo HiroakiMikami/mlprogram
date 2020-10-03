@@ -5,35 +5,36 @@ from torchnlp.encoders import LabelEncoder
 
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Query, Token
+from mlprogram.languages import Token
 
 
 Input = TypeVar("Input")
 
 
 class TransformQuery(Generic[Input]):
-    def __init__(self, extract_query: Callable[[Input], Query],
+    def __init__(self, extract_reference: Callable[[Input], List[Token]],
                  word_encoder: LabelEncoder, char_encoder: LabelEncoder,
                  max_word_length: int):
-        self.extract_query = extract_query
+        self.extract_reference = extract_reference
         self.word_encoder = word_encoder
         self.char_encoder = char_encoder
         self.max_word_length = max_word_length
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         input = cast(Input, entry["input"])
-        query = self.extract_query(input)
+        reference = self.extract_reference(input)
 
-        word_query = self.word_encoder.batch_encode(query.query_for_dnn)
+        word_query = self.word_encoder.batch_encode([
+            token.value for token in reference
+        ])
         char_query = \
-            torch.ones(len(query.query_for_dnn), self.max_word_length).long() \
+            torch.ones(len(reference), self.max_word_length).long() \
             * -1
-        for i, word in enumerate(query.query_for_dnn):
-            chars = self.char_encoder.batch_encode(word)
+        for i, token in enumerate(reference):
+            chars = self.char_encoder.batch_encode(token.value)
             length = min(self.max_word_length, len(chars))
-            char_query[i, :length] = \
-                self.char_encoder.batch_encode(word)[:length]
-        entry["reference"] = query.reference
+            char_query[i, :length] = chars[:length]
+        entry["reference"] = reference
         entry["word_nl_query"] = word_query
         entry["char_nl_query"] = char_query
 
@@ -51,14 +52,12 @@ class TransformActionSequence:
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str]], entry["reference"])
-        refs = list(map(lambda x: x.value, reference))
-        # TODO use type in encoding action sequence
+        reference = cast(List[Token[str, str]], entry["reference"])
         a = self.action_sequence_encoder.encode_action(
-            action_sequence, refs)
+            action_sequence, reference)
         rule_prev_action = \
             self.action_sequence_encoder.encode_each_action(
-                action_sequence, refs, self.max_arity)
+                action_sequence, reference, self.max_arity)
         path = \
             self.action_sequence_encoder.encode_path(
                 action_sequence, self.max_depth)
@@ -79,7 +78,7 @@ class TransformActionSequence:
             query = path
             rule_prev_action = \
                 self.action_sequence_encoder.encode_each_action(
-                    action_sequence, refs, self.max_arity)
+                    action_sequence, reference, self.max_arity)
 
         entry["previous_actions"] = prev_action
         entry["previous_action_rules"] = rule_prev_action

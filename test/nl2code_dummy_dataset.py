@@ -1,5 +1,6 @@
 from typing import List, Union
 from mlprogram.languages import AST, Node, Leaf, Field, Root
+from mlprogram.languages import Token
 from mlprogram.utils.data import ListDataset
 
 
@@ -24,8 +25,8 @@ def is_subtype(subtype: Union[str, Root], basetype: Union[str, Root]) -> bool:
     return False
 
 
-def get_token_type(x):
-    return None
+def tokenize(str: str) -> List[Token]:
+    return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
 def string(value: str):

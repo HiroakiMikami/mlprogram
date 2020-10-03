@@ -22,3 +22,6 @@ class TokenSequence(Generic[Kind]):
         if not isinstance(rhs, TokenSequence):
             return False
         return self.tokens == rhs.tokens and self.raw_text == rhs.raw_text
+
+    def __str__(self) -> str:
+        return ",".join(map(str, self.tokens))

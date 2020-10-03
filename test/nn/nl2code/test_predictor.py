@@ -21,12 +21,12 @@ class TestPredictor(unittest.TestCase):
         context0 = torch.rand(2, 2)
         context1 = torch.rand(1, 2)
         context = rnn.pad_sequence([context0, context1])
-        query0 = torch.rand(3, 2)
-        query1 = torch.rand(1, 2)
-        query = rnn.pad_sequence([query0, query1])
+        ref0 = torch.rand(3, 2)
+        ref1 = torch.rand(1, 2)
+        reference = rnn.pad_sequence([ref0, ref1])
 
         inputs = predictor({
-            "reference_features": query,
+            "reference_features": reference,
             "action_features": feature,
             "action_contexts": context
         })
@@ -52,13 +52,13 @@ class TestPredictor(unittest.TestCase):
         context0 = torch.rand(2, 2)
         context1 = torch.rand(1, 2)
         context = rnn.pad_sequence([context0, context1])
-        query0 = torch.rand(3, 2)
-        query1 = torch.rand(1, 2)
-        query = rnn.pad_sequence([query0, query1])
+        ref0 = torch.rand(3, 2)
+        ref1 = torch.rand(1, 2)
+        reference = rnn.pad_sequence([ref0, ref1])
 
         predictor.eval()
         inputs = predictor({
-            "reference_features": query,
+            "reference_features": reference,
             "action_features": feature,
             "action_contexts": context
         })
@@ -78,12 +78,12 @@ class TestPredictor(unittest.TestCase):
         context0 = torch.rand(2, 2)
         context1 = torch.rand(1, 2)
         context = rnn.pad_sequence([context0, context1])
-        query0 = torch.rand(3, 2)
-        query1 = torch.rand(1, 2)
-        query = rnn.pad_sequence([query0, query1])
+        ref0 = torch.rand(3, 2)
+        ref1 = torch.rand(1, 2)
+        reference = rnn.pad_sequence([ref0, ref1])
 
         inputs = predictor({
-            "reference_features": query,
+            "reference_features": reference,
             "action_features": feature,
             "action_contexts": context
         })

@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
+from typing import List
 from torchnlp.encoders import LabelEncoder
-from mlprogram.utils import Query, Token
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.languages import Node, Field, Leaf
+from mlprogram.languages import Token
 from mlprogram.actions import AstToActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils.transform.action_sequence import TransformCode
@@ -11,10 +12,8 @@ from mlprogram.utils.transform.treegen \
     import TransformQuery, TransformActionSequence
 
 
-def tokenize_query(str: str) -> Query:
-    return Query(
-        list(map(lambda x: Token(None, x), str.split(" "))),
-        str.split(" "))
+def tokenize(str: str) -> List[Token]:
+    return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
 def to_action_sequence(code: str):
@@ -39,12 +38,13 @@ class TestTransformQuery(unittest.TestCase):
         words = ["ab", "test"]
         qencoder = LabelEncoder(words, 0)
         cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
-        transform = TransformQuery(tokenize_query, qencoder, cencoder, 3)
+        transform = TransformQuery(tokenize, qencoder, cencoder, 3)
         result = transform({"input": "ab test"})
         reference = result["reference"]
         word_query = result["word_nl_query"]
         char_query = result["char_nl_query"]
-        self.assertEqual([Token(None, "ab"), Token(None, "test")], reference)
+        self.assertEqual(
+            [Token(None, "ab", "ab"), Token(None, "test", "test")], reference)
         self.assertTrue(np.array_equal([1, 2], word_query.numpy()))
         self.assertTrue(np.array_equal([[1, 2, -1], [3, 4, 0]],
                                        char_query.numpy()))
@@ -63,7 +63,7 @@ class TestTransformActionSequence(unittest.TestCase):
         transform = TransformActionSequence(aencoder, 2, 3)
         result = transform({
             "action_sequence": action_sequence,
-            "reference": [Token(None, "ab"), Token(None, "test")]
+            "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
         })
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
@@ -138,7 +138,7 @@ class TestTransformActionSequence(unittest.TestCase):
         transform = TransformActionSequence(aencoder, 2, 3, train=False)
         result = transform({
             "action_sequence": action_sequence,
-            "reference": [Token(None, "ab"), Token(None, "test")]
+            "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
         })
         prev_action = result["previous_actions"]
         prev_rule_action = result["previous_action_rules"]
@@ -207,7 +207,7 @@ class TestTransformActionSequence(unittest.TestCase):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, to_action_sequence)
-        d.tokens = ["y", "1"]
+        d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = \
             TransformCode(to_action_sequence)({
@@ -216,7 +216,7 @@ class TestTransformActionSequence(unittest.TestCase):
         transform = TransformActionSequence(aencoder, 3, 3)
         result = transform({
             "action_sequence": action_sequence,
-            "reference": [Token(None, "ab"), Token(None, "test")]
+            "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
         })
         self.assertEqual(None, result)
 

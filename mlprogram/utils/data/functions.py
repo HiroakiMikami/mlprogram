@@ -2,38 +2,39 @@ import torch
 from torch.nn import functional as F
 from dataclasses import dataclass
 from typing import Callable, Sequence, Any, Optional, Union, Dict, List
+from typing import Tuple
 from mlprogram.actions \
     import Rule, ApplyRule, CloseVariadicFieldRule
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
-from mlprogram.utils import Query
+from mlprogram.languages import Token
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 def get_words(dataset: torch.utils.data.Dataset,
-              extract_query: Callable[[Any], Query],
+              extract_reference: Callable[[Any], List[Token]],
               ) -> Sequence[str]:
     words = []
 
     for group in dataset:
         for input in group["input"]:
-            query = extract_query(input)
-            words.extend(query.query_for_dnn)
+            reference = extract_reference(input)
+            words.extend([token.value for token in reference])
 
     return words
 
 
 def get_characters(dataset: torch.utils.data.Dataset,
-                   extract_query: Callable[[Any], Query],
+                   extract_reference: Callable[[Any], List[Token]],
                    ) -> Sequence[str]:
     chars: List[str] = []
 
     for group in dataset:
         for input in group["input"]:
-            query = extract_query(input)
-            for token in query.query_for_dnn:
-                chars.extend(token)
+            reference = extract_reference(input)
+            for token in reference:
+                chars.extend(token.value)
 
     return chars
 
@@ -44,7 +45,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
                 ) -> Samples:
     rules: List[Rule] = []
     node_types = []
-    tokens: List[str] = []  # TODO V
+    tokens: List[Tuple[str, str]] = []
 
     for group in dataset:
         for gt in group["ground_truth"]:
@@ -60,8 +61,8 @@ def get_samples(dataset: torch.utils.data.Dataset,
                         for _, child in rule.children:
                             node_types.append(child)
                 else:
-                    token = action.token
-                    tokens.append(token)
+                    assert action.kind is not None
+                    tokens.append((action.kind, action.value))
 
     return Samples(rules, node_types, tokens)
 

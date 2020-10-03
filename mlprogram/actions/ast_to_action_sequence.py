@@ -64,7 +64,10 @@ class AstToActionSequence:
                         seq.extend(to_sequence(field.value))
                 return seq
             elif isinstance(node, Leaf):
-                return [GenerateToken(node.value)]
+                node_type = node.get_type_name()
+                assert not isinstance(node_type, Root)
+                assert node_type is not None
+                return [GenerateToken(node_type, node.value)]
             else:
                 logger.critical(f"Invalid type of node: {type(node)}")
                 raise InvalidNodeException(str(type(node)))

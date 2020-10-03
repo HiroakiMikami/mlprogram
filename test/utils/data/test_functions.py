@@ -2,18 +2,17 @@ import torch
 import unittest
 import numpy as np
 import ast
+from typing import List
 from mlprogram.actions import AstToActionSequence
-from mlprogram.utils import Query, Token
+from mlprogram.languages import Token
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 from mlprogram.utils.data \
     import ListDataset, get_samples, get_words, \
     get_characters, Collate, CollateOptions
 
 
-def tokenize_query(str: str) -> Query:
-    return Query(
-        list(map(lambda x: Token(None, x), str.split(" "))),
-        str.split(" "))
+def tokenize(str: str) -> List[Token]:
+    return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
 def to_action_sequence(code: str):
@@ -26,7 +25,7 @@ class TestGetWords(unittest.TestCase):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
-        words = get_words(dataset, tokenize_query)
+        words = get_words(dataset, tokenize)
         self.assertEqual(["foo", "bar", "test", "foo"], words)
 
 
@@ -35,7 +34,7 @@ class TestGetCharacters(unittest.TestCase):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
-        chars = get_characters(dataset, tokenize_query)
+        chars = get_characters(dataset, tokenize)
         self.assertEqual([
             "f", "o", "o",
             "b", "a", "r",
@@ -49,7 +48,13 @@ class TestGetSamples(unittest.TestCase):
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, to_action_sequence)
-        self.assertEqual(["y", "x", "1", "f", "x"], d.tokens)
+        self.assertEqual([
+            ("str", "y"),
+            ("str", "x"),
+            ("int", "1"),
+            ("str", "f"),
+            ("str", "x")
+        ], d.tokens)
         self.assertEqual(12, len(d.rules))
         self.assertEqual(28, len(d.node_types))
 

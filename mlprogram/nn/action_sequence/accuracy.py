@@ -19,11 +19,11 @@ class Accuracy(nn.Module):
             The probabilities of gen-token. The shape is (L_a, B, num_tokens).
         reference_probs: PaddedSequenceWithMask
             The probabilities of reference-token. The shape is
-            (L_a, B, query_length).
+            (L_a, B, reference_length).
         ground_truth_actions: PaddedSequenceWithMask
             The input sequence of action. Each action is represented by
             the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
+            the index of the word copied from the reference).
             The padding value should be -1.
         """
         rule_probs = cast(PaddedSequenceWithMask, inputs["rule_probs"])
@@ -34,7 +34,7 @@ class Accuracy(nn.Module):
                                     inputs["ground_truth_actions"])
         L_a, B, num_rules = rule_probs.data.shape
         _, _, num_tokens = token_probs.data.shape
-        _, _, query_length = reference_probs.data.shape
+        _, _, reference_length = reference_probs.data.shape
 
         gt_rule, gt_token, gt_reference = torch.split(
             ground_truth_actions.data, 1, dim=2)  # (L_a, B, 1)

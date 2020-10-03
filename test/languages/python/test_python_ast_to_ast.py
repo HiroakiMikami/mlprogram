@@ -34,7 +34,7 @@ class TestToAST(unittest.TestCase):
                          to_ast(node, lambda x: [x]))
 
     def test_tokenize_builtin_type(self):
-        def tokenize(x: str):
+        def split_value(x):
             return list(x)
 
         node = python_ast.List()
@@ -49,7 +49,7 @@ class TestToAST(unittest.TestCase):
                                                      [ast.Leaf("int", "1"),
                                                       ast.Leaf("int", "0")])])
                                  ])]),
-            to_ast(node, tokenize))
+            to_ast(node, split_value))
 
     def test_variadic_args(self):
         node = python_ast.List()

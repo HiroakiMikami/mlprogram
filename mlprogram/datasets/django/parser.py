@@ -62,8 +62,8 @@ p_decorator = re.compile(r'^@.*')
 
 
 class Parser(BaseParser):
-    def __init__(self, tokenize: Callable[[str], List[str]]):
-        super().__init__(tokenize)
+    def __init__(self, split_value: Callable[[str], List[str]]):
+        super().__init__(split_value)
 
     def parse(self, code: str) -> Optional[AST]:
         """

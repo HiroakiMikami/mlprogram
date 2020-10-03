@@ -6,6 +6,7 @@ from typing \
     cast, Dict, Any, Tuple
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Root
+from mlprogram.languages import Token
 from mlprogram.actions \
     import ExpandTreeRule, ApplyRule, NodeConstraint, \
     GenerateToken, Action, NodeType, CloseVariadicFieldRule
@@ -14,7 +15,6 @@ from mlprogram.languages import AST, Node
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.collections import TopKElement
-from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
 from mlprogram import logging
 
@@ -52,15 +52,10 @@ class LazyActionSequence(object):
         return str(self.__call__())
 
 
-def return_none(x):
-    return None
-
-
 class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                             Generic[V]):
     def __init__(self,
                  encoder: ActionSequenceEncoder,
-                 get_token_type: Optional[Callable[[V], Optional[str]]],
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
                  transform_input: Callable[[Dict[str, Any]], Dict[str, Any]],
@@ -72,7 +67,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                  rng: Optional[np.random.RandomState] = None
                  ):
         self.encoder = encoder
-        self.get_token_type = get_token_type or return_none
         self.is_subtype = is_subtype
         self.transform_input = transform_input
         self.transform_action_sequence = transform_action_sequence
@@ -81,6 +75,25 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         self.eps = eps
         self.rng = \
             rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
+
+        self.token_kind_to_idx: Dict[str, List[int]] = {}
+        for token in self.encoder._token_encoder.vocab:
+            if isinstance(token, tuple):
+                kind, _ = token
+                if kind not in self.token_kind_to_idx:
+                    self.token_kind_to_idx[kind] = []
+                self.token_kind_to_idx[kind].append(
+                    self.encoder._token_encoder.encode(token).item()
+                )
+        self.rule_kind_to_idx: Dict[str, List[int]] = {}
+        for rule in self.encoder._rule_encoder.vocab:
+            if isinstance(rule, ExpandTreeRule):
+                kind = rule.parent.type_name
+                if kind not in self.rule_kind_to_idx:
+                    self.rule_kind_to_idx[kind] = []
+                self.rule_kind_to_idx[kind].append(
+                    self.encoder._rule_encoder.encode(rule).item()
+                )
 
     @logger.function_block("initialize")
     def initialize(self, input: Dict[str, Any]) \
@@ -178,19 +191,18 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 # Generate token
-                if len(state.state["reference"]) == 0:
-                    ref_ids = torch.tensor([]).long()
-                else:
-                    ref_ids = self.encoder._token_encoder.batch_encode(
-                        [token.value for token in state.state["reference"]]
-                    )
+                ref_ids = self.encoder.batch_encode_raw_value(
+                    [x.raw_value for x in state.state["reference"]]
+                )
                 tokens = list(self.encoder._token_encoder.vocab) + \
                     state.state["reference"]
                 # the score will be merged into predefined token
-                for i, ref_id in enumerate(ref_ids):
-                    # merge token and reference pred
-                    token_pred[ref_id] += reference_pred[i]
-                reference_pred[ref_ids != 0] = 0.0
+                for i, ids in enumerate(ref_ids):
+                    for ref_id in ids:
+                        # merge token and reference pred
+                        token_pred[ref_id] += reference_pred[i]
+                        if ref_id != 0:
+                            reference_pred[i] = 0.0
                 pred = torch.cat([token_pred, reference_pred], dim=0)
 
                 # CloseVariadicFieldRule is a candidate if variadic fields
@@ -203,17 +215,22 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     pred = torch.cat([pred, torch.tensor([p])], dim=0)
 
                 with logger.block("exclude_invalid_tokens"):
-                    for x, p in enumerate(pred[1:]):
-                        x += 1
-                        token = tokens[x]
-                        if isinstance(token, ApplyRule):
-                            action: Action = token
-                        else:
+                    # token
+                    for kind, idxes in self.token_kind_to_idx.items():
+                        if kind is not None and \
+                                not self.is_subtype(kind,
+                                                    head_field.type_name):
+                            pred[idxes] = 0.0
+                    # reference
+                    for x, (p, token) in enumerate(
+                            zip(pred[len(token_pred):],
+                                tokens[len(token_pred):])):
+                        x += len(token_pred)
+                        if not isinstance(token, ApplyRule):
                             if isinstance(token, Token):
-                                t = token.type_name
-                                token = token.value
+                                t = token.kind
                             else:
-                                t = self.get_token_type(token)
+                                t = token[0]
                             if t is not None and \
                                     not self.is_subtype(t,
                                                         head_field.type_name):
@@ -230,12 +247,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     token = tokens[x]
 
                     if isinstance(token, ApplyRule):
-                        action = token
+                        action: Action = token
+                    elif isinstance(token, Token):
+                        action = GenerateToken(token.kind, token.raw_value)
                     else:
-                        if isinstance(token, Token):
-                            t = token.type_name
-                            token = token.value
-                        action = GenerateToken(token)
+                        action = GenerateToken(token[0], token[1])
 
                     if p == 0.0:
                         continue
@@ -256,20 +272,19 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             else:
                 # Apply rule
                 with logger.block("exclude_invalid_rules"):
-                    for x, p in enumerate(rule_pred[1:]):
-                        x += 1
-                        rule = self.encoder._rule_encoder.vocab[x]
-                        if isinstance(rule, ExpandTreeRule):
-                            if not (rule.parent.type_name is not None and
-                                    self.is_subtype(
-                                    rule.parent.type_name,
+                    # expand tree rule
+                    for kind, idxes in self.rule_kind_to_idx.items():
+                        if not (kind is not None and
+                                self.is_subtype(
+                                    kind,
                                     head_field.type_name)):
-                                rule_pred[x] = 0.0
-                        else:
-                            # CloseVariadicFieldRule
-                            if not(head_field is not None and
-                                    head_field.is_variadic):
-                                rule_pred[x] = 0.0
+                            rule_pred[idxes] = 0.0
+                    # CloseVariadicField
+                    idx = self.encoder._rule_encoder.encode(
+                        CloseVariadicFieldRule())
+                    if not(head_field is not None and
+                           head_field.is_variadic):
+                        rule_pred[idx] = 0.0
 
                 n_rule = 0
                 for x, n in logger.iterable_block("sample-rule",

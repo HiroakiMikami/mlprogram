@@ -8,12 +8,12 @@ from mlprogram.languages.python.ast_to_python_ast import to_python_ast
 
 
 class Parser(BaseParser[str]):
-    def __init__(self, tokenize: Callable[[str], List[str]],
+    def __init__(self, split_value: Callable[[str], List[str]],
                  mode: str = "single"):
         super().__init__()
         assert mode in set(["single", "eval", "exec"])
         self.mode = mode
-        self.tokenize = tokenize
+        self.split_value = split_value
 
     def parse(self, code: str) -> Optional[AST]:
         try:
@@ -21,11 +21,11 @@ class Parser(BaseParser[str]):
             if self.mode == "exec":
                 return to_ast(
                     past,
-                    tokenize=self.tokenize)
+                    split_value=self.split_value)
             else:
                 return to_ast(
                     past.body[0],
-                    tokenize=self.tokenize)
+                    split_value=self.split_value)
         except:  # noqa
             return None
 

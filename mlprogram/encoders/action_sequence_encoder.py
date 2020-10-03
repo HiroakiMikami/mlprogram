@@ -1,8 +1,11 @@
 import torch
 from torchnlp.encoders import LabelEncoder
 from typing import Any, List, Optional, Union, cast, Generic, TypeVar
+from typing import Tuple
+from typing import Dict
 from dataclasses import dataclass
 
+from mlprogram.languages import Token
 from mlprogram.actions import NodeType
 from mlprogram.actions import ApplyRule, GenerateToken
 from mlprogram.actions import Rule, ExpandTreeRule
@@ -40,7 +43,7 @@ class Unknown:
 class Samples(Generic[V]):
     rules: List[Rule]
     node_types: List[NodeType]
-    tokens: List[V]
+    tokens: List[Tuple[str, V]]
 
 
 class ActionSequenceEncoder:
@@ -57,8 +60,14 @@ class ActionSequenceEncoder:
                                            min_occurrences=token_threshold,
                                            reserved_labels=reserved_labels,
                                            unknown_index=0)
+        self.value_to_idx: Dict[str, List[int]] = {}
+        for kind, value in self._token_encoder.vocab[len(reserved_labels):]:
+            idx = self._token_encoder.encode((kind, value))
+            if value not in self.value_to_idx:
+                self.value_to_idx[value] = []
+            self.value_to_idx[value].append(idx)
 
-    def decode(self, tensor: torch.LongTensor, query: List[str]) \
+    def decode(self, tensor: torch.LongTensor, reference: List[Token]) \
             -> Optional[ActionSequence]:
         """
         Return the action sequence corresponding to the tensor
@@ -69,9 +78,9 @@ class ActionSequenceEncoder:
             The encoded tensor with the shape of
             (len(action_sequence), 3). Each action will be encoded by the tuple
             of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the query).
+            the index of the word copied from the reference).
             The padding value should be -1.
-        query: List[str]
+        reference
 
         Returns
         -------
@@ -88,22 +97,23 @@ class ActionSequenceEncoder:
                 retval.eval(ApplyRule(rule))
             elif tensor[i, 1] > 0:
                 # GenerateToken
-                token = self._token_encoder.decode(tensor[i, 1])
-                retval.eval(GenerateToken(token))
+                kind, value = self._token_encoder.decode(tensor[i, 1])
+                retval.eval(GenerateToken(kind, value))
             elif tensor[i, 2] >= 0:
                 # GenerateToken (Copy)
                 index = int(tensor[i, 2].numpy())
-                if index >= len(query):
+                if index >= len(reference):
                     return None
-                token = query[index]
-                retval.eval(GenerateToken(token))
+                token = reference[index]
+                retval.eval(GenerateToken(token.kind, token.raw_value))
             else:
                 return None
 
         return retval
 
     def encode_action(self,
-                      action_sequence: ActionSequence, query: List[str]) \
+                      action_sequence: ActionSequence,
+                      reference: List[Token]) \
             -> Optional[torch.Tensor]:
         """
         Return the tensor encoded the action sequence
@@ -112,7 +122,7 @@ class ActionSequenceEncoder:
         ----------
         action_sequence: action_sequence
             The action_sequence containing action sequence to be encoded
-        query: List[str]
+        reference
 
         Returns
         -------
@@ -121,9 +131,10 @@ class ActionSequenceEncoder:
             (len(action_sequence) + 1, 4). Each action will be encoded by
             the tuple of (ID of the node types, ID of the applied rule,
             ID of the inserted token, the index of the word copied from
-            the query. The padding value should be -1.
+            the reference. The padding value should be -1.
             None if the action sequence cannot be encoded.
         """
+        reference_value = [token.raw_value for token in reference]
         action = \
             torch.ones(len(action_sequence.action_sequence) + 1, 4).long() \
             * -1
@@ -142,17 +153,20 @@ class ActionSequenceEncoder:
                 rule = a.rule
                 action[i, 1] = self._rule_encoder.encode(rule)
             else:
-                token = a.token
-                encoded_token = int(self._token_encoder.encode(token).numpy())
+                encoded_token = \
+                    int(self._token_encoder.encode((a.kind, a.value)).numpy())
 
                 if encoded_token != 0:
                     action[i, 2] = encoded_token
 
                 # Unknown token
-                if token in query:
-                    action[i, 3] = query.index(cast(str, token))
+                if a.value in reference_value:
+                    # TODO use kind in reference
+                    action[i, 3] = \
+                        reference_value.index(cast(str, a.value))
 
-                if encoded_token == 0 and token not in query:
+                if encoded_token == 0 and \
+                        a.value not in reference_value:
                     return None
 
         head = action_sequence.head
@@ -166,6 +180,18 @@ class ActionSequenceEncoder:
                 head_rule.children[head.field][1])
 
         return action
+
+    def encode_raw_value(self, text: str) -> List[int]:
+        if text in self.value_to_idx:
+            return self.value_to_idx[text]
+        else:
+            return [self._token_encoder.encode(Unknown()).item()]
+
+    def batch_encode_raw_value(self, texts: List[str]) -> List[List[int]]:
+        return [
+            self.encode_raw_value(text)
+            for text in texts
+        ]
 
     def encode_parent(self, action_sequence) -> torch.Tensor:
         """
@@ -251,7 +277,8 @@ class ActionSequenceEncoder:
         return depth, m
 
     def encode_each_action(self,
-                           action_sequence: ActionSequence, query: List[str],
+                           action_sequence: ActionSequence,
+                           reference: List[Token],
                            max_arity: int) \
             -> torch.Tensor:
         """
@@ -261,7 +288,7 @@ class ActionSequenceEncoder:
         ----------
         action_sequence: action_sequence
             The action_sequence containing action sequence to be encoded
-        query: List[str]]
+        reference
         max_arity: int
 
         Returns
@@ -271,11 +298,12 @@ class ActionSequenceEncoder:
             (len(action_sequence), max_arity + 1, 3).
             [:, 0, 0] encodes the parent node type. [:, i, 0] encodes
             the node type of (i - 1)-th child node. [:, i, 1] encodes
-            the token of (i - 1)-th child node. [:, i, 2] encodes the query
+            the token of (i - 1)-th child node. [:, i, 2] encodes the reference
             index of (i - 1)-th child node.
             The padding value is -1.
         """
         L = len(action_sequence.action_sequence)
+        reference_value = [token.raw_value for token in reference]
         retval = torch.ones(L, max_arity + 1, 3).long() * -1
         for i, action in enumerate(action_sequence.action_sequence):
             if isinstance(action, ApplyRule):
@@ -290,14 +318,18 @@ class ActionSequenceEncoder:
                             self._node_type_encoder.encode(child)
             else:
                 gentoken: GenerateToken = action
-                token = gentoken.token
-                encoded_token = int(self._token_encoder.encode(token).numpy())
+                kind = gentoken.kind
+                value = gentoken.value
+                encoded_token = \
+                    int(self._token_encoder.encode((kind, value)).numpy())
 
                 if encoded_token != 0:
                     retval[i, 1, 1] = encoded_token
 
-                if token in query:
-                    retval[i, 1, 2] = query.index(cast(str, token))
+                if value in reference_value:
+                    # TODO use kind in reference
+                    retval[i, 1, 2] = \
+                        reference_value.index(cast(str, value))
 
         return retval
 

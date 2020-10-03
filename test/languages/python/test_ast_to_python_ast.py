@@ -35,6 +35,9 @@ class TestToPythonAST(unittest.TestCase):
         self.assertEqual(python_ast.dump(node), python_ast.dump(node2))
 
     def test_builtin_type(self):
+        def split_value(x):
+            return list(x)
+
         node = python_ast.List()
         ten = python_ast.Constant()
         setattr(ten, "value", 10)
@@ -42,8 +45,9 @@ class TestToPythonAST(unittest.TestCase):
         setattr(node, "elts", [ten])
         setattr(node, "ctx", None)
         self.assertEqual(python_ast.dump(node),
-                         python_ast.dump(to_python_ast(to_ast(node,
-                                                              tokenize=list))))
+                         python_ast.dump(to_python_ast(
+                             to_ast(node,
+                                    split_value=split_value))))
 
     def test_variadic_args(self):
         node = python_ast.List()

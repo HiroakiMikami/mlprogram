@@ -102,8 +102,7 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                         f"{tmpdir}/workspace.{random.randint(0, 100)}"
                     value["output_dir"] = f"{tmpdir}/output"
                     if "n_process" in value:
-                        # This prevent "Too many open files" error
-                        value["n_process"] = 1
+                        value["n_process"] = None
                 value = modify_config_for_profile(value, tmpdir)
             elif isinstance(value, dict):
                 value = modify_config_for_profile(value, tmpdir)
@@ -145,7 +144,7 @@ def launch(config_file: str, option: Optional[str], tmpdir: str,
     if option == "profile":
         cprofile = cProfile.Profile()
         cprofile.enable()
-        with profile(use_cuda=True) as torch_prof:
+        with profile() as torch_prof:
             parse_config(configs)["/main"]
         cprofile.disable()
         torch.save(torch_prof, os.path.join(output_dir,

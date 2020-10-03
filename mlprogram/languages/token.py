@@ -23,3 +23,6 @@ class Token(Generic[Kind, Value]):
             return False
         return self.kind == rhs.kind and self.value == rhs.value and \
             self.raw_value == rhs.raw_value
+
+    def __str__(self) -> str:
+        return f"{self.raw_value}/{self.value}:{self.kind}"

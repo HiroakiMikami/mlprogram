@@ -4,7 +4,7 @@ import unittest
 from typing import List, Dict, Any
 from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.languages import AST, Node, Leaf, Field
-from mlprogram.utils import Token
+from mlprogram.languages import Token
 from mlprogram.utils.data import Collate
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
@@ -51,7 +51,8 @@ class TestSequentialProgramSampler(unittest.TestCase):
                 "code": SequentialProgram([
                     Statement(Reference("v0"), "tmp")
                 ]),
-                "unused_reference": [Token(None, Reference("v0"))]
+                "unused_reference":
+                    [Token(None, Reference("v0"), Reference("v0"))]
             }))
         self.assertEqual(
             (SequentialProgram([
@@ -63,8 +64,8 @@ class TestSequentialProgramSampler(unittest.TestCase):
                     Statement(Reference("v1"), "tmp")
                 ]),
                 "unused_reference": [
-                    Token(None, Reference("v0")),
-                    Token(None, Reference("v1"))
+                    Token(None, Reference("v0"), Reference("v0")),
+                    Token(None, Reference("v1"), Reference("v1"))
                 ]
             }))
 
@@ -88,8 +89,10 @@ class TestSequentialProgramSampler(unittest.TestCase):
             DuplicatedSamplerState(
                 SamplerState(1, {
                     "x": 0,
-                    "reference": [Token("def", Reference("v0"))],
-                    "unused_reference": [Token("def", Reference("v0"))],
+                    "reference":
+                        [Token("def", Reference("v0"), Reference("v0"))],
+                    "unused_reference":
+                        [Token("def", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[0])])
                 }),
@@ -100,8 +103,10 @@ class TestSequentialProgramSampler(unittest.TestCase):
             DuplicatedSamplerState(
                 SamplerState(0.5, {
                     "x": 0,
-                    "reference": [Token("int", Reference("v0"))],
-                    "unused_reference": [Token("int", Reference("v0"))],
+                    "reference":
+                        [Token("int", Reference("v0"), Reference("v0"))],
+                    "unused_reference":
+                        [Token("int", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[1])])
                 }),
@@ -112,8 +117,10 @@ class TestSequentialProgramSampler(unittest.TestCase):
             DuplicatedSamplerState(
                 SamplerState(1.0 / 3, {
                     "x": 0,
-                    "reference": [Token("float", Reference("v0"))],
-                    "unused_reference": [Token("float", Reference("v0"))],
+                    "reference":
+                        [Token("float", Reference("v0"), Reference("v0"))],
+                    "unused_reference":
+                        [Token("float", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[2])])
                 }),
@@ -134,8 +141,10 @@ class TestSequentialProgramSampler(unittest.TestCase):
             MockEncoder(),
             to_code=lambda x: x)
         zero = SamplerState(0, sampler.initialize(0))
-        zero.state["reference"] = [Token("str", Reference("v0"))]
-        zero.state["unused_reference"] = [Token("str", Reference("v0"))]
+        zero.state["reference"] = [
+            Token("str", Reference("v0"), Reference("v0"))]
+        zero.state["unused_reference"] = [
+            Token("str", Reference("v0"), Reference("v0"))]
         zero.state["code"] = \
             SequentialProgram([Statement(Reference("v0"), ast)])
         samples = list(sampler.batch_k_samples([zero], [1]))
@@ -145,8 +154,10 @@ class TestSequentialProgramSampler(unittest.TestCase):
             DuplicatedSamplerState(
                 SamplerState(1, {
                     "x": 0,
-                    "reference": [Token("def", Reference("v1"))],
-                    "unused_reference": [Token("def", Reference("v1"))],
+                    "reference":
+                        [Token("def", Reference("v1"), Reference("v1"))],
+                    "unused_reference":
+                        [Token("def", Reference("v1"), Reference("v1"))],
                     "code": SequentialProgram([
                         Statement(Reference("v0"), ast),
                         Statement(Reference("v1"), asts[0])])

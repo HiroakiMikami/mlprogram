@@ -1,6 +1,6 @@
 import torch
 from typing import Dict, Any, Optional, cast, List, TypeVar, Generic, Callable
-from mlprogram.utils import Token
+from mlprogram.languages import Token
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.actions import ActionSequence
 import numpy as np
@@ -39,10 +39,9 @@ class TransformGroundTruth:
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str]], entry["reference"])
-        # TODO use type in encoding action sequence
+        reference = cast(List[Token[str, str]], entry["reference"])
         a = self.action_sequence_encoder.encode_action(
-            action_sequence, list(map(lambda x: x.value, reference)))
+            action_sequence, reference)
         if a is None:
             return None
         if np.any(a[-1, :].numpy() != -1):
@@ -61,10 +60,9 @@ class TransformActionSequenceForRnnDecoder:
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str]], entry["reference"])
-        # TODO use type in encoding action sequence
+        reference = cast(List[Token[str, str]], entry["reference"])
         a = self.action_sequence_encoder.encode_action(
-            action_sequence, list(map(lambda x: x.value, reference)))
+            action_sequence, reference)
         if a is None:
             return None
         if self.train:

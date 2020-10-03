@@ -10,14 +10,6 @@ from mlprogram.actions \
 from mlprogram.languages import Root
 
 
-class GetTokenType:
-    def __call__(self, value: U[int, R]) -> Optional[str]:
-        if isinstance(value, R):
-            return "CSG"
-        else:
-            return "int"
-
-
 class IsSubtype:
     def __call__(self, subtype: U[str, Root],
                  basetype: U[str, Root]) -> bool:
@@ -39,9 +31,9 @@ def get_samples(dataset: Dataset,
     node_types = []
     srule = set()
     sntype = set()
-    tokens = dataset.size_candidates
-    tokens.extend(dataset.length_candidates)
-    tokens.extend(dataset.degree_candidates)
+    tokens = [("size", x) for x in dataset.size_candidates]
+    tokens.extend([("length", x) for x in dataset.length_candidates])
+    tokens.extend([("degree", x) for x in dataset.degree_candidates])
 
     if dataset.reference:
         xs = [

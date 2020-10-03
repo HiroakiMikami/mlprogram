@@ -25,7 +25,7 @@ class MockSynthesizer:
     def __init__(self, model):
         self.model = model
 
-    def __call__(self, query):
+    def __call__(self, input):
         yield DecoderResult(self.model.state_dict["name"],
                             self.model.state_dict["score"],
                             True,
@@ -33,11 +33,11 @@ class MockSynthesizer:
 
 
 def synthesize(input):
-    query = input["input"]
+    input = input["input"]
     output = []
-    if query == "query0":
+    if input == "query0":
         output = ["c0", "c1", "c2"]
-    elif query == "query1":
+    elif input == "query1":
         output = ["c2", "c3", "c0"]
     else:
         output = ["c2", "c3", "c5"]
@@ -99,7 +99,7 @@ class TestEvaluateSynthesizer(unittest.TestCase):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
-        results.results.sort(key=lambda x: x.query)
+        results.results.sort(key=lambda x: x.input)
         self.assertEqual(
             Result("query0", {"ground_truth": ["c0", "c1", "c4"]},
                    ["c0", "c1", "c2"],

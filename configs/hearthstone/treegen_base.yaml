@@ -5,8 +5,8 @@ device:
 
 parser:
   type: mlprogram.languages.python.Parser
-  tokenize:
-    type: mlprogram.datasets.hearthstone.TokenizeToken
+  split_value:
+    type: mlprogram.datasets.hearthstone.SplitValue
 to_action_sequence:
   type: mlprogram.utils.Compose
   funcs:
@@ -38,54 +38,56 @@ valid_dataset:
   transform: "@/normalize_dataset"
 
 model:
-  type: torch.nn.Sequential
-  modules:
-    type: collections.OrderedDict
-    items:
-      - - "encoder"
-        - type: mlprogram.nn.treegen.NLReader
-          token_num: "@/encoder.word_encoder.vocab_size"
-          char_num: "@/encoder.char_encoder.vocab_size"
-          max_token_len: 128
-          char_embed_size: 256
-          hidden_size: 256
-          n_heads: 1
-          dropout: 0.15
-          n_blocks: 6
-      - - "decoder"
-        - type: torch.nn.Sequential
-          modules:
-            type: collections.OrderedDict
-            items:
-              - - "action_sequence_reader"
-                - type: mlprogram.nn.treegen.ActionSequenceReader
-                  rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-                  token_num: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
-                  node_type_num: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
-                  max_arity: 128
-                  rule_embed_size: 256
-                  hidden_size: 256
-                  tree_conv_kernel_size: 3
-                  n_heads: 1
-                  dropout: 0.15
-                  n_blocks: 6
-              - - "decoder"
-                - type: mlprogram.nn.treegen.Decoder
-                  rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-                  max_depth: 128
-                  feature_size: 256
-                  hidden_size: 1024
-                  out_size: 256
-                  n_heads: 1
-                  dropout: 0.15
-                  n_blocks: 6
-              - - "predictor"
-                - type: mlprogram.nn.action_sequence.Predictor
-                  feature_size: 256
-                  reference_feature_size: 256
-                  rule_size: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-                  token_size: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"  # TODO
-                  hidden_size: 256
+  type: mlprogram.utils.share_memory
+  model:
+    type: torch.nn.Sequential
+    modules:
+      type: collections.OrderedDict
+      items:
+        - - "encoder"
+          - type: mlprogram.nn.treegen.NLReader
+            token_num: "@/encoder.word_encoder.vocab_size"
+            char_num: "@/encoder.char_encoder.vocab_size"
+            max_token_len: 128
+            char_embed_size: 256
+            hidden_size: 256
+            n_heads: 1
+            dropout: 0.15
+            n_blocks: 6
+        - - "decoder"
+          - type: torch.nn.Sequential
+            modules:
+              type: collections.OrderedDict
+              items:
+                - - "action_sequence_reader"
+                  - type: mlprogram.nn.treegen.ActionSequenceReader
+                    rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+                    token_num: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
+                    node_type_num: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
+                    max_arity: 128
+                    rule_embed_size: 256
+                    hidden_size: 256
+                    tree_conv_kernel_size: 3
+                    n_heads: 1
+                    dropout: 0.15
+                    n_blocks: 6
+                - - "decoder"
+                  - type: mlprogram.nn.treegen.Decoder
+                    rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+                    max_depth: 128
+                    feature_size: 256
+                    hidden_size: 1024
+                    out_size: 256
+                    n_heads: 1
+                    dropout: 0.15
+                    n_blocks: 6
+                - - "predictor"
+                  - type: mlprogram.nn.action_sequence.Predictor
+                    feature_size: 256
+                    reference_feature_size: 256
+                    rule_size: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+                    token_size: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"  # TODO
+                    hidden_size: 256
 
 collate:
   type: mlprogram.utils.data.Collate
@@ -156,12 +158,11 @@ synthesizer:
     sampler:
       type: mlprogram.samplers.ActionSequenceSampler
       encoder: "@/encoder.action_sequence_encoder"
-      get_token_type: null
       is_subtype:
         type: mlprogram.languages.python.IsSubtype
       transform_input:
         type: mlprogram.utils.transform.treegen.TransformQuery
-        extract_query:
+        extract_reference:
           type: mlprogram.datasets.hearthstone.TokenizeQuery
         word_encoder: "@/encoder.word_encoder"
         char_encoder: "@/encoder.char_encoder"

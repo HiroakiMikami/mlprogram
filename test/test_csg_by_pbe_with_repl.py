@@ -32,7 +32,7 @@ from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
 from mlprogram.nn.pbe_with_repl import Encoder
 import mlprogram.nn.action_sequence as a_s
 from mlprogram import metrics
-from mlprogram.languages.csg import get_samples, IsSubtype, GetTokenType
+from mlprogram.languages.csg import get_samples, IsSubtype
 from mlprogram.languages.csg import Interpreter, Parser, Dataset
 from mlprogram.utils.data \
     import to_map_style_dataset, transform as data_transform
@@ -95,7 +95,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             ground_truth_actions=CollateOptions(True, 0, -1)
         )
         subsampler = ActionSequenceSampler(
-            encoder, GetTokenType(), IsSubtype(),
+            encoder, IsSubtype(),
             Compose(OrderedDict([
                 ("ecode", EvaluateCode(interpreter)),
                 ("tcanvas", TransformCanvas(["variables"]))

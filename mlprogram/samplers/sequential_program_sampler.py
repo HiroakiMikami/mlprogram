@@ -5,12 +5,12 @@ from typing \
     import TypeVar, Generic, Generator, Optional, Dict, Any, Callable, \
     List, Set, Tuple
 from mlprogram.languages import AST, Node, Leaf
+from mlprogram.languages import Token
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
 from mlprogram.interpreters import SequentialProgram
 from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils import Token
 from mlprogram.utils.data import Collate
 from mlprogram import logging
 
@@ -114,9 +114,9 @@ class SequentialProgramSampler(Sampler[Input, SequentialProgram[Code],
                         new_state["reference"] = \
                             [ref for ref in new_state["unused_reference"]]
                     new_state["reference"].append(
-                        Token(type_name, ref))
+                        Token(type_name, ref, ref))
                     new_state["unused_reference"].append(
-                        Token(type_name, ref))
+                        Token(type_name, ref, ref))
                     new_code.append(Statement(ref, code))
                     new_state["code"] = SequentialProgram(new_code)
                     yield DuplicatedSamplerState(

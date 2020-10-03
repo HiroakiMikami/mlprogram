@@ -19,7 +19,7 @@ class TestAstToSequence(unittest.TestCase):
                 [("root", NodeType(Root(),
                                    NodeConstraint.Token, False))
                  ])),
-                GenerateToken("t0 t1")],
+                GenerateToken("str", "t0 t1")],
             seq.action_sequence
         )
 
@@ -37,8 +37,8 @@ class TestAstToSequence(unittest.TestCase):
                  NodeType("value", NodeConstraint.Node, False),
                  [("name", NodeType("str", NodeConstraint.Token, True))]
              )),
-             GenerateToken("t0"),
-             GenerateToken("t1"),
+             GenerateToken("str", "t0"),
+             GenerateToken("str", "t1"),
              ApplyRule(CloseVariadicFieldRule())],
             seq.action_sequence
         )
@@ -59,7 +59,7 @@ class TestAstToSequence(unittest.TestCase):
                  NodeType("def", NodeConstraint.Node, False),
                  [("name",
                    NodeType("literal", NodeConstraint.Token, False))])),
-             GenerateToken("foo")],
+             GenerateToken("str", "foo")],
             seq.action_sequence
         )
 

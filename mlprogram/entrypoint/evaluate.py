@@ -30,7 +30,7 @@ DecoderInput = TypeVar("DecoderInput")
 
 @dataclass
 class Result(Generic[Input, Code, GroundTruth]):
-    query: Input
+    input: Input
     data: Dict[str, Any]
     candidates: List[Code]
     metrics: Dict[int, Dict[str, float]]
@@ -180,11 +180,6 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
 
     evaluate_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
         valid_dataset, synthesizer, metrics, top_n, n_process, n_samples)
-
-    # Move parameters to shared memory
-    if n_process is not None:
-        for k, v in model.state_dict().items():
-            v.share_memory_()
 
     model_dir = os.path.join(input_dir, "model")
     if len(os.listdir(model_dir)) != 1:
