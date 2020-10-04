@@ -50,7 +50,7 @@ train_dataset:
     type: mlprogram.utils.data.transform
     dataset: "@/dataset"
     transform:
-        type: mlprogram.utils.transform.EvaluateGroundTruth
+        type: mlprogram.languages.csg.transform.AddTestCases
         interpreter: "@/interpreter"
         reference: true
 test_dataset:
@@ -68,7 +68,7 @@ test_dataset:
             seed: 10000
         n: "@/option.n_evaluate_dataset"
     transform:
-        type: mlprogram.utils.transform.EvaluateGroundTruth
+        type: mlprogram.languages.csg.transform.AddTestCases
         interpreter: "@/interpreter"
         reference: true
 valid_dataset:
@@ -86,7 +86,7 @@ valid_dataset:
             seed: 20000
         n: "@/option.n_evaluate_dataset"
     transform:
-        type: mlprogram.utils.transform.EvaluateGroundTruth
+        type: mlprogram.languages.csg.transform.AddTestCases
         interpreter: "@/interpreter"
         reference: true
 

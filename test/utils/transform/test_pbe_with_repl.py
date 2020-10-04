@@ -11,18 +11,19 @@ from mlprogram.interpreters import Interpreter
 
 
 class MockInterpreter(Interpreter):
-    def eval(self, code):
-        return int(code)
+    def eval(self, code, input):
+        return int(code) + input
 
-    def eval_references(self, code):
-        return {stmt.reference: int(stmt.code) for stmt in code.statements}
+    def eval_references(self, code, input):
+        return {stmt.reference: int(stmt.code) + input
+                for stmt in code.statements}
 
 
 class TestToEpisode(unittest.TestCase):
     def test_happy_path(self):
         f = ToEpisode(remove_used_reference=False)
         retval = f({
-            "input": torch.tensor(0),
+            "input": (torch.tensor(1), torch.tensor(0)),
             "ground_truth": SequentialProgram([
                 Statement(Reference(0), 0),
                 Statement(Reference(1), 1)
@@ -30,7 +31,7 @@ class TestToEpisode(unittest.TestCase):
         })
         self.assertEqual(2, len(retval))
         self.assertTrue(np.array_equal(
-            torch.tensor(0),
+            (torch.tensor(1), torch.tensor(0)),
             retval[0]["input"]
         ))
         self.assertEqual(
@@ -41,7 +42,7 @@ class TestToEpisode(unittest.TestCase):
         self.assertEqual([], retval[0]["reference"])
 
         self.assertTrue(np.array_equal(
-            torch.tensor(0),
+            (torch.tensor(1), torch.tensor(0)),
             retval[1]["input"]
         ))
         self.assertEqual(
@@ -57,7 +58,7 @@ class TestToEpisode(unittest.TestCase):
         f = ToEpisode(to_ast=lambda x: Leaf("", Reference(0)),
                       remove_used_reference=True)
         retval = f({
-            "input": torch.tensor(0),
+            "input": (torch.tensor(1), torch.tensor(0)),
             "ground_truth": SequentialProgram([
                 Statement(Reference(0), torch.tensor(0)),
                 Statement(Reference(1), torch.tensor(1)),
@@ -66,7 +67,7 @@ class TestToEpisode(unittest.TestCase):
         })
         self.assertEqual(3, len(retval))
         self.assertTrue(np.array_equal(
-            torch.tensor(0),
+            (torch.tensor(1), torch.tensor(0)),
             retval[0]["input"]
         ))
         self.assertEqual(
@@ -77,7 +78,7 @@ class TestToEpisode(unittest.TestCase):
         self.assertEqual([], retval[0]["reference"])
 
         self.assertTrue(np.array_equal(
-            torch.tensor(0),
+            (torch.tensor(1), torch.tensor(0)),
             retval[1]["input"]
         ))
         self.assertEqual(
@@ -89,7 +90,7 @@ class TestToEpisode(unittest.TestCase):
         self.assertEqual([], retval[1]["reference"])
 
         self.assertTrue(np.array_equal(
-            torch.tensor(0),
+            (torch.tensor(1), torch.tensor(0)),
             retval[2]["input"]
         ))
         self.assertEqual(
@@ -107,12 +108,13 @@ class TestEvaluateCode(unittest.TestCase):
     def test_happy_path(self):
         f = EvaluateCode(MockInterpreter())
         output = f({
+            "input": (1, None),
             "reference": [Token(None, Reference(1), Reference(1))],
             "code": SequentialProgram(
                 [Statement(Reference(0), "0"), Statement(Reference(1), "1")]
             )
         })
-        self.assertEqual([1], output["variables"])
+        self.assertEqual([2], output["variables"])
 
 
 if __name__ == "__main__":

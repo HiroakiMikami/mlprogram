@@ -61,9 +61,10 @@ class EvaluateCode:
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         code = entry["code"]
+        input, _ = entry["input"]
         reference = entry["reference"]
         refs = [token.value for token in reference]
-        result = self.interpreter.eval_references(code)
+        result = self.interpreter.eval_references(code, input)
         variables = [result[ref] for ref in refs]
         entry["variables"] = variables
         return entry
