@@ -17,9 +17,9 @@ class MockInterpreter(Interpreter):
 class TestTestCaseResult(unittest.TestCase):
     def test_simple_case(self):
         acc = TestCaseResult(MockInterpreter())
-        self.assertAlmostEqual(1.0, acc({"ground_truth": ["0"]}, "0"))
-        self.assertAlmostEqual(0.0, acc({"ground_truth": ["0"]}, "1"))
-        self.assertAlmostEqual(1.0, acc({"ground_truth": ["0", "1"]}, "1"))
+        self.assertAlmostEqual(1.0, acc({"ground_truth": "0"}, "0"))
+        self.assertAlmostEqual(0.0, acc({"ground_truth": "0"}, "1"))
+        self.assertAlmostEqual(1.0, acc({"ground_truth": "1"}, "1"))
 
     def test_use_input(self):
         acc = TestCaseResult(MockInterpreter(), use_input=True)
@@ -30,18 +30,18 @@ class TestTestCaseResult(unittest.TestCase):
         self.assertAlmostEqual(
             1.0,
             acc({"ground_truth":
-                 [SequentialProgram([Statement(Reference("0"), "0")])]},
+                 SequentialProgram([Statement(Reference("0"), "0")])},
                 SequentialProgram([Statement(Reference("0"), "0")]))
         )
 
     def test_custom_metric(self):
         def metric(input, actual):
-            return sum(input["ground_truth"]) + actual
+            return input["ground_truth"] + actual
 
         acc = TestCaseResult(MockInterpreter(), metric=metric)
-        self.assertAlmostEqual(0.0, acc({"ground_truth": ["0"]}, "0"))
-        self.assertAlmostEqual(1.0, acc({"ground_truth": ["0"]}, "1"))
-        self.assertAlmostEqual(2.0, acc({"ground_truth": ["0", "1"]}, "1"))
+        self.assertAlmostEqual(0.0, acc({"ground_truth": "0"}, "0"))
+        self.assertAlmostEqual(1.0, acc({"ground_truth": "0"}, "1"))
+        self.assertAlmostEqual(2.0, acc({"ground_truth": "1"}, "1"))
 
 
 if __name__ == "__main__":

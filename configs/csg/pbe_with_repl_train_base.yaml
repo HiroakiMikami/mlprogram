@@ -145,7 +145,7 @@ main:
       threshold: 0.9
       dtype: "float"
   rollout_transform:
-    type: mlprogram.utils.transform.RandomChoice
+    type: mlprogram.utils.Identity
   collate: "@/collate_fn"
   batch_size: "@/batch_size"
   n_rollout: "@/n_rollout"

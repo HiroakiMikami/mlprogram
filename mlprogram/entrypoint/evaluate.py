@@ -55,9 +55,10 @@ class EvaluateSample(Generic[Input, Code]):
         self.metrics = metrics
         self.top_n = top_n
 
-    def __call__(self, elem: Tuple[int, Tuple[Input, Dict[str, Any]]]) \
+    def __call__(self, elem: Tuple[int, Dict[str, Any]]) \
             -> Result:
-        i, (input, group) = elem
+        i, sample = elem
+        input = sample["input"]
         begin = time.time()
         logger.debug(f"Start evaluation of {i}-th sample")
         with logger.block("synthesizer"):
@@ -72,12 +73,12 @@ class EvaluateSample(Generic[Input, Code]):
                     m[name] = 0
                 for c in candidates[:n]:
                     for name, f in self.metrics.items():
-                        m[name] = max(m[name], f(group, c.output))
+                        m[name] = max(m[name], f(sample, c.output))
                 ms[n] = m
         logger.debug(f"Finish evaluation of {i}-th sample")
         return Result(
             input,
-            {key: value for key, value in group.items() if key != "input"},
+            {key: value for key, value in sample.items() if key != "input"},
             list(map(lambda x: x.output, candidates)), ms,
             len(candidates) != 0, end - begin)
 
@@ -109,28 +110,24 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
             total[n] = t
         evaluate_sample: EvaluateSample[Dict[str, Any], Code] = \
             EvaluateSample(self.synthesizer, self.metrics, self.top_n)
-        inputs = []
-        for group in self.dataset:
-            for input in group["input"]:
-                inputs.append((input, group))
 
         results: List[Result[Input, Code, GroundTruth]] = []
         if self.n_process is None:
-            logger.info(f"Evalute with {len(inputs)} samples")
+            logger.info(f"Evalute with {len(self.dataset)} samples")
             results = [
                 evaluate_sample(elem)
                 for elem in tqdm(
                     logger.iterable_block("evaluate_sample",
-                                          enumerate(inputs)))]
+                                          enumerate(self.dataset)))]
         else:
             logger.info(
-                f"Evalute with {len(inputs)} samples "
+                f"Evalute with {len(self.dataset)} samples "
                 f"using {self.n_process} processes")
             results = []
             with ctx.Pool(processes=self.n_process) as pool:
-                with tqdm(total=len(inputs)) as _t:
+                with tqdm(total=len(self.dataset)) as _t:
                     for _r in pool.imap_unordered(evaluate_sample,
-                                                  enumerate(inputs)):
+                                                  enumerate(self.dataset)):
                         _t.update(1)
                         results.append(_r)
 
@@ -145,7 +142,7 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
                     total[n][name] += \
                         m[name] if m[name] is not None else 0
 
-        total = {n: {name: value / len(inputs)
+        total = {n: {name: value / len(self.dataset)
                      for name, value in metric.items()}
                  for n, metric in total.items()}
         r = EvaluationResult(results, total,

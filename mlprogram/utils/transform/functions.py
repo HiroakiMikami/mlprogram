@@ -1,5 +1,3 @@
-import numpy as np
-
 from mlprogram.interpreters import Interpreter
 from typing import Any, Optional, Dict, Callable, TypeVar, Generic
 
@@ -11,13 +9,12 @@ class NormalizeGroudTruth(Generic[Code]):
         self.normalize = normalize
 
     def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        gts = []
-        for gt in entry["ground_truth"]:
-            norm_gt = self.normalize(gt)
-            if norm_gt is None:
-                norm_gt = gt
-            gts.append(norm_gt)
-        entry["ground_truth"] = gts
+        gt = entry["ground_truth"]
+        norm_gt = self.normalize(entry["ground_truth"])
+        if norm_gt is not None:
+            gt = norm_gt
+
+        entry["ground_truth"] = gt
         return entry
 
 
@@ -27,27 +24,10 @@ class EvaluateGroundTruth:
         self.reference = reference
 
     def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        gts = entry["ground_truth"]
-        input = []
-        for gt in gts:
-            if self.reference:
-                results = self.interpreter.eval_references(gt)
-                input.append(results[gt.statements[-1].reference])
-            else:
-                input.append(self.interpreter.eval(gt))
-
-        entry["input"] = input
+        ground_truth = entry["ground_truth"]
+        if self.reference:
+            results = self.interpreter.eval_references(ground_truth)
+            entry["input"] = results[ground_truth.statements[-1].reference]
+        else:
+            entry["input"] = self.interpreter.eval(ground_truth)
         return entry
-
-
-class RandomChoice:
-    def __init__(self, rng: Optional[np.random.RandomState] = None):
-        self.rng = \
-            rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
-
-    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        output = {}
-        for key, value in entry.items():
-            idx = self.rng.randint(0, len(value))
-            output[key] = value[idx]
-        return output

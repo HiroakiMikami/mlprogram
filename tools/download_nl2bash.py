@@ -39,7 +39,7 @@ make -C $tmpdir/nl2bash/scripts data
                                    f"{name}.cm.filtered")) as file:
                 ground_truths = list(file.readlines())
             return [
-                {"input": [input], "ground_truth": [ground_truth]}
+                {"input": input, "ground_truth": ground_truth}
                 for input, ground_truth in zip(inputs, ground_truths)
             ]
 

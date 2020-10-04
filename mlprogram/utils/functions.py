@@ -14,6 +14,11 @@ V0 = TypeVar("V0")
 V1 = TypeVar("V1")
 
 
+class Identity(Generic[V]):
+    def __call__(self, value: V) -> V:
+        return value
+
+
 class Compose:
     def __init__(self, funcs: OrderedDict):
         self.funcs = funcs

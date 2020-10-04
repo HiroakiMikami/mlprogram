@@ -22,9 +22,9 @@ from mlprogram.samplers import SamplerWithValueNetwork
 from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
+from mlprogram.utils import Identity
 from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.utils.transform \
-    import EvaluateGroundTruth, RandomChoice
+from mlprogram.utils.transform import EvaluateGroundTruth
 import mlprogram.nn
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
@@ -156,16 +156,8 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
     def interpreter(self):
         return Interpreter(2, 2, 8)
 
-    def to_episode(self, encoder, interpreter, reinforce=False):
-        to_episode = ToEpisode(Parser().parse, remove_used_reference=True)
-        if reinforce:
-            return to_episode
-        return Sequence(
-            OrderedDict([
-                ("choice", RandomChoice(rng=np.random.RandomState(0))),
-                ("to_episode", to_episode)
-            ])
-        )
+    def to_episode(self, encoder, interpreter):
+        return ToEpisode(Parser().parse, remove_used_reference=True)
 
     def transform(self, encoder, interpreter, parser):
         tcanvas = TransformCanvas(["input", "variables"])
@@ -266,8 +258,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             )
             collate_fn = Sequence(OrderedDict([
                 ("to_episode", Map(self.to_episode(encoder,
-                                                   interpreter,
-                                                   reinforce=True))),
+                                                   interpreter))),
                 ("flatten", Flatten()),
                 ("transform", Map(self.transform(
                     encoder, interpreter, Parser()))),
@@ -330,7 +321,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                     metrics.TestCaseResult(interpreter, reference=True,
                                            metric=metrics.Iou()),
                     Threshold(0.9, dtype="float")),
-                RandomChoice(rng=np.random.RandomState(0)),
+                Identity(),
                 collate_fn,
                 1, 1,
                 Epoch(30), evaluation_interval=Epoch(30),

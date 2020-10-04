@@ -1,5 +1,5 @@
 import requests
-from typing import Callable, Tuple, List, Dict, Any
+from typing import Callable, Tuple, Dict, Any
 
 from mlprogram import logging
 from mlprogram.utils.data import ListDataset
@@ -24,13 +24,13 @@ def download(base_path: str = BASE_PATH,
     annotation = format_annotations(annotation)
     code = get(BASE_PATH + "all.code").split("\n")
 
-    def to_group(elem: Tuple[str, str]) -> Dict[str, List[Any]]:
+    def to_sample(elem: Tuple[str, str]) -> Dict[str, Any]:
         anno, code = elem
-        return {"input": [anno], "ground_truth": [code]}
-    data = list(map(to_group, zip(annotation, code)))
+        return {"input": anno, "ground_truth": code}
+    samples = list(map(to_sample, zip(annotation, code)))
 
-    train = ListDataset(data[:num_train])
-    test = ListDataset(data[num_train:num_train + num_test])
-    valid = ListDataset(data[num_train + num_test:])
+    train = ListDataset(samples[:num_train])
+    test = ListDataset(samples[num_train:num_train + num_test])
+    valid = ListDataset(samples[num_train + num_test:])
 
     return {"train": train, "test": test, "valid": valid}

@@ -23,7 +23,6 @@ from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_characters, get_samples
-from mlprogram.utils.transform import RandomChoice
 from mlprogram.utils.transform.action_sequence \
     import TransformGroundTruth, TransformCode
 from mlprogram.utils.transform.treegen \
@@ -113,7 +112,6 @@ class TestTreeGen(unittest.TestCase):
         tgt = TransformGroundTruth(aencoder)
         return Sequence(
             OrderedDict([
-                ("f0", RandomChoice()),
                 ("f1", tquery),
                 ("f2", tcode),
                 ("f3", teval),

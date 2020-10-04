@@ -240,8 +240,6 @@ transform:
     funcs:
         type: collections.OrderedDict
         items:
-            - - "choice"
-              - type: mlprogram.utils.transform.RandomChoice
             - - "add_reference"
               - type: mlprogram.utils.transform.action_sequence.AddEmptyReference
             - - "transform_canvas"

@@ -48,9 +48,9 @@ def download(path: str = BASE_PATH,
         for code, error, errorcount in \
                 c.execute("SELECT code, error, errorcount FROM Code"):
             samples.append({
-                "code": [code],
-                "error": [error],  # TODO remove error/n_error
-                "n_error": [errorcount]
+                "code": code,
+                "error": error,  # TODO remove error/n_error
+                "n_error": errorcount
             })
 
     return ListDataset(samples)

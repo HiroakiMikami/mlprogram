@@ -8,7 +8,7 @@ class TestIou(unittest.TestCase):
         iou = Iou()
         gt = np.array([False, True, False], dtype=np.bool)
         self.assertAlmostEqual(0.5,
-                               iou({"ground_truth": [gt]},
+                               iou({"ground_truth": gt},
                                    np.array([True, True, False], dtype=np.bool)
                                    ))
 
@@ -16,11 +16,11 @@ class TestIou(unittest.TestCase):
         iou = Iou()
         gt = np.array([False, False, False], dtype=np.bool)
         self.assertAlmostEqual(1.0 / 3,
-                               iou({"ground_truth": [gt]},
+                               iou({"ground_truth": gt},
                                    np.array([True, True, False], dtype=np.bool)
                                    ))
         self.assertAlmostEqual(1.0,
-                               iou({"ground_truth": [gt]},
+                               iou({"ground_truth": gt},
                                    np.array([False, False, False],
                                             dtype=np.bool)
                                    ))

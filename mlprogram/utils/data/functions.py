@@ -46,23 +46,23 @@ def get_samples(dataset: torch.utils.data.Dataset,
     node_types = []
     tokens: List[Tuple[str, str]] = []
 
-    for group in dataset:
-        for gt in group["ground_truth"]:
-            ast = parser.parse(gt)
-            if ast is None:
-                continue
-            action_sequence = ActionSequence.create(ast)
-            for action in action_sequence.action_sequence:
-                if isinstance(action, ApplyRule):
-                    rule = action.rule
-                    if not isinstance(rule, CloseVariadicFieldRule):
-                        rules.append(rule)
-                        node_types.append(rule.parent)
-                        for _, child in rule.children:
-                            node_types.append(child)
-                else:
-                    assert action.kind is not None
-                    tokens.append((action.kind, action.value))
+    for sample in dataset:
+        ground_truth = sample["ground_truth"]
+        ast = parser.parse(ground_truth)
+        if ast is None:
+            continue
+        action_sequence = ActionSequence.create(ast)
+        for action in action_sequence.action_sequence:
+            if isinstance(action, ApplyRule):
+                rule = action.rule
+                if not isinstance(rule, CloseVariadicFieldRule):
+                    rules.append(rule)
+                    node_types.append(rule.parent)
+                    for _, child in rule.children:
+                        node_types.append(child)
+            else:
+                assert action.kind is not None
+                tokens.append((action.kind, action.value))
 
     return Samples(rules, node_types, tokens)
 
