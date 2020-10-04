@@ -7,7 +7,7 @@ from mlprogram.languages.python.python_ast_to_ast import base_ast_type
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 
 
-class TestBaseAstType(unittest.TestCase):
+class TestBaseASTType(unittest.TestCase):
     def test_base_type(self):
         self.assertEqual(python_ast.stmt, base_ast_type(python_ast.stmt()))
 

@@ -4,7 +4,7 @@ from mlprogram.languages.csg.ast \
     import Circle, Rectangle, Translation, Rotation, Union, Difference
 
 
-class TestAst(unittest.TestCase):
+class TestAST(unittest.TestCase):
     def test_circle(self):
         self.assertEqual("Circle", Circle(1).type_name())
 
