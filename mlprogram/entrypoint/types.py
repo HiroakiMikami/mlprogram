@@ -150,8 +150,6 @@ types = {
         mlprogram.utils.data.random.random_split,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
-    "mlprogram.utils.transform.EvaluateGroundTruth":
-        mlprogram.utils.transform.EvaluateGroundTruth,
     "mlprogram.utils.transform.NormalizeGroundTruth":
         mlprogram.utils.transform.NormalizeGroudTruth,
     "mlprogram.utils.transform.action_sequence.AddEmptyReference":
@@ -211,6 +209,8 @@ types = {
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
     "mlprogram.languages.csg.transform.TransformCanvas":
         mlprogram.languages.csg.transform.TransformCanvas,
+    "mlprogram.languages.csg.transform.AddTestCases":
+        mlprogram.languages.csg.transform.AddTestCases,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
     "mlprogram.languages.c.Lexer": mlprogram.languages.c.Lexer

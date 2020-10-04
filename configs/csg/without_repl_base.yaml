@@ -48,7 +48,7 @@ train_dataset:
     type: mlprogram.utils.data.transform
     dataset: "@/dataset"
     transform:
-        type: mlprogram.utils.transform.EvaluateGroundTruth
+        type: mlprogram.languages.csg.transform.AddTestCases
         interpreter: "@/interpreter"
         reference: false
 test_dataset:
@@ -66,7 +66,7 @@ test_dataset:
             seed: 10000
         n: "@/option.n_evaluate_dataset"
     transform:
-        type: mlprogram.utils.transform.EvaluateGroundTruth
+        type: mlprogram.languages.csg.transform.AddTestCases
         interpreter: "@/interpreter"
         reference: false
 valid_dataset:
@@ -84,7 +84,7 @@ valid_dataset:
             seed: 20000
         n: "@/option.n_evaluate_dataset"
     transform:
-        type: mlprogram.utils.transform.EvaluateGroundTruth
+        type: mlprogram.languages.csg.transform.AddTestCases
         interpreter: "@/interpreter"
         reference: false
 
@@ -230,7 +230,6 @@ synthesizer:
     type: mlprogram.metrics.TestCaseResult
     interpreter: "@/interpreter"
     reference: false
-    use_input: True
     metric:
       type: mlprogram.metrics.Iou
   threshold: 0.9

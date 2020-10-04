@@ -22,9 +22,7 @@ from mlprogram.samplers import SamplerWithValueNetwork
 from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
-from mlprogram.utils import Identity
 from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.utils.transform import EvaluateGroundTruth
 import mlprogram.nn
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
@@ -36,6 +34,7 @@ from mlprogram.languages.csg import Interpreter, Parser, Dataset
 from mlprogram.utils.data \
     import to_map_style_dataset, transform as data_transform
 from mlprogram.languages.csg.transform import TransformCanvas
+from mlprogram.languages.csg.transform import AddTestCases
 from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder
@@ -121,7 +120,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             sampler = FilteredSampler(
                 sampler,
                 metrics.TestCaseResult(interpreter, reference=True,
-                                       use_input=True, metric=metrics.Iou()),
+                                       metric=metrics.Iou()),
                 0.9
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
@@ -149,7 +148,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             return FilteredSynthesizer(
                 synthesizer,
                 metrics.TestCaseResult(interpreter, reference=True,
-                                       use_input=True, metric=metrics.Iou()),
+                                       metric=metrics.Iou()),
                 0.9
             )
 
@@ -197,7 +196,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             interpreter = self.interpreter()
             train_dataset = data_transform(
                 train_dataset,
-                EvaluateGroundTruth(interpreter, reference=True))
+                AddTestCases(interpreter, reference=True))
             encoder = self.prepare_encoder(dataset, Parser())
 
             collate = Collate(
@@ -321,7 +320,6 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                     metrics.TestCaseResult(interpreter, reference=True,
                                            metric=metrics.Iou()),
                     Threshold(0.9, dtype="float")),
-                Identity(),
                 collate_fn,
                 1, 1,
                 Epoch(30), evaluation_interval=Epoch(30),

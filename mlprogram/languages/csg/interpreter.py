@@ -44,17 +44,17 @@ class InvalidNodeTypeException(BaseException):
         super().__init__(f"Invalid node type: {type_name}")
 
 
-class Interpreter(BaseInterpreter[AST, Shape]):
+class Interpreter(BaseInterpreter[AST, None, Shape]):
     def __init__(self, width: int, height: int, resolution: int):
         self.width = width
         self.height = height
         self.resolution = resolution
 
-    def eval(self, code: AST) -> np.array:
+    def eval(self, code: AST, input: None) -> np.array:
         return self._cached_eval(code).render(
             self.width, self.height, self.resolution)
 
-    def eval_references(self, code: SequentialProgram[AST]) \
+    def eval_references(self, code: SequentialProgram[AST], input: None) \
             -> Dict[R, np.array]:
         unref_code: Dict[R, AST] = {}
         values = {}
@@ -62,7 +62,7 @@ class Interpreter(BaseInterpreter[AST, Shape]):
             ref = statement.reference
             ast = statement.code
             unref_code[ref] = self._unreference(ast, unref_code)
-            values[ref] = self.eval(unref_code[ref])
+            values[ref] = self.eval(unref_code[ref], input)
         return values
 
     def _unreference(self, code: AST, refs: Dict[R, AST]) -> AST:

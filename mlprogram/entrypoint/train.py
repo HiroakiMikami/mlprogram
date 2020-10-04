@@ -279,7 +279,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     evaluate: Optional[Callable[[], None]],
                     metric: str,
                     reward: Metric,
-                    rollout_transform: Callable[[Any], Any],
                     collate: Callable[[List[Any]], Any],
                     batch_size: int,
                     n_rollout: int,
@@ -346,16 +345,15 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 rollouts = []
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
-                        input = rollout_transform(sample)
                         for rollout in logger.iterable_block(
                                 "sample",
-                                synthesizer(input,
+                                synthesizer(sample,
                                             n_required_output=n_rollout)):
                             if not rollout.is_finished:
                                 continue
                             for _ in range(rollout.num):
                                 output = {key: value
-                                          for key, value in input.items()}
+                                          for key, value in sample.items()}
                                 output["ground_truth"] = rollout.output
                                 output["reward"] = torch.tensor(
                                     reward(sample, rollout.output))
