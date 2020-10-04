@@ -37,8 +37,8 @@ class TestGetCharacters(unittest.TestCase):
 
 class TestGetSamples(unittest.TestCase):
     def test_get_samples(self):
-        entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
-                   {"input": ["test foo"], "ground_truth": ["f(x)"]}]
+        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"},
+                   {"input": "test foo", "ground_truth": "f(x)"}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, Parser(lambda x: [x]))
         self.assertEqual([

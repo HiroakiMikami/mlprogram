@@ -31,15 +31,7 @@ collate_fn:
         items:
             - - "to_episode"
               - type: mlprogram.utils.Map
-                func:
-                    type: mlprogram.utils.Compose
-                    funcs:
-                        type: collections.OrderedDict
-                        items:
-                            - - "choice"
-                              - type: mlprogram.utils.transform.RandomChoice
-                            - - "to_episode"
-                              - "@/to_episode"
+                func: "@/to_episode"
             - - "flatten"
               - type: mlprogram.utils.Flatten
             - - "transform"

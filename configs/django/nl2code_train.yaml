@@ -46,8 +46,6 @@ transform:
   funcs:
     type: collections.OrderedDict
     items:
-      - - "random choice"
-        - type: mlprogram.utils.transform.RandomChoice
       - - "transform_input"
         - type: mlprogram.utils.transform.nl2code.TransformQuery
           extract_reference:

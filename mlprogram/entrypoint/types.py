@@ -106,6 +106,7 @@ types = {
     "mlprogram.languages.bash.Parser": mlprogram.languages.bash.Parser,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
+    "mlprogram.utils.Identity": mlprogram.utils.Identity,
     "mlprogram.utils.Compose": mlprogram.utils.Compose,
     "mlprogram.utils.Map": mlprogram.utils.Map,
     "mlprogram.utils.Flatten": mlprogram.utils.Flatten,
@@ -149,8 +150,6 @@ types = {
         mlprogram.utils.data.random.random_split,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
-    "mlprogram.utils.transform.RandomChoice":
-        mlprogram.utils.transform.RandomChoice,
     "mlprogram.utils.transform.EvaluateGroundTruth":
         mlprogram.utils.transform.EvaluateGroundTruth,
     "mlprogram.utils.transform.NormalizeGroundTruth":

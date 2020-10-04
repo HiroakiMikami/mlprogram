@@ -15,15 +15,15 @@ class TestDownload(unittest.TestCase):
         valid_dataset = dataset["valid"]
 
         self.assertEqual(1, len(train_dataset))
-        self.assertEqual({"input": ["line0"], "ground_truth": ["x = 10"]},
+        self.assertEqual({"input": "line0", "ground_truth": "x = 10"},
                          train_dataset[0])
 
         self.assertEqual(1, len(test_dataset))
-        self.assertEqual({"input": ["line1"], "ground_truth": ["if True:"]},
+        self.assertEqual({"input": "line1", "ground_truth": "if True:"},
                          test_dataset[0])
 
         self.assertEqual(1, len(valid_dataset))
-        self.assertEqual({"input": ["line2"], "ground_truth": ["else:"]},
+        self.assertEqual({"input": "line2", "ground_truth": "else:"},
                          valid_dataset[0])
 
 

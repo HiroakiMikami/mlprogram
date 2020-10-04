@@ -151,11 +151,11 @@ class Dataset(IterableDataset):
                 if self.parent.reference:
                     refs, output = self.parent.to_reference(ast)
                     retval: Dict[str, Any] = {
-                        "ground_truth": [SequentialProgram(refs)]
+                        "ground_truth": SequentialProgram(refs)
                     }
                 else:
                     retval = {
-                        "ground_truth": [ast]
+                        "ground_truth": ast
                     }
                 return retval
 

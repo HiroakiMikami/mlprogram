@@ -46,9 +46,9 @@ class TestDownload(unittest.TestCase):
             dataset = download(path=path, get=get)
 
         self.assertEqual(2, len(dataset))
-        self.assertEqual({"code": ["foo"], "error": ["bar"], "n_error": [1]},
+        self.assertEqual({"code": "foo", "error": "bar", "n_error": 1},
                          dataset[0])
-        self.assertEqual({"code": ["foo"], "error": [""], "n_error": [0]},
+        self.assertEqual({"code": "foo", "error": "", "n_error": 0},
                          dataset[1])
 
 

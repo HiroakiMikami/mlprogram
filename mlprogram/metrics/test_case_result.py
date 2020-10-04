@@ -29,12 +29,12 @@ class TestCaseResult(Metric[Code], Generic[Code]):
 
     def __call__(self, input: Dict[str, Any], value: Code) -> float:
         if self.use_input:
-            outputs = [input["input"]]
+            output = input["input"]
         else:
             ground_truth = input["ground_truth"]
             # evaluate ground truth
-            outputs = [self._eval(gt) for gt in ground_truth]
+            output = self._eval(ground_truth)
 
         # calc. metric
         actual = self._eval(value)
-        return self.metric({"ground_truth": outputs}, actual)
+        return self.metric({"ground_truth": output}, actual)

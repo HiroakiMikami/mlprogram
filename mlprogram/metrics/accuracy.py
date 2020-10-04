@@ -6,5 +6,5 @@ Value = TypeVar("Value")
 
 class Accuracy(Metric[Value], Generic[Value]):
     def __call__(self, input: Dict[str, Any], value: Value) -> float:
-        gts = input["ground_truth"]
-        return 1.0 if value in gts else 0.0
+        ground_truth = input["ground_truth"]
+        return 1.0 if value == ground_truth else 0.0

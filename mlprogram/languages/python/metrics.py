@@ -6,7 +6,7 @@ from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 class Bleu(Metric[str]):
     def __call__(self, input: Dict[str, Any], value: str) -> float:
-        gts = input["ground_truth"]
+        ground_truth = input["ground_truth"]
         sm = SmoothingFunction()
 
         def tokenize(code: str) -> List[str]:
@@ -17,7 +17,7 @@ class Bleu(Metric[str]):
             tokens = [t for t in code.split(' ') if t]
             return tokens
 
-        ref = [tokenize(ref) for ref in gts]
+        ref = [tokenize(ground_truth)]
         cand = tokenize(value)
         return sentence_bleu(ref,
                              cand,

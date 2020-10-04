@@ -28,10 +28,10 @@ def download(base_path: str = BASE_PATH,
         query = get(f"{base_path}/{name}_hs.in").split("\n")
         code = get(f"{base_path}/{name}_hs.out").split("\n")
         code = [c.replace("§", "\n").replace("and \\", "and ") for c in code]
-        groups = []
+        samples = []
         for q, c in zip(query, code):
             if q == "" and c == "":
                 continue
-            groups.append({"input": [q], "ground_truth": [c]})
-        dataset[target] = ListDataset(groups)
+            samples.append({"input": q, "ground_truth": c})
+        dataset[target] = ListDataset(samples)
     return dataset

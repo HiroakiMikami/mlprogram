@@ -1,1 +1,2 @@
-from mlprogram.utils.transform.functions import RandomChoice, EvaluateGroundTruth, NormalizeGroudTruth  # noqa
+from mlprogram.utils.transform.functions import EvaluateGroundTruth  # noqa
+from mlprogram.utils.transform.functions import NormalizeGroudTruth  # noqa
