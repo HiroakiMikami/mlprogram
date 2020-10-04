@@ -230,7 +230,6 @@ synthesizer:
     type: mlprogram.metrics.TestCaseResult
     interpreter: "@/interpreter"
     reference: false
-    use_input: True
     metric:
       type: mlprogram.metrics.Iou
   threshold: 0.9

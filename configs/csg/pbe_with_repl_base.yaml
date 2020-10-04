@@ -285,7 +285,6 @@ train_synthesizer:
             type: mlprogram.metrics.TestCaseResult
             interpreter: "@/interpreter"
             reference: True
-            use_input: True
             metric:
                 type: mlprogram.metrics.Iou
         threshold: 0.9

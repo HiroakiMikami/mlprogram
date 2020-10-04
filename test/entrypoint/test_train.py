@@ -307,7 +307,6 @@ class TestTrainREINFORCE(unittest.TestCase):
                                                         ) * kwargs["reward"],
                             MockEvaluate("key"), "key",
                             reward,
-                            lambda x: x,
                             self.collate,
                             1, 1, Epoch(2))
             self.assertTrue(os.path.exists(
@@ -350,7 +349,6 @@ class TestTrainREINFORCE(unittest.TestCase):
                                                         ) * kwargs["reward"],
                             MockEvaluate("key"), "key",
                             reward,
-                            lambda x: x,
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_model=True)
@@ -377,7 +375,6 @@ class TestTrainREINFORCE(unittest.TestCase):
                                                         ) * kwargs["reward"],
                             MockEvaluate("key"), "key",
                             reward,
-                            lambda x: x,
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_optimizer=True)

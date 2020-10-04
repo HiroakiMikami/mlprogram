@@ -22,7 +22,6 @@ from mlprogram.samplers import SamplerWithValueNetwork
 from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
-from mlprogram.utils import Identity
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.transform import EvaluateGroundTruth
 import mlprogram.nn
@@ -121,7 +120,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             sampler = FilteredSampler(
                 sampler,
                 metrics.TestCaseResult(interpreter, reference=True,
-                                       use_input=True, metric=metrics.Iou()),
+                                       metric=metrics.Iou()),
                 0.9
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
@@ -149,7 +148,7 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             return FilteredSynthesizer(
                 synthesizer,
                 metrics.TestCaseResult(interpreter, reference=True,
-                                       use_input=True, metric=metrics.Iou()),
+                                       metric=metrics.Iou()),
                 0.9
             )
 
@@ -321,7 +320,6 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                     metrics.TestCaseResult(interpreter, reference=True,
                                            metric=metrics.Iou()),
                     Threshold(0.9, dtype="float")),
-                Identity(),
                 collate_fn,
                 1, 1,
                 Epoch(30), evaluation_interval=Epoch(30),
