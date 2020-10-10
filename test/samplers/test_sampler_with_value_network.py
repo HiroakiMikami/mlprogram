@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import unittest
 from typing import List, Dict, Any
 from mlprogram.samplers \
     import Sampler, SamplerWithValueNetwork, SamplerState, \
@@ -24,7 +23,7 @@ class MockValueNetwork(nn.Module):
         return state["x"]
 
 
-class TestSamplerWithValueNetwork(unittest.TestCase):
+class TestSamplerWithValueNetwork(object):
     def test_rescore(self):
         def transform(state: str) -> torch.Tensor:
             return {"x": torch.tensor([int(state)])}
@@ -34,13 +33,7 @@ class TestSamplerWithValueNetwork(unittest.TestCase):
                                           MockValueNetwork())
         zero = SamplerState(0, sampler.initialize(0))
         samples = list(sampler.batch_k_samples([zero], [3]))
-        self.assertEqual(
-            [DuplicatedSamplerState(SamplerState(0, "00"), 1),
-             DuplicatedSamplerState(SamplerState(1, "01"), 1),
-             DuplicatedSamplerState(SamplerState(2, "02"), 1)],
-            samples
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert [DuplicatedSamplerState(SamplerState(0, "00"), 1),
+                DuplicatedSamplerState(SamplerState(1, "01"), 1),
+                DuplicatedSamplerState(SamplerState(2, "02"), 1)
+                ] == samples

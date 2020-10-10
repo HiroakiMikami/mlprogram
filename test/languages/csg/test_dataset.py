@@ -1,11 +1,10 @@
-import unittest
 import torch
 import numpy as np
 from mlprogram.interpreters import Reference as R
 from mlprogram.languages.csg import Dataset
 
 
-class TestDataset(unittest.TestCase):
+class TestDataset(object):
     def test_iterator(self):
         dataset = Dataset(2, 1, 1, 1, 45)
         for x in dataset:
@@ -22,8 +21,7 @@ class TestDataset(unittest.TestCase):
             samples.append(xs)
             if i == 1:
                 break
-        self.assertNotEqual(samples[0][0]["ground_truth"],
-                            samples[1][0]["ground_truth"])
+        assert samples[0][0]["ground_truth"] != samples[1][0]["ground_truth"]
 
     def test_reference(self):
         torch.manual_seed(0)
@@ -35,11 +33,5 @@ class TestDataset(unittest.TestCase):
                 sample = x
                 break
         n_ref = len(sample["ground_truth"].statements)
-        self.assertEqual(
-            [R(str(i)) for i in range(n_ref)],
+        assert [R(str(i)) for i in range(n_ref)] == \
             [stmt.reference for stmt in sample["ground_truth"].statements]
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()

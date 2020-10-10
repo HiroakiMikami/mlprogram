@@ -1,14 +1,13 @@
 import numpy as np
 import torch
-import unittest
 from mlprogram.nn.utils.rnn import pad_sequence
 from mlprogram.nn.pbe_with_repl import Encoder
 
 
-class TestEncoder(unittest.TestCase):
+class TestEncoder(object):
     def test_parameters(self):
         encoder = Encoder(torch.nn.ReLU())
-        self.assertEqual(0, len(list(encoder.parameters())))
+        assert 0 == len(list(encoder.parameters()))
 
     def test_shape(self):
         encoder = Encoder(torch.nn.Linear(2, 1))
@@ -19,12 +18,12 @@ class TestEncoder(unittest.TestCase):
                                        torch.rand(1, 1),
                                        ])
         })
-        self.assertEqual((2, 2), output["input_feature"].shape)
-        self.assertEqual((3, 2, 1), output["reference_features"].data.shape)
-        self.assertTrue(np.array_equal(
+        assert (2, 2) == output["input_feature"].shape
+        assert (3, 2, 1) == output["reference_features"].data.shape
+        assert np.array_equal(
             [[1, 1], [1, 0], [1, 0]],
             output["reference_features"].mask.numpy()
-        ))
+        )
 
     def test_empty_sequence(self):
         encoder = Encoder(torch.nn.Linear(2, 1))
@@ -33,9 +32,9 @@ class TestEncoder(unittest.TestCase):
             "input_feature": torch.arange(1).reshape(1, 1),
             "variables": pad_sequence([torch.rand(0, 1)])
         })
-        self.assertEqual((1, 2), output["input_feature"].shape)
-        self.assertEqual((1, 1), output["variable_feature"].shape)
-        self.assertEqual((0, 1, 1), output["reference_features"].data.shape)
+        assert (1, 2) == output["input_feature"].shape
+        assert (1, 1) == output["variable_feature"].shape
+        assert (0, 1, 1) == output["reference_features"].data.shape
 
     def test_mean(self):
         module = torch.nn.Linear(2, 1)
@@ -55,11 +54,11 @@ class TestEncoder(unittest.TestCase):
             "input_feature": torch.arange(2).reshape(2, 1),
             "variables": variables
         })
-        self.assertTrue(np.allclose(
+        assert np.allclose(
             (output["input_feature"][:, 1] /
              torch.tensor([3.0, 1.0])).detach().numpy(),
             mean["input_feature"][:, 1].detach().numpy(),
-        ))
+        )
 
     def test_mask(self):
         encoder = Encoder(torch.nn.Linear(2, 1))
@@ -70,19 +69,15 @@ class TestEncoder(unittest.TestCase):
                                        torch.rand(1, 1)
                                        ])
         })
-        self.assertEqual((2, 2), output["input_feature"].shape)
-        self.assertEqual((3, 2, 1), output["reference_features"].data.shape)
+        assert (2, 2) == output["input_feature"].shape
+        assert (3, 2, 1) == output["reference_features"].data.shape
         padded = output["reference_features"].\
             data[output["reference_features"].mask == 0]
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             padded.detach().numpy(),
             torch.zeros_like(padded).numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [[1, 1], [1, 0], [1, 0]],
             output["reference_features"].mask.numpy()
-        ))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        )

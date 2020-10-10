@@ -1,4 +1,3 @@
-import unittest
 import numpy as np
 from mlprogram.interpreters import Reference as R, SequentialProgram, Statement
 from mlprogram.languages.csg import show, Shape, Interpreter
@@ -7,64 +6,53 @@ from mlprogram.languages.csg \
     Reference
 
 
-class TestShow(unittest.TestCase):
+class TestShow(object):
     def test_str(self):
         c = np.zeros((3, 3), dtype=np.bool)
-        self.assertEqual("   \n   \n   \n", show(c))
+        assert "   \n   \n   \n" == show(c)
         c = np.eye(3, dtype=np.bool)
-        self.assertEqual("#  \n # \n  #\n", show(c))
+        assert "#  \n # \n  #\n" == show(c)
 
 
-class TestShape(unittest.TestCase):
+class TestShape(object):
     def test_render(self):
         shape = Shape(lambda x, y: x * y == 0)
-        self.assertEqual(" # \n###\n # \n", show(shape.render(3, 3)))
-        self.assertEqual("  \n  \n", show(shape.render(2, 2)))
+        assert " # \n###\n # \n" == show(shape.render(3, 3))
+        assert "  \n  \n" == show(shape.render(2, 2))
 
     def test_render_with_resolution(self):
         shape = Shape(lambda x, y: abs(x * y) < 0.5)
-        self.assertEqual(" # \n###\n # \n", show(shape.render(3, 3, 1)))
-        self.assertEqual("  ##  \n  ##  \n######\n######\n  ##  \n  ##  \n",
-                         show(shape.render(3, 3, 2)))
-        self.assertEqual("      \n      \n  ##  \n  ##  \n      \n      \n",
-                         show(shape.render(6, 6, 1)))
+        assert " # \n###\n # \n" == show(shape.render(3, 3, 1))
+        assert "  ##  \n  ##  \n######\n######\n  ##  \n  ##  \n" == \
+            show(shape.render(3, 3, 2))
+        assert "      \n      \n  ##  \n  ##  \n      \n      \n" == \
+            show(shape.render(6, 6, 1))
 
 
-class TestInterpreter(unittest.TestCase):
+class TestInterpreter(object):
     def test_circle(self):
-        self.assertEqual(
-            "#\n",
-            show(Interpreter(1, 1, 1).eval(Circle(1), None)))
+        assert "#\n" == show(Interpreter(1, 1, 1).eval(Circle(1), None))
 
     def test_rectangle(self):
         code = Rectangle(1, 3)
-        self.assertEqual(
-            " # \n # \n # \n",
-            show(Interpreter(3, 3, 1).eval(code, None)))
+        assert " # \n # \n # \n" == show(Interpreter(3, 3, 1).eval(code, None))
 
     def test_translation(self):
         code = Translation(2, 1, Rectangle(1, 3))
-        self.assertEqual(
-            "    #\n    #\n    #\n     \n     \n",
-            show(Interpreter(5, 5, 1).eval(code, None)))
+        assert "    #\n    #\n    #\n     \n     \n" == \
+            show(Interpreter(5, 5, 1).eval(code, None))
 
     def test_rotation(self):
         code = Rotation(45, Rectangle(4, 1))
-        self.assertEqual(
-            "  #\n # \n#  \n",
-            show(Interpreter(3, 3, 1).eval(code, None)))
+        assert "  #\n # \n#  \n" == show(Interpreter(3, 3, 1).eval(code, None))
 
     def test_union(self):
         code = Union(Rectangle(3, 1), Rectangle(1, 3))
-        self.assertEqual(
-            " # \n###\n # \n",
-            show(Interpreter(3, 3, 1).eval(code, None)))
+        assert " # \n###\n # \n" == show(Interpreter(3, 3, 1).eval(code, None))
 
     def test_difference(self):
         code = Difference(Rectangle(1, 1), Rectangle(3, 1))
-        self.assertEqual(
-            "   \n# #\n   \n",
-            show(Interpreter(3, 3, 1).eval(code, None)))
+        assert "   \n# #\n   \n" == show(Interpreter(3, 3, 1).eval(code, None))
 
     def test_reference(self):
         ref0 = Rectangle(1, 1)
@@ -79,19 +67,7 @@ class TestInterpreter(unittest.TestCase):
         ]
         result = Interpreter(3, 3, 1).eval_references(SequentialProgram(code),
                                                       None)
-        self.assertEqual(
-            "   \n # \n   \n",
-            show(result[R(0)]))
-        self.assertEqual(
-            "   \n###\n   \n",
-            show(result[R(1)]))
-        self.assertEqual(
-            "   \n# #\n   \n",
-            show(result[R(2)]))
-        self.assertEqual(
-            "   \n###\n   \n",
-            show(result[R(3)]))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert "   \n # \n   \n" == show(result[R(0)])
+        assert "   \n###\n   \n" == show(result[R(1)])
+        assert "   \n# #\n   \n" == show(result[R(2)])
+        assert "   \n###\n   \n" == show(result[R(3)])

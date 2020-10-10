@@ -1,4 +1,3 @@
-import unittest
 import torch
 import numpy as np
 
@@ -6,23 +5,23 @@ from mlprogram.nn.action_sequence import Predictor
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
-class TestPredictor(unittest.TestCase):
+class TestPredictor(object):
     def test_parameters(self):
         predictor = Predictor(2, 3, 5, 7, 11)
         pshape = {k: v.shape for k, v in predictor.named_parameters()}
-        self.assertEqual(12, len(list(predictor.parameters())))
-        self.assertEqual((3, 2), pshape["select.weight"])
-        self.assertEqual((3,), pshape["select.bias"])
-        self.assertEqual((5, 2), pshape["rule.weight"])
-        self.assertEqual((5,), pshape["rule.bias"])
-        self.assertEqual((7, 2), pshape["token.weight"])
-        self.assertEqual((7,), pshape["token.bias"])
-        self.assertEqual((11, 2), pshape["reference.w1.weight"])
-        self.assertEqual((11,), pshape["reference.w1.bias"])
-        self.assertEqual((11, 3), pshape["reference.w2.weight"])
-        self.assertEqual((11,), pshape["reference.w2.bias"])
-        self.assertEqual((1, 11), pshape["reference.v.weight"])
-        self.assertEqual((1,), pshape["reference.v.bias"])
+        assert 12 == len(list(predictor.parameters()))
+        assert (3, 2) == pshape["select.weight"]
+        assert (3,) == pshape["select.bias"]
+        assert (5, 2) == pshape["rule.weight"]
+        assert (5,) == pshape["rule.bias"]
+        assert (7, 2) == pshape["token.weight"]
+        assert (7,) == pshape["token.bias"]
+        assert (11, 2) == pshape["reference.w1.weight"]
+        assert (11,) == pshape["reference.w1.bias"]
+        assert (11, 3) == pshape["reference.w2.weight"]
+        assert (11,) == pshape["reference.w2.bias"]
+        assert (1, 11) == pshape["reference.v.weight"]
+        assert (1,) == pshape["reference.v.bias"]
 
     def test_shape(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -33,12 +32,12 @@ class TestPredictor(unittest.TestCase):
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
         reference = inputs["reference_probs"]
-        self.assertEqual((11, 1, 5), rule.data.shape)
-        self.assertEqual((11, 1), rule.mask.shape)
-        self.assertEqual((11, 1, 7), token.data.shape)
-        self.assertEqual((11, 1), token.mask.shape)
-        self.assertEqual((11, 1, 13), reference.data.shape)
-        self.assertEqual((11, 1), reference.mask.shape)
+        assert (11, 1, 5) == rule.data.shape
+        assert (11, 1) == rule.mask.shape
+        assert (11, 1, 7) == token.data.shape
+        assert (11, 1) == token.mask.shape
+        assert (11, 1, 13) == reference.data.shape
+        assert (11, 1) == reference.mask.shape
 
     def test_shape_eval(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -50,9 +49,9 @@ class TestPredictor(unittest.TestCase):
         rule = inputs["rule_probs"]
         token = inputs["token_probs"]
         reference = inputs["reference_probs"]
-        self.assertEqual((1, 5), rule.shape)
-        self.assertEqual((1, 7), token.shape)
-        self.assertEqual((1, 13), reference.shape)
+        assert (1, 5) == rule.shape
+        assert (1, 7) == token.shape
+        assert (1, 13) == reference.shape
 
     def test_prog(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -65,10 +64,10 @@ class TestPredictor(unittest.TestCase):
         reference = inputs["reference_probs"]
         prob = torch.cat([rule.data, token.data, reference.data], dim=2)
         prob = prob.detach().numpy()
-        self.assertTrue(np.all(prob >= 0.0))
-        self.assertTrue(np.all(prob <= 1.0))
+        assert np.all(prob >= 0.0)
+        assert np.all(prob <= 1.0)
         total = np.sum(prob, axis=2)
-        self.assertTrue(np.allclose(1.0, total))
+        assert np.allclose(1.0, total)
 
     def test_nl_mask(self):
         predictor = Predictor(2, 3, 5, 7, 11)
@@ -89,13 +88,9 @@ class TestPredictor(unittest.TestCase):
         rule1 = rule1.data[:11, :1, :]
         token1 = token1.data[:11, :1, :]
         ref1 = ref1.data[:11, :1, :13]
-        self.assertTrue(np.allclose(rule0.data.detach().numpy(),
-                                    rule1.detach().numpy()))
-        self.assertTrue(np.allclose(token0.data.detach().numpy(),
-                                    token1.detach().numpy()))
-        self.assertTrue(np.allclose(ref0.data.detach().numpy(),
-                                    ref1.detach().numpy()))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(rule0.data.detach().numpy(),
+                           rule1.detach().numpy())
+        assert np.allclose(token0.data.detach().numpy(),
+                           token1.detach().numpy())
+        assert np.allclose(ref0.data.detach().numpy(),
+                           ref1.detach().numpy())

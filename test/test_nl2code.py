@@ -1,9 +1,10 @@
-import unittest
 from collections import OrderedDict
 import logging
 import sys
 import tempfile
 import os
+import numpy as np
+import pytest
 
 import torch
 import torch.nn as nn
@@ -28,17 +29,16 @@ from mlprogram.nn.action_sequence import Loss
 import mlprogram.nn.nl2code as nl2code
 from mlprogram.metrics import Accuracy
 
-from nl2code_dummy_dataset import is_subtype
-from nl2code_dummy_dataset import train_dataset
-from nl2code_dummy_dataset import test_dataset
-from nl2code_dummy_dataset import tokenize
-from nl2code_dummy_dataset import Parser
-from test_case_utils import integration_test
+from test.nl2code_dummy_dataset import is_subtype
+from test.nl2code_dummy_dataset import train_dataset
+from test.nl2code_dummy_dataset import test_dataset
+from test.nl2code_dummy_dataset import tokenize
+from test.nl2code_dummy_dataset import Parser
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-class TestNL2Code(unittest.TestCase):
+class TestNL2Code(object):
     def prepare_encoder(self, dataset, parser):
         words = get_words(dataset, tokenize)
         samples = get_samples(dataset, parser)
@@ -161,14 +161,11 @@ class TestNL2Code(unittest.TestCase):
             )
         return qencoder, aencoder
 
-    @integration_test
+    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
+                        reason="Skip integration tests")
     def test(self):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:
             encoder = self.train(tmpdir)
             results = self.evaluate(*encoder, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(1.0, results.metrics[5]["accuracy"])

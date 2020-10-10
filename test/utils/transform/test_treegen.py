@@ -1,4 +1,3 @@
-import unittest
 import numpy as np
 from typing import List
 from torchnlp.encoders import LabelEncoder
@@ -36,7 +35,7 @@ class MockParser(Parser[str]):
         return ast
 
 
-class TestTransformQuery(unittest.TestCase):
+class TestTransformQuery(object):
     def test_simple_case(self):
         words = ["ab", "test"]
         qencoder = LabelEncoder(words, 0)
@@ -46,14 +45,14 @@ class TestTransformQuery(unittest.TestCase):
         reference = result["reference"]
         word_query = result["word_nl_query"]
         char_query = result["char_nl_query"]
-        self.assertEqual(
-            [Token(None, "ab", "ab"), Token(None, "test", "test")], reference)
-        self.assertTrue(np.array_equal([1, 2], word_query.numpy()))
-        self.assertTrue(np.array_equal([[1, 2, -1], [3, 4, 0]],
-                                       char_query.numpy()))
+        assert [Token(None, "ab", "ab"),
+                Token(None, "test", "test")] == reference
+        assert np.array_equal([1, 2], word_query.numpy())
+        assert np.array_equal([[1, 2, -1], [3, 4, 0]],
+                              char_query.numpy())
 
 
-class TestTransformActionSequence(unittest.TestCase):
+class TestTransformActionSequence(object):
     def test_simple_case(self):
         entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
@@ -73,15 +72,15 @@ class TestTransformActionSequence(unittest.TestCase):
         depth = result["depthes"]
         matrix = result["adjacency_matrix"]
         query = result["action_queries"]
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
                 [5, -1, -1], [-1, 2, -1], [4, -1, -1], [-1, 3, -1],
                 [6, -1, -1]
             ],
             prev_action.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 # None -> Root
                 [[1, -1, -1], [2, -1, -1], [-1, -1, -1]],
@@ -103,12 +102,12 @@ class TestTransformActionSequence(unittest.TestCase):
                 [[8, -1, -1], [9, -1, -1], [-1, -1, -1]],
             ],
             prev_rule_action.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [0, 1, 2, 3, 2, 3, 3, 4, 3],
             depth.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [[0, 1, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 1, 0, 1, 0, 0, 0, 0],
              [0, 0, 0, 1, 0, 0, 0, 0, 0],
@@ -119,15 +118,15 @@ class TestTransformActionSequence(unittest.TestCase):
              [0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0]],
             matrix.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 [-1, -1, -1], [2, -1, -1], [3, 2, -1], [4, 3, 2],
                 [3, 2, -1], [5, 3, 2], [5, 3, 2], [4, 5, 3],
                 [5, 3, 2]
             ],
             query.numpy()
-        ))
+        )
 
     def test_eval(self):
         entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
@@ -148,15 +147,15 @@ class TestTransformActionSequence(unittest.TestCase):
         depth = result["depthes"]
         matrix = result["adjacency_matrix"]
         query = result["action_queries"]
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
                 [5, -1, -1], [-1, 2, -1], [4, -1, -1], [-1, 3, -1],
                 [6, -1, -1], [-1, 4, -1]
             ],
             prev_action.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 # None -> Root
                 [[1, -1, -1], [2, -1, -1], [-1, -1, -1]],
@@ -179,12 +178,12 @@ class TestTransformActionSequence(unittest.TestCase):
                 [[-1, -1, -1], [-1, 4, -1], [-1, -1, -1]],
             ],
             prev_rule_action.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [0, 1, 2, 3, 2, 3, 3, 4, 3, 4],
             depth.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
              [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -196,15 +195,15 @@ class TestTransformActionSequence(unittest.TestCase):
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
             matrix.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 [-1, -1, -1], [2, -1, -1], [3, 2, -1], [4, 3, 2],
                 [3, 2, -1], [5, 3, 2], [5, 3, 2], [4, 5, 3],
                 [5, 3, 2], [6, 5, 3]
             ],
             query.numpy()
-        ))
+        )
 
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
@@ -221,8 +220,4 @@ class TestTransformActionSequence(unittest.TestCase):
             "action_sequence": action_sequence,
             "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
         })
-        self.assertEqual(None, result)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert result is None

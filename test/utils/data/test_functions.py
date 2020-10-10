@@ -1,5 +1,4 @@
 import torch
-import unittest
 import numpy as np
 from typing import List
 from mlprogram.languages import Token
@@ -13,46 +12,46 @@ def tokenize(str: str) -> List[Token]:
     return list(map(lambda x: Token(None, x, x), str.split(" ")))
 
 
-class TestGetWords(unittest.TestCase):
+class TestGetWords(object):
     def test_get_words(self):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
         words = get_words(dataset, tokenize)
-        self.assertEqual(["foo", "bar", "test", "foo"], words)
+        assert ["foo", "bar", "test", "foo"] == words
 
 
-class TestGetCharacters(unittest.TestCase):
+class TestGetCharacters(object):
     def test_get_characters(self):
         entries = [{"input": ["foo bar"], "ground_truth": ["y = x + 1"]},
                    {"input": ["test foo"], "ground_truth": ["f(x)"]}]
         dataset = ListDataset(entries)
         chars = get_characters(dataset, tokenize)
-        self.assertEqual([
+        assert [
             "f", "o", "o",
             "b", "a", "r",
             "t", "e", "s", "t",
-            "f", "o", "o"], chars)
+            "f", "o", "o"] == chars
 
 
-class TestGetSamples(unittest.TestCase):
+class TestGetSamples(object):
     def test_get_samples(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"},
                    {"input": "test foo", "ground_truth": "f(x)"}]
         dataset = ListDataset(entries)
         d = get_samples(dataset, Parser(lambda x: [x]))
-        self.assertEqual([
+        assert [
             ("str", "y"),
             ("str", "x"),
             ("int", "1"),
             ("str", "f"),
             ("str", "x")
-        ], d.tokens)
-        self.assertEqual(12, len(d.rules))
-        self.assertEqual(28, len(d.node_types))
+        ] == d.tokens
+        assert 12 == len(d.rules)
+        assert 28 == len(d.node_types)
 
 
-class TestCollate(unittest.TestCase):
+class TestCollate(object):
     def test_collate(self):
         data = [
             {
@@ -74,22 +73,22 @@ class TestCollate(unittest.TestCase):
                           stack0=CollateOptions(False, 0, -1),
                           stack1=CollateOptions(False, 1, -1))
         retval = collate.collate(data)
-        self.assertEqual(set(["pad0", "pad1", "stack0", "stack1"]),
-                         set(retval.keys()))
+        assert set(["pad0", "pad1", "stack0", "stack1"]) == \
+            set(retval.keys())
 
-        self.assertTrue(np.array_equal([[0, 1], [-1, 1]],
-                                       retval["pad0"].data.numpy()))
-        self.assertTrue(np.array_equal([[1, 1], [0, 1]],
-                                       retval["pad0"].mask.numpy()))
-        self.assertTrue(np.array_equal([[[1], [2]], [[1], [-1]]],
-                                       retval["pad1"].data.numpy()))
-        self.assertTrue(np.array_equal([[1, 1], [1, 0]],
-                                       retval["pad1"].mask.numpy()))
+        assert np.array_equal([[0, 1], [-1, 1]],
+                              retval["pad0"].data.numpy())
+        assert np.array_equal([[1, 1], [0, 1]],
+                              retval["pad0"].mask.numpy())
+        assert np.array_equal([[[1], [2]], [[1], [-1]]],
+                              retval["pad1"].data.numpy())
+        assert np.array_equal([[1, 1], [1, 0]],
+                              retval["pad1"].mask.numpy())
 
-        self.assertTrue(np.array_equal([[0], [1]],
-                                       retval["stack0"].data.numpy()))
-        self.assertTrue(np.array_equal([[[1, 1, 1], [2, 2, 2]]],
-                                       retval["stack1"].data.numpy()))
+        assert np.array_equal([[0], [1]],
+                              retval["stack0"].data.numpy())
+        assert np.array_equal([[[1, 1, 1], [2, 2, 2]]],
+                              retval["stack1"].data.numpy())
 
     def test_collate_with_skip(self):
         data = [
@@ -101,10 +100,8 @@ class TestCollate(unittest.TestCase):
         collate = Collate(device=torch.device("cpu"),
                           pad0=CollateOptions(True, 0, -1))
         retval = collate.collate(data)
-        self.assertEqual(set(["pad0"]),
-                         set(retval.keys()))
-        self.assertTrue(np.array_equal([[0]],
-                                       retval["pad0"].data.numpy()))
+        assert set(["pad0"]) == set(retval.keys())
+        assert np.array_equal([[0]], retval["pad0"].data.numpy())
 
     def test_collate_with_additional_key(self):
         data = [
@@ -113,16 +110,15 @@ class TestCollate(unittest.TestCase):
         ]
         collate = Collate(device=torch.device("cpu"))
         retval = collate.collate(data)
-        self.assertEqual(set(["pad0"]),
-                         set(retval.keys()))
-        self.assertEqual([1, 2], retval["pad0"])
+        assert set(["pad0"]) == set(retval.keys())
+        assert [1, 2] == retval["pad0"]
 
     def test_collate_with_all_none_batch(self):
         data = [None]
         collate = Collate(device=torch.device("cpu"),
                           pad0=CollateOptions(True, 0, -1))
         retval = collate.collate(data)
-        self.assertEqual({}, retval)
+        assert {} == retval
 
     def test_collate_with_pad(self):
         data = [
@@ -136,12 +132,11 @@ class TestCollate(unittest.TestCase):
         collate = Collate(device=torch.device("cpu"),
                           x=CollateOptions(False, 0, -1))
         retval = collate.collate(data)
-        self.assertEqual(set(["x"]), set(retval.keys()))
-        self.assertTrue(np.array_equal((2, 2, 2),
-                                       retval["x"].shape))
-        self.assertTrue(np.array_equal([[[0, -1], [0, -1]],
-                                        [[0, 0], [-1, -1]]],
-                                       retval["x"].numpy()))
+        assert set(["x"]) == set(retval.keys())
+        assert np.array_equal((2, 2, 2), retval["x"].shape)
+        assert np.array_equal([[[0, -1], [0, -1]],
+                               [[0, 0], [-1, -1]]],
+                              retval["x"].numpy())
 
     def test_split(self):
         data = [
@@ -164,13 +159,13 @@ class TestCollate(unittest.TestCase):
                           stack0=CollateOptions(False, 0, -1),
                           stack1=CollateOptions(False, 1, -1))
         retval = collate.split(collate.collate(data))
-        self.assertEqual(2, len(retval))
+        assert 2 == len(retval)
         for i in range(2):
             expected = data[i]
             actual = retval[i]
-            self.assertEqual(set(expected.keys()), set(actual.keys()))
+            assert set(expected.keys()) == set(actual.keys())
             for key in expected:
-                self.assertTrue(np.array_equal(expected[key], actual[key]))
+                assert np.array_equal(expected[key], actual[key])
 
     def test_split_with_additional_key(self):
         data = [
@@ -179,9 +174,5 @@ class TestCollate(unittest.TestCase):
         ]
         collate = Collate(device=torch.device("cpu"))
         retval = collate.split(collate.collate(data))
-        self.assertEqual(1, retval[0]["pad0"])
-        self.assertEqual(2, retval[1]["pad0"])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert 1 == retval[0]["pad0"]
+        assert 2 == retval[1]["pad0"]

@@ -1,11 +1,10 @@
-import unittest
 import torch
 import numpy as np
 
 from mlprogram.nn.functional import position_embeddings, index_embeddings
 
 
-class TestPostionEmbeddings(unittest.TestCase):
+class TestPostionEmbeddings(object):
     def test_position_embeddings(self):
         b = 1
         E = 4
@@ -16,7 +15,7 @@ class TestPostionEmbeddings(unittest.TestCase):
         divisors = np.array([1, 1, 10000**0.5, 10000**0.5])
         e_arr = np.sin(e_arr / divisors.reshape(1, 1, E))
         e_tensor = position_embeddings(torch.tensor(indexes), b, E)
-        self.assertTrue(np.allclose(e_arr, e_tensor.numpy()))
+        assert np.allclose(e_arr, e_tensor.numpy())
 
     def test_index_embeddings(self):
         b = 1
@@ -29,8 +28,4 @@ class TestPostionEmbeddings(unittest.TestCase):
         e_arr = np.sin(e_arr / divisors.reshape(1, 1, E))
         tensor = torch.FloatTensor(3, 2, 4)
         e_tensor = index_embeddings(tensor, b)
-        self.assertTrue(np.allclose(e_arr, e_tensor.numpy()))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(e_arr, e_tensor.numpy())

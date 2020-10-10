@@ -1,15 +1,14 @@
 import torch
 import numpy as np
-import unittest
 
 from mlprogram.nn.treegen import DecoderBlock, Decoder
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
-class TestDecoderBlock(unittest.TestCase):
+class TestDecoderBlock(object):
     def test_parameters(self):
         block = DecoderBlock(1, 3, 5, 1, 0.0)
-        self.assertEqual(18, len(list(block.parameters())))
+        assert 18 == len(list(block.parameters()))
 
     def test_shape(self):
         block = DecoderBlock(1, 3, 5, 1, 0.0)
@@ -19,10 +18,10 @@ class TestDecoderBlock(unittest.TestCase):
         out, w0, w1 = block(pad_sequence([query0], 0),
                             pad_sequence([nl0], 0),
                             pad_sequence([ast0], 0))
-        self.assertEqual((7, 1, 5), out.data.shape)
-        self.assertEqual((7, 1), out.mask.shape)
-        self.assertEqual((1, 7, 11), w0.shape)
-        self.assertEqual((1, 7, 7), w1.shape)
+        assert (7, 1, 5) == out.data.shape
+        assert (7, 1) == out.mask.shape
+        assert (1, 7, 11) == w0.shape
+        assert (1, 7, 7) == w1.shape
 
     def test_mask_nl(self):
         block = DecoderBlock(1, 3, 5, 1, 0.0)
@@ -40,12 +39,12 @@ class TestDecoderBlock(unittest.TestCase):
         out1 = out1.data[:7, :1, :]
         w10 = w10[:1, :7, :11]
         w11 = w11[:1, :7, :7]
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-        self.assertTrue(np.allclose(w00.detach().numpy(),
-                                    w10.detach().numpy()))
-        self.assertTrue(np.allclose(w01.detach().numpy(),
-                                    w11.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
+        assert np.allclose(w00.detach().numpy(),
+                           w10.detach().numpy())
+        assert np.allclose(w01.detach().numpy(),
+                           w11.detach().numpy())
 
     def test_mask_ast_and_query(self):
         block = DecoderBlock(1, 3, 5, 1, 0.0)
@@ -64,12 +63,12 @@ class TestDecoderBlock(unittest.TestCase):
         out1 = out1.data[:7, :1, :]
         w10 = w10[:1, :7, :11]
         w11 = w11[:1, :7, :7]
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-        self.assertTrue(np.allclose(w00.detach().numpy(),
-                                    w10.detach().numpy()))
-        self.assertTrue(np.allclose(w01.detach().numpy(),
-                                    w11.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
+        assert np.allclose(w00.detach().numpy(),
+                           w10.detach().numpy())
+        assert np.allclose(w01.detach().numpy(),
+                           w11.detach().numpy())
 
     def test_attn_mask(self):
         block = DecoderBlock(1, 3, 5, 1, 0.0)
@@ -86,18 +85,18 @@ class TestDecoderBlock(unittest.TestCase):
         out1 = out1.data[:5, :1, :]
         w10 = w10[:1, :5, :11]
         w11 = w11[:1, :5, :5]
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-        self.assertTrue(np.allclose(w00.detach().numpy(),
-                                    w10.detach().numpy()))
-        self.assertTrue(np.allclose(w01.detach().numpy(),
-                                    w11.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
+        assert np.allclose(w00.detach().numpy(),
+                           w10.detach().numpy())
+        assert np.allclose(w01.detach().numpy(),
+                           w11.detach().numpy())
 
 
-class TestDecoder(unittest.TestCase):
+class TestDecoder(object):
     def test_parameters(self):
         decoder = Decoder(1, 3, 1, 3, 5, 1, 0.0, 5)
-        self.assertEqual(18 * 5 + 2, len(list(decoder.parameters())))
+        assert 18 * 5 + 2 == len(list(decoder.parameters()))
 
     def test_shape(self):
         decoder = Decoder(1, 3, 1, 3, 5, 1, 0.0, 5)
@@ -109,8 +108,8 @@ class TestDecoder(unittest.TestCase):
             "nl_query_features": pad_sequence([nl0], 0),
             "action_features": pad_sequence([ast0], 0)
         })["action_features"]
-        self.assertEqual((7, 1, 5), out.data.shape)
-        self.assertEqual((7, 1), out.mask.shape)
+        assert (7, 1, 5) == out.data.shape
+        assert (7, 1) == out.mask.shape
 
     def test_mask_nl(self):
         decoder = Decoder(1, 3, 1, 3, 5, 1, 0.0, 5)
@@ -130,8 +129,8 @@ class TestDecoder(unittest.TestCase):
         })["action_features"]
         out0 = out0.data
         out1 = out1.data[:7, :1, :]
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
 
     def test_mask_ast_and_query(self):
         decoder = Decoder(1, 3, 1, 3, 5, 1, 0.0, 5)
@@ -152,8 +151,8 @@ class TestDecoder(unittest.TestCase):
         })["action_features"]
         out0 = out0.data
         out1 = out1.data[:7, :1, :]
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
 
     def test_attn_mask(self):
         decoder = Decoder(1, 3, 1, 3, 5, 1, 0.0, 5)
@@ -172,9 +171,5 @@ class TestDecoder(unittest.TestCase):
         })["action_features"]
         out0 = out0.data
         out1 = out1.data[:5, :1, :]
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())

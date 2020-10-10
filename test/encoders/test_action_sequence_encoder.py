@@ -1,5 +1,4 @@
 import torch
-import unittest
 import numpy as np
 
 from mlprogram.actions \
@@ -10,19 +9,19 @@ from mlprogram.languages import Token
 from mlprogram.encoders import Samples, ActionSequenceEncoder
 
 
-class TestEncoder(unittest.TestCase):
+class TestEncoder(object):
     def test_reserved_labels(self):
         encoder = ActionSequenceEncoder(Samples([], [], []), 0)
-        self.assertEqual(2, len(encoder._rule_encoder.vocab))
-        self.assertEqual(1, len(encoder._token_encoder.vocab))
+        assert 2 == len(encoder._rule_encoder.vocab)
+        assert 1 == len(encoder._token_encoder.vocab)
 
     def test_encode_raw_value(self):
         encoder = ActionSequenceEncoder(
             Samples([], [],
                     [("", "foo"), ("x", "foo")]),
             0)
-        self.assertEqual([1, 2], encoder.encode_raw_value("foo"))
-        self.assertEqual([0], encoder.encode_raw_value("bar"))
+        assert [1, 2] == encoder.encode_raw_value("foo")
+        assert [0] == encoder.encode_raw_value("bar")
 
     def test_encode_action(self):
         funcdef = ExpandTreeRule(
@@ -56,7 +55,7 @@ class TestEncoder(unittest.TestCase):
                                        [Token("", "1", "1"),
                                         Token("", "2", "2")])
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [-1, 2, -1, -1],
                 [2, -1, 1, -1],
@@ -66,7 +65,7 @@ class TestEncoder(unittest.TestCase):
                 [3, -1, -1, -1]
             ],
             action.numpy()
-        ))
+        )
 
     def test_encode_parent(self):
         funcdef = ExpandTreeRule(
@@ -98,7 +97,7 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         parent = encoder.encode_parent(action_sequence)
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [-1, -1, -1, -1],
                 [1, 2, 0, 0],
@@ -108,7 +107,7 @@ class TestEncoder(unittest.TestCase):
                 [1, 2, 0, 1]
             ],
             parent.numpy()
-        ))
+        )
 
     def test_encode_tree(self):
         funcdef = ExpandTreeRule(
@@ -138,13 +137,13 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken("", "1"))
         d, m = encoder.encode_tree(action_sequence)
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [0, 1, 1], d.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [[0, 1, 1], [0, 0, 0], [0, 0, 0]],
             m.numpy()
-        ))
+        )
 
     def test_encode_empty_sequence(self):
         funcdef = ExpandTreeRule(
@@ -173,20 +172,20 @@ class TestEncoder(unittest.TestCase):
         parent = encoder.encode_parent(action_sequence)
         d, m = encoder.encode_tree(action_sequence)
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [-1, -1, -1, -1]
             ],
             action.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 [-1, -1, -1, -1]
             ],
             parent.numpy()
-        ))
-        self.assertTrue(np.array_equal(np.zeros((0,)), d.numpy()))
-        self.assertTrue(np.array_equal(np.zeros((0, 0)), m.numpy()))
+        )
+        assert np.array_equal(np.zeros((0,)), d.numpy())
+        assert np.array_equal(np.zeros((0, 0)), m.numpy())
 
     def test_encode_invalid_sequence(self):
         funcdef = ExpandTreeRule(
@@ -216,8 +215,8 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(GenerateToken("", "1"))
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
-        self.assertEqual(None, encoder.encode_action(action_sequence,
-                                                     [Token("", "2", "2")]))
+        assert encoder.encode_action(action_sequence,
+                                     [Token("", "2", "2")]) is None
 
     def test_encode_completed_sequence(self):
         none = ExpandTreeRule(NodeType("value", NodeConstraint.Node, False),
@@ -232,20 +231,20 @@ class TestEncoder(unittest.TestCase):
         action = encoder.encode_action(action_sequence, [Token("", "1", "1")])
         parent = encoder.encode_parent(action_sequence)
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [-1, 2, -1, -1],
                 [-1, -1, -1, -1]
             ],
             action.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 [-1, -1, -1, -1],
                 [-1, -1, -1, -1]
             ],
             parent.numpy()
-        ))
+        )
 
     def test_decode(self):
         funcdef = ExpandTreeRule(
@@ -282,10 +281,10 @@ class TestEncoder(unittest.TestCase):
         expected_action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
 
         result = encoder.decode(encoder.encode_action(
-            action_sequence, [Token(None, "1", "1")])[:-1, 1:],
+            action_sequence, [Token(None, "1", "1")])[: -1, 1:],
             [Token(None, "1", "1")])
-        self.assertEqual(expected_action_sequence.action_sequence,
-                         result.action_sequence)
+        assert \
+            expected_action_sequence.action_sequence == result.action_sequence
 
     def test_decode_invalid_tensor(self):
         funcdef = ExpandTreeRule(
@@ -309,10 +308,8 @@ class TestEncoder(unittest.TestCase):
                      NodeType("expr", NodeConstraint.Node, False)],
                     [("", "f")]),
             0)
-        self.assertEqual(None,
-                         encoder.decode(torch.LongTensor([[-1, -1, -1]]), []))
-        self.assertEqual(None,
-                         encoder.decode(torch.LongTensor([[-1, -1, 1]]), []))
+        assert encoder.decode(torch.LongTensor([[-1, -1, -1]]), []) is None
+        assert encoder.decode(torch.LongTensor([[-1, -1, 1]]), []) is None
 
     def test_encode_each_action(self):
         funcdef = ExpandTreeRule(
@@ -349,7 +346,7 @@ class TestEncoder(unittest.TestCase):
             [Token("", "1", "1"), Token("", "2", "2")],
             1)
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             np.array([
                 [[1, -1, -1], [2, -1, -1]],   # funcdef
                 [[-1, -1, -1], [-1, 1, -1]],  # f
@@ -362,7 +359,7 @@ class TestEncoder(unittest.TestCase):
                 [[-1, -1, -1], [-1, -1, -1]]  # CloseVariadicField
             ], dtype=np.long),
             action.numpy()
-        ))
+        )
 
     def test_encode_path(self):
         funcdef = ExpandTreeRule(
@@ -395,7 +392,7 @@ class TestEncoder(unittest.TestCase):
         action_sequence.eval(ApplyRule(CloseVariadicFieldRule()))
         path = encoder.encode_path(action_sequence, 2)
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             np.array([
                 [-1, -1],  # funcdef
                 [2, -1],  # f
@@ -408,9 +405,9 @@ class TestEncoder(unittest.TestCase):
                 [2, -1],  # CloseVariadicField
             ], dtype=np.long),
             path.numpy()
-        ))
+        )
         path = encoder.encode_path(action_sequence, 1)
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             np.array([
                 [-1],  # funcdef
                 [2],  # f
@@ -423,8 +420,4 @@ class TestEncoder(unittest.TestCase):
                 [2],  # CloseVariadicField
             ], dtype=np.long),
             path.numpy()
-        ))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        )

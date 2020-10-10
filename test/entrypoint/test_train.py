@@ -1,5 +1,4 @@
 import numpy as np
-import unittest
 import tempfile
 import os
 import json
@@ -46,7 +45,7 @@ class MockEvaluate(object):
         report({self.key: 0.0})
 
 
-class TestTrainSupervised(unittest.TestCase):
+class TestTrainSupervised(object):
     def prepare_dataset(self):
         return ListDataset([0, 1, 2])
 
@@ -87,24 +86,23 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_6")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_6"))
+            assert os.path.exists(os.path.join(ws, "log"))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(ws, "model")))
 
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(
-                os.path.exists(os.path.join(output, "optimizer.pt")))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(output, "model")))
+            assert os.path.exists(os.path.join(output, "model.pt"))
+            assert os.path.exists(os.path.join(output, "optimizer.pt"))
 
     def test_threshold(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -120,12 +118,11 @@ class TestTrainSupervised(unittest.TestCase):
                              MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2),
                              threshold=0.0)
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+            assert 1 == len(os.listdir(os.path.join(ws, "model")))
 
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(
-                os.path.exists(os.path.join(output, "optimizer.pt")))
+            assert 1 == len(os.listdir(os.path.join(output, "model")))
+            assert os.path.exists(os.path.join(output, "model.pt"))
+            assert os.path.exists(os.path.join(output, "optimizer.pt"))
 
     def test_skip_evaluation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -140,24 +137,23 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              None, "key",
                              self.collate, 1, Epoch(2))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_6")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_6"))
+            assert os.path.exists(os.path.join(ws, "log"))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(0, len(os.listdir(os.path.join(ws, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 0 == len(os.listdir(os.path.join(ws, "model")))
 
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(0, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(
-                os.path.exists(os.path.join(output, "optimizer.pt")))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 0 == len(os.listdir(os.path.join(output, "model")))
+            assert os.path.exists(os.path.join(output, "model.pt"))
+            assert os.path.exists(os.path.join(output, "optimizer.pt"))
 
     def test_remove_old_snapshots(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -171,8 +167,8 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_6")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_6"))
 
     def test_resume_from_checkpoint(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -197,12 +193,12 @@ class TestTrainSupervised(unittest.TestCase):
                                                          kwargs["target"]),
                              MockEvaluate("key"), "key",
                              self.collate, 1, Epoch(2))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_6")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_6"))
             with open(os.path.join(output, "log.json")) as file:
                 log2 = json.load(file)
-            self.assertEqual(log[0], log2[0])
-            self.assertEqual(2, len(log2))
+            assert log[0] == log2[0]
+            assert 2 == len(log2)
 
     def test_finish_by_iteration(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -218,21 +214,21 @@ class TestTrainSupervised(unittest.TestCase):
                              MockEvaluate("key"), "key",
                              self.collate, 1, Iteration(2),
                              evaluation_interval=Iteration(1))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_2")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_2"))
+            assert os.path.exists(os.path.join(ws, "log"))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(ws, "model")))
 
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(output, "model")))
 
     def test_iterable_dataset(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -248,24 +244,24 @@ class TestTrainSupervised(unittest.TestCase):
                              MockEvaluate("key"), "key",
                              self.collate, 1, Iteration(2),
                              evaluation_interval=Iteration(1))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_2")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_2"))
+            assert os.path.exists(os.path.join(ws, "log"))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(ws, "model")))
 
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(output, "model")))
 
 
-class TestTrainREINFORCE(unittest.TestCase):
+class TestTrainREINFORCE(object):
     def prepare_dataset(self):
         return ListDataset([
             {"value": 0},
@@ -309,24 +305,24 @@ class TestTrainREINFORCE(unittest.TestCase):
                             reward,
                             self.collate,
                             1, 1, Epoch(2))
-            self.assertTrue(os.path.exists(
-                os.path.join(ws, "snapshot_iter_6")))
-            self.assertTrue(os.path.exists(os.path.join(ws, "log")))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_6"))
+            assert os.path.exists(os.path.join(ws, "log"))
             with open(os.path.join(ws, "log")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(ws, "model"))))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(ws, "model")))
 
-            self.assertTrue(os.path.exists(os.path.join(output, "log.json")))
+            assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
-            self.assertTrue(isinstance(log, list))
-            self.assertEqual(1, len(log))
-            self.assertEqual(1, len(os.listdir(os.path.join(output, "model"))))
-            self.assertTrue(os.path.exists(os.path.join(output, "model.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "optimizer.pt")))
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(output, "model")))
+            assert os.path.exists(os.path.join(output, "model.pt"))
+            assert os.path.exists(
+                os.path.join(output, "optimizer.pt"))
 
     def test_pretrained_model(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -352,7 +348,7 @@ class TestTrainREINFORCE(unittest.TestCase):
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_model=True)
-            self.assertFalse(os.path.exists(os.path.join(ws, "log")))
+            assert not os.path.exists(os.path.join(ws, "log"))
 
     def test_pretrained_optimizer(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -378,8 +374,4 @@ class TestTrainREINFORCE(unittest.TestCase):
                             self.collate,
                             1, 1, Epoch(2),
                             use_pretrained_optimizer=True)
-            self.assertFalse(os.path.exists(os.path.join(ws, "log")))
-
-
-if __name__ == "__main__":
-    unittest.main()
+            assert not os.path.exists(os.path.join(ws, "log"))

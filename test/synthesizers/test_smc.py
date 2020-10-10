@@ -1,4 +1,3 @@
-import unittest
 from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import SMC
 from typing import Tuple, Optional, List
@@ -47,16 +46,16 @@ class MockSMC(SMC[str, str, Tuple[str, str], str]):
                          max_try_num=max_try_num)
 
 
-class TestSMC(unittest.TestCase):
+class TestSMC(object):
     def test_happy_path(self):
         decoder = MockSMC(3, 10, 10, np.random.RandomState(0))
         results = set([result.output for result in decoder("x0")])
-        self.assertTrue("x0" in results)
+        assert "x0" in results
 
     def test_when_synthesize_finishes(self):
         decoder = MockSMC(10, 1, 10, np.random.RandomState(0), True)
         results = list([result.output for result in decoder("x0")])
-        self.assertTrue(len(results) <= 10)
+        assert len(results) <= 10
 
     def test_n_required_output_limit_n_particle(self):
         @timeout_decorator.timeout(1)
@@ -65,9 +64,5 @@ class TestSMC(unittest.TestCase):
             results = set([
                 result.output
                 for result in decoder("x0", n_required_output=10)])
-            self.assertTrue("x0" in results)
+            assert "x0" in results
         f()
-
-
-if __name__ == "__main__":
-    unittest.main()

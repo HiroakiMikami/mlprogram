@@ -1,9 +1,7 @@
-import unittest
-
 from mlprogram.datasets.hearthstone import download
 
 
-class TestDownload(unittest.TestCase):
+class TestDownload(object):
     def test_download(self):
         values = [
             "line0\n", "x = 10\n",
@@ -18,20 +16,14 @@ class TestDownload(unittest.TestCase):
         test_dataset = dataset["test"]
         valid_dataset = dataset["valid"]
 
-        self.assertEqual(1, len(train_dataset))
-        self.assertEqual({"input": "line0", "ground_truth": "x = 10"},
-                         train_dataset[0])
+        assert 1 == len(train_dataset)
+        assert {"input": "line0", "ground_truth": "x = 10"} == train_dataset[0]
 
-        self.assertEqual(1, len(test_dataset))
-        self.assertEqual({"input": "line1",
-                          "ground_truth": "if True:\n  pass"},
-                         test_dataset[0])
+        assert 1 == len(test_dataset)
+        assert {"input": "line1",
+                "ground_truth": "if True:\n  pass"} == test_dataset[0]
 
-        self.assertEqual(1, len(valid_dataset))
-        self.assertEqual({"input": "line2",
-                          "ground_truth": "if True and True:\n  pass"},
-                         valid_dataset[0])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert 1 == len(valid_dataset)
+        assert {"input": "line2",
+                "ground_truth": "if True and True:\n  pass"} == \
+            valid_dataset[0]
