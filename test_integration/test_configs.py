@@ -2,7 +2,6 @@ import tempfile
 import os
 import logging
 import sys
-import pytest
 from typing import List, Tuple
 from tools.launch import launch_multiprocess
 
@@ -17,16 +16,12 @@ class TestConfig(object):
             for config, n_process in configs:
                 launch_multiprocess(config, "test", tmpdir, n_process)
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_django_nl2code(self):
         self.launch_config([
             (os.path.join("configs", "django", "nl2code_train.yaml"), 0),
             (os.path.join("configs", "django", "nl2code_evaluate.yaml"), 0),
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_hearthstone_nl2code(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "nl2code_train.yaml"), 0),
@@ -34,8 +29,6 @@ class TestConfig(object):
              0),
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_hearthstone_treegen(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "treegen_train.yaml"), 0),
@@ -43,8 +36,6 @@ class TestConfig(object):
              0)
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_nl2bash_nl2code(self):
         if not os.path.exists(os.path.join("datasets", "nl2bash.json")):
             logger.warning("nl2bash dataset is not downloaded. Skip this test")
@@ -55,8 +46,6 @@ class TestConfig(object):
             (os.path.join("configs", "nl2bash", "nl2code_evaluate.yaml"), 0)
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_csg_small_pbe_without_repl(self):
         self.launch_config([
             (os.path.join("configs", "csg",
@@ -65,8 +54,6 @@ class TestConfig(object):
                           "without_repl_evaluate_small.yaml"), 0)
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_csg_large_pbe_without_repl(self):
         self.launch_config([
             (os.path.join("configs", "csg",
@@ -75,8 +62,6 @@ class TestConfig(object):
                           "without_repl_evaluate_large.yaml"), 0),
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_csg_small_pbe_with_repl(self):
         self.launch_config([
             (os.path.join("configs", "csg",
@@ -87,8 +72,6 @@ class TestConfig(object):
                           "pbe_with_repl_evaluate_small.yaml"), 0)
         ])
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test_csg_large_pbe_with_repl(self):
         self.launch_config([
             (os.path.join("configs", "csg",

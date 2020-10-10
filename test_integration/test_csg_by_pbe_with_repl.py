@@ -5,7 +5,6 @@ import sys
 import tempfile
 import os
 import random
-import pytest
 
 import torch
 import torch.optim as optim
@@ -327,8 +326,6 @@ class TestCsgByPbeWithREPL(object):
                 use_pretrained_optimizer=False,
                 threshold=0.9)
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test(self):
         torch.manual_seed(0)
         np.random.seed(0)

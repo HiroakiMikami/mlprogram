@@ -1,17 +1,14 @@
 from collections import OrderedDict
-import sys
 import logging
+import sys
 import tempfile
 import os
 import numpy as np
-import random
-import pytest
 
 import torch
 import torch.nn as nn
-import fairseq.optim as optim
+import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
-
 import mlprogram.nn
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint import EvaluateSynthesizer
@@ -22,80 +19,67 @@ from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.utils import Sequence, Map
 from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.utils.data import get_words, get_characters, get_samples
+from mlprogram.utils.data import get_words, get_samples
 from mlprogram.utils.transform.action_sequence \
-    import TransformGroundTruth, TransformCode
-from mlprogram.utils.transform.treegen \
+    import TransformCode, TransformGroundTruth
+from mlprogram.utils.transform.nl2code \
     import TransformQuery, TransformActionSequence
-from mlprogram.nn.action_sequence import Loss, Predictor
-from mlprogram.nn import treegen
+from mlprogram.nn.action_sequence import Loss
+import mlprogram.nn.nl2code as nl2code
 from mlprogram.metrics import Accuracy
 
-from test.nl2code_dummy_dataset import is_subtype
-from test.nl2code_dummy_dataset import train_dataset
-from test.nl2code_dummy_dataset import test_dataset
-from test.nl2code_dummy_dataset import tokenize
-from test.nl2code_dummy_dataset import Parser
+from test_integration.nl2code_dummy_dataset import is_subtype
+from test_integration.nl2code_dummy_dataset import train_dataset
+from test_integration.nl2code_dummy_dataset import test_dataset
+from test_integration.nl2code_dummy_dataset import tokenize
+from test_integration.nl2code_dummy_dataset import Parser
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-class TestTreeGen(object):
+class TestNL2Code(object):
     def prepare_encoder(self, dataset, parser):
         words = get_words(dataset, tokenize)
-        chars = get_characters(dataset, tokenize)
         samples = get_samples(dataset, parser)
-
         qencoder = LabelEncoder(words, 2)
-        cencoder = LabelEncoder(chars, 0)
         aencoder = ActionSequenceEncoder(samples, 2)
-        return qencoder, cencoder, aencoder
+        return qencoder, aencoder
 
-    def prepare_model(self, qencoder, cencoder, aencoder):
-        rule_num = aencoder._rule_encoder.vocab_size
-        token_num = aencoder._token_encoder.vocab_size
-        node_type_num = aencoder._node_type_encoder.vocab_size
-        token_num = aencoder._token_encoder. vocab_size
+    def prepare_model(self, qencoder, aencoder):
+        reader = nl2code.ActionSequenceReader(
+            aencoder._rule_encoder.vocab_size,
+            aencoder._token_encoder.vocab_size,
+            aencoder._node_type_encoder.vocab_size,
+            64, 256
+        )
         return torch.nn.Sequential(OrderedDict([
-            ("encoder", treegen.NLReader(
-                qencoder.vocab_size, cencoder.vocab_size,
-                10, 256, 256, 1, 0.0, 5
-            )),
-            ("decoder", torch.nn.Sequential(OrderedDict([
-                ("action_sequence_reader", treegen.ActionSequenceReader(
-                    rule_num, token_num, node_type_num, 4, 256,
-                    256, 3, 1, 0.0, 5
-                )),
-                ("decoder", treegen.Decoder(
-                    rule_num, 4, 256, 1024, 256, 1, 0.0, 5
-                )),
-                ("predictor", Predictor(
-                    256, 256, rule_num, token_num, 256
-                ))
-            ])))
+            ("encoder", nl2code.NLReader(qencoder.vocab_size, 256, 256, 0.0)),
+            ("decoder",
+             torch.nn.Sequential(OrderedDict([
+                 ("action_sequence_reader", reader),
+                 ("decoder", nl2code.Decoder(256, 2 * 256 + 64, 256, 64, 0.0)),
+                 ("predictor", nl2code.Predictor(reader, 256, 256, 256, 64))
+             ])))
         ]))
 
     def prepare_optimizer(self, model):
-        return Optimizer(optim.adafactor.Adafactor,
-                         model)
+        return Optimizer(optim.Adam, model)
 
-    def prepare_synthesizer(self, model, qencoder, cencoder, aencoder):
-        transform_input = TransformQuery(tokenize, qencoder,
-                                         cencoder, 10)
-        transform_action_sequence = TransformActionSequence(aencoder, 4, 4,
+    def prepare_synthesizer(self, model, qencoder, aencoder):
+        transform_input = TransformQuery(tokenize, qencoder)
+        transform_action_sequence = TransformActionSequence(aencoder,
                                                             train=False)
-
         collate = Collate(
             torch.device("cpu"),
             word_nl_query=CollateOptions(True, 0, -1),
-            char_nl_query=CollateOptions(True, 0, -1),
             nl_query_features=CollateOptions(True, 0, -1),
             reference_features=CollateOptions(True, 0, -1),
+            actions=CollateOptions(True, 0, -1),
             previous_actions=CollateOptions(True, 0, -1),
             previous_action_rules=CollateOptions(True, 0, -1),
-            depthes=CollateOptions(False, 1, 0),
-            adjacency_matrix=CollateOptions(False, 0, 0),
-            action_queries=CollateOptions(True, 0, -1),
+            history=CollateOptions(False, 1, 0),
+            hidden_state=CollateOptions(False, 0, 0),
+            state=CollateOptions(False, 0, 0),
             ground_truth_actions=CollateOptions(True, 0, -1)
         )
         return BeamSearch(
@@ -104,10 +88,10 @@ class TestTreeGen(object):
                 aencoder, is_subtype, transform_input,
                 transform_action_sequence, collate, model))
 
-    def transform_cls(self, qencoder, cencoder, aencoder, parser):
-        tquery = TransformQuery(tokenize, qencoder, cencoder, 10)
+    def transform_cls(self, qencoder, aencoder, parser):
+        tquery = TransformQuery(tokenize, qencoder)
         tcode = TransformCode(parser)
-        teval = TransformActionSequence(aencoder, 4, 4)
+        teval = TransformActionSequence(aencoder)
         tgt = TransformGroundTruth(aencoder)
         return Sequence(
             OrderedDict([
@@ -118,15 +102,13 @@ class TestTreeGen(object):
             ])
         )
 
-    def evaluate(self, qencoder, cencoder, aencoder, dir):
+    def evaluate(self, qencoder, aencoder, dir):
         with tempfile.TemporaryDirectory() as tmpdir:
-            model = self.prepare_model(qencoder, cencoder, aencoder)
+            model = self.prepare_model(qencoder, aencoder)
             eval(
                 dir, tmpdir, dir,
-                test_dataset,
-                model,
-                self.prepare_synthesizer(
-                    model, qencoder, cencoder, aencoder),
+                test_dataset, model,
+                self.prepare_synthesizer(model, qencoder, aencoder),
                 {"accuracy": Accuracy()},
                 top_n=[5],
                 n_process=1
@@ -141,33 +123,34 @@ class TestTreeGen(object):
                  mlprogram.nn.Function(
                      mlprogram.utils.Pick("action_sequence_loss")))
             ]))
-
             collate = Collate(
                 torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),
-                char_nl_query=CollateOptions(True, 0, -1),
                 nl_query_features=CollateOptions(True, 0, -1),
                 reference_features=CollateOptions(True, 0, -1),
+                actions=CollateOptions(True, 0, -1),
                 previous_actions=CollateOptions(True, 0, -1),
                 previous_action_rules=CollateOptions(True, 0, -1),
-                depthes=CollateOptions(False, 1, 0),
-                adjacency_matrix=CollateOptions(False, 0, 0),
-                action_queries=CollateOptions(True, 0, -1),
+                history=CollateOptions(False, 1, 0),
+                hidden_state=CollateOptions(False, 0, 0),
+                state=CollateOptions(False, 0, 0),
                 ground_truth_actions=CollateOptions(True, 0, -1)
             ).collate
 
-            encoder = self.prepare_encoder(train_dataset, Parser())
-            model = self.prepare_model(*encoder)
-            transform = Map(self.transform_cls(*encoder, Parser()))
+            qencoder, aencoder = \
+                self.prepare_encoder(train_dataset, Parser())
+            transform = Map(self.transform_cls(qencoder, aencoder,
+                                               Parser()))
+            model = self.prepare_model(qencoder, aencoder)
+            optimizer = self.prepare_optimizer(model)
             train_supervised(
-                tmpdir, output_dir, train_dataset,
-                model, self.prepare_optimizer(model),
+                tmpdir, output_dir,
+                train_dataset, model, optimizer,
                 loss_fn,
                 EvaluateSynthesizer(
                     test_dataset,
-                    self.prepare_synthesizer(model, *encoder),
-                    {"accuracy": Accuracy()},
-                    top_n=[5]
+                    self.prepare_synthesizer(model, qencoder, aencoder),
+                    {"accuracy": Accuracy()}, top_n=[5]
                 ),
                 "accuracy@5",
                 lambda x: collate(transform(x)),
@@ -175,14 +158,10 @@ class TestTreeGen(object):
                 snapshot_interval=Epoch(100),
                 threshold=1.0
             )
-        return encoder
+        return qencoder, aencoder
 
-    @pytest.mark.skipif("MLPROGRAM_INTEGRATION_TEST" not in os.environ,
-                        reason="Skip integration tests")
     def test(self):
-        torch.manual_seed(1)
-        np.random.seed(1)
-        random.seed(1)
+        torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:
             encoder = self.train(tmpdir)
             results = self.evaluate(*encoder, tmpdir)
