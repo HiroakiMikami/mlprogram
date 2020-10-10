@@ -1,4 +1,3 @@
-import unittest
 from typing import Optional, Tuple
 from mlprogram.samplers import Sampler, transform
 
@@ -11,12 +10,8 @@ class MockSampler(Sampler[int, int, str]):
             return int(state), True
 
 
-class TestTransform(unittest.TestCase):
+class TestTransform(object):
     def test_transform(self):
         sampler = transform(MockSampler(), lambda x: x * 2)
-        self.assertEqual((4, True), sampler.create_output(None, "2"))
-        self.assertEqual(None, sampler.create_output(None, ""))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert (4, True) == sampler.create_output(None, "2")
+        assert sampler.create_output(None, "") is None

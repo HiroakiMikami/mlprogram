@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 from typing import List
-import unittest
 from mlprogram.samplers \
     import ActionSequenceSampler, SamplerState
 from mlprogram.encoders import Samples, ActionSequenceEncoder
@@ -91,7 +90,7 @@ class Module(nn.Module):
         self.decoder = decoder
 
 
-class TestActionSequenceSampler(unittest.TestCase):
+class TestActionSequenceSampler(object):
     def test_initialize(self):
         sampler = ActionSequenceSampler(
             create_encoder(),
@@ -102,9 +101,9 @@ class TestActionSequenceSampler(unittest.TestCase):
                    DecoderModule([], [], []))
         )
         s = sampler.initialize({})
-        self.assertEqual(1, len(s["action_sequence"].action_sequence))
+        assert 1 == len(s["action_sequence"].action_sequence)
         s.pop("action_sequence")
-        self.assertEqual({"input": torch.zeros((1,)), "reference": []}, s)
+        assert {"input": torch.zeros((1,)), "reference": []} == s
 
     def test_rule(self):
         rule_prob = torch.tensor([
@@ -136,20 +135,19 @@ class TestActionSequenceSampler(unittest.TestCase):
         )
         s = SamplerState(0.0, sampler.initialize({}))
         topk_results = list(sampler.top_k_samples([s], 1))
-        self.assertEqual(1, len(topk_results))
-        self.assertEqual(1, topk_results[0].state.state["length"].item())
-        self.assertAlmostEqual(log(0.2), topk_results[0].state.score)
+        assert 1 == len(topk_results)
+        assert 1 == topk_results[0].state.state["length"].item()
+        assert np.allclose(log(0.2), topk_results[0].state.score)
         random_results = list(sampler.batch_k_samples([s], [1]))
-        self.assertEqual(1, len(random_results))
-        self.assertEqual(1, random_results[0].state.state["length"].item())
-        self.assertTrue(
-            log(0.1) - 1e-5 <= random_results[0].state.score
-            <= log(0.2) + 1e-5)
+        assert 1 == len(random_results)
+        assert 1 == random_results[0].state.state["length"].item()
+        assert \
+            log(0.1) - 1e-5 <= random_results[0].state.score <= log(0.2) + 1e-5
 
         next = list(sampler.top_k_samples(
             [s.state for s in topk_results], 1))[0]
-        self.assertEqual(2, next.state.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.5), next.state.score)
+        assert 2 == next.state.state["length"].item()
+        assert np.allclose(log(0.2) + log(0.5), next.state.score)
 
     def test_variadic_rule(self):
         rule_prob = torch.tensor([
@@ -192,19 +190,18 @@ class TestActionSequenceSampler(unittest.TestCase):
         results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = \
             list(sampler.top_k_samples(results, 2))
-        self.assertEqual(2, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.5) +
-                               log(0.8), topk_results[0].state.score)
-        self.assertAlmostEqual(log(0.2) + log(0.5) +
-                               log(0.2), topk_results[1].state.score)
+        assert 2 == len(topk_results)
+        assert 3 == topk_results[0].state.state["length"].item()
+        assert np.allclose(log(0.2) + log(0.5) + log(0.8),
+                           topk_results[0].state.score)
+        assert np.allclose(log(0.2) + log(0.5) + log(0.2),
+                           topk_results[1].state.score)
         random_results = list(sampler.batch_k_samples(results[:1], [1]))
-        self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
-        self.assertTrue(
-            (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
+        assert 1 == len(random_results)
+        assert 3 == random_results[0].state.state["length"].item()
+        assert (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
                 random_results[0].state.score <=
-                log(0.2) + log(0.5) + log(0.8) + 1e-5))
+                log(0.2) + log(0.5) + log(0.8) + 1e-5)
 
     def test_token(self):
         rule_prob = torch.tensor([
@@ -248,19 +245,15 @@ class TestActionSequenceSampler(unittest.TestCase):
         results = [s.state for s in sampler.top_k_samples([s], 1)]
         results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = list(sampler.top_k_samples(results, 2))
-        self.assertEqual(2, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(0.8),
-                               topk_results[0].state.score)
-        self.assertAlmostEqual(log(0.2) + log(0.2),
-                               topk_results[1].state.score)
+        assert 2 == len(topk_results)
+        assert 3 == topk_results[0].state.state["length"].item()
+        assert np.allclose(log(0.2) + log(0.8), topk_results[0].state.score)
+        assert np.allclose(log(0.2) + log(0.2), topk_results[1].state.score)
         random_results = list(sampler.batch_k_samples(results[:1], [1]))
-        self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
-        self.assertTrue(
-            (log(0.2) + log(0.2) - 1e-5 <=
-                random_results[0].state.score <=
-                log(0.2) + log(0.8) + 1e-5))
+        assert 1 == len(random_results)
+        assert 3 == random_results[0].state.state["length"].item()
+        assert log(0.2) + log(0.2) - \
+            1e-5 <= random_results[0].state.score <= log(0.2) + log(0.8) + 1e-5
 
     def test_reference(self):
         torch.manual_seed(0)
@@ -290,8 +283,8 @@ class TestActionSequenceSampler(unittest.TestCase):
                 0.8,  # x
                 0.2,  # 1
             ]]])
-        reference_prob = \
-            torch.tensor([[[0.0, 0.0]], [[0.0, 0.0]], [[0.1, 0.1]]])
+        reference_prob = torch.tensor(
+            [[[0.0, 0.0]], [[0.0, 0.0]], [[0.1, 0.1]]])
         sampler = ActionSequenceSampler(
             create_encoder(),
             is_subtype,
@@ -307,16 +300,12 @@ class TestActionSequenceSampler(unittest.TestCase):
         results = [s.state for s in sampler.top_k_samples([s], 1)]
         results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = list(sampler.top_k_samples(results, 1))
-        self.assertEqual(1, len(topk_results))
-        self.assertEqual(3, topk_results[0].state.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(1.),
-                               topk_results[0].state.score)
+        assert 1 == len(topk_results)
+        assert 3 == topk_results[0].state.state["length"].item()
+        assert np.allclose(log(0.2) + log(1.),
+                           topk_results[0].state.score)
         random_results = list(sampler.batch_k_samples(results[:1], [1]))
-        self.assertEqual(1, len(random_results))
-        self.assertEqual(3, random_results[0].state.state["length"].item())
-        self.assertAlmostEqual(log(0.2) + log(1.0),
-                               random_results[0].state.score)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert 1 == len(random_results)
+        assert 3 == random_results[0].state.state["length"].item()
+        assert np.allclose(log(0.2) + log(1.0),
+                           random_results[0].state.score)

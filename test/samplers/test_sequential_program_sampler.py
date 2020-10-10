@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import unittest
 from typing import List, Dict, Any
 from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.languages import AST, Node, Leaf, Field
@@ -27,7 +26,7 @@ class MockEncoder(nn.Module):
         return x
 
 
-class TestSequentialProgramSampler(unittest.TestCase):
+class TestSequentialProgramSampler(object):
     def test_create_output(self):
         asts = [
             Node("def", [Field("name", "str", Leaf("str", "f"))]),
@@ -40,24 +39,21 @@ class TestSequentialProgramSampler(unittest.TestCase):
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
-        self.assertEqual(
-            None,
-            sampler.create_output(None, {"code": SequentialProgram([])}))
-        self.assertEqual(
-            (SequentialProgram([
+        assert sampler.create_output(
+            None, {"code": SequentialProgram([])}) is None
+        assert (SequentialProgram([
                 Statement(Reference("v0"), "tmp")
-            ]), False),
+                ]), False) == \
             sampler.create_output(None, {
                 "code": SequentialProgram([
                     Statement(Reference("v0"), "tmp")
                 ]),
                 "unused_reference":
                     [Token(None, Reference("v0"), Reference("v0"))]
-            }))
-        self.assertEqual(
-            (SequentialProgram([
+            })
+        assert (SequentialProgram([
                 Statement(Reference("v1"), "tmp")
-            ]), False),
+                ]), False) == \
             sampler.create_output(None, {
                 "code": SequentialProgram([
                     Statement(Reference("v0"), "tmp2"),
@@ -67,7 +63,7 @@ class TestSequentialProgramSampler(unittest.TestCase):
                     Token(None, Reference("v0"), Reference("v0")),
                     Token(None, Reference("v1"), Reference("v1"))
                 ]
-            }))
+            })
 
     def test_ast_set_sample(self):
         asts = [
@@ -84,49 +80,40 @@ class TestSequentialProgramSampler(unittest.TestCase):
         zero = SamplerState(0, sampler.initialize(0))
         samples = list(sampler.batch_k_samples([zero], [3]))
         samples.sort(key=lambda x: -x.state.score)
-        self.assertEqual(3, len(samples))
-        self.assertEqual(
-            DuplicatedSamplerState(
-                SamplerState(1, {
-                    "x": 0,
-                    "reference":
-                        [Token("def", Reference("v0"), Reference("v0"))],
+        assert 3 == len(samples)
+        assert DuplicatedSamplerState(
+            SamplerState(1, {
+                "x": 0,
+                "reference":
+                [Token("def", Reference("v0"), Reference("v0"))],
                     "unused_reference":
                         [Token("def", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[0])])
-                }),
-                1),
-            samples[0]
-        )
-        self.assertEqual(
-            DuplicatedSamplerState(
-                SamplerState(0.5, {
-                    "x": 0,
-                    "reference":
-                        [Token("int", Reference("v0"), Reference("v0"))],
+            }),
+            1) == samples[0]
+        assert DuplicatedSamplerState(
+            SamplerState(0.5, {
+                "x": 0,
+                "reference":
+                [Token("int", Reference("v0"), Reference("v0"))],
                     "unused_reference":
                         [Token("int", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[1])])
-                }),
-                1),
-            samples[1]
-        )
-        self.assertEqual(
-            DuplicatedSamplerState(
-                SamplerState(1.0 / 3, {
-                    "x": 0,
-                    "reference":
-                        [Token("float", Reference("v0"), Reference("v0"))],
+            }),
+            1) == samples[1]
+        assert DuplicatedSamplerState(
+            SamplerState(1.0 / 3, {
+                "x": 0,
+                "reference":
+                [Token("float", Reference("v0"), Reference("v0"))],
                     "unused_reference":
                         [Token("float", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[2])])
-                }),
-                1),
-            samples[2]
-        )
+            }),
+            1) == samples[2]
 
     def test_remove_used_variable(self):
         ast = Node("String", [Field("value", "str", Leaf("str", "str"))])
@@ -149,23 +136,16 @@ class TestSequentialProgramSampler(unittest.TestCase):
             SequentialProgram([Statement(Reference("v0"), ast)])
         samples = list(sampler.batch_k_samples([zero], [1]))
         samples.sort(key=lambda x: -x.state.score)
-        self.assertEqual(1, len(samples))
-        self.assertEqual(
-            DuplicatedSamplerState(
-                SamplerState(1, {
-                    "x": 0,
-                    "reference":
-                        [Token("def", Reference("v1"), Reference("v1"))],
+        assert 1 == len(samples)
+        assert DuplicatedSamplerState(
+            SamplerState(1, {
+                "x": 0,
+                "reference":
+                [Token("def", Reference("v1"), Reference("v1"))],
                     "unused_reference":
                         [Token("def", Reference("v1"), Reference("v1"))],
                     "code": SequentialProgram([
                         Statement(Reference("v0"), ast),
                         Statement(Reference("v1"), asts[0])])
-                }),
-                1),
-            samples[0]
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+            }),
+            1) == samples[0]

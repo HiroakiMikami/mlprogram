@@ -1,33 +1,28 @@
-import unittest
 import ast as python_ast
 
 from mlprogram.languages.python.utils import is_builtin_type
 from mlprogram.languages.python import IsSubtype
 
 
-class TestIsBuiltinType(unittest.TestCase):
+class TestIsBuiltinType(object):
     def test_ast(self):
-        self.assertFalse(is_builtin_type(python_ast.Expr()))
+        assert not is_builtin_type(python_ast.Expr())
 
     def test_builtin(self):
-        self.assertTrue(is_builtin_type(10))
-        self.assertTrue(is_builtin_type(None))
-        self.assertTrue(is_builtin_type(True))
+        assert is_builtin_type(10)
+        assert is_builtin_type(None)
+        assert is_builtin_type(True)
 
 
-class TestIsSubtype(unittest.TestCase):
+class TestIsSubtype(object):
     def test_ast(self):
-        self.assertTrue(IsSubtype()("Expr", "AST"))
-        self.assertFalse(IsSubtype()("Expr", "Name"))
+        assert IsSubtype()("Expr", "AST")
+        assert not IsSubtype()("Expr", "Name")
 
     def test_builtin(self):
-        self.assertTrue(IsSubtype()("int", "int"))
-        self.assertFalse(IsSubtype()("str", "int"))
+        assert IsSubtype()("int", "int")
+        assert not IsSubtype()("str", "int")
 
     def test_special_type(self):
-        self.assertTrue(IsSubtype()("str__proxy", "str__proxy"))
-        self.assertFalse(IsSubtype()("str__proxy", "str"))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert IsSubtype()("str__proxy", "str__proxy")
+        assert not IsSubtype()("str__proxy", "str")

@@ -1,13 +1,9 @@
-import unittest
+import numpy as np
 from mlprogram.metrics import Accuracy
 
 
-class TestAccuracy(unittest.TestCase):
+class TestAccuracy(object):
     def test_simple_case(self):
         acc = Accuracy()
-        self.assertAlmostEqual(1.0, acc({"ground_truth": "str"}, "str"))
-        self.assertAlmostEqual(0.0, acc({"ground_truth": "int"}, "str"))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(1.0, acc({"ground_truth": "str"}, "str"))
+        assert np.allclose(0.0, acc({"ground_truth": "int"}, "str"))

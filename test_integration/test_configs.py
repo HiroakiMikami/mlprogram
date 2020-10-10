@@ -1,19 +1,16 @@
-import unittest
 import tempfile
 import os
 import logging
 import sys
 from typing import List, Tuple
 from tools.launch import launch_multiprocess
-from test_case_utils import integration_test
 
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-class ConfigTest(unittest.TestCase):
-    @integration_test
+class TestConfig(object):
     def launch_config(self, configs: List[Tuple[str, int]]):
         with tempfile.TemporaryDirectory() as tmpdir:
             for config, n_process in configs:
@@ -84,7 +81,3 @@ class ConfigTest(unittest.TestCase):
             (os.path.join("configs", "csg",
                           "pbe_with_repl_evaluate_large.yaml"), 0),
         ])
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,4 +1,4 @@
-import unittest
+import numpy as np
 from mlprogram.metrics import TestCaseResult
 from mlprogram.interpreters import Reference
 from mlprogram.interpreters import Statement
@@ -15,16 +15,16 @@ class MockInterpreter(Interpreter):
                 for stmt in code.statements}
 
 
-class TestTestCaseResult(unittest.TestCase):
+class TestTestCaseResult(object):
     def test_simple_case(self):
         acc = TestCaseResult(MockInterpreter())
-        self.assertAlmostEqual(1.0, acc({"input": (1, 0)}, "-1"))
-        self.assertAlmostEqual(0.0, acc({"input": (1, 0)}, "2"))
-        self.assertAlmostEqual(1.0, acc({"input": (1, 1)}, "0"))
+        assert np.allclose(1.0, acc({"input": (1, 0)}, "-1"))
+        assert np.allclose(0.0, acc({"input": (1, 0)}, "2"))
+        assert np.allclose(1.0, acc({"input": (1, 1)}, "0"))
 
     def test_reference(self):
         acc = TestCaseResult(MockInterpreter(), reference=True)
-        self.assertAlmostEqual(
+        assert np.allclose(
             1.0,
             acc({"input": (0, 0)},
                 SequentialProgram([Statement(Reference("0"), "0")]))
@@ -35,10 +35,6 @@ class TestTestCaseResult(unittest.TestCase):
             return input["ground_truth"] + actual
 
         acc = TestCaseResult(MockInterpreter(), metric=metric)
-        self.assertAlmostEqual(0.0, acc({"input": (0, 0)}, "0"))
-        self.assertAlmostEqual(1.0, acc({"input": (0, 0)}, "1"))
-        self.assertAlmostEqual(2.0, acc({"input": (0, 1)}, "1"))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(0.0, acc({"input": (0, 0)}, "0"))
+        assert np.allclose(1.0, acc({"input": (0, 0)}, "1"))
+        assert np.allclose(2.0, acc({"input": (0, 1)}, "1"))

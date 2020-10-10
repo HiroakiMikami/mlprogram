@@ -1,16 +1,15 @@
 import torch
 import numpy as np
-import unittest
 
 from mlprogram.nn.treegen \
     import ActionSequenceReaderBlock, ActionSequenceReader
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
-class TestActionSequenceReaderBlock(unittest.TestCase):
+class TestActionSequenceReaderBlock(object):
     def test_parameters(self):
         block = ActionSequenceReaderBlock(2, 3, 1, 3, 0.0, 0)
-        self.assertEqual(19, len(list(block.parameters())))
+        assert 19 == len(list(block.parameters()))
 
     def test_shape(self):
         block = ActionSequenceReaderBlock(2, 3, 1, 3, 0.0, 0)
@@ -20,9 +19,9 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
         in1 = torch.Tensor(5, 1, 2)
         adj = torch.Tensor(1, 5, 5)
         out, weight = block(in0, depth, in1, adj)
-        self.assertEqual((5, 1, 3), out.data.shape)
-        self.assertEqual((5, 1), out.mask.shape)
-        self.assertEqual((1, 5, 5), weight.shape)
+        assert (5, 1, 3) == out.data.shape
+        assert (5, 1) == out.mask.shape
+        assert (1, 5, 5) == weight.shape
 
     def test_dependency(self):
         torch.manual_seed(0)
@@ -37,10 +36,10 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
         out0 = out0.data[:2, :, :]
         weight0 = weight0[:1, :2, :2]
         out1 = out1.data
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-        self.assertTrue(np.allclose(weight0.detach().numpy(),
-                                    weight1.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
+        assert np.allclose(weight0.detach().numpy(),
+                           weight1.detach().numpy())
 
     def test_mask(self):
         torch.manual_seed(0)
@@ -56,16 +55,16 @@ class TestActionSequenceReaderBlock(unittest.TestCase):
         out0 = out0.data[:5, :1, :]
         weight0 = weight0[:1, :5, :5]
         out1 = out1.data
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-        self.assertTrue(np.allclose(weight0.detach().numpy(),
-                                    weight1.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
+        assert np.allclose(weight0.detach().numpy(),
+                           weight1.detach().numpy())
 
 
-class TestActionSequenceReader(unittest.TestCase):
+class TestActionSequenceReader(object):
     def test_parameters(self):
         reader = ActionSequenceReader(1, 1, 1, 3, 2, 3, 1, 3, 0.0, 5)
-        self.assertEqual(19 * 5 + 5, len(list(reader.parameters())))
+        assert 19 * 5 + 5 == len(list(reader.parameters()))
 
     def test_shape(self):
         reader = ActionSequenceReader(1, 1, 1, 3, 2, 3, 1, 3, 0.0, 5)
@@ -81,8 +80,8 @@ class TestActionSequenceReader(unittest.TestCase):
             "depthes": depth,
             "adjacency_matrix": adj
         })["action_features"]
-        self.assertEqual((5, 1, 3), out.data.shape)
-        self.assertEqual((5, 1), out.mask.shape)
+        assert (5, 1, 3) == out.data.shape
+        assert (5, 1) == out.mask.shape
 
     def test_mask(self):
         torch.manual_seed(0)
@@ -107,9 +106,5 @@ class TestActionSequenceReader(unittest.TestCase):
         })["action_features"]
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())

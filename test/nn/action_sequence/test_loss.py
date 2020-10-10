@@ -1,14 +1,14 @@
-import unittest
 import torch
+import numpy as np
 
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn.utils import rnn
 
 
-class TestLoss(unittest.TestCase):
+class TestLoss(object):
     def test_parameters(self):
         loss = Loss()
-        self.assertEqual(0, len(dict(loss.named_parameters())))
+        assert 0 == len(dict(loss.named_parameters()))
 
     def test_shape(self):
         gt0 = torch.LongTensor([[0, -1, -1], [-1, 2, -1], [-1, -1, 3]])
@@ -27,7 +27,7 @@ class TestLoss(unittest.TestCase):
                           "token_probs": token_prob,
                           "reference_probs": reference_prob,
                           "ground_truth_actions": gt})["action_sequence_loss"]
-        self.assertEqual((), objective.shape)
+        assert () == objective.shape
 
     def test_reduction(self):
         gt0 = torch.LongTensor([[0, -1, -1], [-1, 2, -1], [-1, -1, 3]])
@@ -59,9 +59,5 @@ class TestLoss(unittest.TestCase):
              "token_probs": token_prob,
              "reference_probs": reference_prob,
              "ground_truth_actions": gt})["action_sequence_loss"]
-        self.assertEqual((1,), objective2.shape)
-        self.assertAlmostEqual(objective0.item(), objective1.item())
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert (1,) == objective2.shape
+        assert np.allclose(objective0.item(), objective1.item())

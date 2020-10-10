@@ -1,4 +1,3 @@
-import unittest
 from collections import OrderedDict
 import sys
 import logging
@@ -31,17 +30,16 @@ from mlprogram.nn.action_sequence import Loss, Predictor
 from mlprogram.nn import treegen
 from mlprogram.metrics import Accuracy
 
-from nl2code_dummy_dataset import is_subtype
-from nl2code_dummy_dataset import train_dataset
-from nl2code_dummy_dataset import test_dataset
-from nl2code_dummy_dataset import tokenize
-from nl2code_dummy_dataset import Parser
-from test_case_utils import integration_test
+from test_integration.nl2code_dummy_dataset import is_subtype
+from test_integration.nl2code_dummy_dataset import train_dataset
+from test_integration.nl2code_dummy_dataset import test_dataset
+from test_integration.nl2code_dummy_dataset import tokenize
+from test_integration.nl2code_dummy_dataset import Parser
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-class TestTreeGen(unittest.TestCase):
+class TestTreeGen(object):
     def prepare_encoder(self, dataset, parser):
         words = get_words(dataset, tokenize)
         chars = get_characters(dataset, tokenize)
@@ -178,7 +176,6 @@ class TestTreeGen(unittest.TestCase):
             )
         return encoder
 
-    @integration_test
     def test(self):
         torch.manual_seed(1)
         np.random.seed(1)
@@ -186,8 +183,4 @@ class TestTreeGen(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             encoder = self.train(tmpdir)
             results = self.evaluate(*encoder, tmpdir)
-        self.assertAlmostEqual(1.0, results.metrics[5]["accuracy"])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(1.0, results.metrics[5]["accuracy"])

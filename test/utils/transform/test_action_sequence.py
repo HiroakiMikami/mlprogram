@@ -1,4 +1,3 @@
-import unittest
 import numpy as np
 
 from mlprogram.utils.data import ListDataset, get_samples
@@ -36,15 +35,15 @@ class MockParser(Parser[str]):
         return ast
 
 
-class TestTransformCode(unittest.TestCase):
+class TestTransformCode(object):
     def test_simple_case(self):
         transform = TransformCode(MockParser())
         action_sequence = \
             transform({"ground_truth": "y = x + 1"})["action_sequence"]
-        self.assertEqual(None, action_sequence.head)
+        assert action_sequence.head is None
 
 
-class TestTransformGroundTruth(unittest.TestCase):
+class TestTransformGroundTruth(object):
     def test_simple_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
@@ -57,7 +56,7 @@ class TestTransformGroundTruth(unittest.TestCase):
             Token(None, "foo", "foo"), Token(None, "bar", "bar")]
         ground_truth = \
             transform(input)["ground_truth_actions"]
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 1, -1], [1, -1, -1],
                 [5, -1, -1], [-1, 2, -1], [1, -1, -1], [4, -1, -1],
@@ -65,7 +64,7 @@ class TestTransformGroundTruth(unittest.TestCase):
                 [1, -1, -1]
             ],
             ground_truth.numpy()
-        ))
+        )
 
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
@@ -81,10 +80,10 @@ class TestTransformGroundTruth(unittest.TestCase):
             "action_sequence": action_sequence,
             "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
         })
-        self.assertEqual(None, ground_truth)
+        assert ground_truth is None
 
 
-class TestTransformActionSequenceForRnnDecoder(unittest.TestCase):
+class TestTransformActionSequenceForRnnDecoder(object):
     def test_simple_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
@@ -99,7 +98,7 @@ class TestTransformActionSequenceForRnnDecoder(unittest.TestCase):
             "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
         })
         prev_action_tensor = result["previous_actions"]
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
                 [1, -1, -1], [5, -1, -1], [-1, 2, -1], [1, -1, -1],
@@ -107,7 +106,7 @@ class TestTransformActionSequenceForRnnDecoder(unittest.TestCase):
                 [-1, 4, -1]
             ],
             prev_action_tensor.numpy()
-        ))
+        )
 
     def test_eval(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
@@ -124,10 +123,10 @@ class TestTransformActionSequenceForRnnDecoder(unittest.TestCase):
         })
         prev_action_tensor = result["previous_actions"]
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [[1, -1, -1]],
             prev_action_tensor.numpy()
-        ))
+        )
 
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
@@ -143,8 +142,4 @@ class TestTransformActionSequenceForRnnDecoder(unittest.TestCase):
             "action_sequence": action_sequence,
             "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
         })
-        self.assertEqual(None, result)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert result is None

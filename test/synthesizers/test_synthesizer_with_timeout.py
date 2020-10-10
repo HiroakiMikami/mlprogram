@@ -1,4 +1,3 @@
-import unittest
 from typing import List, Dict, Any
 from mlprogram.synthesizers import Synthesizer, Result, SynthesizerWithTimeout
 import time
@@ -14,15 +13,11 @@ class MockSynthesizer(Synthesizer[Dict[str, Any], int]):
             yield Result(value, 1.0 / (i + 1), True, 1)
 
 
-class TestFilteredSynthesizer(unittest.TestCase):
+class TestFilteredSynthesizer(object):
     def test_timeout(self):
         synthesizer = SynthesizerWithTimeout(
             MockSynthesizer([0.3, 0.5, 0]),
             1)
         candidates = list(synthesizer({"input": [0]}))
-        self.assertEqual(1, len(candidates))
-        self.assertEqual(0.3, candidates[0].output)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert 1 == len(candidates)
+        assert 0.3 == candidates[0].output

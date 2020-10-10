@@ -1,4 +1,3 @@
-import unittest
 import tempfile
 import os
 import torch
@@ -46,7 +45,7 @@ def synthesize(input):
         yield DecoderResult(s, -i, True, 1)
 
 
-class TestEvaluateSynthesizer(unittest.TestCase):
+class TestEvaluateSynthesizer(object):
     def test_simple_case(self):
         accuracy = Accuracy()
         dataset = ListDataset([
@@ -66,31 +65,24 @@ class TestEvaluateSynthesizer(unittest.TestCase):
         results = EvaluateSynthesizer(dataset, synthesize,
                                       metrics={"accuracy": accuracy})()
 
-        self.assertEqual(
-            results.metrics,
-            {1: {"accuracy": 1.0 / 3.0}, 3: {"accuracy": 2.0 / 3.0}})
-        self.assertEqual(3, len(results.results))
+        assert results.metrics == \
+            {1: {"accuracy": 1.0 / 3.0}, 3: {"accuracy": 2.0 / 3.0}}
+        assert 3 == len(results.results)
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
-        self.assertEqual(
-            Result("query0", {"ground_truth": "c0"},
-                   ["c0", "c1", "c2"],
-                   {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
-                   True, 0.0),
-            results.results[0])
-        self.assertEqual(
-            Result("query1", {"ground_truth": "c0"},
-                   ["c2", "c3", "c0"],
-                   {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
-                   True, 0.0),
-            results.results[1])
-        self.assertEqual(
-            Result("query2", {"ground_truth": "c0"},
-                   ["c2", "c3", "c5"],
-                   {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
-                   True, 0.0),
-            results.results[2])
+        assert Result("query0", {"ground_truth": "c0"},
+                      ["c0", "c1", "c2"],
+                      {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
+                      True, 0.0) == results.results[0]
+        assert Result("query1", {"ground_truth": "c0"},
+                      ["c2", "c3", "c0"],
+                      {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
+                      True, 0.0) == results.results[1]
+        assert Result("query2", {"ground_truth": "c0"},
+                      ["c2", "c3", "c5"],
+                      {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
+                      True, 0.0) == results.results[2]
 
     def test_multiprocess(self):
         accuracy = Accuracy()
@@ -112,35 +104,28 @@ class TestEvaluateSynthesizer(unittest.TestCase):
                                       metrics={"accuracy": accuracy},
                                       n_process=2)()
 
-        self.assertEqual(
-            results.metrics,
-            {1: {"accuracy": 1.0 / 3}, 3: {"accuracy": 2.0 / 3}})
-        self.assertEqual(3, len(results.results))
+        assert results.metrics == {1: {"accuracy": 1.0 / 3},
+                                   3: {"accuracy": 2.0 / 3}}
+        assert 3 == len(results.results)
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
         results.results.sort(key=lambda x: x.input)
-        self.assertEqual(
-            Result("query0", {"ground_truth": "c0"},
-                   ["c0", "c1", "c2"],
-                   {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
-                   True, 0.0),
-            results.results[0])
-        self.assertEqual(
-            Result("query1", {"ground_truth": "c0"},
-                   ["c2", "c3", "c0"],
-                   {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
-                   True, 0.0),
-            results.results[1])
-        self.assertEqual(
-            Result("query2", {"ground_truth": "c0"},
-                   ["c2", "c3", "c5"],
-                   {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
-                   True, 0.0),
-            results.results[2])
+        assert Result("query0", {"ground_truth": "c0"},
+                      ["c0", "c1", "c2"],
+                      {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
+                      True, 0.0) == results.results[0]
+        assert Result("query1", {"ground_truth": "c0"},
+                      ["c2", "c3", "c0"],
+                      {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
+                      True, 0.0) == results.results[1]
+        assert Result("query2", {"ground_truth": "c0"},
+                      ["c2", "c3", "c5"],
+                      {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
+                      True, 0.0) == results.results[2]
 
 
-class TestEvaluate(unittest.TestCase):
+class TestEvaluate(object):
     def prepare_dataset(self):
         return {"valid": ListDataset([{"input": "query",
                                        "ground_truth": "name0"}])}
@@ -168,9 +153,9 @@ class TestEvaluate(unittest.TestCase):
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
             })
-            self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "result_metrics.json")))
+            assert os.path.exists(os.path.join(output, "result.pt"))
+            assert os.path.exists(
+                os.path.join(output, "result_metrics.json"))
 
     def test_multiple_models(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -191,9 +176,9 @@ class TestEvaluate(unittest.TestCase):
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
             })
-            self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "result_metrics.json")))
+            assert os.path.exists(os.path.join(output, "result.pt"))
+            assert os.path.exists(
+                os.path.join(output, "result_metrics.json"))
 
     def test_multiprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -212,10 +197,6 @@ class TestEvaluate(unittest.TestCase):
                 "accuracy": Accuracy(),
                 "bleu": Bleu(),
             }, n_process=2)
-            self.assertTrue(os.path.exists(os.path.join(output, "result.pt")))
-            self.assertTrue(os.path.exists(
-                os.path.join(output, "result_metrics.json")))
-
-
-if __name__ == "__main__":
-    unittest.main()
+            assert os.path.exists(os.path.join(output, "result.pt"))
+            assert os.path.exists(
+                os.path.join(output, "result_metrics.json"))

@@ -1,4 +1,3 @@
-import unittest
 import torch
 import numpy as np
 
@@ -6,14 +5,14 @@ from mlprogram.nn import PointerNet
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
-class TestPointerNet(unittest.TestCase):
+class TestPointerNet(object):
     def test_parameters(self):
         layer = PointerNet(1, 2, 3)
         params = dict(layer.named_parameters())
-        self.assertEqual(6, len(params))
-        self.assertEqual((3, 1), params["w1.weight"].shape)
-        self.assertEqual((3, 2), params["w2.weight"].shape)
-        self.assertEqual((1, 3), params["v.weight"].shape)
+        assert 6 == len(params)
+        assert (3, 1) == params["w1.weight"].shape
+        assert (3, 2) == params["w2.weight"].shape
+        assert (1, 3) == params["v.weight"].shape
 
     def test_pointer_net(self):
         value0 = torch.FloatTensor([[1]])
@@ -28,11 +27,7 @@ class TestPointerNet(unittest.TestCase):
         log_output = layer(key, value)  # (1, 2, 4)
         output = torch.exp(log_output)
         output *= value.mask.permute(1, 0).view(1, 2, 4).float()
-        self.assertEqual((1, 2, 4), output.shape)
-        self.assertTrue(np.allclose(
+        assert (1, 2, 4) == output.shape
+        assert np.allclose(
             [[1, 0, 0, 0], [0.25, 0.25, 0.25, 0.25]],
-            output.detach().numpy()))
-
-
-if __name__ == "__main__":
-    unittest.main()
+            output.detach().numpy())

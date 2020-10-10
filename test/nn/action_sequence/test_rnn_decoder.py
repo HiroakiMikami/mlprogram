@@ -1,4 +1,3 @@
-import unittest
 import torch
 import numpy as np
 
@@ -6,10 +5,10 @@ from mlprogram.nn.action_sequence import RnnDecoder
 from mlprogram.nn.utils import rnn
 
 
-class TestRnnDecoder(unittest.TestCase):
+class TestRnnDecoder(object):
     def test_parameters(self):
         decoder = RnnDecoder(2, 3, 5, 0.0)
-        self.assertEqual(4, len(dict(decoder.named_parameters())))
+        assert 4 == len(dict(decoder.named_parameters()))
 
     def test_shape(self):
         decoder = RnnDecoder(2, 3, 5, 0.0)
@@ -29,11 +28,11 @@ class TestRnnDecoder(unittest.TestCase):
         output = inputs["action_features"]
         h_n = inputs["hidden_state"]
         c_n = inputs["state"]
-        self.assertEqual((3, 2, 5), output.data.shape)
-        self.assertTrue(np.array_equal(
-            [[1, 1], [1, 0], [1, 0]], output.mask.numpy()))
-        self.assertEqual((2, 5), h_n.shape)
-        self.assertEqual((2, 5), c_n.shape)
+        assert (3, 2, 5) == output.data.shape
+        assert np.array_equal(
+            [[1, 1], [1, 0], [1, 0]], output.mask.numpy())
+        assert (2, 5) == h_n.shape
+        assert (2, 5) == c_n.shape
 
     def test_state(self):
         decoder = RnnDecoder(2, 3, 5, 0.0)
@@ -50,10 +49,6 @@ class TestRnnDecoder(unittest.TestCase):
             "state": c_0
         })
         output = inputs["action_features"].data
-        self.assertFalse(np.array_equal(
+        assert not np.array_equal(
             output[0, 0, :].detach().numpy(), output[1, 0, :].detach().numpy()
-        ))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        )

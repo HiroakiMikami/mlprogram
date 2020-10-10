@@ -1,5 +1,4 @@
 import numpy as np
-import unittest
 from collections import OrderedDict
 import logging
 import sys
@@ -39,12 +38,11 @@ from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
-from test_case_utils import integration_test
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-class TestCsgByPbeWithREPL(unittest.TestCase):
+class TestCsgByPbeWithREPL(object):
     def prepare_encoder(self, dataset, parser):
         return ActionSequenceEncoder(get_samples(dataset, parser),
                                      0)
@@ -328,7 +326,6 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
                 use_pretrained_optimizer=False,
                 threshold=0.9)
 
-    @integration_test
     def test(self):
         torch.manual_seed(0)
         np.random.seed(0)
@@ -337,8 +334,4 @@ class TestCsgByPbeWithREPL(unittest.TestCase):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             result = self.evaluate(dataset, encoder, tmpdir)
-        self.assertLessEqual(0.9, result.generation_rate)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert 0.9 <= result.generation_rate

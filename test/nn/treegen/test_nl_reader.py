@@ -1,18 +1,17 @@
 import torch
 import numpy as np
-import unittest
 
 from mlprogram.nn.treegen import NLReaderBlock, NLReader
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
-class TestNLReaderBlock(unittest.TestCase):
+class TestNLReaderBlock(object):
     def setup(self):
         torch.manual_seed(0)
 
     def test_parameters(self):
         block = NLReaderBlock(2, 3, 1, 0.0, 0)
-        self.assertEqual(21, len(list(block.parameters())))
+        assert 21 == len(list(block.parameters()))
 
     def test_shape(self):
         block = NLReaderBlock(2, 3, 1, 0.0, 0)
@@ -20,9 +19,9 @@ class TestNLReaderBlock(unittest.TestCase):
         in0 = pad_sequence([in0], 0)
         in1 = torch.Tensor(5, 1, 2)
         out, weight = block(in0, in1)
-        self.assertEqual((5, 1, 3), out.data.shape)
-        self.assertEqual((5, 1), out.mask.shape)
-        self.assertEqual((1, 5, 5), weight.shape)
+        assert (5, 1, 3) == out.data.shape
+        assert (5, 1) == out.mask.shape
+        assert (1, 5, 5) == weight.shape
 
     def test_mask(self):
         block = NLReaderBlock(2, 3, 1, 0.0, 0)
@@ -34,16 +33,16 @@ class TestNLReaderBlock(unittest.TestCase):
         out0 = out0.data[:5, :1, :]
         weight0 = weight0[:1, :5, :5]
         out1 = out1.data
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-        self.assertTrue(np.allclose(weight0.detach().numpy(),
-                                    weight1.detach().numpy()))
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())
+        assert np.allclose(weight0.detach().numpy(),
+                           weight1.detach().numpy())
 
 
-class TestNLReader(unittest.TestCase):
+class TestNLReader(object):
     def test_parameters(self):
         reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
-        self.assertEqual(3 + 21 * 5, len(list(reader.parameters())))
+        assert 3 + 21 * 5 == len(list(reader.parameters()))
 
     def test_shape(self):
         reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
@@ -53,8 +52,8 @@ class TestNLReader(unittest.TestCase):
         in1 = pad_sequence([in1], 0)
         out = reader({"word_nl_query": in0,
                       "char_nl_query": in1})["nl_query_features"]
-        self.assertEqual((5, 1, 3), out.data.shape)
-        self.assertEqual((5, 1), out.mask.shape)
+        assert (5, 1, 3) == out.data.shape
+        assert (5, 1) == out.mask.shape
 
     def test_mask(self):
         reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
@@ -70,9 +69,5 @@ class TestNLReader(unittest.TestCase):
                        })["nl_query_features"]
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
-        self.assertTrue(np.allclose(out0.detach().numpy(),
-                                    out1.detach().numpy()))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.allclose(out0.detach().numpy(),
+                           out1.detach().numpy())

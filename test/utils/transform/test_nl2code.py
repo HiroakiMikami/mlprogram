@@ -1,4 +1,3 @@
-import unittest
 import numpy as np
 from typing import List
 from torchnlp.encoders import LabelEncoder
@@ -37,18 +36,18 @@ class MockParser(Parser[str]):
         return ast
 
 
-class TestTransformQuery(unittest.TestCase):
+class TestTransformQuery(object):
     def test_happy_path(self):
         def tokenize(value: str):
             return [Token(None, value + "dnn", value)]
 
         transform = TransformQuery(tokenize, LabelEncoder(["dnn"]))
         result = transform({"input": ""})
-        self.assertEqual([Token(None, "dnn", "")], result["reference"])
-        self.assertEqual([1], result["word_nl_query"].numpy().tolist())
+        assert [Token(None, "dnn", "")] == result["reference"]
+        assert [1] == result["word_nl_query"].numpy().tolist()
 
 
-class TestTransformActionSequence(unittest.TestCase):
+class TestTransformActionSequence(object):
     def test_simple_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
         dataset = ListDataset(entries)
@@ -64,15 +63,15 @@ class TestTransformActionSequence(unittest.TestCase):
         })
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [
                 [2, 2, 0], [4, 3, 1], [6, 4, 2], [6, 4, 2], [5, 3, 1],
                 [6, 5, 5], [6, 5, 5], [5, 5, 5], [6, 4, 8], [6, 4, 8],
                 [5, 5, 5], [9, 6, 11], [9, 6, 11]
             ],
             action_tensor.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
                 [1, -1, -1], [5, -1, -1], [-1, 2, -1], [1, -1, -1],
@@ -80,7 +79,7 @@ class TestTransformActionSequence(unittest.TestCase):
                 [-1, 4, -1]
             ],
             prev_action_tensor.numpy()
-        ))
+        )
 
     def test_eval(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
@@ -98,14 +97,14 @@ class TestTransformActionSequence(unittest.TestCase):
         action_tensor = result["actions"]
         prev_action_tensor = result["previous_actions"]
 
-        self.assertTrue(np.array_equal(
+        assert np.array_equal(
             [[-1, -1, -1]],
             action_tensor.numpy()
-        ))
-        self.assertTrue(np.array_equal(
+        )
+        assert np.array_equal(
             [[1, -1, -1]],
             prev_action_tensor.numpy()
-        ))
+        )
 
     def test_impossible_case(self):
         entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
@@ -121,8 +120,4 @@ class TestTransformActionSequence(unittest.TestCase):
             "action_sequence": action_sequence,
             "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
         })
-        self.assertEqual(None, result)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert result is None

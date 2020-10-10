@@ -1,4 +1,3 @@
-import unittest
 from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
 from mlprogram.synthesizers import BeamSearch, Result
 from typing import List, Tuple
@@ -43,30 +42,21 @@ class MockBeamSearch(BeamSearch[str, str, Tuple[str, List[str]]]):
         super().__init__(beam_size, max_step_size, MockSampler(finish))
 
 
-class TestBeamSearch(unittest.TestCase):
+class TestBeamSearch(object):
     def test_happy_path(self):
         decoder = MockBeamSearch(3, 100)
         results = list(decoder("x0"))
-        self.assertEqual(
-            [Result("0", -1.0, True, 1), Result("x0", 0.0, True, 1),
-             Result("10", -2.0, True, 1)],
-            results
-        )
+        assert [Result("0", -1.0, True, 1), Result("x0", 0.0, True, 1),
+                Result("10", -2.0, True, 1)] == results
 
     def test_not_finished_output(self):
         decoder = MockBeamSearch(3, 2, False)
         results = list(decoder("x0"))
-        self.assertEqual(
-            [Result("0", -1.0, False, 1), Result("x0", 0.0, True, 1),
-             Result("00", -1.0, True, 1), Result("10", -2.0, True, 1)],
-            results
-        )
+        assert [Result("0", -1.0, False, 1), Result("x0", 0.0, True, 1),
+                Result("00", -1.0, True, 1), Result("10", -2.0, True, 1)
+                ] == results
 
     def test_abort(self):
         decoder = MockBeamSearch(3, 2)
         results = list(decoder("".join([" "] * 100)))
-        self.assertEqual([Result("0", -1.0, True, 1)], results)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert [Result("0", -1.0, True, 1)] == results

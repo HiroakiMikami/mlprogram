@@ -1,4 +1,3 @@
-import unittest
 import torch
 import numpy as np
 
@@ -6,10 +5,10 @@ from mlprogram.nn.nl2code import ActionSequenceReader
 from mlprogram.nn.utils import rnn
 
 
-class TestActionSequenceReader(unittest.TestCase):
+class TestActionSequenceReader(object):
     def test_parameters(self):
         reader = ActionSequenceReader(2, 3, 5, 2, 3)
-        self.assertEqual(3, len(dict(reader.named_parameters())))
+        assert 3 == len(dict(reader.named_parameters()))
 
     def test_shape(self):
         """
@@ -29,13 +28,9 @@ class TestActionSequenceReader(unittest.TestCase):
         data = reader({"actions": action, "previous_actions": prev_action})
         feature = data["action_features"]
         index = data["parent_indexes"]
-        self.assertTrue(np.array_equal(
-            [[1, 1], [0, 1]], feature.mask.numpy()))
-        self.assertEqual((2, 2, 8), feature.data.shape)
-        self.assertTrue(np.array_equal(
-            [[1, 1], [0, 1]], index.mask.numpy()))
-        self.assertEqual((2, 2, 1), index.data.shape)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert np.array_equal(
+            [[1, 1], [0, 1]], feature.mask.numpy())
+        assert (2, 2, 8) == feature.data.shape
+        assert np.array_equal(
+            [[1, 1], [0, 1]], index.mask.numpy())
+        assert (2, 2, 1) == index.data.shape

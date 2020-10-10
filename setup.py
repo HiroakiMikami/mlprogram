@@ -9,7 +9,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 7:
 
 extras = {
     "test": ["flake8", "autopep8", "fairseq", "mypy==0.770",
-             "timeout-decorator"],
+             "timeout-decorator", "pytest", "pytest-parallel"],
     "colab": ["jupyter", "jupyter-http-over-ws"],
     "visualize": ["graphviz"]
 }

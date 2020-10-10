@@ -1,4 +1,3 @@
-import unittest
 import os
 import tempfile
 import zipfile
@@ -12,7 +11,7 @@ from mlprogram.datasets.deepfix import download
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
-class TestDownload(unittest.TestCase):
+class TestDownload(object):
     def test_download(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             sqlitefile = os.path.join(tmpdir, "dataset.db")
@@ -45,12 +44,6 @@ class TestDownload(unittest.TestCase):
                 copyfile(src, dst)
             dataset = download(path=path, get=get)
 
-        self.assertEqual(2, len(dataset))
-        self.assertEqual({"code": "foo", "error": "bar", "n_error": 1},
-                         dataset[0])
-        self.assertEqual({"code": "foo", "error": "", "n_error": 0},
-                         dataset[1])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert 2 == len(dataset)
+        assert {"code": "foo", "error": "bar", "n_error": 1} == dataset[0]
+        assert {"code": "foo", "error": "", "n_error": 0} == dataset[1]

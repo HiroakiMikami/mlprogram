@@ -8,6 +8,7 @@
 !/mlprogram/**/*.py
 !/bin/*.bash
 !/test/**/*.py
+!/test_integration/**/*.py
 !/configs/**/*.yaml
 !/tools/*.py
 !/tools/*.ipynb
