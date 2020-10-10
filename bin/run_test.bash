@@ -12,7 +12,7 @@ else
     unset MLPROGRAM_INTEGRATION_TEST
 fi
 
-pytest -s test
+pytest --workers auto -s test
 
 unset MLPROGRAM_INTEGRATION_TEST
 export PYTHONPATH=$OLD_PYTHONPATH
