@@ -3,7 +3,9 @@ import numpy as np
 from enum import Enum
 from typing \
     import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
-    cast, Dict, Any, Tuple
+    cast, Dict, Tuple
+
+from mlprogram import Environment
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Root
 from mlprogram.languages import Token
@@ -20,6 +22,7 @@ from mlprogram import logging
 
 logger = logging.Logger(__name__)
 
+Input = TypeVar("Input")
 V = TypeVar("V")
 
 
@@ -52,15 +55,15 @@ class LazyActionSequence(object):
         return str(self.__call__())
 
 
-class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
-                            Generic[V]):
+class ActionSequenceSampler(Sampler[Environment, AST, Environment],
+                            Generic[Input, V]):
     def __init__(self,
                  encoder: ActionSequenceEncoder,
                  is_subtype: Callable[[Union[str, Root], Union[str, Root]],
                                       bool],
-                 transform_input: Callable[[Dict[str, Any]], Dict[str, Any]],
-                 transform_action_sequence: Callable[[Dict[str, Any]],
-                                                     Dict[str, Any]],
+                 transform_input: Callable[[Input], Environment],
+                 transform_action_sequence: Callable[[Environment],
+                                                     Environment],
                  collate: Collate,
                  module: torch.nn.Module,
                  eps: float = 1e-5,
@@ -95,11 +98,9 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     self.encoder._rule_encoder.encode(rule).item()
                 )
 
-    @logger.function_block("initialize")
-    def initialize(self, input: Dict[str, Any]) \
-            -> Dict[str, Any]:
+    @ logger.function_block("initialize")
+    def initialize(self, input: Input) -> Environment:
         self.module.encoder.eval()
-        action_sequence = ActionSequence()
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
         with torch.no_grad(), logger.block("encode_state"):
@@ -107,49 +108,51 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
         state = self.collate.split(state_tensor)[0]
 
         # Add initial rule
+        action_sequence = ActionSequence()
         action_sequence.eval(ApplyRule(
             ExpandTreeRule(NodeType(None, NodeConstraint.Node, False),
                            [("root",
                              NodeType(Root(), NodeConstraint.Node, False))])))
-        state["action_sequence"] = action_sequence
+        state.states["action_sequence"] = action_sequence
+
+        state.mutable(
+            inputs=False,
+            supervisions=False
+        )
         return state
 
-    def create_output(self, input, state: Dict[str, Any]) \
+    def create_output(self, input, state: Environment) \
             -> Optional[Tuple[AST, bool]]:
-        if state["action_sequence"].head is None:
+        if state.states["action_sequence"].head is None:
             # complete
-            ast = cast(Node, state["action_sequence"].generate())
+            ast = cast(Node, state.states["action_sequence"].generate())
             return cast(AST, ast.fields[0].value), True
         return None
 
-    @logger.function_block("batch_infer")
+    @ logger.function_block("batch_infer")
     def batch_infer(self,
-                    states: List[SamplerState[Dict[str, Any]]]):
+                    states: List[SamplerState[Environment]]):
         N = len(states)
 
-        state_list: List[Dict[str, Any]] = []
+        state_list: List[Environment] = []
         for s in logger.iterable_block("transform_state", states):
             tmp = self.transform_action_sequence(s.state)
             if tmp is not None:
-                state = {}
-                for key, value in s.state.items():
-                    state[key] = value
-                for key, value in tmp.items():
-                    state[key] = value
-                state_list.append(state)
+                state_list.append(tmp)
             else:
                 logger.warning(
                     "Invalid action_sequence is in the set of hypothesis" +
-                    str(s.state["action_sequence"]))
+                    str(s.state.outputs["action_sequence"]))
         states_tensor = self.collate.collate(state_list)
 
         with torch.no_grad(), logger.block("decode_state"):
             next_states = self.module.decoder(states_tensor)
 
-        rule_pred = next_states.pop("rule_probs").data.cpu().reshape(N, -1)
-        token_pred = next_states.pop("token_probs").data.cpu().reshape(N, -1)
+        rule_pred = next_states.outputs["rule_probs"].data.cpu().reshape(N, -1)
+        token_pred = \
+            next_states.outputs["token_probs"].data.cpu().reshape(N, -1)
         reference_pred = \
-            next_states.pop("reference_probs").data.cpu().reshape(N, -1)
+            next_states.outputs["reference_probs"].data.cpu().reshape(N, -1)
         next_state_list = self.collate.split(next_states)
         return rule_pred, token_pred, reference_pred, next_state_list
 
@@ -157,11 +160,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                     rule_pred: torch.Tensor,
                                     token_pred: torch.Tensor,
                                     reference_pred: torch.Tensor,
-                                    next_state: Dict[str, Any],
-                                    state: SamplerState[Dict[str, Any]],
+                                    next_state: Environment,
+                                    state: SamplerState[Environment],
                                     enumerateion: Enumeration,
                                     k: int) \
-            -> Generator[DuplicatedSamplerState[Dict[str, Any]], None, None]:
+            -> Generator[DuplicatedSamplerState[Environment], None, None]:
         def indices(pred: torch.Tensor):
             # 0 is unknown token
             if enumerateion == Enumeration.Top:
@@ -181,21 +184,21 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     yield i + 1, n
 
         with logger.block("enumerate_samples_per_state"):
-            head = state.state["action_sequence"].head
+            head = state.state.states["action_sequence"].head
             assert head is not None
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
-                    state.state["action_sequence"]
+                    state.state.states["action_sequence"]
                     .action_sequence[head.action]
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 # Generate token
                 ref_ids = self.encoder.batch_encode_raw_value(
-                    [x.raw_value for x in state.state["reference"]]
+                    [x.raw_value for x in state.state.states["reference"]]
                 )
                 tokens = list(self.encoder._token_encoder.vocab) + \
-                    state.state["reference"]
+                    state.state.states["reference"]
                 # the score will be merged into predefined token
                 for i, ids in enumerate(ref_ids):
                     for ref_id in ids:
@@ -261,11 +264,11 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                         lp = np.log(p)
 
                     n_action += n
-                    next_state = {key: value
-                                  for key, value in next_state.items()}
-                    next_state["action_sequence"] = \
-                        LazyActionSequence(state.state["action_sequence"],
-                                           action)
+                    next_state = next_state.clone()
+                    next_state.outputs.clear()
+                    next_state.states["action_sequence"] = \
+                        LazyActionSequence(
+                            state.state.states["action_sequence"], action)
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
                         n)
@@ -304,21 +307,25 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                     n_rule += n
                     rule = self.encoder._rule_encoder.vocab[x]
 
-                    next_state = {key: value
-                                  for key, value in next_state.items()}
-                    next_state["action_sequence"] = \
-                        LazyActionSequence(state.state["action_sequence"],
-                                           ApplyRule(rule))
+                    next_state = next_state.clone()
+                    next_state.states["action_sequence"] = \
+                        LazyActionSequence(
+                            state.state.states["action_sequence"],
+                            ApplyRule(rule))
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
                         n)
 
     def top_k_samples(
-        self, states: List[SamplerState[Dict[str, Any]]], k: int) \
-            -> Generator[DuplicatedSamplerState[Dict[str, Any]], None, None]:
+        self, states: List[SamplerState[Environment]], k: int) \
+            -> Generator[DuplicatedSamplerState[Environment], None, None]:
+        assert all([len(state.state.outputs) for state in states]) == 0
+        assert all([len(state.state.supervisions) for state in states]) == 0
+
         with logger.block("top_k_samples"):
-            states = [state for state in states
-                      if state.state["action_sequence"].head is not None]
+            states = [
+                state for state in states
+                if state.state.states["action_sequence"].head is not None]
             if len(states) == 0:
                 return
 
@@ -337,20 +344,25 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
             # Instantiate top-k hypothesis
             with logger.block("find_top_k_among_all_states"):
                 for score, state in topk.elements:
-                    state.state.state["action_sequence"] = \
-                        state.state.state["action_sequence"]()
+                    state.state.state.states["action_sequence"] = \
+                        state.state.state.states["action_sequence"]()
                     yield state
 
     def batch_k_samples(
-        self, states: List[SamplerState[Dict[str, Any]]], ks: List[int]) \
-            -> Generator[DuplicatedSamplerState[Dict[str, Any]],
+        self, states: List[SamplerState[Environment]], ks: List[int]) \
+            -> Generator[DuplicatedSamplerState[Environment],
                          None, None]:
+        assert all([len(state.state.outputs) for state in states]) == 0
+        assert all([len(state.state.supervisions) for state in states]) == 0
+
         with logger.block("batch_k_samples"):
             self.module.eval()
-            ks = [ks[i] for i in range(len(states))
-                  if states[i].state["action_sequence"].head is not None]
-            states = [state for state in states
-                      if state.state["action_sequence"].head is not None]
+            ks = [
+                ks[i] for i in range(len(states))
+                if states[i].state.states["action_sequence"].head is not None]
+            states = [
+                state for state in states
+                if state.state.states["action_sequence"].head is not None]
             if len(states) == 0:
                 return
 
@@ -361,6 +373,6 @@ class ActionSequenceSampler(Sampler[Dict[str, Any], AST, Dict[str, Any]],
                                          next_states, states, ks):
                 for state in self.enumerate_samples_per_state(
                         r, t, c, ns, s, Enumeration.Random, k=k):
-                    state.state.state["action_sequence"] = \
-                        state.state.state["action_sequence"]()
+                    state.state.state.states["action_sequence"] = \
+                        state.state.state.states["action_sequence"]()
                     yield state

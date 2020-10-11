@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import List, Dict, Any
+from typing import List
+from mlprogram import Environment
 from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.languages import AST, Node, Leaf, Field
 from mlprogram.languages import Token
@@ -12,11 +13,15 @@ from mlprogram.samplers \
     import SequentialProgramSampler, SamplerState, DuplicatedSamplerState
 
 
-class MockSynthesizer(Synthesizer[Dict[str, Any], AST]):
+def transform_input(x):
+    return Environment(inputs={"x": x})
+
+
+class MockSynthesizer(Synthesizer[Environment, AST]):
     def __init__(self, asts: List[AST]):
         self.asts = asts
 
-    def __call__(self, input: Dict[str, Any], n_required_output=None):
+    def __call__(self, input: Environment, n_required_output=None):
         for i, ast in enumerate(self.asts):
             yield Result(ast, 1.0 / (i + 1), True, 1)
 
@@ -35,26 +40,27 @@ class TestSequentialProgramSampler(object):
         ]
         sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
-            lambda x: {"x": x},
+            transform_input,
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
         assert sampler.create_output(
-            None, {"code": SequentialProgram([])}) is None
+            None, Environment(inputs={"code": SequentialProgram([])})
+        ) is None
         assert (SequentialProgram([
                 Statement(Reference("v0"), "tmp")
                 ]), False) == \
-            sampler.create_output(None, {
+            sampler.create_output(None, Environment(inputs={
                 "code": SequentialProgram([
                     Statement(Reference("v0"), "tmp")
                 ]),
                 "unused_reference":
                     [Token(None, Reference("v0"), Reference("v0"))]
-            })
+            }))
         assert (SequentialProgram([
                 Statement(Reference("v1"), "tmp")
                 ]), False) == \
-            sampler.create_output(None, {
+            sampler.create_output(None, Environment(inputs={
                 "code": SequentialProgram([
                     Statement(Reference("v0"), "tmp2"),
                     Statement(Reference("v1"), "tmp")
@@ -63,7 +69,7 @@ class TestSequentialProgramSampler(object):
                     Token(None, Reference("v0"), Reference("v0")),
                     Token(None, Reference("v1"), Reference("v1"))
                 ]
-            })
+            }))
 
     def test_ast_set_sample(self):
         asts = [
@@ -73,7 +79,7 @@ class TestSequentialProgramSampler(object):
         ]
         sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
-            lambda x: {"x": x},
+            transform_input,
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
@@ -82,37 +88,46 @@ class TestSequentialProgramSampler(object):
         samples.sort(key=lambda x: -x.state.score)
         assert 3 == len(samples)
         assert DuplicatedSamplerState(
-            SamplerState(1, {
-                "x": 0,
-                "reference":
-                [Token("def", Reference("v0"), Reference("v0"))],
+            SamplerState(1, Environment(
+                inputs={
+                    "x": 0,
                     "unused_reference":
                         [Token("def", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[0])])
-            }),
+                },
+                states={
+                    "reference":
+                        [Token("def", Reference("v0"), Reference("v0"))],
+                })),
             1) == samples[0]
         assert DuplicatedSamplerState(
-            SamplerState(0.5, {
-                "x": 0,
-                "reference":
-                [Token("int", Reference("v0"), Reference("v0"))],
+            SamplerState(0.5, Environment(
+                inputs={
+                    "x": 0,
                     "unused_reference":
                         [Token("int", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[1])])
-            }),
+                },
+                states={
+                    "reference":
+                        [Token("int", Reference("v0"), Reference("v0"))],
+                })),
             1) == samples[1]
         assert DuplicatedSamplerState(
-            SamplerState(1.0 / 3, {
-                "x": 0,
-                "reference":
-                [Token("float", Reference("v0"), Reference("v0"))],
+            SamplerState(1.0 / 3, Environment(
+                inputs={
+                    "x": 0,
                     "unused_reference":
-                        [Token("float", Reference("v0"), Reference("v0"))],
+                    [Token("float", Reference("v0"), Reference("v0"))],
                     "code": SequentialProgram(
                         [Statement(Reference("v0"), asts[2])])
-            }),
+                },
+                states={
+                    "reference":
+                        [Token("float", Reference("v0"), Reference("v0"))],
+                })),
             1) == samples[2]
 
     def test_remove_used_variable(self):
@@ -123,29 +138,32 @@ class TestSequentialProgramSampler(object):
         ]
         sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
-            lambda x: {"x": x},
+            transform_input,
             Collate(torch.device("cpu")),
             MockEncoder(),
             to_code=lambda x: x)
         zero = SamplerState(0, sampler.initialize(0))
-        zero.state["reference"] = [
+        zero.state.states["reference"] = [
             Token("str", Reference("v0"), Reference("v0"))]
-        zero.state["unused_reference"] = [
+        zero.state.inputs["unused_reference"] = [
             Token("str", Reference("v0"), Reference("v0"))]
-        zero.state["code"] = \
+        zero.state.inputs["code"] = \
             SequentialProgram([Statement(Reference("v0"), ast)])
         samples = list(sampler.batch_k_samples([zero], [1]))
         samples.sort(key=lambda x: -x.state.score)
         assert 1 == len(samples)
-        assert DuplicatedSamplerState(
-            SamplerState(1, {
-                "x": 0,
-                "reference":
-                [Token("def", Reference("v1"), Reference("v1"))],
+        assert samples[0] == DuplicatedSamplerState(
+            SamplerState(1, Environment(
+                inputs={
+                    "x": 0,
                     "unused_reference":
-                        [Token("def", Reference("v1"), Reference("v1"))],
+                    [Token("def", Reference("v1"), Reference("v1"))],
                     "code": SequentialProgram([
                         Statement(Reference("v0"), ast),
                         Statement(Reference("v1"), asts[0])])
-            }),
-            1) == samples[0]
+                },
+                states={
+                    "reference":
+                    [Token("def", Reference("v1"), Reference("v1"))],
+                })),
+            1)

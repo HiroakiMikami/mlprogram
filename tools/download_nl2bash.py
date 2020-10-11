@@ -4,6 +4,7 @@ import subprocess
 import os
 import json
 from mlprogram import logging
+from mlprogram import Environment
 
 logger = logging.Logger(__name__)
 
@@ -39,7 +40,10 @@ make -C $tmpdir/nl2bash/scripts data
                                    f"{name}.cm.filtered")) as file:
                 ground_truths = list(file.readlines())
             return [
-                {"input": input, "ground_truth": ground_truth}
+                Environment(
+                    inputs={"input": input},
+                    supervisions={"ground_truth": ground_truth}
+                ).to_dict()
                 for input, ground_truth in zip(inputs, ground_truths)
             ]
 

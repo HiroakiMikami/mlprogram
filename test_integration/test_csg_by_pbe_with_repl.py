@@ -50,7 +50,7 @@ class TestCsgByPbeWithREPL(object):
     def prepare_model(self, encoder: ActionSequenceEncoder):
         return torch.nn.Sequential(OrderedDict([
             ("encode_input",
-             Apply([("processed_input", "x")], "input_feature",
+             Apply([("state@test_case_tensor", "x")], "state@input_feature",
                    CNN2d(1, 16, 32, 2, 2, 2))),
             ("encoder",
              Encoder(CNN2d(2, 16, 32, 2, 2, 2))),
@@ -69,7 +69,7 @@ class TestCsgByPbeWithREPL(object):
                                 512))
              ]))),
             ("value",
-             Apply([("variable_feature", "x")], "value",
+             Apply([("state@variable_feature", "x")], "state@value",
                    MLP(16 * 8 * 8, 1, 512, 2,
                        activation=torch.nn.Sigmoid()),
                    value_type="tensor"))
@@ -81,10 +81,10 @@ class TestCsgByPbeWithREPL(object):
     def prepare_synthesizer(self, model, encoder, interpreter, rollout=True):
         collate = Collate(
             torch.device("cpu"),
-            processed_input=CollateOptions(False, 0, 0),
+            test_case_tensor=CollateOptions(False, 0, 0),
             input_feature=CollateOptions(False, 0, 0),
             reference_features=CollateOptions(True, 0, 0),
-            variables=CollateOptions(True, 0, 0),
+            variables_tensor=CollateOptions(True, 0, 0),
             previous_actions=CollateOptions(True, 0, -1),
             hidden_state=CollateOptions(False, 0, 0),
             state=CollateOptions(False, 0, 0),
@@ -94,7 +94,7 @@ class TestCsgByPbeWithREPL(object):
             encoder, IsSubtype(),
             Compose(OrderedDict([
                 ("ecode", EvaluateCode(interpreter)),
-                ("tcanvas", TransformCanvas(["variables"]))
+                ("tcanvas", TransformCanvas())
             ])),
             TransformActionSequenceForRnnDecoder(encoder, train=False),
             collate, model,
@@ -103,13 +103,13 @@ class TestCsgByPbeWithREPL(object):
             5, 1,
             subsampler,
             max_try_num=1,
-            to_key=Pick("action_sequence"),
+            to_key=Pick("state@action_sequence"),
             rng=np.random.RandomState(0)
         )
 
         sampler = SequentialProgramSampler(
             subsynthesizer,
-            TransformCanvas(["input"]),
+            TransformCanvas(),
             collate,
             model.encode_input,
             to_code=Parser().unparse,
@@ -122,25 +122,26 @@ class TestCsgByPbeWithREPL(object):
                 0.9
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                       to_key=Pick("code"), max_try_num=1)
+                       to_key=Pick("input@code"), max_try_num=1)
         else:
             sampler = SamplerWithValueNetwork(
                 sampler,
                 Compose(OrderedDict([
                     ("ecode", EvaluateCode(interpreter)),
-                    ("tcanvas", TransformCanvas(["variables"]))
+                    ("tcanvas", TransformCanvas())
                 ])),
                 collate,
                 torch.nn.Sequential(OrderedDict([
                     ("encoder", model.encoder),
                     ("value", model.value),
                     ("pick",
-                     mlprogram.nn.Function(mlprogram.utils.Pick("value")))
+                     mlprogram.nn.Function(
+                         mlprogram.utils.Pick("state@value")))
                 ])))
 
             synthesizer = SynthesizerWithTimeout(
                 SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                    to_key=Pick("code")),
+                    to_key=Pick("input@code")),
                 1
             )
             return FilteredSynthesizer(
@@ -157,7 +158,7 @@ class TestCsgByPbeWithREPL(object):
         return ToEpisode(Parser().parse, remove_used_reference=True)
 
     def transform(self, encoder, interpreter, parser):
-        tcanvas = TransformCanvas(["input", "variables"])
+        tcanvas = TransformCanvas()
         tcode = TransformCode(parser)
         taction = TransformActionSequenceForRnnDecoder(encoder)
         tgt = TransformGroundTruth(encoder)
@@ -199,8 +200,8 @@ class TestCsgByPbeWithREPL(object):
 
             collate = Collate(
                 torch.device("cpu"),
-                processed_input=CollateOptions(False, 0, 0),
-                variables=CollateOptions(True, 0, 0),
+                test_case_tensor=CollateOptions(False, 0, 0),
+                variables_tensor=CollateOptions(True, 0, 0),
                 previous_actions=CollateOptions(True, 0, -1),
                 hidden_state=CollateOptions(False, 0, 0),
                 state=CollateOptions(False, 0, 0),
@@ -212,7 +213,7 @@ class TestCsgByPbeWithREPL(object):
                 ("flatten", Flatten()),
                 ("transform", Map(self.transform(
                     encoder, interpreter, Parser()))),
-                ("collate", collate)
+                ("collate", collate.collate)
             ]))
 
             model = self.prepare_model(encoder)
@@ -224,13 +225,13 @@ class TestCsgByPbeWithREPL(object):
                     ("loss", Loss(reduction="sum")),
                     ("normalize",  # divided by batch_size
                      Apply(
-                         [("action_sequence_loss", "lhs")],
-                         "action_sequence_loss",
+                         [("output@action_sequence_loss", "lhs")],
+                         "output@loss",
                          mlprogram.nn.Function(mlprogram.utils.Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(
-                         mlprogram.utils.Pick("action_sequence_loss")))
+                         mlprogram.utils.Pick("output@loss")))
                 ])),
                 None, "score",
                 collate_fn,
@@ -245,8 +246,8 @@ class TestCsgByPbeWithREPL(object):
 
             collate = Collate(
                 torch.device("cpu"),
-                processed_input=CollateOptions(False, 0, 0),
-                variables=CollateOptions(True, 0, 0),
+                test_case_tensor=CollateOptions(False, 0, 0),
+                variables_tensor=CollateOptions(True, 0, 0),
                 previous_actions=CollateOptions(True, 0, -1),
                 hidden_state=CollateOptions(False, 0, 0),
                 state=CollateOptions(False, 0, 0),
@@ -259,7 +260,7 @@ class TestCsgByPbeWithREPL(object):
                 ("flatten", Flatten()),
                 ("transform", Map(self.transform(
                     encoder, interpreter, Parser()))),
-                ("collate", collate)
+                ("collate", collate.collate)
             ]))
 
             model = self.prepare_model(encoder)
@@ -275,38 +276,39 @@ class TestCsgByPbeWithREPL(object):
                          ("loss", Loss(reduction="none")),
                          ("weight_by_reward",
                              Apply(
-                                 [("reward", "lhs"),
-                                  ("action_sequence_loss", "rhs")],
-                                 "action_sequence_loss",
+                                 [("input@reward", "lhs"),
+                                  ("output@action_sequence_loss", "rhs")],
+                                 "output@action_sequence_loss",
                                  mlprogram.nn.Function(mlprogram.utils.Mul())))
                      ]))),
                     ("value",
                      torch.nn.Sequential(OrderedDict([
                          ("reshape_reward",
                              Apply(
-                                 [("reward", "x")],
-                                 "value_loss_target",
+                                 [("input@reward", "x")],
+                                 "state@value_loss_target",
                                  Reshape([-1, 1]))),
                          ("BCE",
                              Apply(
-                                 [("value", "input"),
-                                  ("value_loss_target", "target")],
-                                 "value_loss",
+                                 [("state@value", "input"),
+                                  ("state@value_loss_target", "target")],
+                                 "output@value_loss",
                                  torch.nn.BCELoss(reduction='sum')))
                      ]))),
                     ("aggregate",
                      Apply(
-                         ["action_sequence_loss", "value_loss"],
-                         "loss",
+                         ["output@action_sequence_loss", "output@value_loss"],
+                         "output@loss",
                          AggregatedLoss())),
                     ("normalize",
                      Apply(
-                         [("loss", "lhs")],
-                         "loss",
+                         [("output@loss", "lhs")],
+                         "output@loss",
                          mlprogram.nn.Function(mlprogram.utils.Div()),
                          constants={"rhs": 1})),
                     ("pick",
-                     mlprogram.nn.Function(mlprogram.utils.Pick("loss")))
+                     mlprogram.nn.Function(
+                         mlprogram.utils.Pick("output@loss")))
                 ])),
                 EvaluateSynthesizer(
                     train_dataset,

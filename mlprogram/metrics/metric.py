@@ -1,11 +1,12 @@
-from typing import Dict, Any, Generic, TypeVar, Callable
+from mlprogram import Environment
+from typing import Generic, TypeVar, Callable
 
 
 Value = TypeVar("Value")
 
 
 class Metric(Generic[Value]):
-    def __call__(self, input: Dict[str, Any], value: Value) -> float:
+    def __call__(self, input: Environment, value: Value) -> float:
         raise NotImplementedError
 
 
@@ -15,7 +16,7 @@ class TransformedMetric(Metric[Value], Generic[Value]):
         self.metric = metric
         self.f = f
 
-    def __call__(self, input: Dict[str, Any], value: Value) -> float:
+    def __call__(self, input: Environment, value: Value) -> float:
         return self.f(self.metric(input, value))
 
 

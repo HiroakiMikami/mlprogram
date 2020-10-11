@@ -29,7 +29,7 @@ class Test_Dict(object):
         d = _Dict()
         d["0"] = 0
         d["1"] = 1
-        d.immutable()
+        d.mutable(False)
         with pytest.raises(AssertionError):
             d["2"] = 2
         with pytest.raises(AssertionError):

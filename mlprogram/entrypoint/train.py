@@ -8,6 +8,7 @@ from pytorch_pfn_extras.training import extensions
 from typing import Callable, Any, Union, Optional, List
 import os
 import shutil
+from mlprogram import Environment
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram import logging
@@ -238,11 +239,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
 
             model.train()
             for batch in logger.iterable_block("iteration", loader, True):
+                batch.mutable(
+                    inputs=False,
+                    supervisions=False
+                )
                 if manager.iteration >= n_iter:
                     break
-                if len(batch) == 0:
-                    logger.warning(
-                        f"Skip {manager.iteration} th batch")
+                if len(batch.to_dict()) == 0:
+                    logger.warning(f"Skip {manager.iteration} th batch")
                     continue
                 with manager.run_iteration():
                     with logger.block("forward"):
@@ -345,18 +349,23 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 rollouts = []
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
+                        sample_inputs = Environment(
+                            inputs=sample.inputs.to_dict()
+                        )
+                        # TODO set mutable flag
                         for rollout in logger.iterable_block(
                                 "sample",
-                                synthesizer(sample,
+                                synthesizer(sample_inputs,
                                             n_required_output=n_rollout)):
                             if not rollout.is_finished:
                                 continue
                             for _ in range(rollout.num):
-                                output = {key: value
-                                          for key, value in sample.items()}
-                                output["ground_truth"] = rollout.output
-                                output["reward"] = torch.tensor(
-                                    reward(sample, rollout.output))
+                                output = sample.clone()
+                                output.supervisions["ground_truth"] = \
+                                    rollout.output
+                                output.inputs["reward"] = \
+                                    torch.tensor(reward(sample,
+                                                        rollout.output))
                                 rollouts.append(output)
                 if len(rollouts) == 0:
                     logger.warning("No rollout")

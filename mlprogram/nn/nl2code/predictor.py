@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Any, cast
+from typing import cast
 
+from mlprogram import Environment
 from mlprogram.nn.nl2code import ActionSequenceReader
 from mlprogram.nn import PointerNet
 from mlprogram.nn.embedding import EmbeddingInverse
@@ -45,7 +46,7 @@ class Predictor(nn.Module):
         nn.init.xavier_uniform_(self._l_generate.weight)
         nn.init.zeros_(self._l_generate.bias)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -70,11 +71,11 @@ class Predictor(nn.Module):
             N is the batch_size.
         """
         reference_features = cast(PaddedSequenceWithMask,
-                                  inputs["reference_features"])
+                                  inputs.states["reference_features"])
         action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
+                               inputs.states["action_features"])
         action_contexts = cast(PaddedSequenceWithMask,
-                               inputs["action_contexts"])
+                               inputs.states["action_contexts"])
         L_q, B, _ = reference_features.data.shape
 
         # Decode embeddings
@@ -114,14 +115,14 @@ class Predictor(nn.Module):
         reference_pred = reference * reference_pred  # (L_a, B, query_length)
 
         if self.training:
-            inputs["rule_probs"] = \
+            inputs.outputs["rule_probs"] = \
                 PaddedSequenceWithMask(rule_pred, action_features.mask)
-            inputs["token_probs"] = \
+            inputs.outputs["token_probs"] = \
                 PaddedSequenceWithMask(token_pred, action_features.mask)
-            inputs["reference_probs"] = \
+            inputs.outputs["reference_probs"] = \
                 PaddedSequenceWithMask(reference_pred, action_features.mask)
         else:
-            inputs["rule_probs"] = rule_pred[-1, :, :]
-            inputs["token_probs"] = token_pred[-1, :, :]
-            inputs["reference_probs"] = reference_pred[-1, :, :]
+            inputs.outputs["rule_probs"] = rule_pred[-1, :, :]
+            inputs.outputs["token_probs"] = token_pred[-1, :, :]
+            inputs.outputs["reference_probs"] = reference_pred[-1, :, :]
         return inputs

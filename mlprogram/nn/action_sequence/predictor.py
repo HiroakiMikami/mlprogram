@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Any, cast
+from typing import cast
 
+from mlprogram import Environment
 from mlprogram.nn import PointerNet
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -16,7 +17,7 @@ class Predictor(nn.Module):
         self.reference = PointerNet(feature_size, reference_feature_size,
                                     hidden_size)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -40,9 +41,9 @@ class Predictor(nn.Module):
             N is the batch_size.
         """
         reference_features = cast(PaddedSequenceWithMask,
-                                  inputs["reference_features"])
+                                  inputs.states["reference_features"])
         action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
+                               inputs.states["action_features"])
         rule_pred = self.rule(action_features.data)
         rule_prob = torch.softmax(rule_pred, dim=2)
 
@@ -60,16 +61,16 @@ class Predictor(nn.Module):
         token_log_prob = select_prob[:, :, 1:2] * token_prob
         reference_log_prob = select_prob[:, :, 2:3] * reference_prob
         if self.training:
-            inputs["rule_probs"] = \
+            inputs.outputs["rule_probs"] = \
                 PaddedSequenceWithMask(rule_log_prob, action_features.mask)
-            inputs["token_probs"] = \
+            inputs.outputs["token_probs"] = \
                 PaddedSequenceWithMask(token_log_prob, action_features.mask)
-            inputs["reference_probs"] = \
+            inputs.outputs["reference_probs"] = \
                 PaddedSequenceWithMask(reference_log_prob,
                                        action_features.mask)
         else:
-            inputs["rule_probs"] = rule_log_prob[-1, :, :]
-            inputs["token_probs"] = token_log_prob[-1, :, :]
-            inputs["reference_probs"] = reference_log_prob[-1, :, :]
+            inputs.outputs["rule_probs"] = rule_log_prob[-1, :, :]
+            inputs.outputs["token_probs"] = token_log_prob[-1, :, :]
+            inputs.outputs["reference_probs"] = reference_log_prob[-1, :, :]
 
         return inputs

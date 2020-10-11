@@ -1,8 +1,9 @@
 import torch
 import numpy as np
-from typing import Callable, List, Any, Optional, Dict, TypeVar, Generic, cast
+from typing import Callable, List, Optional, TypeVar, Generic, cast
 from torchnlp.encoders import LabelEncoder
 
+from mlprogram import Environment
 from mlprogram.actions import ActionSequence
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Token
@@ -20,8 +21,8 @@ class TransformQuery(Generic[Input]):
         self.char_encoder = char_encoder
         self.max_word_length = max_word_length
 
-    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        input = cast(Input, entry["input"])
+    def __call__(self, entry: Environment) -> Environment:
+        input = cast(Input, entry.inputs["input"])
         reference = self.extract_reference(input)
 
         word_query = self.word_encoder.batch_encode([
@@ -34,9 +35,9 @@ class TransformQuery(Generic[Input]):
             chars = self.char_encoder.batch_encode(token.value)
             length = min(self.max_word_length, len(chars))
             char_query[i, :length] = chars[:length]
-        entry["reference"] = reference
-        entry["word_nl_query"] = word_query
-        entry["char_nl_query"] = char_query
+        entry.states["reference"] = reference
+        entry.states["word_nl_query"] = word_query
+        entry.states["char_nl_query"] = char_query
 
         return entry
 
@@ -50,9 +51,14 @@ class TransformActionSequence:
         self.max_depth = max_depth
         self.train = train
 
-    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str, str]], entry["reference"])
+    def __call__(self, entry: Environment) -> Optional[Environment]:
+        if self.train:
+            action_sequence = cast(ActionSequence,
+                                   entry.supervisions["action_sequence"])
+        else:
+            action_sequence = cast(ActionSequence,
+                                   entry.states["action_sequence"])
+        reference = cast(List[Token[str, str]], entry.states["reference"])
         a = self.action_sequence_encoder.encode_action(
             action_sequence, reference)
         rule_prev_action = \
@@ -80,10 +86,10 @@ class TransformActionSequence:
                 self.action_sequence_encoder.encode_each_action(
                     action_sequence, reference, self.max_arity)
 
-        entry["previous_actions"] = prev_action
-        entry["previous_action_rules"] = rule_prev_action
-        entry["depthes"] = depth
-        entry["adjacency_matrix"] = matrix
-        entry["action_queries"] = query
+        entry.states["previous_actions"] = prev_action
+        entry.states["previous_action_rules"] = rule_prev_action
+        entry.states["depthes"] = depth
+        entry.states["adjacency_matrix"] = matrix
+        entry.states["action_queries"] = query
 
         return entry

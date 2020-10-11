@@ -1,4 +1,5 @@
-from typing import List, Dict, Any, cast, Callable, Optional, Set
+from typing import List, Any, cast, Callable, Optional, Set
+from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.languages import AST, Node, Leaf
 from mlprogram.interpreters import Interpreter, SequentialProgram, Reference
@@ -10,9 +11,9 @@ class ToEpisode:
         self.to_ast = to_ast
         self.remove_used_reference = remove_used_reference
 
-    def __call__(self, entry: Dict[str, Any]) -> List[Dict[str, Any]]:
-        input = entry["input"]
-        ground_truth = cast(SequentialProgram[Any], entry["ground_truth"])
+    def __call__(self, entry: Environment) -> List[Environment]:
+        ground_truth = cast(SequentialProgram[Any],
+                            entry.supervisions["ground_truth"])
         gt_refs = {statement.reference: statement.code
                    for statement in ground_truth.statements}
 
@@ -31,18 +32,18 @@ class ToEpisode:
                     return [ast.value]
             return []
 
-        retval: List[Dict[str, Any]] = []
+        retval: List[Environment] = []
         refs: Set[Reference] = set()
         for i, statement in enumerate(ground_truth.statements):
             ref = statement.reference
             rs = list(refs)
             rs.sort(key=lambda r: r.name)
-            xs = {key: value for key, value in entry.items()
-                  if key not in set(["input", "ground_truth"])}
-            xs["input"] = input
-            xs["ground_truth"] = gt_refs[ref]
-            xs["reference"] = [Token(None, r, r) for r in rs]
-            xs["code"] = SequentialProgram(ground_truth.statements[:(i + 1)])
+            xs = entry.clone()
+            xs.states["reference"] = [Token(None, r, r) for r in rs]
+            # TODO "code" may be in supervisions
+            xs.inputs["code"] = \
+                SequentialProgram(ground_truth.statements[:(i + 1)])
+            xs.supervisions["ground_truth"] = gt_refs[ref]
             retval.append(xs)
             refs.add(ref)
             if self.remove_used_reference:
@@ -59,12 +60,12 @@ class EvaluateCode:
     def __init__(self, interpreter: Interpreter):
         self.interpreter = interpreter
 
-    def __call__(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        code = entry["code"]
-        input, _ = entry["input"]
-        reference = entry["reference"]
+    def __call__(self, entry: Environment) -> Environment:
+        code = entry.inputs["code"]
+        input, _ = entry.inputs["test_case"]
+        reference = entry.states["reference"]
         refs = [token.value for token in reference]
         result = self.interpreter.eval_references(code, input)
         variables = [result[ref] for ref in refs]
-        entry["variables"] = variables
+        entry.inputs["variables"] = variables
         return entry

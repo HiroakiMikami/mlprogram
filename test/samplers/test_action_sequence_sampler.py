@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from typing import List
+from mlprogram import Environment
 from mlprogram.samplers \
     import ActionSequenceSampler, SamplerState
 from mlprogram.encoders import Samples, ActionSequenceEncoder
@@ -47,16 +48,16 @@ collate = Collate(torch.device("cpu"),
 
 
 def create_transform_input(reference: List[Token[str, str]]):
-    def transform_input(kwargs):
-        kwargs["reference"] = reference
-        kwargs["input"] = torch.zeros((1,))
-        return kwargs
+    def transform_input(env):
+        env.states["reference"] = reference
+        env.inputs["input"] = torch.zeros((1,))
+        return env
     return transform_input
 
 
 def transform_action_sequence(kwargs):
-    kwargs["length"] = \
-        torch.tensor(len(kwargs["action_sequence"].action_sequence))
+    kwargs.states["length"] = \
+        torch.tensor(len(kwargs.states["action_sequence"].action_sequence))
     return kwargs
 
 
@@ -75,12 +76,12 @@ class DecoderModule(nn.Module):
         self.token_prob = token_prob
         self.reference_prob = reference_prob
 
-    def forward(self, kwargs):
-        length = kwargs["length"][0] - 1
-        kwargs["rule_probs"] = self.rule_prob[length]
-        kwargs["token_probs"] = self.token_prob[length]
-        kwargs["reference_probs"] = self.reference_prob[length]
-        return kwargs
+    def forward(self, env):
+        length = env.states["length"][0] - 1
+        env.outputs["rule_probs"] = self.rule_prob[length]
+        env.outputs["token_probs"] = self.token_prob[length]
+        env.outputs["reference_probs"] = self.reference_prob[length]
+        return env
 
 
 class Module(nn.Module):
@@ -100,10 +101,10 @@ class TestActionSequenceSampler(object):
             Module(encoder_module,
                    DecoderModule([], [], []))
         )
-        s = sampler.initialize({})
-        assert 1 == len(s["action_sequence"].action_sequence)
-        s.pop("action_sequence")
-        assert {"input": torch.zeros((1,)), "reference": []} == s
+        s = sampler.initialize(Environment())
+        assert 1 == len(s.states["action_sequence"].action_sequence)
+        assert s.inputs.to_dict() == {"input": torch.zeros((1,))}
+        assert s.states.to_dict()["reference"] == []
 
     def test_rule(self):
         rule_prob = torch.tensor([
@@ -133,20 +134,20 @@ class TestActionSequenceSampler(object):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize(Environment()))
         topk_results = list(sampler.top_k_samples([s], 1))
         assert 1 == len(topk_results)
-        assert 1 == topk_results[0].state.state["length"].item()
+        assert 1 == topk_results[0].state.state.states["length"].item()
         assert np.allclose(log(0.2), topk_results[0].state.score)
         random_results = list(sampler.batch_k_samples([s], [1]))
         assert 1 == len(random_results)
-        assert 1 == random_results[0].state.state["length"].item()
+        assert 1 == random_results[0].state.state.states["length"].item()
         assert \
             log(0.1) - 1e-5 <= random_results[0].state.score <= log(0.2) + 1e-5
 
         next = list(sampler.top_k_samples(
             [s.state for s in topk_results], 1))[0]
-        assert 2 == next.state.state["length"].item()
+        assert 2 == next.state.state.states["length"].item()
         assert np.allclose(log(0.2) + log(0.5), next.state.score)
 
     def test_variadic_rule(self):
@@ -185,20 +186,20 @@ class TestActionSequenceSampler(object):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize(Environment()))
         results = [s.state for s in sampler.top_k_samples([s], 1)]
         results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = \
             list(sampler.top_k_samples(results, 2))
         assert 2 == len(topk_results)
-        assert 3 == topk_results[0].state.state["length"].item()
+        assert 3 == topk_results[0].state.state.states["length"].item()
         assert np.allclose(log(0.2) + log(0.5) + log(0.8),
                            topk_results[0].state.score)
         assert np.allclose(log(0.2) + log(0.5) + log(0.2),
                            topk_results[1].state.score)
         random_results = list(sampler.batch_k_samples(results[:1], [1]))
         assert 1 == len(random_results)
-        assert 3 == random_results[0].state.state["length"].item()
+        assert 3 == random_results[0].state.state.states["length"].item()
         assert (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
                 random_results[0].state.score <=
                 log(0.2) + log(0.5) + log(0.8) + 1e-5)
@@ -241,17 +242,17 @@ class TestActionSequenceSampler(object):
             Module(encoder_module,
                    DecoderModule(rule_prob, token_prob, reference_prob))
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize(Environment()))
         results = [s.state for s in sampler.top_k_samples([s], 1)]
         results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = list(sampler.top_k_samples(results, 2))
         assert 2 == len(topk_results)
-        assert 3 == topk_results[0].state.state["length"].item()
+        assert 3 == topk_results[0].state.state.states["length"].item()
         assert np.allclose(log(0.2) + log(0.8), topk_results[0].state.score)
         assert np.allclose(log(0.2) + log(0.2), topk_results[1].state.score)
         random_results = list(sampler.batch_k_samples(results[:1], [1]))
         assert 1 == len(random_results)
-        assert 3 == random_results[0].state.state["length"].item()
+        assert 3 == random_results[0].state.state.states["length"].item()
         assert log(0.2) + log(0.2) - \
             1e-5 <= random_results[0].state.score <= log(0.2) + log(0.8) + 1e-5
 
@@ -296,16 +297,16 @@ class TestActionSequenceSampler(object):
                    DecoderModule(rule_prob, token_prob, reference_prob)),
             rng=np.random.RandomState(0)
         )
-        s = SamplerState(0.0, sampler.initialize({}))
+        s = SamplerState(0.0, sampler.initialize(Environment()))
         results = [s.state for s in sampler.top_k_samples([s], 1)]
         results = [s.state for s in sampler.top_k_samples(results, 1)]
         topk_results = list(sampler.top_k_samples(results, 1))
         assert 1 == len(topk_results)
-        assert 3 == topk_results[0].state.state["length"].item()
+        assert 3 == topk_results[0].state.state.states["length"].item()
         assert np.allclose(log(0.2) + log(1.),
                            topk_results[0].state.score)
         random_results = list(sampler.batch_k_samples(results[:1], [1]))
         assert 1 == len(random_results)
-        assert 3 == random_results[0].state.state["length"].item()
+        assert 3 == random_results[0].state.state.states["length"].item()
         assert np.allclose(log(0.2) + log(1.0),
                            random_results[0].state.score)

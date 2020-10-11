@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Dict, Any, cast
+from typing import Tuple, cast
 
+from mlprogram import Environment
 from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional import gelu
@@ -112,7 +113,7 @@ class Decoder(nn.Module):
             max_depth, feature_size, feature_size
         )
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -134,16 +135,17 @@ class Decoder(nn.Module):
             (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
         """
-        nl_query_features = cast(
-            PaddedSequenceWithMask, inputs["nl_query_features"])
-        action_queries = cast(PaddedSequenceWithMask, inputs["action_queries"])
+        nl_query_features = cast(PaddedSequenceWithMask,
+                                 inputs.states["nl_query_features"])
+        action_queries = cast(PaddedSequenceWithMask,
+                              inputs.states["action_queries"])
         action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
+                               inputs.states["action_features"])
         q = action_queries.data + \
             (action_queries.data == -1) * (self.rule_num + 1)
         embed = self.query_embed(q)
         input = PaddedSequenceWithMask(embed, action_queries.mask)
         for block in self.blocks:
             input, _, _ = block(input, nl_query_features, action_features)
-        inputs["action_features"] = input
+        inputs.states["action_features"] = input
         return inputs

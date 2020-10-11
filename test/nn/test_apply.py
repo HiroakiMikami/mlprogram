@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch import nn
+from mlprogram import Environment
 from mlprogram.nn import Apply
 from mlprogram.nn.utils.rnn import pad_sequence
 
@@ -20,59 +21,62 @@ class MockModule(nn.Module):
 
 class TestApply(object):
     def test_parameters(self):
-        apply = Apply(["x"], "out", MockModule(1))
+        apply = Apply(["input@x"], "output@out", MockModule(1))
         assert set(["module.p"]) == \
             dict(apply.named_parameters()).keys()
 
     def test_simple(self):
-        apply = Apply(["x"], "out", MockModule(1))
-        output = apply({"x": torch.arange(3).reshape(-1, 1)})
+        apply = Apply(["input@x"], "output@out", MockModule(1))
+        output = apply(Environment(
+            inputs={"x": torch.arange(3).reshape(-1, 1)}
+        ))
         assert np.array_equal(
-            [[1], [2], [3]], output["out"].detach().numpy()
+            [[1], [2], [3]], output["output@out"].detach().numpy()
         )
 
     def test_sequence(self):
-        apply = Apply(["x"], "out", MockModule(1),
+        apply = Apply(["input@x"], "output@out", MockModule(1),
                       value_type="list")
 
-        output = apply({"x": [torch.arange(2).reshape(-1, 1),
-                              torch.arange(1).reshape(-1, 1) * 10,
-                              torch.arange(3).reshape(-1, 1) * 100]})
+        output = apply(Environment(inputs={
+            "x": [torch.arange(2).reshape(-1, 1),
+                  torch.arange(1).reshape(-1, 1) * 10,
+                  torch.arange(3).reshape(-1, 1) * 100]}))
         assert np.array_equal(
-            [[1], [2]], output["out"][0].detach().numpy()
+            [[1], [2]], output["output@out"][0].detach().numpy()
         )
         assert np.array_equal(
-            [[1]], output["out"][1].detach().numpy()
+            [[1]], output["output@out"][1].detach().numpy()
         )
         assert np.array_equal(
-            [[1], [101], [201]], output["out"][2].detach().numpy()
+            [[1], [101], [201]], output["output@out"][2].detach().numpy()
         )
 
     def test_empty_sequence(self):
-        apply = Apply(["x"], "out", MockModule(1),
+        apply = Apply(["input@x"], "output@out", MockModule(1),
                       value_type="list")
 
-        output = apply({"x": []})
-        assert [] == output["out"]
-        output = apply({"x": [torch.zeros((0,))]})
-        assert [[]] == output["out"]
+        output = apply(Environment(inputs={"x": []}))
+        assert [] == output["output@out"]
+        output = apply(Environment(inputs={"x": [torch.zeros((0,))]}))
+        assert [[]] == output["output@out"]
 
     def test_padded_sequence(self):
-        apply = Apply(["x"], "out", MockModule(1),
+        apply = Apply(["input@x"], "output@out", MockModule(1),
                       value_type="padded_tensor")
 
         padded = pad_sequence([torch.arange(2).reshape(-1, 1),
                                torch.arange(1).reshape(-1, 1) * 10,
                                torch.arange(3).reshape(-1, 1) * 100],
                               padding_value=-1)
-        output = apply({"x": padded})
+        output = apply(Environment(inputs={"x": padded}))
         assert np.array_equal(
             [
                 [[1], [1], [1]],
                 [[2], [0], [101]],
                 [[0], [0], [201]]
             ],
-            output["out"].data.detach().numpy()
+            output["output@out"].data.detach().numpy()
         )
         assert np.array_equal(
             [
@@ -80,27 +84,31 @@ class TestApply(object):
                 [1, 0, 1],
                 [0, 0, 1]
             ],
-            output["out"].mask.detach().numpy()
+            output["output@out"].mask.detach().numpy()
         )
 
     def test_multiple_inputs(self):
-        apply = Apply(["x", "y"], "out", MockModule(1))
-        output = apply({"x": torch.arange(3).reshape(-1, 1), "y": 10})
+        apply = Apply(["input@x", "input@y"], "output@out", MockModule(1))
+        output = apply(Environment(
+            inputs={"x": torch.arange(3).reshape(-1, 1), "y": 10}
+        ))
         assert np.array_equal(
-            [[11], [12], [13]], output["out"].detach().numpy()
+            [[11], [12], [13]], output["output@out"].detach().numpy()
         )
 
     def test_rename_keys(self):
-        apply = Apply([("in", "x")], "out", MockModule(1))
-        output = apply({"in": torch.arange(3).reshape(-1, 1)})
+        apply = Apply([("input@in", "x")], "output@out", MockModule(1))
+        output = apply(Environment(
+            inputs={"in": torch.arange(3).reshape(-1, 1)}
+        ))
         assert np.array_equal(
-            [[1], [2], [3]], output["out"].detach().numpy()
+            [[1], [2], [3]], output["output@out"].detach().numpy()
         )
 
     def test_constants(self):
-        apply = Apply([], "out", MockModule(1),
+        apply = Apply([], "output@out", MockModule(1),
                       constants={"x": torch.arange(3).reshape(-1, 1)})
-        output = apply({})
+        output = apply(Environment())
         assert np.array_equal(
-            [[1], [2], [3]], output["out"].detach().numpy()
+            [[1], [2], [3]], output["output@out"].detach().numpy()
         )

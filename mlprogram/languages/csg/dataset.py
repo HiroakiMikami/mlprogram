@@ -4,6 +4,7 @@ from torch.utils import data
 from torch.utils.data import IterableDataset
 from typing import Optional, Any, Tuple, Dict, List
 
+from mlprogram import Environment
 from mlprogram.interpreters import Reference as R
 from mlprogram.interpreters import Statement
 from mlprogram.interpreters import SequentialProgram
@@ -150,13 +151,12 @@ class Dataset(IterableDataset):
                 ast = self.parent.sample_ast(rng, n_object)
                 if self.parent.reference:
                     refs, output = self.parent.to_reference(ast)
-                    retval: Dict[str, Any] = {
-                        "ground_truth": SequentialProgram(refs)
-                    }
+                    retval = Environment(
+                        supervisions={
+                            "ground_truth": SequentialProgram(refs)
+                        })
                 else:
-                    retval = {
-                        "ground_truth": ast
-                    }
+                    retval = Environment(supervisions={"ground_truth": ast})
                 return retval
 
         return InternalIterator(self)

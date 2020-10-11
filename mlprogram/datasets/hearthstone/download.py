@@ -2,6 +2,7 @@ import requests
 from typing import Callable, Dict
 
 from mlprogram import logging
+from mlprogram import Environment
 from mlprogram.utils.data import ListDataset
 
 logger = logging.Logger(__name__)
@@ -32,6 +33,8 @@ def download(base_path: str = BASE_PATH,
         for q, c in zip(query, code):
             if q == "" and c == "":
                 continue
-            samples.append({"input": q, "ground_truth": c})
+            samples.append(Environment(
+                inputs={"input": q},
+                supervisions={"ground_truth": c}))
         dataset[target] = ListDataset(samples)
     return dataset

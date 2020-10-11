@@ -42,7 +42,7 @@ collate_fn:
         - type: mlprogram.utils.Map
           func: "@/transform"
       - - "collate"
-        - "@/collate"
+        - "@/collate.collate"
 
 loss_fn:
   type: torch.nn.Sequential
@@ -60,9 +60,9 @@ loss_fn:
               - - "weight_by_reward"
                 - type: mlprogram.nn.Apply
                   in_keys:
-                    - ["reward", "lhs"]
-                    - ["action_sequence_loss", "rhs"]
-                  out_key: action_sequence_loss
+                    - ["input@reward", "lhs"]
+                    - ["output@action_sequence_loss", "rhs"]
+                  out_key: output@action_sequence_loss
                   module:
                     type: mlprogram.nn.Function
                     f:
@@ -75,33 +75,33 @@ loss_fn:
               - - "reshape_reward"
                 - type: mlprogram.nn.Apply
                   in_keys:
-                    - ["reward", "x"]
-                  out_key: value_loss_target
+                    - ["input@reward", "x"]
+                  out_key: state@value_loss_target
                   module:
                     type: torch.Reshape
                     sizes: [-1, 1]
               - - "BCE"
                 - type: mlprogram.nn.Apply
                   in_keys:
-                    - ["value", "input"]
-                    - ["value_loss_target", "target"]
-                  out_key: value_loss
+                    - ["state@value", "input"]
+                    - ["state@value_loss_target", "target"]
+                  out_key: output@value_loss
                   module:
                     type: torch.nn.BCELoss
                     reduction: sum
       - - "aggregate"
         - type: mlprogram.nn.Apply
           in_keys:
-            - "action_sequence_loss"
-            - "value_loss"
-          out_key: "loss"
+            - "output@action_sequence_loss"
+            - "output@value_loss"
+          out_key: "output@loss"
           module:
             type: mlprogram.nn.AggregatedLoss
       - - "normalize"
         - type: mlprogram.nn.Apply
           in_keys:
-            - ["loss", "lhs"]
-          out_key: "loss"
+            - ["output@loss", "lhs"]
+          out_key: "output@loss"
           module:
             type: mlprogram.nn.Function
             f:
@@ -112,7 +112,7 @@ loss_fn:
         - type: mlprogram.nn.Function
           f:
             type: mlprogram.utils.Pick
-            key: loss
+            key: output@loss
 
 main:
   type: mlprogram.entrypoint.train_REINFORCE

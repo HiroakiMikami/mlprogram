@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Dict, Any, cast
+from typing import Tuple, cast
 
+from mlprogram import Environment
 from mlprogram.nn import TreeConvolution
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
@@ -116,7 +117,7 @@ class ActionSequenceReader(nn.Module):
                                      hidden_size),
             max_arity + 1, hidden_size, rule_embed_size)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -145,15 +146,16 @@ class ActionSequenceReader(nn.Module):
             N is the batch size.
         """
         previous_actions = cast(PaddedSequenceWithMask,
-                                inputs["previous_actions"])
-        rule_previous_actions = cast(
-            PaddedSequenceWithMask, inputs["previous_action_rules"])
-        depthes = cast(torch.Tensor, inputs["depthes"])
-        adjacency_matrix = cast(torch.Tensor, inputs["adjacency_matrix"])
+                                inputs.states["previous_actions"])
+        rule_previous_actions = cast(PaddedSequenceWithMask,
+                                     inputs.states["previous_action_rules"])
+        depthes = cast(torch.Tensor, inputs.states["depthes"])
+        adjacency_matrix = cast(torch.Tensor,
+                                inputs.states["adjacency_matrix"])
         e_action = self.action_embed(previous_actions.data)
         e_rule_action = self.elem_embed(rule_previous_actions.data)
         input = PaddedSequenceWithMask(e_action, previous_actions.mask)
         for block in self.blocks:
             input, _ = block(input, depthes, e_rule_action, adjacency_matrix)
-        inputs["action_features"] = input
+        inputs.states["action_features"] = input
         return inputs

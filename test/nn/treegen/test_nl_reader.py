@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram import Environment
 from mlprogram.nn.treegen import NLReaderBlock, NLReader
 from mlprogram.nn.utils.rnn import pad_sequence
 
@@ -50,8 +51,11 @@ class TestNLReader(object):
         in0 = pad_sequence([in0], 0)
         in1 = torch.zeros(5, 7).long()
         in1 = pad_sequence([in1], 0)
-        out = reader({"word_nl_query": in0,
-                      "char_nl_query": in1})["nl_query_features"]
+        out = reader(Environment(
+            states={"word_nl_query": in0,
+                    "char_nl_query": in1
+                    }
+        )).states["nl_query_features"]
         assert (5, 1, 3) == out.data.shape
         assert (5, 1) == out.mask.shape
 
@@ -61,12 +65,14 @@ class TestNLReader(object):
         in01 = torch.zeros(7).long()
         in10 = torch.zeros(5, 7).long()
         in11 = torch.zeros(7, 7).long()
-        out0 = reader({"word_nl_query": pad_sequence([in00, in01], 0),
-                       "char_nl_query": pad_sequence([in10, in11])}
-                      )["nl_query_features"]
-        out1 = reader({"word_nl_query": pad_sequence([in00], 0),
-                       "char_nl_query": pad_sequence([in10])
-                       })["nl_query_features"]
+        out0 = reader(Environment(
+            states={"word_nl_query": pad_sequence([in00, in01], 0),
+                    "char_nl_query": pad_sequence([in10, in11])}
+        )).states["nl_query_features"]
+        out1 = reader(Environment(
+            states={"word_nl_query": pad_sequence([in00], 0),
+                    "char_nl_query": pad_sequence([in10])}
+        )).states["nl_query_features"]
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
         assert np.allclose(out0.detach().numpy(),

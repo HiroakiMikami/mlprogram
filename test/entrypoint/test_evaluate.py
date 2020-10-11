@@ -2,6 +2,7 @@ import tempfile
 import os
 import torch
 
+from mlprogram import Environment
 from mlprogram.entrypoint import evaluate
 from mlprogram.utils.data import ListDataset
 from mlprogram.metrics import Accuracy, Bleu
@@ -32,7 +33,7 @@ class MockSynthesizer:
 
 
 def synthesize(input):
-    input = input["input"]
+    input = input.inputs["query"]
     output = []
     if input == "query0":
         output = ["c0", "c1", "c2"]
@@ -49,18 +50,18 @@ class TestEvaluateSynthesizer(object):
     def test_simple_case(self):
         accuracy = Accuracy()
         dataset = ListDataset([
-            {
-                "input": "query0",
-                "ground_truth": "c0"
-            },
-            {
-                "input": "query1",
-                "ground_truth": "c0"
-            },
-            {
-                "input": "query2",
-                "ground_truth": "c0"
-            }
+            Environment(
+                inputs={"query": "query0"},
+                supervisions={"ground_truth": "c0"}
+            ),
+            Environment(
+                inputs={"query": "query1"},
+                supervisions={"ground_truth": "c0"}
+            ),
+            Environment(
+                inputs={"query": "query2"},
+                supervisions={"ground_truth": "c0"}
+            ),
         ])
         results = EvaluateSynthesizer(dataset, synthesize,
                                       metrics={"accuracy": accuracy})()
@@ -71,15 +72,18 @@ class TestEvaluateSynthesizer(object):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
-        assert Result("query0", {"ground_truth": "c0"},
+        assert Result({"input@query": "query0",
+                       "supervision@ground_truth": "c0"},
                       ["c0", "c1", "c2"],
                       {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[0]
-        assert Result("query1", {"ground_truth": "c0"},
+        assert Result({"input@query": "query1",
+                       "supervision@ground_truth": "c0"},
                       ["c2", "c3", "c0"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[1]
-        assert Result("query2", {"ground_truth": "c0"},
+        assert Result({"input@query": "query2",
+                       "supervision@ground_truth": "c0"},
                       ["c2", "c3", "c5"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
                       True, 0.0) == results.results[2]
@@ -87,18 +91,18 @@ class TestEvaluateSynthesizer(object):
     def test_multiprocess(self):
         accuracy = Accuracy()
         dataset = ListDataset([
-            {
-                "input": "query0",
-                "ground_truth": "c0"
-            },
-            {
-                "input": "query1",
-                "ground_truth": "c0"
-            },
-            {
-                "input": "query2",
-                "ground_truth": "c0"
-            }
+            Environment(
+                inputs={"query": "query0"},
+                supervisions={"ground_truth": "c0"}
+            ),
+            Environment(
+                inputs={"query": "query1"},
+                supervisions={"ground_truth": "c0"}
+            ),
+            Environment(
+                inputs={"query": "query2"},
+                supervisions={"ground_truth": "c0"}
+            ),
         ])
         results = EvaluateSynthesizer(dataset, synthesize,
                                       metrics={"accuracy": accuracy},
@@ -110,16 +114,19 @@ class TestEvaluateSynthesizer(object):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
-        results.results.sort(key=lambda x: x.input)
-        assert Result("query0", {"ground_truth": "c0"},
+        results.results.sort(key=lambda x: x.sample["input@query"])
+        assert Result({"input@query": "query0",
+                       "supervision@ground_truth": "c0"},
                       ["c0", "c1", "c2"],
                       {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[0]
-        assert Result("query1", {"ground_truth": "c0"},
+        assert Result({"input@query": "query1",
+                       "supervision@ground_truth": "c0"},
                       ["c2", "c3", "c0"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[1]
-        assert Result("query2", {"ground_truth": "c0"},
+        assert Result({"input@query": "query2",
+                       "supervision@ground_truth": "c0"},
                       ["c2", "c3", "c5"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
                       True, 0.0) == results.results[2]
@@ -127,8 +134,10 @@ class TestEvaluateSynthesizer(object):
 
 class TestEvaluate(object):
     def prepare_dataset(self):
-        return {"valid": ListDataset([{"input": "query",
-                                       "ground_truth": "name0"}])}
+        return ListDataset([
+            Environment(inputs={"query": "query"},
+                        supervisions={"ground_truth": "name0"})
+        ])
 
     def prepare_model(self):
         return MockModel()
@@ -147,12 +156,12 @@ class TestEvaluate(object):
                        os.path.join(input, "model", "0"))
             dataset = self.prepare_dataset()
             model = self.prepare_model()
-            evaluate(input, ws, output, dataset["valid"],
+            evaluate(input, ws, output, dataset,
                      model, self.prepare_synthesizer(model),
                      {
-                "accuracy": Accuracy(),
-                "bleu": Bleu(),
-            })
+                         "accuracy": Accuracy(),
+                         "bleu": Bleu(),
+                     })
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))
@@ -170,12 +179,12 @@ class TestEvaluate(object):
                        os.path.join(input, "model", "1"))
             dataset = self.prepare_dataset()
             model = self.prepare_model()
-            evaluate(input, ws, output, dataset["valid"],
+            evaluate(input, ws, output, dataset,
                      model, self.prepare_synthesizer(model),
                      {
-                "accuracy": Accuracy(),
-                "bleu": Bleu(),
-            })
+                         "accuracy": Accuracy(),
+                         "bleu": Bleu(),
+                     })
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))
@@ -191,12 +200,12 @@ class TestEvaluate(object):
                        os.path.join(input, "model", "0"))
             dataset = self.prepare_dataset()
             model = self.prepare_model()
-            evaluate(input, ws, output, dataset["valid"],
+            evaluate(input, ws, output, dataset,
                      model, self.prepare_synthesizer(model),
                      {
-                "accuracy": Accuracy(),
-                "bleu": Bleu(),
-            }, n_process=2)
+                         "accuracy": Accuracy(),
+                         "bleu": Bleu(),
+                     }, n_process=2)
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))

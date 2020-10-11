@@ -3,7 +3,8 @@ from torch import nn
 from torch import multiprocessing
 import os
 from collections import OrderedDict
-from typing import Generic, TypeVar, Optional, Any, List, Callable, Dict
+from typing import Generic, TypeVar, Optional, Any, List, Callable
+from mlprogram import Environment
 from mlprogram import logging
 from mlprogram.distributed import is_main_process
 
@@ -95,8 +96,8 @@ class Pick(object):
     def __init__(self, key: str):
         self.key = key
 
-    def __call__(self, entry: Dict[str, Any]) -> Optional[Any]:
-        return entry[self.key] if self.key in entry else None
+    def __call__(self, entry: Environment) -> Optional[Any]:
+        return entry[self.key] if self.key in entry.to_dict() else None
 
 
 def save(obj: V, file: str) -> V:

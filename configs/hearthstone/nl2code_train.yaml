@@ -86,7 +86,7 @@ main:
           - type: mlprogram.nn.Function
             f:
               type: mlprogram.utils.Pick
-              key: "action_sequence_loss"
+              key: "output@action_sequence_loss"
   evaluate:
     type: mlprogram.entrypoint.EvaluateSynthesizer
     dataset: "@/test_dataset"
@@ -107,7 +107,7 @@ main:
           - type: mlprogram.utils.Map
             func: "@/transform"
         - - "collate"
-          - "@/collate"
+          - "@/collate.collate"
   batch_size: 1
   length:
     type: mlprogram.entrypoint.train.Epoch

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram import Environment
 from mlprogram.nn.action_sequence import Accuracy
 from mlprogram.nn.utils import rnn
 
@@ -23,10 +24,12 @@ class TestAccuracy(object):
         reference_prob = rnn.pad_sequence([reference_prob0])
 
         acc = Accuracy()
-        a = acc({"rule_probs": rule_prob,
-                 "token_probs": token_prob,
-                 "reference_probs": reference_prob,
-                 "ground_truth_actions": gt})["action_sequence_accuracy"]
+        a = acc(Environment(
+            outputs={"rule_probs": rule_prob,
+                     "token_probs": token_prob,
+                     "reference_probs": reference_prob},
+            supervisions={"ground_truth_actions": gt})
+        ).outputs["action_sequence_accuracy"]
         assert () == a.shape
 
     def test_accuracy_if_match(self):
@@ -45,8 +48,10 @@ class TestAccuracy(object):
         reference_prob = rnn.pad_sequence([reference_prob0])
 
         acc = Accuracy()
-        a = acc({"rule_probs": rule_prob,
-                 "token_probs": token_prob,
-                 "reference_probs": reference_prob,
-                 "ground_truth_actions": gt})["action_sequence_accuracy"]
+        a = acc(Environment(
+            outputs={"rule_probs": rule_prob,
+                     "token_probs": token_prob,
+                     "reference_probs": reference_prob},
+            supervisions={"ground_truth_actions": gt})
+        ).outputs["action_sequence_accuracy"]
         assert np.allclose(1.0, float(a.numpy()))

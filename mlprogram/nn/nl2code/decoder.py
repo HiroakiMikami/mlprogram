@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Tuple, Any, cast
+from typing import Tuple, cast
 
+from mlprogram import Environment
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -170,8 +171,7 @@ class Decoder(nn.Module):
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
 
-    def forward(self, inputs: Dict[str, Any]) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -205,13 +205,14 @@ class Decoder(nn.Module):
             The tuple of the next state. The shape is (B, hidden_size)
         """
         action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
-        parent_indexes = cast(PaddedSequenceWithMask, inputs["parent_indexes"])
-        nl_query_features = cast(
-            PaddedSequenceWithMask, inputs["nl_query_features"])
-        history = inputs["history"]
-        h_n = inputs["hidden_state"]
-        c_n = inputs["state"]
+                               inputs.states["action_features"])
+        parent_indexes = cast(PaddedSequenceWithMask,
+                              inputs.states["parent_indexes"])
+        nl_query_features = cast(PaddedSequenceWithMask,
+                                 inputs.states["nl_query_features"])
+        history = inputs.states["history"]
+        h_n = inputs.states["hidden_state"]
+        c_n = inputs.states["state"]
         B = nl_query_features.data.shape[1]
         if history is None:
             history = torch.zeros(1, B, self.hidden_size,
@@ -240,12 +241,12 @@ class Decoder(nn.Module):
         cs = torch.stack(cs)
         h_n, c_n = s
 
-        inputs["action_features"] = rnn.PaddedSequenceWithMask(
-            hs, action_features.mask)
-        inputs["action_contexts"] = rnn.PaddedSequenceWithMask(
-            cs, action_features.mask)
-        inputs["history"] = history
-        inputs["hidden_state"] = h_n
-        inputs["state"] = c_n
+        inputs.states["action_features"] = \
+            rnn.PaddedSequenceWithMask(hs, action_features.mask)
+        inputs.states["action_contexts"] = \
+            rnn.PaddedSequenceWithMask(cs, action_features.mask)
+        inputs.states["history"] = history
+        inputs.states["hidden_state"] = h_n
+        inputs.states["state"] = c_n
 
         return inputs

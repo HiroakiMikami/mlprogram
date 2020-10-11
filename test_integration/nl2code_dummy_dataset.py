@@ -1,6 +1,7 @@
 from typing import List
 from typing import Union
 from typing import Optional
+from mlprogram import Environment
 from mlprogram.languages import AST, Node, Leaf, Field, Root
 from mlprogram.languages import Token
 from mlprogram.languages import Parser as BaseParser
@@ -72,18 +73,40 @@ def FunctionCall(name: str, args: List[AST]):
 
 # Dataset
 train_dataset = ListDataset([
-    {"input": "x is assigned the value of 0",
-     "ground_truth": Assign("x", Number(0))},
-    {"input": "dump the value of xy",
-     "ground_truth": FunctionCall("print", [Name(["x", "y"])])},
-    {"input": "dump the value of xy and x",
-     "ground_truth": FunctionCall("print", [Name(["x", "y"]), Name("x")])}
+    Environment(
+        inputs={"input": "x is assigned the value of 0"},
+        supervisions={"ground_truth": Assign("x", Number(0))}
+    ),
+    Environment(
+        inputs={"input": "dump the value of xy"},
+        supervisions={
+            "ground_truth": FunctionCall("print", [Name(["x", "y"])])
+        }
+    ),
+    Environment(
+        inputs={"input": "dump the value of xy and x"},
+        supervisions={
+            "ground_truth":
+                FunctionCall("print", [Name(["x", "y"]), Name("x")])
+        }
+    )
 ])
 test_dataset = ListDataset([
-    {"input": "x is assigned the value of 4",
-     "ground_truth": Assign("x", Number(4))},
-    {"input": "dump the value of xy",
-     "ground_truth": FunctionCall("print", [Name(["x", "y"])])},
-    {"input": "dump the value of xy and x",
-     "ground_truth": FunctionCall("print", [Name(["x", "y"]), Name("x")])}
+    Environment(
+        inputs={"input": "x is assigned the value of 4"},
+        supervisions={"ground_truth": Assign("x", Number(4))},
+    ),
+    Environment(
+        inputs={"input": "dump the value of xy"},
+        supervisions={
+            "ground_truth": FunctionCall("print", [Name(["x", "y"])])
+        }
+    ),
+    Environment(
+        inputs={"input": "dump the value of xy and x"},
+        supervisions={
+            "ground_truth":
+                FunctionCall("print", [Name(["x", "y"]), Name("x")])
+        }
+    )
 ])

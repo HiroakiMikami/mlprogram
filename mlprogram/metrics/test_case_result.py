@@ -1,4 +1,6 @@
-from typing import Dict, Any, Generic, TypeVar, cast
+from typing import Any, Generic, TypeVar, cast
+
+from mlprogram import Environment
 from mlprogram.metrics import Metric, Accuracy
 from mlprogram.interpreters import Interpreter, SequentialProgram
 
@@ -26,9 +28,14 @@ class TestCaseResult(Metric[Code], Generic[Code, Input, Result]):
             output = self.interpreter.eval(code, input)
         return output
 
-    def __call__(self, input: Dict[str, Any], value: Code) -> float:
-        t_input, output = input["input"]  # get test case
+    def __call__(self, input: Environment, value: Code) -> float:
+        t_input, output = input.inputs["test_case"]
 
         # calc. metric
         actual = self._eval(value, t_input)
-        return self.metric({"ground_truth": output}, actual)
+        minput = Environment(supervisions={"ground_truth": output})
+        minput.mutable(
+            inputs=False, outputs=False,
+            states=False, supervisions=False
+        )
+        return self.metric(minput, actual)

@@ -1,3 +1,4 @@
+from mlprogram import Environment
 from mlprogram.datasets.django import download
 
 
@@ -13,11 +14,19 @@ class TestDownload(object):
         valid_dataset = dataset["valid"]
 
         assert 1 == len(train_dataset)
-        assert {"input": "line0", "ground_truth": "x = 10"} == train_dataset[0]
+        assert train_dataset[0] == Environment(
+            inputs={"input": "line0"},
+            supervisions={"ground_truth": "x = 10"}
+        )
 
         assert 1 == len(test_dataset)
-        assert \
-            {"input": "line1", "ground_truth": "if True:"} == test_dataset[0]
+        assert test_dataset[0] == Environment(
+            inputs={"input": "line1"},
+            supervisions={"ground_truth": "if True:"}
+        )
 
         assert 1 == len(valid_dataset)
-        assert {"input": "line2", "ground_truth": "else:"} == valid_dataset[0]
+        assert valid_dataset[0] == Environment(
+            inputs={"input": "line2"},
+            supervisions={"ground_truth": "else:"}
+        )

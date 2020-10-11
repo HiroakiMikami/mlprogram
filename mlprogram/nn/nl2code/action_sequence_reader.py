@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Dict, cast, Any
+from typing import cast
 
+from mlprogram import Environment
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn import EmbeddingWithMask
 
@@ -39,7 +40,7 @@ class ActionSequenceReader(nn.Module):
         nn.init.normal_(self._token_embed.weight, std=0.01)
         nn.init.normal_(self._node_type_embed.weight, std=0.01)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -62,9 +63,9 @@ class ActionSequenceReader(nn.Module):
         parent_indexes: PaddedSequenceWithMask
             The indexes of the parent nodes
         """
-        actions = cast(PaddedSequenceWithMask, inputs["actions"])
+        actions = cast(PaddedSequenceWithMask, inputs.states["actions"])
         previous_actions = cast(PaddedSequenceWithMask,
-                                inputs["previous_actions"])
+                                inputs.states["previous_actions"])
         L_a, B, _ = actions.data.shape
         node_types, parent_rule, parent_index = torch.split(
             actions.data, 1, dim=2)  # (L_a, B, 1)
@@ -98,8 +99,8 @@ class ActionSequenceReader(nn.Module):
         feature = torch.cat(
             [prev_action_embed, node_type_embed, parent_rule_embed],
             dim=2)  # (L_a, B, input_size)
-        inputs["action_features"] = \
+        inputs.states["action_features"] = \
             PaddedSequenceWithMask(feature, actions.mask)
-        inputs["parent_indexes"] = \
+        inputs.states["parent_indexes"] = \
             PaddedSequenceWithMask(parent_index, actions.mask)
         return inputs

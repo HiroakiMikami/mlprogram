@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram import Environment
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn.utils import rnn
 
@@ -23,10 +24,12 @@ class TestLoss(object):
         reference_prob = rnn.pad_sequence([reference_prob0])
 
         loss = Loss()
-        objective = loss({"rule_probs": rule_prob,
-                          "token_probs": token_prob,
-                          "reference_probs": reference_prob,
-                          "ground_truth_actions": gt})["action_sequence_loss"]
+        objective = loss(Environment(
+            outputs={"rule_probs": rule_prob,
+                     "token_probs": token_prob,
+                     "reference_probs": reference_prob},
+            supervisions={"ground_truth_actions": gt}
+        )).outputs["action_sequence_loss"]
         assert () == objective.shape
 
     def test_reduction(self):
@@ -44,20 +47,23 @@ class TestLoss(object):
         loss0 = Loss()
         loss1 = Loss(reduction="sum")
         loss2 = Loss(reduction="none")
-        objective0 = loss0(
-            {"rule_probs": rule_prob,
-             "token_probs": token_prob,
-             "reference_probs": reference_prob,
-             "ground_truth_actions": gt})["action_sequence_loss"]
-        objective1 = loss1(
-            {"rule_probs": rule_prob,
-             "token_probs": token_prob,
-             "reference_probs": reference_prob,
-             "ground_truth_actions": gt})["action_sequence_loss"]
-        objective2 = loss2(
-            {"rule_probs": rule_prob,
-             "token_probs": token_prob,
-             "reference_probs": reference_prob,
-             "ground_truth_actions": gt})["action_sequence_loss"]
+        objective0 = loss0(Environment(
+            outputs={"rule_probs": rule_prob,
+                     "token_probs": token_prob,
+                     "reference_probs": reference_prob},
+            supervisions={"ground_truth_actions": gt}
+        )).outputs["action_sequence_loss"]
+        objective1 = loss1(Environment(
+            outputs={"rule_probs": rule_prob,
+                     "token_probs": token_prob,
+                     "reference_probs": reference_prob},
+            supervisions={"ground_truth_actions": gt}
+        )).outputs["action_sequence_loss"]
+        objective2 = loss2(Environment(
+            outputs={"rule_probs": rule_prob,
+                     "token_probs": token_prob,
+                     "reference_probs": reference_prob},
+            supervisions={"ground_truth_actions": gt}
+        )).outputs["action_sequence_loss"]
         assert (1,) == objective2.shape
         assert np.allclose(objective0.item(), objective1.item())
