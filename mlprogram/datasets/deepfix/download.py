@@ -10,6 +10,8 @@ from typing import Callable
 from mlprogram import Environment
 from mlprogram import logging
 from mlprogram.utils.data import ListDataset
+from mlprogram.datasets import DEFAULT_CACHE_DIR
+from mlprogram.functools import file_cache
 
 logger = logging.Logger(__name__)
 
@@ -22,37 +24,43 @@ def default_get(src: str, dst: str):
         copyfileobj(src_file, dst_file)
 
 
-def download(path: str = BASE_PATH,
+def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "deepfix.pt"),
+             path: str = BASE_PATH,
              get: Callable[[str, str], None] = default_get) \
         -> ListDataset:
-    logger.info("Download DeepFix dataset")
-    logger.debug(f"Dataset path: {path}")
-    samples = []
-    with tempfile.TemporaryDirectory() as tmpdir:
-        dst = os.path.join(tmpdir, "dataset.zip")
-        get(path, dst)
 
-        gzipfile = os.path.join(tmpdir, "dataset.gz")
-        with zipfile.ZipFile(dst) as z:
-            with z.open(os.path.join("prutor-deepfix-09-12-2017",
-                                     "prutor-deepfix-09-12-2017.db.gz"), "r"
-                        ) as file, \
-                    open(gzipfile, "wb") as dst_file:
-                copyfileobj(file, dst_file)
-        sqlitefile = os.path.join(tmpdir, "dataset.db")
-        with gzip.open(gzipfile, "rb") as src_file, \
-                open(sqlitefile, "wb") as dst_file:
-            copyfileobj(src_file, dst_file)
+    @file_cache(cache_path)
+    def _download():
+        logger.info("Download DeepFix dataset")
+        logger.debug(f"Dataset path: {path}")
+        samples = []
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dst = os.path.join(tmpdir, "dataset.zip")
+            get(path, dst)
 
-        conn = sqlite3.connect(sqlitefile)
-        c = conn.cursor()
-        for code, error, errorcount in \
-                c.execute("SELECT code, error, errorcount FROM Code"):
-            samples.append(Environment(
-                inputs={"code": code},
-                supervisions={
-                    "error": error,  # TODO remove error/n_error
-                    "n_error": errorcount
-                }))
+            gzipfile = os.path.join(tmpdir, "dataset.gz")
+            with zipfile.ZipFile(dst) as z:
+                with z.open(os.path.join("prutor-deepfix-09-12-2017",
+                                         "prutor-deepfix-09-12-2017.db.gz"),
+                            "r") as file, \
+                        open(gzipfile, "wb") as dst_file:
+                    copyfileobj(file, dst_file)
+            sqlitefile = os.path.join(tmpdir, "dataset.db")
+            with gzip.open(gzipfile, "rb") as src_file, \
+                    open(sqlitefile, "wb") as dst_file:
+                copyfileobj(src_file, dst_file)
 
+            conn = sqlite3.connect(sqlitefile)
+            c = conn.cursor()
+            for code, error, errorcount in \
+                    c.execute("SELECT code, error, errorcount FROM Code"):
+                samples.append(Environment(
+                    inputs={"code": code},
+                    supervisions={
+                        "error": error,  # TODO remove error/n_error
+                        "n_error": errorcount
+                    }))
+        return samples
+
+    samples = _download()
     return ListDataset(samples)

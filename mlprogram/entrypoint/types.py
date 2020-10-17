@@ -83,7 +83,7 @@ types = {
         mlprogram.datasets.hearthstone.TokenizeQuery,
     "mlprogram.datasets.hearthstone.SplitValue":
         mlprogram.datasets.hearthstone.SplitValue,
-    "mlprogram.datasets.nl2bash.load": mlprogram.datasets.nl2bash.load,
+    "mlprogram.datasets.nl2bash.download": mlprogram.datasets.nl2bash.download,
     "mlprogram.datasets.nl2bash.TokenizeQuery":
         mlprogram.datasets.nl2bash.TokenizeQuery,
     "mlprogram.datasets.nl2bash.SplitValue":
