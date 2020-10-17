@@ -33,7 +33,7 @@ loss_fn:
       - - "pick"
         - type: mlprogram.nn.Function
           f:
-            type: mlprogram.utils.Pick
+            type: Pick
             key: output@action_sequence_loss
 main:
   type: mlprogram.entrypoint.train_supervised

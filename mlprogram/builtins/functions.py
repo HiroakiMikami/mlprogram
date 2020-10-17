@@ -1,4 +1,3 @@
-from torch import nn
 from typing import Generic, TypeVar, Optional, Any, List, Callable
 from mlprogram import Environment
 from mlprogram import logging
@@ -43,9 +42,3 @@ class Pick(object):
 
     def __call__(self, entry: Environment) -> Optional[Any]:
         return entry[self.key] if self.key in entry.to_dict() else None
-
-
-def share_memory(model: nn.Module):
-    for k, v in model.state_dict().items():
-        v.share_memory_()
-    return model

@@ -29,7 +29,7 @@ collate_fn:
         - type: mlprogram.functools.Map
           func: "@/to_episode"
       - - "flatten"
-        - type: mlprogram.utils.Flatten
+        - type: Flatten
       - - "transform"
         - type: mlprogram.functools.Map
           func: "@/transform"
@@ -58,7 +58,7 @@ loss_fn:
                   module:
                     type: mlprogram.nn.Function
                     f:
-                      type: mlprogram.utils.Mul
+                      type: Mul
       - - "value"
         - type: torch.nn.Sequential
           modules:
@@ -97,13 +97,13 @@ loss_fn:
           module:
             type: mlprogram.nn.Function
             f:
-              type: mlprogram.utils.Div
+              type: Div
           constants:
             "rhs": "@/batch_size"
       - - "pick"
         - type: mlprogram.nn.Function
           f:
-            type: mlprogram.utils.Pick
+            type: Pick
             key: output@loss
 
 main:
@@ -133,7 +133,7 @@ main:
       metric:
         type: mlprogram.metrics.Iou
     transform:
-      type: mlprogram.utils.Threshold
+      type: Threshold
       threshold: 0.9
       dtype: "float"
   collate: "@/collate_fn"

@@ -83,7 +83,7 @@ encoder:
       token_threshold: 0
 
 model:
-  type: mlprogram.utils.share_memory
+  type: torch.share_memory_
   model:
     type: torch.nn.Sequential
     modules:

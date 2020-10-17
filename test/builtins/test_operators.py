@@ -1,5 +1,4 @@
-
-from mlprogram.utils import Add, Mul, Sub, Div, IntDiv, Neg
+from mlprogram.builtins.operators import Add, Mul, Sub, Div, IntDiv, Neg
 
 
 class TestAdd(object):

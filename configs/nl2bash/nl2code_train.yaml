@@ -47,7 +47,7 @@ main:
         - - "pick"
           - type: mlprogram.nn.Function
             f:
-              type: mlprogram.utils.Pick
+              type: Pick
               key: "output@action_sequence_loss"
   evaluate:
     type: mlprogram.entrypoint.EvaluateSynthesizer

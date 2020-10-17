@@ -32,8 +32,8 @@ n_pixel:
     y: "@/option.resolution"
 n_feature_pixel:
     type: intdiv
-    x: "@/n_pixel"
-    y: 2
+    lhs: "@/n_pixel"
+    rhs: 2
 
 dataset:
     type: mlprogram.languages.csg.Dataset
@@ -109,7 +109,7 @@ interpreter:
     height: "@/option.size"
     resolution: "@/option.resolution"
 model:
-    type: mlprogram.utils.share_memory
+    type: torch.share_memory_
     model:
         type: torch.nn.Sequential
         modules:
@@ -237,7 +237,7 @@ synthesizer:
       max_try_num: 50
       sampler: "@/sampler"
       to_key:
-          type: mlprogram.utils.Pick
+          type: Pick
           key: "state@action_sequence"
     timeout_sec: "@/option.timeout_sec"
   score:

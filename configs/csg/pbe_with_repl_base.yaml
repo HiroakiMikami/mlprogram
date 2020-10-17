@@ -34,8 +34,8 @@ n_pixel:
     y: "@/option.resolution"
 n_feature_pixel:
     type: intdiv
-    x: "@/n_pixel"
-    y: 2
+    lhs: "@/n_pixel"
+    rhs: 2
 
 dataset:
     type: mlprogram.languages.csg.Dataset
@@ -111,7 +111,7 @@ interpreter:
     height: "@/option.size"
     resolution: "@/option.resolution"
 model:
-    type: mlprogram.utils.share_memory
+    type: torch.share_memory_
     model:
         type: torch.nn.Sequential
         modules:
@@ -273,7 +273,7 @@ subsynthesizer:
     initial_particle_size: 1
     sampler: "@/subsampler"
     to_key:
-        type: mlprogram.utils.Pick
+        type: Pick
         key: "state@action_sequence"
 sampler:
     type: mlprogram.samplers.SequentialProgramSampler
@@ -302,7 +302,7 @@ train_synthesizer:
                 type: mlprogram.metrics.Iou
         threshold: 0.9
     to_key:
-        type: mlprogram.utils.Pick
+        type: Pick
         key: "input@code"
 evaluate_synthesizer:
     type: mlprogram.synthesizers.SynthesizerWithTimeout
@@ -339,11 +339,11 @@ evaluate_synthesizer:
                         - - "pick"
                           - type: mlprogram.nn.Function
                             f: 
-                                type: mlprogram.utils.Pick
+                                type: Pick
                                 key: "state@value"
             batch_size: 1
         to_key:
-            type: mlprogram.utils.Pick
+            type: Pick
             key: "input@code"
     timeout_sec: "@/option.timeout_sec"
 

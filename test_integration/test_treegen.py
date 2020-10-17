@@ -16,6 +16,7 @@ from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer
+from mlprogram.builtins import Pick
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
@@ -138,7 +139,7 @@ class TestTreeGen(object):
                 ("loss", Loss()),
                 ("pick",
                  mlprogram.nn.Function(
-                     mlprogram.utils.Pick("output@action_sequence_loss")))
+                     Pick("output@action_sequence_loss")))
             ]))
 
             collate = Collate(
