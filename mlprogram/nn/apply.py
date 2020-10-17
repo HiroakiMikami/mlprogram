@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 from typing import Dict, Any, List, Union, Tuple
+
+from mlprogram import Environment
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -18,12 +20,12 @@ class Apply(nn.Module):
         self.value_type = value_type
         self.constants = constants
 
-    def forward(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, entry: Environment) -> Environment:
         kwargs = {key: value for key, value in self.constants.items()}
         for i, in_key in enumerate(self.in_keys):
             if isinstance(in_key, str):
                 original_key = in_key
-                renamed_key = in_key
+                _, renamed_key = Environment.parse_key(in_key)
             else:
                 original_key, renamed_key = in_key
             kwargs[renamed_key] = entry[original_key]

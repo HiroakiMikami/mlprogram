@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram import Environment
 from mlprogram.nn.treegen import DecoderBlock, Decoder
 from mlprogram.nn.utils.rnn import pad_sequence
 
@@ -103,11 +104,12 @@ class TestDecoder(object):
         query0 = torch.zeros(7, 3).long()
         nl0 = torch.Tensor(11, 1)
         ast0 = torch.Tensor(7, 1)
-        out = decoder({
-            "action_queries": pad_sequence([query0], 0),
-            "nl_query_features": pad_sequence([nl0], 0),
-            "action_features": pad_sequence([ast0], 0)
-        })["action_features"]
+        out = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0], 0),
+                "nl_query_features": pad_sequence([nl0], 0),
+                "action_features": pad_sequence([ast0], 0)
+            })).states["action_features"]
         assert (7, 1, 5) == out.data.shape
         assert (7, 1) == out.mask.shape
 
@@ -117,16 +119,18 @@ class TestDecoder(object):
         nl0 = torch.rand(11, 1)
         nl1 = torch.rand(13, 1)
         ast0 = torch.rand(7, 1)
-        out0 = decoder({
-            "action_queries": pad_sequence([query0], 0),
-            "nl_query_features": pad_sequence([nl0], 0),
-            "action_features": pad_sequence([ast0], 0)
-        })["action_features"]
-        out1 = decoder({
-            "action_queries": pad_sequence([query0, query0], 0),
-            "nl_query_features": pad_sequence([nl0, nl1], 0),
-            "action_features": pad_sequence([ast0, ast0], 0)
-        })["action_features"]
+        out0 = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0], 0),
+                "nl_query_features": pad_sequence([nl0], 0),
+                "action_features": pad_sequence([ast0], 0)
+            })).states["action_features"]
+        out1 = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0, query0], 0),
+                "nl_query_features": pad_sequence([nl0, nl1], 0),
+                "action_features": pad_sequence([ast0, ast0], 0)
+            })).states["action_features"]
         out0 = out0.data
         out1 = out1.data[:7, :1, :]
         assert np.allclose(out0.detach().numpy(),
@@ -139,16 +143,18 @@ class TestDecoder(object):
         nl0 = torch.rand(11, 1)
         ast0 = torch.rand(7, 1)
         ast1 = torch.rand(9, 1)
-        out0 = decoder({
-            "action_queries": pad_sequence([query0], 0),
-            "nl_query_features": pad_sequence([nl0], 0),
-            "action_features": pad_sequence([ast0], 0)
-        })["action_features"]
-        out1 = decoder({
-            "action_queries": pad_sequence([query0, query1], 0),
-            "nl_query_features": pad_sequence([nl0, nl0], 0),
-            "action_features": pad_sequence([ast0, ast1], 0)
-        })["action_features"]
+        out0 = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0], 0),
+                "nl_query_features": pad_sequence([nl0], 0),
+                "action_features": pad_sequence([ast0], 0)
+            })).states["action_features"]
+        out1 = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0, query1], 0),
+                "nl_query_features": pad_sequence([nl0, nl0], 0),
+                "action_features": pad_sequence([ast0, ast1], 0)
+            })).states["action_features"]
         out0 = out0.data
         out1 = out1.data[:7, :1, :]
         assert np.allclose(out0.detach().numpy(),
@@ -159,16 +165,18 @@ class TestDecoder(object):
         query0 = torch.zeros(7, 3).long()
         nl0 = torch.rand(11, 1)
         ast0 = torch.rand(7, 1)
-        out0 = decoder({
-            "action_queries": pad_sequence([query0[:5, :]], 0),
-            "nl_query_features": pad_sequence([nl0], 0),
-            "action_features": pad_sequence([ast0[:5, :]], 0)
-        })["action_features"]
-        out1 = decoder({
-            "action_queries": pad_sequence([query0], 0),
-            "nl_query_features": pad_sequence([nl0], 0),
-            "action_features": pad_sequence([ast0], 0)
-        })["action_features"]
+        out0 = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0[:5, :]], 0),
+                "nl_query_features": pad_sequence([nl0], 0),
+                "action_features": pad_sequence([ast0[:5, :]], 0)
+            })).states["action_features"]
+        out1 = decoder(Environment(
+            states={
+                "action_queries": pad_sequence([query0], 0),
+                "nl_query_features": pad_sequence([nl0], 0),
+                "action_features": pad_sequence([ast0], 0)
+            })).states["action_features"]
         out0 = out0.data
         out1 = out1.data[:5, :1, :]
         assert np.allclose(out0.detach().numpy(),

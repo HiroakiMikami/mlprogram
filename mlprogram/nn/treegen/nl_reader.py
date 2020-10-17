@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, Dict, Any, cast
+from typing import Tuple, cast
 
+from mlprogram import Environment
 from mlprogram.nn import SeparableConv1d, EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn.functional \
@@ -98,7 +99,7 @@ class NLReader(nn.Module):
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -116,8 +117,10 @@ class NLReader(nn.Module):
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        token_nl_query = cast(PaddedSequenceWithMask, inputs["word_nl_query"])
-        char_nl_query = cast(PaddedSequenceWithMask, inputs["char_nl_query"])
+        token_nl_query = cast(PaddedSequenceWithMask,
+                              inputs.states["word_nl_query"])
+        char_nl_query = cast(PaddedSequenceWithMask,
+                             inputs.states["char_nl_query"])
         e_token_query = self.query_embed(token_nl_query.data)
         char_nl_query = \
             char_nl_query.data + \
@@ -127,6 +130,6 @@ class NLReader(nn.Module):
                                              token_nl_query.mask)
         for block in self.blocks:
             block_input, _ = block(block_input, e_char_query)
-        inputs["nl_query_features"] = block_input
-        inputs["reference_features"] = block_input
+        inputs.states["nl_query_features"] = block_input
+        inputs.states["reference_features"] = block_input
         return inputs

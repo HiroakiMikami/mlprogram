@@ -105,8 +105,8 @@ model:
                 - - "encode_input"
                   - type: mlprogram.nn.Apply
                     in_keys:
-                        - ["processed_input", "x"]
-                    out_key: "input_feature"
+                        - ["state@test_case_tensor", "x"]
+                    out_key: "state@input_feature"
                     module:
                         type: mlprogram.nn.CNN2d
                         in_channel: 1
@@ -163,8 +163,8 @@ model:
                 - - "value"
                   - type: mlprogram.nn.Apply
                     in_keys:
-                        - ["variable_feature", "x"]
-                    out_key: "value"
+                        - ["state@variable_feature", "x"]
+                    out_key: "state@value"
                     module:
                         type: mlprogram.nn.MLP
                         in_channel:
@@ -184,7 +184,7 @@ model:
 collate:
     type: mlprogram.utils.data.Collate
     device: "@/device"
-    processed_input:
+    test_case_tensor:
         type: mlprogram.utils.data.CollateOptions
         use_pad_sequence: false
         dim: 0
@@ -199,7 +199,7 @@ collate:
         use_pad_sequence: true
         dim: 0
         padding_value: 0
-    variables:
+    variables_tensor:
         type: mlprogram.utils.data.CollateOptions
         use_pad_sequence: true
         dim: 0
@@ -245,7 +245,6 @@ subsampler:
                     interpreter: "@/interpreter"
                 - - "transform_canvas"
                   - type: mlprogram.languages.csg.transform.TransformCanvas
-                    targets: ["variables"]
     transform_action_sequence:
         type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
         action_sequence_encoder: "@/encoder"
@@ -260,13 +259,12 @@ subsynthesizer:
     sampler: "@/subsampler"
     to_key:
         type: mlprogram.utils.Pick
-        key: "action_sequence"
+        key: "state@action_sequence"
 sampler:
     type: mlprogram.samplers.SequentialProgramSampler
     synthesizer: "@/subsynthesizer"
     transform_input:
         type: mlprogram.languages.csg.transform.TransformCanvas
-        targets: ["input"]
     collate: "@/collate"
     encoder: "@/model.encode_input"
     to_code: "@/parser.unparse"
@@ -290,7 +288,7 @@ train_synthesizer:
         threshold: 0.9
     to_key:
         type: mlprogram.utils.Pick
-        key: "code"
+        key: "input@code"
 evaluate_synthesizer:
     type: mlprogram.synthesizers.SynthesizerWithTimeout
     synthesizer:
@@ -313,7 +311,6 @@ evaluate_synthesizer:
                             interpreter: "@/interpreter"
                         - - "transform_canvas"
                           - type: mlprogram.languages.csg.transform.TransformCanvas
-                            targets: ["variables"]
             collate: "@/collate"
             value_network:
                 type: torch.nn.Sequential
@@ -328,11 +325,11 @@ evaluate_synthesizer:
                           - type: mlprogram.nn.Function
                             f: 
                                 type: mlprogram.utils.Pick
-                                key: "value"
+                                key: "state@value"
             batch_size: 1
         to_key:
             type: mlprogram.utils.Pick
-            key: "code"
+            key: "input@code"
     timeout_sec: "@/option.timeout_sec"
 
 to_episode:
@@ -350,7 +347,6 @@ transform:
                 interpreter: "@/interpreter"
             - - "transform_canvas"
               - type: mlprogram.languages.csg.transform.TransformCanvas
-                targets: ["input", "variables"]
             - - "transform_code"
               - type: mlprogram.utils.transform.action_sequence.TransformCode
                 parser: "@/parser"

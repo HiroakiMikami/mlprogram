@@ -103,8 +103,8 @@ model:
                 - - "encoder"
                   - type: mlprogram.nn.Apply
                     in_keys:
-                        - ["processed_input", "x"]
-                    out_key: "input_feature"
+                        - ["state@test_case_tensor", "x"]
+                    out_key: "state@input_feature"
                     module:
                         type: mlprogram.nn.CNN2d
                         in_channel: 1
@@ -146,7 +146,7 @@ model:
 collate:
     type: mlprogram.utils.data.Collate
     device: "@/device"
-    processed_input:
+    test_case_tensor:
         type: mlprogram.utils.data.CollateOptions
         use_pad_sequence: false
         dim: 0
@@ -198,7 +198,6 @@ sampler:
                       - type: mlprogram.utils.transform.action_sequence.AddEmptyReference
                     - - "transform_canvas"
                       - type: mlprogram.languages.csg.transform.TransformCanvas
-                        targets: ["input"]
         transform_action_sequence:
             type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
             action_sequence_encoder: "@/encoder"
@@ -224,7 +223,7 @@ synthesizer:
       sampler: "@/sampler"
       to_key:
           type: mlprogram.utils.Pick
-          key: "action_sequence"
+          key: "state@action_sequence"
     timeout_sec: "@/option.timeout_sec"
   score:
     type: mlprogram.metrics.TestCaseResult
@@ -243,7 +242,6 @@ transform:
               - type: mlprogram.utils.transform.action_sequence.AddEmptyReference
             - - "transform_canvas"
               - type: mlprogram.languages.csg.transform.TransformCanvas
-                targets: ["input"]
             - - "transform_code"
               - type: mlprogram.utils.transform.action_sequence.TransformCode
                 parser: "@/parser"

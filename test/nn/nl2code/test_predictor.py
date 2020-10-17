@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram import Environment
 from mlprogram.nn.nl2code import Predictor, ActionSequenceReader
 from mlprogram.nn.utils import rnn
 
@@ -24,14 +25,14 @@ class TestPredictor(object):
         ref1 = torch.rand(1, 2)
         reference = rnn.pad_sequence([ref0, ref1])
 
-        inputs = predictor({
+        inputs = predictor(Environment(states={
             "reference_features": reference,
             "action_features": feature,
             "action_contexts": context
-        })
-        rule_pred = inputs["rule_probs"]
-        token_pred = inputs["token_probs"]
-        reference_pred = inputs["reference_probs"]
+        }))
+        rule_pred = inputs.outputs["rule_probs"]
+        token_pred = inputs.outputs["token_probs"]
+        reference_pred = inputs.outputs["reference_probs"]
         assert np.array_equal(
             [[1, 1], [1, 0]], rule_pred.mask.numpy())
         assert (2, 2, 1) == rule_pred.data.shape
@@ -56,14 +57,14 @@ class TestPredictor(object):
         reference = rnn.pad_sequence([ref0, ref1])
 
         predictor.eval()
-        inputs = predictor({
+        inputs = predictor(Environment(states={
             "reference_features": reference,
             "action_features": feature,
             "action_contexts": context
-        })
-        rule_pred = inputs["rule_probs"]
-        token_pred = inputs["token_probs"]
-        reference_pred = inputs["reference_probs"]
+        }))
+        rule_pred = inputs.outputs["rule_probs"]
+        token_pred = inputs.outputs["token_probs"]
+        reference_pred = inputs.outputs["reference_probs"]
         assert (2, 1) == rule_pred.shape
         assert (2, 1) == token_pred.shape
         assert (2, 3) == reference_pred.shape
@@ -81,14 +82,14 @@ class TestPredictor(object):
         ref1 = torch.rand(1, 2)
         reference = rnn.pad_sequence([ref0, ref1])
 
-        inputs = predictor({
+        inputs = predictor(Environment(states={
             "reference_features": reference,
             "action_features": feature,
             "action_contexts": context
-        })
-        rule_pred = inputs["rule_probs"].data
-        token_pred = inputs["token_probs"].data
-        reference_pred = inputs["reference_probs"].data
+        }))
+        rule_pred = inputs.outputs["rule_probs"].data
+        token_pred = inputs.outputs["token_probs"].data
+        reference_pred = inputs.outputs["reference_probs"].data
         probs = \
             torch.sum(rule_pred, dim=2) + torch.sum(token_pred, dim=2) + \
             torch.sum(reference_pred, dim=2)

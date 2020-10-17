@@ -1,8 +1,10 @@
 import torch
 from torch.nn import functional as F
 from dataclasses import dataclass
-from typing import Callable, Sequence, Any, Optional, Union, Dict, List
+from typing import Callable, Sequence, Any, Optional, Dict, List
 from typing import Tuple
+from mlprogram import Environment
+from mlprogram import logging
 from mlprogram.actions \
     import Rule, ApplyRule, CloseVariadicFieldRule
 from mlprogram.languages import Parser
@@ -10,7 +12,8 @@ from mlprogram.actions import ActionSequence
 from mlprogram.encoders import Samples
 from mlprogram.languages import Token
 from mlprogram.nn.utils import rnn
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
+
+logger = logging.Logger(__name__)
 
 
 def get_words(dataset: torch.utils.data.Dataset,
@@ -18,10 +21,9 @@ def get_words(dataset: torch.utils.data.Dataset,
               ) -> Sequence[str]:
     words = []
 
-    for group in dataset:
-        for input in group["input"]:
-            reference = extract_reference(input)
-            words.extend([token.value for token in reference])
+    for sample in dataset:
+        reference = extract_reference(sample.inputs["input"])
+        words.extend([token.value for token in reference])
 
     return words
 
@@ -31,11 +33,10 @@ def get_characters(dataset: torch.utils.data.Dataset,
                    ) -> Sequence[str]:
     chars: List[str] = []
 
-    for group in dataset:
-        for input in group["input"]:
-            reference = extract_reference(input)
-            for token in reference:
-                chars.extend(token.value)
+    for sample in dataset:
+        reference = extract_reference(sample.inputs["input"])
+        for token in reference:
+            chars.extend(token.value)
 
     return chars
 
@@ -47,7 +48,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
     tokens: List[Tuple[str, str]] = []
 
     for sample in dataset:
-        ground_truth = sample["ground_truth"]
+        ground_truth = sample.supervisions["ground_truth"]
         ast = parser.parse(ground_truth)
         if ast is None:
             continue
@@ -80,70 +81,85 @@ class Collate:
         self.device = device
         self.options: Dict[str, CollateOptions] = kwargs
 
-    def __call__(self, tensors: Sequence[Optional[Dict[str, Any]]]) \
-            -> Dict[str, Union[torch.Tensor, PaddedSequenceWithMask]]:
-        return self.collate(tensors)
-
-    def collate(self, tensors: Sequence[Optional[Dict[str, Any]]]) \
-            -> Dict[str, Any]:
-        retval: Dict[str, Any] = {}
-        tmp: Dict[str, List[torch.Tensor]] = {}
+    def collate(self, tensors: Sequence[Optional[Environment]]) -> Environment:
+        tmp: Dict[str, List[Any]] = {}
         for i, t in enumerate(tensors):
             if t is None:
                 continue
-            for name, tensor in t.items():
+            for name, item in t.to_dict().items():
                 if name not in tmp:
                     tmp[name] = []
-                tmp[name].append(tensor)
-        for name, ts in tmp.items():
-            if name not in self.options:
-                retval[name] = ts
-                continue
-            option = self.options[name]
-            if all(map(lambda x: x is None, ts)):
+                tmp[name].append(item)
+
+        retval = Environment()
+        for name, values in tmp.items():
+            if all([x is None for x in values]):
                 retval[name] = None
-            elif option.use_pad_sequence:
+                continue
+
+            _, key = Environment.parse_key(name)
+            if key not in self.options:
+                retval[name] = values
+                continue
+            option = self.options[key]
+            if option.use_pad_sequence:
                 retval[name] = \
-                    rnn.pad_sequence(ts,
+                    rnn.pad_sequence(values,
                                      padding_value=option.padding_value) \
                     .to(self.device)
             else:
                 # pad tensors
                 shape: List[int] = []
-                for tensor in ts:
+                for item in values:
                     if len(shape) == 0:
-                        for x in tensor.shape:
+                        for x in item.shape:
                             shape.append(x)
                     else:
-                        for i, x in enumerate(tensor.shape):
+                        for i, x in enumerate(item.shape):
                             shape[i] = max(shape[i], x)
                 padded_ts = []
-                for tensor in ts:
+                for item in values:
                     p = []
-                    for dst, src in zip(shape, tensor.shape):
+                    for dst, src in zip(shape, item.shape):
                         p.append(dst - src)
                         p.append(0)
                     p.reverse()
-                    padded_ts.append(F.pad(tensor, p,
+                    padded_ts.append(F.pad(item, p,
                                            value=option.padding_value))
 
                 retval[name] = \
                     torch.stack(padded_ts, dim=option.dim).to(self.device)
         return retval
 
-    def split(self, tensors: Dict[str, Any]) \
-            -> Sequence[Dict[str, Any]]:
-        retval: List[Dict[str, torch.Tensor]] = []
-        for name, t in tensors.items():
-            if name in self.options:
-                option = self.options[name]
+    def split(self, values: Environment) -> Sequence[Environment]:
+        retval: List[Environment] = []
+        B = None
+        for name, t in values.to_dict().items():
+            _, key = Environment.parse_key(name)
+            if key in self.options:
+                option = self.options[key]
                 if option.use_pad_sequence:
                     B = t.data.shape[1]
                 else:
                     B = t.data.shape[option.dim]
-                if len(retval) == 0:
-                    for _ in range(B):
-                        retval.append({})
+                break
+            elif isinstance(t, list):
+                B = len(t)
+                break
+
+        assert B is not None
+
+        for _ in range(B):
+            retval.append(Environment())
+
+        for name, t in values.to_dict().items():
+            _, key = Environment.parse_key(name)
+            if key in self.options:
+                option = self.options[key]
+                if option.use_pad_sequence:
+                    B = t.data.shape[1]
+                else:
+                    B = t.data.shape[option.dim]
 
                 if option.use_pad_sequence:
                     for b in range(B):
@@ -165,11 +181,9 @@ class Collate:
                             d = d.reshape(*shape)
                         retval[b][name] = d
             elif isinstance(t, list):
-                B = len(t)
-                if len(retval) == 0:
-                    for _ in range(B):
-                        retval.append({})
                 for b in range(B):
                     retval[b][name] = t[b]
+            else:
+                logger.debug(f"{name} is invalid type: {type(t)}")
 
         return retval

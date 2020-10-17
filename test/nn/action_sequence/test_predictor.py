@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from mlprogram import Environment
 from mlprogram.nn.action_sequence import Predictor
 from mlprogram.nn.utils.rnn import pad_sequence
 
@@ -27,11 +28,12 @@ class TestPredictor(object):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
-        inputs = predictor({"reference_features": pad_sequence([nl]),
-                            "action_features": pad_sequence([f])})
-        rule = inputs["rule_probs"]
-        token = inputs["token_probs"]
-        reference = inputs["reference_probs"]
+        inputs = predictor(Environment(
+            states={"reference_features": pad_sequence([nl]),
+                    "action_features": pad_sequence([f])}))
+        rule = inputs.outputs["rule_probs"]
+        token = inputs.outputs["token_probs"]
+        reference = inputs.outputs["reference_probs"]
         assert (11, 1, 5) == rule.data.shape
         assert (11, 1) == rule.mask.shape
         assert (11, 1, 7) == token.data.shape
@@ -44,11 +46,12 @@ class TestPredictor(object):
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
         predictor.eval()
-        inputs = predictor({"reference_features": pad_sequence([nl]),
-                            "action_features": pad_sequence([f])})
-        rule = inputs["rule_probs"]
-        token = inputs["token_probs"]
-        reference = inputs["reference_probs"]
+        inputs = predictor(Environment(
+            states={"reference_features": pad_sequence([nl]),
+                    "action_features": pad_sequence([f])}))
+        rule = inputs.outputs["rule_probs"]
+        token = inputs.outputs["token_probs"]
+        reference = inputs.outputs["reference_probs"]
         assert (1, 5) == rule.shape
         assert (1, 7) == token.shape
         assert (1, 13) == reference.shape
@@ -57,11 +60,12 @@ class TestPredictor(object):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.rand(11, 2)
         nl = torch.rand(13, 3)
-        inputs = predictor({"reference_features": pad_sequence([nl]),
-                            "action_features": pad_sequence([f])})
-        rule = inputs["rule_probs"]
-        token = inputs["token_probs"]
-        reference = inputs["reference_probs"]
+        inputs = predictor(Environment(
+            states={"reference_features": pad_sequence([nl]),
+                    "action_features": pad_sequence([f])}))
+        rule = inputs.outputs["rule_probs"]
+        token = inputs.outputs["token_probs"]
+        reference = inputs.outputs["reference_probs"]
         prob = torch.cat([rule.data, token.data, reference.data], dim=2)
         prob = prob.detach().numpy()
         assert np.all(prob >= 0.0)
@@ -75,16 +79,18 @@ class TestPredictor(object):
         f1 = torch.rand(13, 2)
         nl0 = torch.rand(13, 3)
         nl1 = torch.rand(15, 3)
-        inputs0 = predictor({"reference_features": pad_sequence([nl0]),
-                             "action_features": pad_sequence([f0])})
-        rule0 = inputs0["rule_probs"]
-        token0 = inputs0["token_probs"]
-        ref0 = inputs0["reference_probs"]
-        inputs1 = predictor({"reference_features": pad_sequence([nl0, nl1]),
-                             "action_features": pad_sequence([f0, f1])})
-        rule1 = inputs1["rule_probs"]
-        token1 = inputs1["token_probs"]
-        ref1 = inputs1["reference_probs"]
+        inputs0 = predictor(Environment(
+            states={"reference_features": pad_sequence([nl0]),
+                    "action_features": pad_sequence([f0])}))
+        rule0 = inputs0.outputs["rule_probs"]
+        token0 = inputs0.outputs["token_probs"]
+        ref0 = inputs0.outputs["reference_probs"]
+        inputs1 = predictor(Environment(
+            states={"reference_features": pad_sequence([nl0, nl1]),
+                    "action_features": pad_sequence([f0, f1])}))
+        rule1 = inputs1.outputs["rule_probs"]
+        token1 = inputs1.outputs["token_probs"]
+        ref1 = inputs1.outputs["reference_probs"]
         rule1 = rule1.data[:11, :1, :]
         token1 = token1.data[:11, :1, :]
         ref1 = ref1.data[:11, :1, :13]

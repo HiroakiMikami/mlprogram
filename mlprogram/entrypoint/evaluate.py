@@ -10,6 +10,7 @@ from tqdm import tqdm
 import os
 import json
 from pytorch_pfn_extras.reporting import report
+from mlprogram import Environment
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
@@ -22,16 +23,14 @@ logger = logging.Logger(__name__)
 ctx = mp.get_context("spawn")
 
 
-Input = TypeVar("Input")
 Code = TypeVar("Code")
 GroundTruth = TypeVar("GroundTruth")
 DecoderInput = TypeVar("DecoderInput")
 
 
 @dataclass
-class Result(Generic[Input, Code, GroundTruth]):
-    input: Input
-    data: Dict[str, Any]
+class Result(Generic[Code, GroundTruth]):
+    sample: Dict[str, Any]
     candidates: List[Code]
     metrics: Dict[int, Dict[str, float]]
     generated: bool
@@ -39,15 +38,15 @@ class Result(Generic[Input, Code, GroundTruth]):
 
 
 @dataclass
-class EvaluationResult(Generic[Input, Code, GroundTruth]):
-    results: List[Result[Input, Code, GroundTruth]]
+class EvaluationResult(Generic[Code, GroundTruth]):
+    results: List[Result[Code, GroundTruth]]
     metrics: Dict[int, Dict[str, float]]
     generation_rate: float
     generation_time: float
 
 
-class EvaluateSample(Generic[Input, Code]):
-    def __init__(self, synthesizer: Synthesizer[Dict[str, Any], Code],
+class EvaluateSample(Generic[Code]):
+    def __init__(self, synthesizer: Synthesizer[Environment, Code],
                  metrics: Mapping[str, Metric],
                  top_n: List[int]):
         super().__init__()
@@ -55,14 +54,18 @@ class EvaluateSample(Generic[Input, Code]):
         self.metrics = metrics
         self.top_n = top_n
 
-    def __call__(self, elem: Tuple[int, Dict[str, Any]]) \
+    def __call__(self, elem: Tuple[int, Environment]) \
             -> Result:
         i, sample = elem
-        input = sample["input"]
+        input = Environment(inputs=sample.inputs.to_dict())
+        input.mutable(
+            inputs=False,
+            supervisions=False
+        )
         begin = time.time()
         logger.debug(f"Start evaluation of {i}-th sample")
         with logger.block("synthesizer"):
-            candidates = list(self.synthesizer({"input": input}))
+            candidates = list(self.synthesizer(input))
         end = time.time()
         with logger.block("calculate_metrics"):
             candidates.sort(key=lambda x: -x.score)
@@ -77,15 +80,14 @@ class EvaluateSample(Generic[Input, Code]):
                 ms[n] = m
         logger.debug(f"Finish evaluation of {i}-th sample")
         return Result(
-            input,
-            {key: value for key, value in sample.items() if key != "input"},
+            sample.to_dict(),
             list(map(lambda x: x.output, candidates)), ms,
             len(candidates) != 0, end - begin)
 
 
-class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
+class EvaluateSynthesizer(Generic[Code, GroundTruth]):
     def __init__(self, dataset: torch.utils.data.Dataset,
-                 synthesizer: Synthesizer[Dict[str, Any], Code],
+                 synthesizer: Synthesizer[Environment, Code],
                  metrics: Mapping[str, Metric], top_n: List[int] = [1, 3],
                  n_process: Optional[int] = None,
                  n_samples: Optional[int] = None):
@@ -99,7 +101,7 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
         self.n_process = n_process
 
     @logger.function_block("__call__")
-    def __call__(self) -> EvaluationResult[Input, Code, GroundTruth]:
+    def __call__(self) -> EvaluationResult[Code, GroundTruth]:
         total = {}
         generated = []
         times = []
@@ -108,10 +110,10 @@ class EvaluateSynthesizer(Generic[Input, Code, GroundTruth]):
             for name in self.metrics.keys():
                 t[name] = 0.0
             total[n] = t
-        evaluate_sample: EvaluateSample[Dict[str, Any], Code] = \
+        evaluate_sample: EvaluateSample[Code] = \
             EvaluateSample(self.synthesizer, self.metrics, self.top_n)
 
-        results: List[Result[Input, Code, GroundTruth]] = []
+        results: List[Result[Code, GroundTruth]] = []
         if self.n_process is None:
             logger.info(f"Evalute with {len(self.dataset)} samples")
             results = [
@@ -175,7 +177,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     logger.info("Prepare model")
     model.to(device)
 
-    evaluate_synthesizer = EvaluateSynthesizer[Input, Code, GroundTruth](
+    evaluate_synthesizer = EvaluateSynthesizer[Code, GroundTruth](
         valid_dataset, synthesizer, metrics, top_n, n_process, n_samples)
 
     model_dir = os.path.join(input_dir, "model")

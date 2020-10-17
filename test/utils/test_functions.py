@@ -1,6 +1,7 @@
 import tempfile
 import os
 from collections import OrderedDict
+from mlprogram import Environment
 from mlprogram.utils \
     import Compose, Sequence, Map, Flatten, Pick, Threshold, save, load
 
@@ -63,13 +64,13 @@ class TestThreshold(object):
 
 class TestPick(object):
     def test_happy_path(self):
-        pick = Pick("x")
-        out = pick({"x": 10})
+        pick = Pick("input@x")
+        out = pick(Environment(inputs={"x": 10}))
         assert 10 == out
 
     def test_if_key_not_exist(self):
-        pick = Pick("x")
-        out = pick({})
+        pick = Pick("input@x")
+        out = pick(Environment())
         assert out is None
 
 

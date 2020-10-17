@@ -6,6 +6,7 @@ import sqlite3
 import logging
 import sys
 from shutil import copyfileobj, copyfile
+from mlprogram import Environment
 from mlprogram.datasets.deepfix import download
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
@@ -45,5 +46,9 @@ class TestDownload(object):
             dataset = download(path=path, get=get)
 
         assert 2 == len(dataset)
-        assert {"code": "foo", "error": "bar", "n_error": 1} == dataset[0]
-        assert {"code": "foo", "error": "", "n_error": 0} == dataset[1]
+        assert dataset[0] == Environment(
+            inputs={"code": "foo"},
+            supervisions={"error": "bar", "n_error": 1})
+        assert dataset[1] == Environment(
+            inputs={"code": "foo"},
+            supervisions={"error": "", "n_error": 0})

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List
 from torchnlp.encoders import LabelEncoder
+from mlprogram import Environment
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.languages import Node, Field, Leaf
 from mlprogram.languages import Token
@@ -41,10 +42,10 @@ class TestTransformQuery(object):
         qencoder = LabelEncoder(words, 0)
         cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
         transform = TransformQuery(tokenize, qencoder, cencoder, 3)
-        result = transform({"input": "ab test"})
-        reference = result["reference"]
-        word_query = result["word_nl_query"]
-        char_query = result["char_nl_query"]
+        result = transform(Environment(inputs={"input": "ab test"}))
+        reference = result.states["reference"]
+        word_query = result.states["word_nl_query"]
+        char_query = result.states["char_nl_query"]
         assert [Token(None, "ab", "ab"),
                 Token(None, "test", "test")] == reference
         assert np.array_equal([1, 2], word_query.numpy())
@@ -54,24 +55,27 @@ class TestTransformQuery(object):
 
 class TestTransformActionSequence(object):
     def test_simple_case(self):
-        entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
+        entries = [Environment(
+            inputs={"input": "ab test"},
+            supervisions={"ground_truth": "y = x + 1"}
+        )]
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = \
-            TransformCode(MockParser())({
-                "ground_truth": "y = x + 1"
-            })["action_sequence"]
+        action_sequence = TransformCode(MockParser())(Environment(
+            supervisions={"ground_truth": "y = x + 1"}
+        )).supervisions["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3)
-        result = transform({
-            "action_sequence": action_sequence,
-            "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
-        })
-        prev_action = result["previous_actions"]
-        prev_rule_action = result["previous_action_rules"]
-        depth = result["depthes"]
-        matrix = result["adjacency_matrix"]
-        query = result["action_queries"]
+        result = transform(Environment(
+            states={"reference": [Token(None, "ab", "ab"),
+                                  Token(None, "test", "test")]},
+            supervisions={"action_sequence": action_sequence}
+        ))
+        prev_action = result.states["previous_actions"]
+        prev_rule_action = result.states["previous_action_rules"]
+        depth = result.states["depthes"]
+        matrix = result.states["adjacency_matrix"]
+        query = result.states["action_queries"]
         assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
@@ -129,24 +133,27 @@ class TestTransformActionSequence(object):
         )
 
     def test_eval(self):
-        entries = [{"input": "ab test", "ground_truth": "y = x + 1"}]
+        entries = [Environment(
+            inputs={"input": "ab test"},
+            supervisions={"ground_truth": "y = x + 1"}
+        )]
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = \
-            TransformCode(MockParser())({
-                "ground_truth": "y = x + 1"
-            })["action_sequence"]
+        action_sequence = TransformCode(MockParser())(Environment(
+            supervisions={"ground_truth": "y = x + 1"}
+        )).supervisions["action_sequence"]
         transform = TransformActionSequence(aencoder, 2, 3, train=False)
-        result = transform({
-            "action_sequence": action_sequence,
-            "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
-        })
-        prev_action = result["previous_actions"]
-        prev_rule_action = result["previous_action_rules"]
-        depth = result["depthes"]
-        matrix = result["adjacency_matrix"]
-        query = result["action_queries"]
+        result = transform(Environment(
+            states={"reference": [Token(None, "ab", "ab"),
+                                  Token(None, "test", "test")],
+                    "action_sequence": action_sequence}
+        ))
+        prev_action = result.states["previous_actions"]
+        prev_rule_action = result.states["previous_action_rules"]
+        depth = result.states["depthes"]
+        matrix = result.states["adjacency_matrix"]
+        query = result.states["action_queries"]
         assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
@@ -206,18 +213,21 @@ class TestTransformActionSequence(object):
         )
 
     def test_impossible_case(self):
-        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        entries = [Environment(
+            inputs={"input": "foo bar"},
+            supervisions={"ground_truth": "y = x + 1"}
+        )]
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = \
-            TransformCode(MockParser())({
-                "ground_truth": "y = x + 1"
-            })["action_sequence"]
+        action_sequence = TransformCode(MockParser())(Environment(
+            supervisions={"ground_truth": "y = x + 1"}
+        )).supervisions["action_sequence"]
         transform = TransformActionSequence(aencoder, 3, 3)
-        result = transform({
-            "action_sequence": action_sequence,
-            "reference": [Token(None, "ab", "ab"), Token(None, "test", "test")]
-        })
+        result = transform(Environment(
+            states={"reference": [Token(None, "ab", "ab"),
+                                  Token(None, "test", "test")]},
+            supervisions={"action_sequence": action_sequence}
+        ))
         assert result is None

@@ -1,12 +1,13 @@
 import numpy as np
-from typing import Dict, Any
+
+from mlprogram import Environment
 from mlprogram.metrics import Metric
 
 
 class Iou(Metric[np.array]):
-    def __call__(self, input: Dict[str, Any],
+    def __call__(self, input: Environment,
                  actual: np.array) -> float:
-        ground_truth = input["ground_truth"]
+        ground_truth = input.supervisions["ground_truth"]
 
         if ground_truth.sum() == 0:
             iou = 1.0 - actual.sum() / np.prod(actual.shape)

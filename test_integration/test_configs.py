@@ -37,10 +37,6 @@ class TestConfig(object):
         ])
 
     def test_nl2bash_nl2code(self):
-        if not os.path.exists(os.path.join("datasets", "nl2bash.json")):
-            logger.warning("nl2bash dataset is not downloaded. Skip this test")
-            self.skipTest("nl2bash dataset is not downloaded. Skip this test")
-            return
         self.launch_config([
             (os.path.join("configs", "nl2bash", "nl2code_train.yaml"), 0),
             (os.path.join("configs", "nl2bash", "nl2code_evaluate.yaml"), 0)

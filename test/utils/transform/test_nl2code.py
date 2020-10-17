@@ -1,6 +1,8 @@
 import numpy as np
 from typing import List
 from torchnlp.encoders import LabelEncoder
+
+from mlprogram import Environment
 from mlprogram.utils.data import ListDataset, get_samples
 from mlprogram.languages import Node, Leaf, Field
 from mlprogram.languages import Token
@@ -42,27 +44,31 @@ class TestTransformQuery(object):
             return [Token(None, value + "dnn", value)]
 
         transform = TransformQuery(tokenize, LabelEncoder(["dnn"]))
-        result = transform({"input": ""})
-        assert [Token(None, "dnn", "")] == result["reference"]
-        assert [1] == result["word_nl_query"].numpy().tolist()
+        result = transform(Environment(inputs={"input": ""}))
+        assert [Token(None, "dnn", "")] == result.states["reference"]
+        assert [1] == result.states["word_nl_query"].numpy().tolist()
 
 
 class TestTransformActionSequence(object):
     def test_simple_case(self):
-        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        entries = [Environment(
+            inputs={"input": "foo bar"},
+            supervisions={"ground_truth": "y = x + 1"}
+        )]
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
-        action_sequence = TransformCode(MockParser())({
-            "ground_truth": "y = x + 1"
-        })["action_sequence"]
-        result = transform({
-            "action_sequence": action_sequence,
-            "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
-        })
-        action_tensor = result["actions"]
-        prev_action_tensor = result["previous_actions"]
+        action_sequence = TransformCode(MockParser())(Environment(
+            supervisions={"ground_truth": "y = x + 1"}
+        )).supervisions["action_sequence"]
+        result = transform(Environment(
+            states={"reference": [Token(None, "foo", "foo"),
+                                  Token(None, "bar", "bar")]},
+            supervisions={"action_sequence": action_sequence}
+        ))
+        action_tensor = result.states["actions"]
+        prev_action_tensor = result.states["previous_actions"]
         assert np.array_equal(
             [
                 [2, 2, 0], [4, 3, 1], [6, 4, 2], [6, 4, 2], [5, 3, 1],
@@ -82,20 +88,24 @@ class TestTransformActionSequence(object):
         )
 
     def test_eval(self):
-        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        entries = [Environment(
+            inputs={"input": "foo bar"},
+            supervisions={"ground_truth": "y = x + 1"}
+        )]
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = TransformCode(MockParser())({
-            "ground_truth": "y = x + 1"
-        })["action_sequence"]
+        action_sequence = TransformCode(MockParser())(Environment(
+            supervisions={"ground_truth": "y = x + 1"}
+        )).supervisions["action_sequence"]
         transform = TransformActionSequence(aencoder, train=False)
-        result = transform({
-            "action_sequence": action_sequence,
-            "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
-        })
-        action_tensor = result["actions"]
-        prev_action_tensor = result["previous_actions"]
+        result = transform(Environment(
+            states={"reference": [Token(None, "foo", "foo"),
+                                  Token(None, "bar", "bar")],
+                    "action_sequence": action_sequence}
+        ))
+        action_tensor = result.states["actions"]
+        prev_action_tensor = result.states["previous_actions"]
 
         assert np.array_equal(
             [[-1, -1, -1]],
@@ -107,17 +117,21 @@ class TestTransformActionSequence(object):
         )
 
     def test_impossible_case(self):
-        entries = [{"input": "foo bar", "ground_truth": "y = x + 1"}]
+        entries = [Environment(
+            inputs={"input": "foo bar"},
+            supervisions={"ground_truth": "y = x + 1"}
+        )]
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
         transform = TransformActionSequence(aencoder)
-        action_sequence = TransformCode(MockParser())({
-            "ground_truth": "y = x + 1"
-        })["action_sequence"]
-        result = transform({
-            "action_sequence": action_sequence,
-            "reference": [Token(None, "foo", "foo"), Token(None, "bar", "bar")]
-        })
+        action_sequence = TransformCode(MockParser())(Environment(
+            supervisions={"ground_truth": "y = x + 1"}
+        )).supervisions["action_sequence"]
+        result = transform(Environment(
+            states={"reference": [Token(None, "foo", "foo"),
+                                  Token(None, "bar", "bar")]},
+            supervisions={"action_sequence": action_sequence}
+        ))
         assert result is None

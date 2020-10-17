@@ -1,6 +1,7 @@
 import torch
 from typing \
-    import TypeVar, Generic, Generator, Optional, List, Callable, Any, Tuple
+    import TypeVar, Generic, Generator, Optional, List, Callable, Tuple
+from mlprogram import Environment
 from mlprogram.samplers import SamplerState, Sampler, DuplicatedSamplerState
 from mlprogram.utils.data import Collate
 from mlprogram import logging
@@ -16,7 +17,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                               Generic[Input, Output, State]):
     def __init__(self,
                  sampler: Sampler[Input, Output, State],
-                 transform: Callable[[State], Any],
+                 transform: Callable[[State], Environment],
                  collate: Collate,
                  value_network: torch.nn.Module,
                  batch_size: int = 1):
@@ -49,7 +50,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
                 if len(outputs) == self.batch_size:
                     with torch.no_grad(), logger.block("calculate_value"):
                         value = self.value_network(
-                            self.collate(value_network_inputs))
+                            self.collate.collate(value_network_inputs))
                     for value, output in zip(value, outputs):
                         yield DuplicatedSamplerState(
                             SamplerState(value.item(), output.state.state),
@@ -59,7 +60,7 @@ class SamplerWithValueNetwork(Sampler[Input, Output, State],
             if len(outputs) != 0:
                 with torch.no_grad(), logger.block("calculate_value"):
                     value = self.value_network(
-                        self.collate(value_network_inputs))
+                        self.collate.collate(value_network_inputs))
                 for value, output in zip(value, outputs):
                     yield DuplicatedSamplerState(
                         SamplerState(value.item(), output.state.state),

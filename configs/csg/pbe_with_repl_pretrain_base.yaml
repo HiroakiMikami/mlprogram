@@ -38,7 +38,7 @@ collate_fn:
               - type: mlprogram.utils.Map
                 func: "@/transform"
             - - "collate"
-              - "@/collate"
+              - "@/collate.collate"
 
 batch_size: 32
 
@@ -53,9 +53,9 @@ loss_fn:
       - - "normalize"
         - type: mlprogram.nn.Apply
           in_keys:
-            - - "action_sequence_loss"
+            - - "output@action_sequence_loss"
               - "lhs"
-          out_key: action_sequence_loss
+          out_key: output@action_sequence_loss
           module:
             type: mlprogram.nn.Function
             f:
@@ -66,7 +66,7 @@ loss_fn:
         - type: mlprogram.nn.Function
           f:
             type: mlprogram.utils.Pick
-            key: action_sequence_loss
+            key: output@action_sequence_loss
 main:
   type: mlprogram.entrypoint.train_supervised
   workspace_dir: "output/workspace_pretraining"

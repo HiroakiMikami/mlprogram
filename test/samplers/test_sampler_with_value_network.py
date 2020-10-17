@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import List, Dict, Any
+from typing import List
+from mlprogram import Environment
 from mlprogram.samplers \
     import Sampler, SamplerWithValueNetwork, SamplerState, \
     DuplicatedSamplerState
@@ -19,14 +20,15 @@ class MockSampler(Sampler[int, int, str]):
 
 
 class MockValueNetwork(nn.Module):
-    def forward(self, state: Dict[str, Any]) -> torch.Tensor:
-        return state["x"]
+    def forward(self, state: Environment) -> torch.Tensor:
+        return state.inputs["x"]
 
 
 class TestSamplerWithValueNetwork(object):
     def test_rescore(self):
-        def transform(state: str) -> torch.Tensor:
-            return {"x": torch.tensor([int(state)])}
+        def transform(state: str) -> Environment:
+            return Environment(inputs={"x": torch.tensor([int(state)])})
+
         collate = Collate(device=torch.device("cpu"),
                           x=CollateOptions(False, 0, 0))
         sampler = SamplerWithValueNetwork(MockSampler(), transform, collate,

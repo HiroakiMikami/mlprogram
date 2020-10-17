@@ -1,5 +1,6 @@
 import torch
-from typing import Dict, Any, Optional, cast, List, TypeVar, Generic
+from typing import Optional, cast, List, TypeVar, Generic
+from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.languages import Parser
 from mlprogram.encoders import ActionSequenceEncoder
@@ -11,9 +12,9 @@ Code = TypeVar("Code")
 
 
 class AddEmptyReference(object):
-    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        entry["reference"] = []
-        entry["reference_features"] = torch.zeros((0, 1))
+    def __call__(self, entry: Environment) -> Optional[Environment]:
+        entry.states["reference"] = []
+        entry.states["reference_features"] = torch.zeros((0, 1))
         return entry
 
 
@@ -21,13 +22,13 @@ class TransformCode(Generic[Code]):
     def __init__(self, parser: Parser[Code]):
         self.parser = parser
 
-    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        code = cast(Code, entry["ground_truth"])
+    def __call__(self, entry: Environment) -> Optional[Environment]:
+        code = cast(Code, entry.supervisions["ground_truth"])
         ast = self.parser.parse(code)
         if ast is None:
             return None
         seq = ActionSequence.create(ast)
-        entry["action_sequence"] = seq
+        entry.supervisions["action_sequence"] = seq
         return entry
 
 
@@ -37,9 +38,10 @@ class TransformGroundTruth:
 
         self.action_sequence_encoder = action_sequence_encoder
 
-    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str, str]], entry["reference"])
+    def __call__(self, entry: Environment) -> Optional[Environment]:
+        action_sequence = cast(ActionSequence,
+                               entry.supervisions["action_sequence"])
+        reference = cast(List[Token[str, str]], entry.states["reference"])
         a = self.action_sequence_encoder.encode_action(
             action_sequence, reference)
         if a is None:
@@ -47,7 +49,7 @@ class TransformGroundTruth:
         if np.any(a[-1, :].numpy() != -1):
             return None
         ground_truth = a[1:-1, 1:]
-        entry["ground_truth_actions"] = ground_truth
+        entry.supervisions["ground_truth_actions"] = ground_truth
         return entry
 
 
@@ -58,9 +60,14 @@ class TransformActionSequenceForRnnDecoder:
         self.action_sequence_encoder = action_sequence_encoder
         self.train = train
 
-    def __call__(self, entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        action_sequence = cast(ActionSequence, entry["action_sequence"])
-        reference = cast(List[Token[str, str]], entry["reference"])
+    def __call__(self, entry: Environment) -> Optional[Environment]:
+        if self.train:
+            action_sequence = cast(ActionSequence,
+                                   entry.supervisions["action_sequence"])
+        else:
+            action_sequence = cast(ActionSequence,
+                                   entry.states["action_sequence"])
+        reference = cast(List[Token[str, str]], entry.states["reference"])
         a = self.action_sequence_encoder.encode_action(
             action_sequence, reference)
         if a is None:
@@ -72,10 +79,10 @@ class TransformActionSequenceForRnnDecoder:
         else:
             prev_action = a[-2, 1:].view(1, -1)
 
-        entry["previous_actions"] = prev_action
-        if self.train or "hidden_state" not in entry:
-            entry["hidden_state"] = None
-        if self.train or "state" not in entry:
-            entry["state"] = None
+        entry.states["previous_actions"] = prev_action
+        if self.train or "hidden_state" not in entry.states:
+            entry.states["hidden_state"] = None
+        if self.train or "state" not in entry.states:
+            entry.states["state"] = None
 
         return entry

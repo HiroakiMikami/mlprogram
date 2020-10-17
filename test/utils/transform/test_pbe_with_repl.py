@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from mlprogram import Environment
 from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
 from mlprogram.languages import Token
 from mlprogram.languages import Leaf
@@ -21,90 +22,98 @@ class MockInterpreter(Interpreter):
 class TestToEpisode(object):
     def test_happy_path(self):
         f = ToEpisode(remove_used_reference=False)
-        retval = f({
-            "input": (torch.tensor(1), torch.tensor(0)),
-            "ground_truth": SequentialProgram([
-                Statement(Reference(0), 0),
-                Statement(Reference(1), 1)
-            ])
-        })
+        retval = f(Environment(
+            inputs={"test_case": (torch.tensor(1), torch.tensor(0))},
+            supervisions={
+                "ground_truth": SequentialProgram([
+                    Statement(Reference(0), 0),
+                    Statement(Reference(1), 1)
+                ])
+            }
+        ))
         assert 2 == len(retval)
         assert np.array_equal(
             (torch.tensor(1), torch.tensor(0)),
-            retval[0]["input"]
+            retval[0].inputs["test_case"]
         )
+        assert [] == retval[0].states["reference"]
         assert SequentialProgram([Statement(Reference(0), 0)]) == \
-            retval[0]["code"]
-        assert 0 == retval[0]["ground_truth"]
-        assert [] == retval[0]["reference"]
+            retval[0].inputs["code"]
+        assert 0 == retval[0].supervisions["ground_truth"]
 
         assert np.array_equal(
             (torch.tensor(1), torch.tensor(0)),
-            retval[1]["input"]
+            retval[1].inputs["test_case"]
         )
         assert SequentialProgram([Statement(Reference(0), 0),
                                   Statement(Reference(1), 1)]) == \
-            retval[1]["code"]
-        assert 1 == retval[1]["ground_truth"]
-        assert [Token(None, Reference(0), Reference(0))
-                ] == retval[1]["reference"]
+            retval[1].inputs["code"]
+        assert [Token(None, Reference(0), Reference(0))] == \
+            retval[1].states["reference"]
+        assert 1 == retval[1].supervisions["ground_truth"]
 
     def test_remove_unused_reference(self):
         f = ToEpisode(to_ast=lambda x: Leaf("", Reference(0)),
                       remove_used_reference=True)
-        retval = f({
-            "input": (torch.tensor(1), torch.tensor(0)),
-            "ground_truth": SequentialProgram([
-                Statement(Reference(0), torch.tensor(0)),
-                Statement(Reference(1), torch.tensor(1)),
-                Statement(Reference(2), torch.tensor(2))
-            ])
-        })
+        retval = f(Environment(
+            inputs={"test_case": (torch.tensor(1), torch.tensor(0))},
+            supervisions={
+                "ground_truth": SequentialProgram([
+                    Statement(Reference(0), torch.tensor(0)),
+                    Statement(Reference(1), torch.tensor(1)),
+                    Statement(Reference(2), torch.tensor(2))
+                ])
+            }
+        ))
         assert 3 == len(retval)
         assert np.array_equal(
             (torch.tensor(1), torch.tensor(0)),
-            retval[0]["input"]
+            retval[0].inputs["test_case"]
         )
         assert SequentialProgram([
             Statement(Reference(0), torch.tensor(0))]) == \
-            retval[0]["code"]
-        assert 0 == retval[0]["ground_truth"]
-        assert [] == retval[0]["reference"]
+            retval[0].inputs["code"]
+        assert [] == retval[0].states["reference"]
+        assert 0 == retval[0].supervisions["ground_truth"]
 
         assert np.array_equal(
             (torch.tensor(1), torch.tensor(0)),
-            retval[1]["input"]
+            retval[1].inputs["test_case"]
         )
         assert SequentialProgram([
             Statement(Reference(0), torch.tensor(0)),
             Statement(Reference(1), torch.tensor(1))]) == \
-            retval[1]["code"]
-        assert 1 == retval[1]["ground_truth"]
-        assert [] == retval[1]["reference"]
+            retval[1].inputs["code"]
+        assert [] == retval[1].states["reference"]
+        assert 1 == retval[1].supervisions["ground_truth"]
 
         assert np.array_equal(
             (torch.tensor(1), torch.tensor(0)),
-            retval[2]["input"]
+            retval[2].inputs["test_case"]
         )
         assert SequentialProgram([
             Statement(Reference(0), torch.tensor(0)),
             Statement(Reference(1), torch.tensor(1)),
             Statement(Reference(2), torch.tensor(2))]) == \
-            retval[2]["code"]
-        assert 2 == retval[2]["ground_truth"]
+            retval[2].inputs["code"]
         assert [
             Token(None, Reference(1), Reference(1))
-        ] == retval[2]["reference"]
+        ] == retval[2].states["reference"]
+        assert 2 == retval[2].supervisions["ground_truth"]
 
 
 class TestEvaluateCode(object):
     def test_happy_path(self):
         f = EvaluateCode(MockInterpreter())
-        output = f({
-            "input": (1, None),
-            "reference": [Token(None, Reference(1), Reference(1))],
-            "code": SequentialProgram(
-                [Statement(Reference(0), "0"), Statement(Reference(1), "1")]
-            )
-        })
-        assert [2] == output["variables"]
+        output = f(Environment(
+            inputs={
+                "test_case": (1, None),
+                "code": SequentialProgram(
+                    [Statement(Reference(0), "0"),
+                     Statement(Reference(1), "1")]
+                )
+            },
+            states={
+                "reference": [Token(None, Reference(1), Reference(1))],
+            }))
+        assert [2] == output.inputs["variables"]

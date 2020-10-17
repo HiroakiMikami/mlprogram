@@ -7,6 +7,7 @@ import sqlite3
 from shutil import copyfileobj
 from typing import Callable
 
+from mlprogram import Environment
 from mlprogram import logging
 from mlprogram.utils.data import ListDataset
 
@@ -47,10 +48,11 @@ def download(path: str = BASE_PATH,
         c = conn.cursor()
         for code, error, errorcount in \
                 c.execute("SELECT code, error, errorcount FROM Code"):
-            samples.append({
-                "code": code,
-                "error": error,  # TODO remove error/n_error
-                "n_error": errorcount
-            })
+            samples.append(Environment(
+                inputs={"code": code},
+                supervisions={
+                    "error": error,  # TODO remove error/n_error
+                    "n_error": errorcount
+                }))
 
     return ListDataset(samples)

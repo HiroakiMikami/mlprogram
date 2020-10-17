@@ -1,12 +1,15 @@
-from typing import Dict, Any, List
-from mlprogram.metrics import Metric
+from typing import List
+
 import re
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
+from mlprogram import Environment
+from mlprogram.metrics import Metric
+
 
 class Bleu(Metric[str]):
-    def __call__(self, input: Dict[str, Any], value: str) -> float:
-        ground_truth = input["ground_truth"]
+    def __call__(self, input: Environment, value: str) -> float:
+        ground_truth = input.supervisions["ground_truth"]
         sm = SmoothingFunction()
 
         def tokenize(code: str) -> List[str]:

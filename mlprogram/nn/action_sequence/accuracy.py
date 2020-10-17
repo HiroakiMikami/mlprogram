@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import cast, Any, Dict
+from typing import cast
 
+from mlprogram import Environment
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -9,7 +10,7 @@ class Accuracy(nn.Module):
     def __init__(self):
         super(Accuracy, self).__init__()
 
-    def forward(self, inputs: Dict[str, Any]) -> torch.Tensor:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -26,12 +27,15 @@ class Accuracy(nn.Module):
             the index of the word copied from the reference).
             The padding value should be -1.
         """
-        rule_probs = cast(PaddedSequenceWithMask, inputs["rule_probs"])
-        token_probs = cast(PaddedSequenceWithMask, inputs["token_probs"])
+        rule_probs = cast(PaddedSequenceWithMask,
+                          inputs.outputs["rule_probs"])
+        token_probs = cast(PaddedSequenceWithMask,
+                           inputs.outputs["token_probs"])
         reference_probs = \
-            cast(PaddedSequenceWithMask, inputs["reference_probs"])
-        ground_truth_actions = cast(PaddedSequenceWithMask,
-                                    inputs["ground_truth_actions"])
+            cast(PaddedSequenceWithMask, inputs.outputs["reference_probs"])
+        ground_truth_actions = cast(
+            PaddedSequenceWithMask,
+            inputs.supervisions["ground_truth_actions"])
         L_a, B, num_rules = rule_probs.data.shape
         _, _, num_tokens = token_probs.data.shape
         _, _, reference_length = reference_probs.data.shape
@@ -60,6 +64,6 @@ class Accuracy(nn.Module):
              (gt_reference != -1).long()).sum()
 
         acc = rule_acc + token_acc + reference_acc
-        inputs["action_sequence_accuracy"] = acc.to(rule_probs.data.dtype) \
-            / (n_rule + n_token + n_reference)
+        inputs.outputs["action_sequence_accuracy"] = \
+            acc.to(rule_probs.data.dtype) / (n_rule + n_token + n_reference)
         return inputs

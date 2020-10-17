@@ -1,7 +1,8 @@
 import requests
-from typing import Callable, Tuple, Dict, Any
+from typing import Callable, Tuple, Dict
 
 from mlprogram import logging
+from mlprogram import Environment
 from mlprogram.utils.data import ListDataset
 from mlprogram.datasets.django.format_annotations import format_annotations
 
@@ -24,9 +25,12 @@ def download(base_path: str = BASE_PATH,
     annotation = format_annotations(annotation)
     code = get(BASE_PATH + "all.code").split("\n")
 
-    def to_sample(elem: Tuple[str, str]) -> Dict[str, Any]:
+    def to_sample(elem: Tuple[str, str]) -> Environment:
         anno, code = elem
-        return {"input": anno, "ground_truth": code}
+        return Environment(
+            inputs={"input": anno},
+            supervisions={"ground_truth": code}
+        )
     samples = list(map(to_sample, zip(annotation, code)))
 
     train = ListDataset(samples[:num_train])

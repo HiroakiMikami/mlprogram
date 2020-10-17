@@ -14,21 +14,21 @@ class TestFilteredSampler(object):
     def test_finish_synthesize_if_score_is_high(self):
         sampler = FilteredSampler(
             MockSampler((0, False)),
-            lambda x, y: 1.0 if y in x["input"] else y,
+            lambda x, y: 1.0 if y in x else y,
             0.9)
-        output = sampler.create_output({"input": [0]}, None)
+        output = sampler.create_output([0], None)
         assert (0, True) == output
 
         sampler = FilteredSampler(
             MockSampler(None),
-            lambda x, y: 1.0 if y in x["input"] else y,
+            lambda x, y: 1.0 if y in x else y,
             0.9)
-        output = sampler.create_output({"input": [0]}, None)
+        output = sampler.create_output([0], None)
         assert output is None
 
         sampler = FilteredSampler(
             MockSampler((0.1, False)),
-            lambda x, y: 1.0 if y in x["input"] else y,
+            lambda x, y: 1.0 if y in x else y,
             0.9)
-        output = sampler.create_output({"input": [0]}, None)
+        output = sampler.create_output([0], None)
         assert (0.1, False) == output

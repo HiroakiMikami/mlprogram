@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from typing import Dict, Any, cast
+from typing import cast
 
+from mlprogram import Environment
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -14,8 +15,7 @@ class RnnDecoder(nn.Module):
         self.lstm = nn.LSTMCell(input_feature_size + action_feature_size,
                                 output_feature_size)
 
-    def forward(self, inputs: Dict[str, Any]) \
-            -> Dict[str, Any]:
+    def forward(self, inputs: Environment) -> Environment:
         """
         Parameters
         ----------
@@ -38,10 +38,10 @@ class RnnDecoder(nn.Module):
             The tuple of the next state. The shape is (B, hidden_size)
         """
         action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
-        input_feature = cast(torch.Tensor, inputs["input_feature"])
-        h_n = inputs["hidden_state"]
-        c_n = inputs["state"]
+                               inputs.states["action_features"])
+        input_feature = cast(torch.Tensor, inputs.states["input_feature"])
+        h_n = inputs.states["hidden_state"]
+        c_n = inputs.states["state"]
         B = input_feature.data.shape[0]
         if h_n is None:
             h_n = torch.zeros(B, self.output_feature_size,
@@ -63,9 +63,9 @@ class RnnDecoder(nn.Module):
         hs = torch.stack(hs)
         cs = torch.stack(cs)
 
-        inputs["action_features"] = rnn.PaddedSequenceWithMask(
+        inputs.states["action_features"] = rnn.PaddedSequenceWithMask(
             hs, action_features.mask)
-        inputs["hidden_state"] = h1
-        inputs["state"] = c1
+        inputs.states["hidden_state"] = h1
+        inputs.states["state"] = c1
 
         return inputs
