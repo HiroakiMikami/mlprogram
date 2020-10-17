@@ -19,6 +19,10 @@ normalize_dataset:
           - "@/parser.parse"
         - - unparse
           - "@/parser.unparse"
+
+dataset:
+  type: mlprogram.datasets.hearthstone.download
+train_dataset: "@/dataset.train"
 test_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.test"
@@ -27,6 +31,41 @@ valid_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.valid"
   transform: "@/normalize_dataset"
+
+words:
+  type: mlprogram.utils.data.get_words
+  dataset: "@/train_dataset"
+  extract_reference:
+    type: mlprogram.datasets.hearthstone.TokenizeQuery
+samples:
+  type: mlprogram.utils.data.get_samples
+  dataset: "@/train_dataset"
+  parser: "@/parser"
+
+encoder:
+  word_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "word_encoder.pt"
+    config:
+      type: torchnlp.encoders.LabelEncoder
+      sample: "@/words"
+      min_occurrences: 3
+  action_sequence_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "action_sequence_encoder.pt"
+        - "word_encoder.pt"
+    config:
+      type: mlprogram.encoders.ActionSequenceEncoder
+      samples: "@/samples"
+      token_threshold: 0
 
 action_sequence_reader:
   type: mlprogram.nn.nl2code.ActionSequenceReader

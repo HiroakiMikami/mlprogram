@@ -3,21 +3,6 @@ imports:
 
 output_dir: "output/output"
 
-encoder:
-  type: mlprogram.utils.save
-  file:
-    type: os.path.join
-    args:
-      - "@/output_dir"
-      - "encoder.pt"
-  obj:
-    type: mlprogram.encoders.ActionSequenceEncoder
-    samples:
-      type: mlprogram.languages.csg.get_samples
-      dataset: "@/dataset"
-      parser: "@/parser"
-    token_threshold: 0
-
 optimizer:
     type: torch.optim.Optimizer
     optimizer_cls:

@@ -1,12 +1,9 @@
-import torch
 from torch import nn
 from torch import multiprocessing
-import os
 from collections import OrderedDict
 from typing import Generic, TypeVar, Optional, Any, List, Callable
 from mlprogram import Environment
 from mlprogram import logging
-from mlprogram.distributed import is_main_process
 
 logger = logging.Logger(__name__)
 
@@ -98,22 +95,6 @@ class Pick(object):
 
     def __call__(self, entry: Environment) -> Optional[Any]:
         return entry[self.key] if self.key in entry.to_dict() else None
-
-
-def save(obj: V, file: str) -> V:
-    if os.path.exists(file):
-        logger.info(f"Reuse data from {file}")
-        return torch.load(file)
-
-    if is_main_process():
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        torch.save(obj, file)
-    return obj
-
-
-def load(file: str) -> Any:
-    logger.info(f"Load data from {file}")
-    return torch.load(file)
 
 
 def share_memory(model: nn.Module):

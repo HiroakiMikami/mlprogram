@@ -9,14 +9,6 @@ device:
 
 output_dir: "output/output"
 
-encoder:
-  type: mlprogram.utils.load
-  file:
-    type: os.path.join
-    args:
-      - "@/output_dir"
-      - "encoder.pt"
-
 optimizer:
     type: torch.optim.Optimizer
     optimizer_cls:

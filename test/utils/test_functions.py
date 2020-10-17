@@ -1,9 +1,7 @@
-import tempfile
-import os
 from collections import OrderedDict
 from mlprogram import Environment
 from mlprogram.utils \
-    import Compose, Sequence, Map, Flatten, Pick, Threshold, save, load
+    import Compose, Sequence, Map, Flatten, Pick, Threshold
 
 
 class TestCompose(object):
@@ -72,27 +70,3 @@ class TestPick(object):
         pick = Pick("input@x")
         out = pick(Environment())
         assert out is None
-
-
-class MockData:
-    def __init__(self, x):
-        self.x = x
-
-
-class TestSave(object):
-    def test_cache(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = os.path.join(tmpdir, "file")
-            obj = save(MockData(10), path)
-            assert 10 == obj.x
-            assert os.path.exists(path)
-
-
-class TestLoad(object):
-    def test_happy_path(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = os.path.join(tmpdir, "file")
-            save(MockData(10), path)
-
-            value = load(path)
-            assert 10 == value.x

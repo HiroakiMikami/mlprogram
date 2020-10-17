@@ -8,14 +8,6 @@ device:
   type_str: "cpu"
   index: 0
 
-encoder:
-  type: mlprogram.utils.load
-  file:
-    type: os.path.join
-    args:
-      - "@/output_dir"
-      - "encoder.pt"
-
 synthesizer:
   type: mlprogram.synthesizers.FilteredSynthesizer
   synthesizer: "@/evaluate_synthesizer"

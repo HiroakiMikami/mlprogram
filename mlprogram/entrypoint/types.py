@@ -119,8 +119,6 @@ types = {
     "mlprogram.utils.Div": mlprogram.utils.Div,
     "mlprogram.utils.IntDiv": mlprogram.utils.IntDiv,
     "mlprogram.utils.Neg": mlprogram.utils.Neg,
-    "mlprogram.utils.save": mlprogram.utils.save,
-    "mlprogram.utils.load": mlprogram.utils.load,
     "mlprogram.utils.share_memory": mlprogram.utils.share_memory,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,

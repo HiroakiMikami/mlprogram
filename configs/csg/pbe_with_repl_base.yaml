@@ -46,6 +46,21 @@ dataset:
     degree_stride: 15
     reference: true
 
+encoder:
+  type: with_file_cache
+  path:
+    type: os.path.join
+    args:
+      - "@/output_dir"
+      - "encoder.pt"
+  config:
+    type: mlprogram.encoders.ActionSequenceEncoder
+    samples:
+        type: mlprogram.languages.csg.get_samples
+        dataset: "@/dataset"
+        parser: "@/parser"
+    token_threshold: 0
+
 train_dataset:
     type: mlprogram.utils.data.transform
     dataset: "@/dataset"

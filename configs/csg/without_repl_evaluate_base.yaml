@@ -8,14 +8,6 @@ device:
   type_str: "cpu"
   index: 0
 
-encoder:
-  type: mlprogram.utils.load
-  file:
-    type: os.path.join
-    args:
-      - "@/output_dir"
-      - "encoder.pt"
-
 main:
   type: mlprogram.entrypoint.evaluate
   workspace_dir: "output/workspace"

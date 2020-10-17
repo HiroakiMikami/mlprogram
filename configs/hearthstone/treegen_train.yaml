@@ -3,60 +3,6 @@ imports:
 
 output_dir: "output/output"
 
-dataset:
-  type: mlprogram.datasets.hearthstone.download
-train_dataset: "@/dataset.train"
-
-words:
-  type: mlprogram.utils.data.get_words
-  dataset: "@/train_dataset"
-  extract_reference:
-    type: mlprogram.datasets.hearthstone.TokenizeQuery
-chars:
-  type: mlprogram.utils.data.get_characters
-  dataset: "@/train_dataset"
-  extract_reference:
-    type: mlprogram.datasets.hearthstone.TokenizeQuery
-samples:
-  type: mlprogram.utils.data.get_samples
-  dataset: "@/train_dataset"
-  parser: "@/parser"
-
-encoder:
-  word_encoder:
-    type: mlprogram.utils.save
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "word_encoder.pt"
-    obj:
-      type: torchnlp.encoders.LabelEncoder
-      sample: "@/words"
-      min_occurrences: 3
-  char_encoder:
-    type: mlprogram.utils.save
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "char_encoder.pt"
-    obj:
-      type: torchnlp.encoders.LabelEncoder
-      sample: "@/chars"
-      min_occurrences: 0
-  action_sequence_encoder:
-    type: mlprogram.utils.save
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "action_sequence_encoder.pt"
-    obj:
-      type: mlprogram.encoders.ActionSequenceEncoder
-      samples: "@/samples"
-      token_threshold: 0
-
 transform:
   type: mlprogram.utils.Sequence
   funcs:
