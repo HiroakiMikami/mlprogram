@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 class TestDownload(object):
     def test_download(self):
         with tempfile.TemporaryDirectory() as tmpdir:
+            cache_path = os.path.join(tmpdir, "cache.pt")
             sqlitefile = os.path.join(tmpdir, "dataset.db")
             conn = sqlite3.connect(sqlitefile)
             c = conn.cursor()
@@ -43,12 +44,18 @@ class TestDownload(object):
 
             def get(src, dst):
                 copyfile(src, dst)
-            dataset = download(path=path, get=get)
+            dataset0 = download(cache_path=cache_path, path=path, get=get)
 
-        assert 2 == len(dataset)
-        assert dataset[0] == Environment(
+            def get2(src, dst):
+                raise NotImplementedError
+            dataset1 = download(cache_path=cache_path, path=path, get=get2)
+
+        assert 2 == len(dataset0)
+        assert dataset0[0] == Environment(
             inputs={"code": "foo"},
             supervisions={"error": "bar", "n_error": 1})
-        assert dataset[1] == Environment(
+        assert dataset0[1] == Environment(
             inputs={"code": "foo"},
             supervisions={"error": "", "n_error": 0})
+
+        assert list(dataset0) == list(dataset1)
