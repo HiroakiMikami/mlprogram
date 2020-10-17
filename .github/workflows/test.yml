@@ -31,10 +31,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install .
         pip install ."[test]"
-    - name: Download dataset
-      run: |
-        mkdir -p ./datasets
-        python ./tools/download_nl2bash.py --path ./datasets/nl2bash.json
     - name: Check type hits with mypy
       run: |
         ./bin/mypy.bash

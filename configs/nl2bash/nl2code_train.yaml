@@ -4,8 +4,7 @@ imports:
 output_dir: "output/output"
 
 dataset:
-  type: mlprogram.datasets.nl2bash.load
-  path: ./datasets/nl2bash.json
+  type: mlprogram.datasets.nl2bash.download
 train_dataset: "@/dataset.train"
 
 words:
