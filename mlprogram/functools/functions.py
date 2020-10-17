@@ -1,23 +1,12 @@
-import torch
-from torch import nn
 from torch import multiprocessing
-import os
 from collections import OrderedDict
 from typing import Generic, TypeVar, Optional, Any, List, Callable
-from mlprogram import Environment
 from mlprogram import logging
-from mlprogram.distributed import is_main_process
 
 logger = logging.Logger(__name__)
 
-V = TypeVar("V")
 V0 = TypeVar("V0")
 V1 = TypeVar("V1")
-
-
-class Identity(Generic[V]):
-    def __call__(self, value: V) -> V:
-        return value
 
 
 class Compose:
@@ -66,57 +55,3 @@ class Map(Generic[V0, V1]):
                     for v0 in logger.iterable_block("values", values)]
         else:
             return list(self.pool.map(self.func, values))
-
-
-class Flatten(Generic[V]):
-    def __call__(self, values: List[List[V]]) -> List[V]:
-        retval = []
-        for v in values:
-            retval.extend(v)
-        return retval
-
-
-class Threshold(object):
-    def __init__(self, threshold: float, dtype: str = "bool"):
-        self.threshold = threshold
-        assert dtype in set(["bool", "int", "float"])
-        if dtype == "bool":
-            self.dtype: Callable[[bool], Any] = bool
-        elif dtype == "int":
-            self.dtype = int
-        elif dtype == "float":
-            self.dtype = float
-
-    def __call__(self, value: float) -> bool:
-        out = value >= self.threshold
-        return self.dtype(out)
-
-
-class Pick(object):
-    def __init__(self, key: str):
-        self.key = key
-
-    def __call__(self, entry: Environment) -> Optional[Any]:
-        return entry[self.key] if self.key in entry.to_dict() else None
-
-
-def save(obj: V, file: str) -> V:
-    if os.path.exists(file):
-        logger.info(f"Reuse data from {file}")
-        return torch.load(file)
-
-    if is_main_process():
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        torch.save(obj, file)
-    return obj
-
-
-def load(file: str) -> Any:
-    logger.info(f"Load data from {file}")
-    return torch.load(file)
-
-
-def share_memory(model: nn.Module):
-    for k, v in model.state_dict().items():
-        v.share_memory_()
-    return model

@@ -25,6 +25,12 @@ class Reshape(nn.Module):
         return x.reshape(*self.sizes)
 
 
+def share_memory_(model: nn.Module):
+    for k, v in model.state_dict().items():
+        v.share_memory_()
+    return model
+
+
 types = {
     "torch.device": device,
     "torch.nn.Sigmoid": lambda: torch.nn.Sigmoid(),
@@ -33,4 +39,5 @@ types = {
     "torch.optim.Adam": lambda: torch.optim.Adam,
     "torch.Reshape": Reshape,
     "torch.nn.BCELoss": torch.nn.BCELoss,
+    "torch.share_memory_": share_memory_
 }

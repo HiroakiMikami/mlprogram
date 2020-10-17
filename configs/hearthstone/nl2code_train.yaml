@@ -3,46 +3,8 @@ imports:
 
 output_dir: "output/output"
 
-dataset:
-  type: mlprogram.datasets.hearthstone.download
-train_dataset: "@/dataset.train"
-
-words:
-  type: mlprogram.utils.data.get_words
-  dataset: "@/train_dataset"
-  extract_reference:
-    type: mlprogram.datasets.hearthstone.TokenizeQuery
-samples:
-  type: mlprogram.utils.data.get_samples
-  dataset: "@/train_dataset"
-  parser: "@/parser"
-
-encoder:
-  word_encoder:
-    type: mlprogram.utils.save
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "word_encoder.pt"
-    obj:
-      type: torchnlp.encoders.LabelEncoder
-      sample: "@/words"
-      min_occurrences: 3
-  action_sequence_encoder:
-    type: mlprogram.utils.save
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "action_sequence_encoder.pt"
-    obj:
-      type: mlprogram.encoders.ActionSequenceEncoder
-      samples: "@/samples"
-      token_threshold: 0
-
 transform:
-  type: mlprogram.utils.Sequence
+  type: mlprogram.functools.Sequence
   funcs:
     type: collections.OrderedDict
     items:
@@ -85,7 +47,7 @@ main:
         - - "pick"
           - type: mlprogram.nn.Function
             f:
-              type: mlprogram.utils.Pick
+              type: Pick
               key: "output@action_sequence_loss"
   evaluate:
     type: mlprogram.entrypoint.EvaluateSynthesizer
@@ -99,12 +61,12 @@ main:
   threshold: 1.0
   maximize: True
   collate:
-    type: mlprogram.utils.Compose
+    type: mlprogram.functools.Compose
     funcs:
       type: collections.OrderedDict
       items:
         - - "transform"
-          - type: mlprogram.utils.Map
+          - type: mlprogram.functools.Map
             func: "@/transform"
         - - "collate"
           - "@/collate.collate"

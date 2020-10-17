@@ -8,17 +8,9 @@ parser:
   split_value:
     type: mlprogram.datasets.django.SplitValue
 
-normalize_dataset:
-  type: mlprogram.utils.transform.NormalizeGroundTruth
-  normalize:
-    type: mlprogram.utils.Sequence
-    funcs:
-      type: collections.OrderedDict
-      items:
-        - - parse
-          - "@/parser.parse"
-        - - unparse
-          - "@/parser.unparse"
+dataset:
+  type: mlprogram.datasets.django.download
+train_dataset: "@/dataset.train"
 test_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.test"
@@ -27,6 +19,52 @@ valid_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.valid"
   transform: "@/normalize_dataset"
+
+words:
+  type: mlprogram.utils.data.get_words
+  dataset: "@/train_dataset"
+  extract_reference:
+    type: mlprogram.datasets.django.TokenizeQuery
+samples:
+  type: mlprogram.utils.data.get_samples
+  dataset: "@/train_dataset"
+  parser: "@/parser"
+
+encoder:
+  word_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "word_encoder.pt"
+    config:
+      type: torchnlp.encoders.LabelEncoder
+      sample: "@/words"
+      min_occurrences: 5
+  action_sequence_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "action_sequence_encoder.pt"
+    config:
+      type: mlprogram.encoders.ActionSequenceEncoder
+      samples: "@/samples"
+      token_threshold: 5
+
+normalize_dataset:
+  type: mlprogram.utils.transform.NormalizeGroundTruth
+  normalize:
+    type: mlprogram.functools.Sequence
+    funcs:
+      type: collections.OrderedDict
+      items:
+        - - parse
+          - "@/parser.parse"
+        - - unparse
+          - "@/parser.unparse"
 
 action_sequence_reader:
   type: mlprogram.nn.nl2code.ActionSequenceReader
@@ -37,7 +75,7 @@ action_sequence_reader:
   embedding_size: 128
 
 model:
-  type: mlprogram.utils.share_memory
+  type: torch.share_memory_
   model:
     type: torch.nn.Sequential
     modules:

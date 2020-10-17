@@ -3,21 +3,6 @@ imports:
 
 output_dir: "output/output"
 
-encoder:
-  type: mlprogram.utils.save
-  file:
-    type: os.path.join
-    args:
-      - "@/output_dir"
-      - "encoder.pt"
-  obj:
-    type: mlprogram.encoders.ActionSequenceEncoder
-    samples:
-      type: mlprogram.languages.csg.get_samples
-      dataset: "@/dataset"
-      parser: "@/parser"
-    token_threshold: 0
-
 optimizer:
     type: torch.optim.Optimizer
     optimizer_cls:
@@ -25,17 +10,17 @@ optimizer:
     model: "@/model"
 
 collate_fn:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
         type: collections.OrderedDict
         items:
             - - "to_episode"
-              - type: mlprogram.utils.Map
+              - type: mlprogram.functools.Map
                 func: "@/to_episode"
             - - "flatten"
-              - type: mlprogram.utils.Flatten
+              - type: Flatten
             - - "transform"
-              - type: mlprogram.utils.Map
+              - type: mlprogram.functools.Map
                 func: "@/transform"
             - - "collate"
               - "@/collate.collate"
@@ -59,13 +44,13 @@ loss_fn:
           module:
             type: mlprogram.nn.Function
             f:
-              type: mlprogram.utils.Div
+              type: Div
           constants:
             rhs: "@/batch_size"
       - - "pick"
         - type: mlprogram.nn.Function
           f:
-            type: mlprogram.utils.Pick
+            type: Pick
             key: output@action_sequence_loss
 main:
   type: mlprogram.entrypoint.train_supervised

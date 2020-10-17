@@ -32,8 +32,8 @@ n_pixel:
     y: "@/option.resolution"
 n_feature_pixel:
     type: intdiv
-    x: "@/n_pixel"
-    y: 2
+    lhs: "@/n_pixel"
+    rhs: 2
 
 dataset:
     type: mlprogram.languages.csg.Dataset
@@ -43,6 +43,21 @@ dataset:
     length_stride: 1
     degree_stride: 15
     reference: false
+
+encoder:
+    type: with_file_cache
+    path:
+        type: os.path.join
+        args:
+        - "@/output_dir"
+        - "encoder.pt"
+    config:
+        type: mlprogram.encoders.ActionSequenceEncoder
+        samples:
+            type: mlprogram.languages.csg.get_samples
+            dataset: "@/dataset"
+            parser: "@/parser"
+        token_threshold: 0
 
 train_dataset:
     type: mlprogram.utils.data.transform
@@ -94,7 +109,7 @@ interpreter:
     height: "@/option.size"
     resolution: "@/option.resolution"
 model:
-    type: mlprogram.utils.share_memory
+    type: torch.share_memory_
     model:
         type: torch.nn.Sequential
         modules:
@@ -190,7 +205,7 @@ sampler:
         is_subtype:
             type: mlprogram.languages.csg.IsSubtype
         transform_input:
-            type: mlprogram.utils.Compose
+            type: mlprogram.functools.Compose
             funcs:
                 type: collections.OrderedDict
                 items:
@@ -222,7 +237,7 @@ synthesizer:
       max_try_num: 50
       sampler: "@/sampler"
       to_key:
-          type: mlprogram.utils.Pick
+          type: Pick
           key: "state@action_sequence"
     timeout_sec: "@/option.timeout_sec"
   score:
@@ -234,7 +249,7 @@ synthesizer:
   threshold: 0.9
 
 transform:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
         type: collections.OrderedDict
         items:

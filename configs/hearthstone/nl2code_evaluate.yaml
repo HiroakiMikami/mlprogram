@@ -8,25 +8,6 @@ device:
 
 output_dir: "output/output"
 
-dataset:
-  type: mlprogram.datasets.hearthstone.download
-
-encoder:
-  word_encoder:
-    type: mlprogram.utils.load
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "word_encoder.pt"
-  action_sequence_encoder:
-    type: mlprogram.utils.load
-    file:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "action_sequence_encoder.pt"
-
 main:
   type: mlprogram.entrypoint.evaluate
   workspace_dir: "output/workspace"

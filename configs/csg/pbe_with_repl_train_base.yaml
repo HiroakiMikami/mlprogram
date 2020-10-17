@@ -9,14 +9,6 @@ device:
 
 output_dir: "output/output"
 
-encoder:
-  type: mlprogram.utils.load
-  file:
-    type: os.path.join
-    args:
-      - "@/output_dir"
-      - "encoder.pt"
-
 optimizer:
     type: torch.optim.Optimizer
     optimizer_cls:
@@ -29,17 +21,17 @@ batch_size: 1
 n_rollout: 16
 
 collate_fn:
-  type: mlprogram.utils.Sequence
+  type: mlprogram.functools.Sequence
   funcs:
     type: collections.OrderedDict
     items:
       - - "to_episode"
-        - type: mlprogram.utils.Map
+        - type: mlprogram.functools.Map
           func: "@/to_episode"
       - - "flatten"
-        - type: mlprogram.utils.Flatten
+        - type: Flatten
       - - "transform"
-        - type: mlprogram.utils.Map
+        - type: mlprogram.functools.Map
           func: "@/transform"
       - - "collate"
         - "@/collate.collate"
@@ -66,7 +58,7 @@ loss_fn:
                   module:
                     type: mlprogram.nn.Function
                     f:
-                      type: mlprogram.utils.Mul
+                      type: Mul
       - - "value"
         - type: torch.nn.Sequential
           modules:
@@ -105,13 +97,13 @@ loss_fn:
           module:
             type: mlprogram.nn.Function
             f:
-              type: mlprogram.utils.Div
+              type: Div
           constants:
             "rhs": "@/batch_size"
       - - "pick"
         - type: mlprogram.nn.Function
           f:
-            type: mlprogram.utils.Pick
+            type: Pick
             key: output@loss
 
 main:
@@ -141,7 +133,7 @@ main:
       metric:
         type: mlprogram.metrics.Iou
     transform:
-      type: mlprogram.utils.Threshold
+      type: Threshold
       threshold: 0.9
       dtype: "float"
   collate: "@/collate_fn"

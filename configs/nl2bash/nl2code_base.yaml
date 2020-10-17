@@ -11,7 +11,7 @@ parser:
 normalize_dataset:
   type: mlprogram.utils.transform.NormalizeGroundTruth
   normalize:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
       type: collections.OrderedDict
       items:
@@ -19,6 +19,10 @@ normalize_dataset:
           - "@/parser.parse"
         - - unparse
           - "@/parser.unparse"
+
+dataset:
+  type: mlprogram.datasets.nl2bash.download
+train_dataset: "@/dataset.train"
 test_dataset:
   type: mlprogram.utils.data.transform
   dataset: "@/dataset.test"
@@ -28,6 +32,41 @@ valid_dataset:
   dataset: "@/dataset.valid"
   transform: "@/normalize_dataset"
 
+words:
+samples:
+  type: mlprogram.utils.data.get_samples
+  dataset: "@/train_dataset"
+  parser: "@/parser"
+
+word_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "word_encoder.pt"
+    config:
+      type: torchnlp.encoders.LabelEncoder
+      sample:
+        type: mlprogram.utils.data.get_words
+        dataset: "@/train_dataset"
+        extract_reference:
+          type: mlprogram.datasets.nl2bash.TokenizeQuery
+      min_occurrences: 3
+encoder:
+  word_encoder: "@/word_encoder"
+  action_sequence_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "action_sequence_encoder.pt"
+    config:
+      type: mlprogram.encoders.ActionSequenceEncoder
+      samples: "@/samples"
+      token_threshold: 0
+
 action_sequence_reader:
   type: mlprogram.nn.nl2code.ActionSequenceReader
   num_rules: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
@@ -36,7 +75,7 @@ action_sequence_reader:
   node_type_embedding_size: 64
   embedding_size: 128
 model:
-  type: mlprogram.utils.share_memory
+  type: torch.share_memory_
   model:
     type: torch.nn.Sequential
     modules:

@@ -2,10 +2,12 @@ import os
 import collections
 
 import mlprogram.entrypoint
+import mlprogram.builtins
 import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
 import mlprogram.datasets.deepfix
+import mlprogram.functools
 import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
@@ -17,7 +19,6 @@ import mlprogram.languages.csg.transform
 import mlprogram.languages.c
 import mlprogram.actions
 import mlprogram.synthesizers
-import mlprogram.utils
 import mlprogram.utils.data
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
@@ -44,11 +45,22 @@ except:  # noqa
 types = {
     "select": lambda key, options: options[key],
 
-    "add": lambda x, y: x + y,
-    "sub": lambda x, y: x - y,
-    "mul": lambda x, y: x * y,
-    "div": lambda x, y: x / y,
-    "intdiv": lambda x, y: x // y,
+    "Identity": mlprogram.builtins.Identity,
+    "Flatten": mlprogram.builtins.Flatten,
+    "Threshold": mlprogram.builtins.Threshold,
+    "Pick": mlprogram.builtins.Pick,
+    "Add": mlprogram.builtins.Add,
+    "add": lambda **kwargs: mlprogram.builtins.Add()(**kwargs),
+    "Sub": mlprogram.builtins.Sub,
+    "sub": lambda lhs, rhs: mlprogram.builtins.Sub()(lhs, rhs),
+    "Mul": mlprogram.builtins.Mul,
+    "mul": lambda **kwargs: mlprogram.builtins.Mul()(**kwargs),
+    "Div": mlprogram.builtins.Div,
+    "div": lambda lhs, rhs: mlprogram.builtins.Div()(lhs, rhs),
+    "IntDiv": mlprogram.builtins.IntDiv,
+    "intdiv": lambda lhs, rhs: mlprogram.builtins.IntDiv()(lhs, rhs),
+    "Neg": mlprogram.builtins.Neg,
+
     "gt": lambda x, y: x > y,
     "ge": lambda x, y: x >= y,
     "lt": lambda x, y: x < y,
@@ -106,22 +118,9 @@ types = {
     "mlprogram.languages.bash.Parser": mlprogram.languages.bash.Parser,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
-    "mlprogram.utils.Identity": mlprogram.utils.Identity,
-    "mlprogram.utils.Compose": mlprogram.utils.Compose,
-    "mlprogram.utils.Map": mlprogram.utils.Map,
-    "mlprogram.utils.Flatten": mlprogram.utils.Flatten,
-    "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
-    "mlprogram.utils.Threshold": mlprogram.utils.Threshold,
-    "mlprogram.utils.Pick": mlprogram.utils.Pick,
-    "mlprogram.utils.Add": mlprogram.utils.Add,
-    "mlprogram.utils.Sub": mlprogram.utils.Sub,
-    "mlprogram.utils.Mul": mlprogram.utils.Mul,
-    "mlprogram.utils.Div": mlprogram.utils.Div,
-    "mlprogram.utils.IntDiv": mlprogram.utils.IntDiv,
-    "mlprogram.utils.Neg": mlprogram.utils.Neg,
-    "mlprogram.utils.save": mlprogram.utils.save,
-    "mlprogram.utils.load": mlprogram.utils.load,
-    "mlprogram.utils.share_memory": mlprogram.utils.share_memory,
+    "mlprogram.functools.Compose": mlprogram.functools.Compose,
+    "mlprogram.functools.Map": mlprogram.functools.Map,
+    "mlprogram.functools.Sequence": mlprogram.functools.Sequence,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,

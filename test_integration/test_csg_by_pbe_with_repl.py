@@ -8,6 +8,8 @@ import random
 
 import torch
 import torch.optim as optim
+from mlprogram.builtins import Div, Mul
+from mlprogram.builtins import Flatten, Threshold, Pick
 from mlprogram.entrypoint \
     import train_supervised, train_REINFORCE, evaluate as eval
 from mlprogram.entrypoint import EvaluateSynthesizer
@@ -20,7 +22,7 @@ from mlprogram.samplers import SequentialProgramSampler
 from mlprogram.samplers import SamplerWithValueNetwork
 from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
+from mlprogram.functools import Sequence, Map, Compose
 from mlprogram.utils.data import Collate, CollateOptions
 import mlprogram.nn
 from mlprogram.nn.action_sequence import Loss
@@ -136,7 +138,7 @@ class TestCsgByPbeWithREPL(object):
                     ("value", model.value),
                     ("pick",
                      mlprogram.nn.Function(
-                         mlprogram.utils.Pick("state@value")))
+                         Pick("state@value")))
                 ])))
 
             synthesizer = SynthesizerWithTimeout(
@@ -227,11 +229,11 @@ class TestCsgByPbeWithREPL(object):
                      Apply(
                          [("output@action_sequence_loss", "lhs")],
                          "output@loss",
-                         mlprogram.nn.Function(mlprogram.utils.Div()),
+                         mlprogram.nn.Function(Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(
-                         mlprogram.utils.Pick("output@loss")))
+                         Pick("output@loss")))
                 ])),
                 None, "score",
                 collate_fn,
@@ -279,7 +281,7 @@ class TestCsgByPbeWithREPL(object):
                                  [("input@reward", "lhs"),
                                   ("output@action_sequence_loss", "rhs")],
                                  "output@action_sequence_loss",
-                                 mlprogram.nn.Function(mlprogram.utils.Mul())))
+                                 mlprogram.nn.Function(Mul())))
                      ]))),
                     ("value",
                      torch.nn.Sequential(OrderedDict([
@@ -304,11 +306,11 @@ class TestCsgByPbeWithREPL(object):
                      Apply(
                          [("output@loss", "lhs")],
                          "output@loss",
-                         mlprogram.nn.Function(mlprogram.utils.Div()),
+                         mlprogram.nn.Function(Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(
-                         mlprogram.utils.Pick("output@loss")))
+                         Pick("output@loss")))
                 ])),
                 EvaluateSynthesizer(
                     train_dataset,

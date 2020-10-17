@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
 import mlprogram.nn
+from mlprogram.builtins import Pick
 from mlprogram.entrypoint import evaluate as eval, train_supervised
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint.train import Epoch
@@ -17,7 +18,7 @@ from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence, Map
+from mlprogram.functools import Sequence, Map
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_samples
 from mlprogram.utils.transform.action_sequence \
@@ -121,7 +122,7 @@ class TestNL2Code(object):
                 ("loss", Loss()),
                 ("pick",
                  mlprogram.nn.Function(
-                     mlprogram.utils.Pick("output@action_sequence_loss")))
+                     Pick("output@action_sequence_loss")))
             ]))
             collate = Collate(
                 torch.device("cpu"),
