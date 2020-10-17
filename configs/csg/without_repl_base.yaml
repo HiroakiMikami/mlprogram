@@ -205,7 +205,7 @@ sampler:
         is_subtype:
             type: mlprogram.languages.csg.IsSubtype
         transform_input:
-            type: mlprogram.utils.Compose
+            type: mlprogram.functools.Compose
             funcs:
                 type: collections.OrderedDict
                 items:
@@ -249,7 +249,7 @@ synthesizer:
   threshold: 0.9
 
 transform:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
         type: collections.OrderedDict
         items:

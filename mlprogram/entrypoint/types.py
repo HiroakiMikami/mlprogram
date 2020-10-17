@@ -6,6 +6,7 @@ import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
 import mlprogram.datasets.deepfix
+import mlprogram.functools
 import mlprogram.nn
 import mlprogram.nn.action_sequence
 import mlprogram.metrics
@@ -106,11 +107,12 @@ types = {
     "mlprogram.languages.bash.Parser": mlprogram.languages.bash.Parser,
     "mlprogram.languages.bash.IsSubtype": mlprogram.languages.bash.IsSubtype,
 
+    "mlprogram.functools.Compose": mlprogram.functools.Compose,
+    "mlprogram.functools.Map": mlprogram.functools.Map,
+    "mlprogram.functools.Sequence": mlprogram.functools.Sequence,
+
     "mlprogram.utils.Identity": mlprogram.utils.Identity,
-    "mlprogram.utils.Compose": mlprogram.utils.Compose,
-    "mlprogram.utils.Map": mlprogram.utils.Map,
     "mlprogram.utils.Flatten": mlprogram.utils.Flatten,
-    "mlprogram.utils.Sequence": mlprogram.utils.Sequence,
     "mlprogram.utils.Threshold": mlprogram.utils.Threshold,
     "mlprogram.utils.Pick": mlprogram.utils.Pick,
     "mlprogram.utils.Add": mlprogram.utils.Add,

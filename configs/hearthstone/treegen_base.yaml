@@ -11,7 +11,7 @@ parser:
 normalize_dataset:
   type: mlprogram.utils.transform.NormalizeGroundTruth
   normalize:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
       type: collections.OrderedDict
       items:

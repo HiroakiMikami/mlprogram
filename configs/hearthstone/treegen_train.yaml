@@ -4,7 +4,7 @@ imports:
 output_dir: "output/output"
 
 transform:
-  type: mlprogram.utils.Sequence
+  type: mlprogram.functools.Sequence
   funcs:
     type: collections.OrderedDict
     items:
@@ -65,12 +65,12 @@ main:
   threshold: 1.0
   maximize: True
   collate:
-    type: mlprogram.utils.Compose
+    type: mlprogram.functools.Compose
     funcs:
       type: collections.OrderedDict
       items:
         - - "transform"
-          - type: mlprogram.utils.Map
+          - type: mlprogram.functools.Map
             func: "@/transform"
         - - "collate"
           - "@/collate.collate"

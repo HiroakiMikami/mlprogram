@@ -10,12 +10,12 @@ optimizer:
     model: "@/model"
 
 collate_fn:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
         type: collections.OrderedDict
         items:
             - - "transform"
-              - type: mlprogram.utils.Map
+              - type: mlprogram.functools.Map
                 func: "@/transform"
             - - "collate"
               - "@/collate.collate"

@@ -20,7 +20,8 @@ from mlprogram.samplers import SequentialProgramSampler
 from mlprogram.samplers import SamplerWithValueNetwork
 from mlprogram.samplers import FilteredSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence, Map, Flatten, Compose, Threshold, Pick
+from mlprogram.functools import Sequence, Map, Compose
+from mlprogram.utils import Flatten, Threshold, Pick
 from mlprogram.utils.data import Collate, CollateOptions
 import mlprogram.nn
 from mlprogram.nn.action_sequence import Loss

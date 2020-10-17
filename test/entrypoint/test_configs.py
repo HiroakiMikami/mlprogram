@@ -23,7 +23,19 @@ class TestParseConfig(object):
             }
             result = parse_config(config)
             assert result["/main"] == 0
-            config["main"]["config"]["options"]["key"] = 1
+            config = {
+                "main": {
+                    "type": "with_file_cache",
+                    "path": path,
+                    "config": {
+                        "type": "select",
+                        "key": "key",
+                        "options": {
+                            "key": 1
+                        }
+                    }
+                }
+            }
             result = parse_config(config)
             assert result["/main"] == 0
 

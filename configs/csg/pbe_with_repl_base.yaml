@@ -251,7 +251,7 @@ subsampler:
     is_subtype:
         type: mlprogram.languages.csg.IsSubtype
     transform_input:
-        type: mlprogram.utils.Compose
+        type: mlprogram.functools.Compose
         funcs:
             type: collections.OrderedDict
             items:
@@ -317,7 +317,7 @@ evaluate_synthesizer:
             type: mlprogram.samplers.SamplerWithValueNetwork
             sampler: "@/sampler"
             transform:
-                type: mlprogram.utils.Compose
+                type: mlprogram.functools.Compose
                 funcs:
                     type: collections.OrderedDict
                     items:
@@ -353,7 +353,7 @@ to_episode:
     remove_used_reference: true
 
 transform:
-    type: mlprogram.utils.Sequence
+    type: mlprogram.functools.Sequence
     funcs:
         type: collections.OrderedDict
         items:

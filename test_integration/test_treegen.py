@@ -19,7 +19,7 @@ from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils import Sequence, Map
+from mlprogram.functools import Sequence, Map
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_characters, get_samples
 from mlprogram.utils.transform.action_sequence \

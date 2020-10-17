@@ -1,7 +1,5 @@
 imports:
-  - "nl2code_base.yaml"
-
-output_dir: "output/output"
+  - "base.yaml"
 
 transform:
   type: mlprogram.functools.Sequence
@@ -11,7 +9,7 @@ transform:
       - - "transform_input"
         - type: mlprogram.utils.transform.nl2code.TransformQuery
           extract_reference:
-            type: mlprogram.datasets.django.TokenizeQuery
+            type: mlprogram.datasets.nl2bash.TokenizeQuery
           word_encoder: "@/encoder.word_encoder"
       - - "transform_code"
         - type: mlprogram.utils.transform.action_sequence.TransformCode
@@ -39,7 +37,7 @@ main:
   optimizer: "@/optimizer"
   loss:
     type: torch.nn.Sequential
-    modules: 
+    modules:
       type: collections.OrderedDict
       items:
         - - "loss"
@@ -54,12 +52,10 @@ main:
     dataset: "@/test_dataset"
     synthesizer: "@/synthesizer"
     metrics: "@/metrics"
-    top_n:
-      - 1
-    n_process: 2
-  metric: "bleu@1"
+    top_n: "@/top_n"
+    n_process: "@/n_process"
+  metric: "@/metric"
   threshold: 1.0
-  maximize: True
   collate:
     type: mlprogram.functools.Compose
     funcs:
@@ -70,14 +66,14 @@ main:
             func: "@/transform"
         - - "collate"
           - "@/collate.collate"
-  batch_size: 10
+  batch_size: "@/batch_size"
   length:
     type: mlprogram.entrypoint.train.Epoch
-    n: 50
+    n: "@/n_epoch"
   evaluation_interval:
     type: mlprogram.entrypoint.train.Epoch
-    n: 10
+    n: "@/eval_interval"
   snapshot_interval:
     type: mlprogram.entrypoint.train.Epoch
-    n: 10
+    n: "@/snapshot_interval"
   device: "@/device"
