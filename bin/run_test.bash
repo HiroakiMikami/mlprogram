@@ -3,7 +3,7 @@ set -u
 
 test_type=${1:-"unit"}
 
-pytest test
+pytest test || exit 1
 
 if [ $test_type = "all" ]
 then

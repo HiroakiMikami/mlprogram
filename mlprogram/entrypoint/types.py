@@ -169,9 +169,6 @@ types = {
         mlprogram.utils.transform.treegen.TransformActionSequence,
     "mlprogram.utils.transform.pbe_with_repl.ToEpisode":
         mlprogram.utils.transform.pbe_with_repl.ToEpisode,
-    "mlprogram.utils.transform.pbe_with_repl.EvaluateCode":
-        mlprogram.utils.transform.pbe_with_repl.EvaluateCode,
-
 
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
@@ -204,6 +201,7 @@ types = {
     "mlprogram.languages.csg.Parser": mlprogram.languages.csg.Parser,
     "mlprogram.languages.csg.Dataset": mlprogram.languages.csg.Dataset,
     "mlprogram.languages.csg.Interpreter": mlprogram.languages.csg.Interpreter,
+    "mlprogram.languages.csg.Expander": mlprogram.languages.csg.Expander,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
     "mlprogram.languages.csg.transform.TransformCanvas":

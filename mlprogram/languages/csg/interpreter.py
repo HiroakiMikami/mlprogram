@@ -1,11 +1,11 @@
 import numpy as np
-from mlprogram.interpreters import Reference as R
-from mlprogram.interpreters import SequentialProgram
+from mlprogram.interpreters import State
 from mlprogram.interpreters import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
     Reference
-from typing import Callable, Dict
+from typing import Callable
+from typing import Dict
 import math
 from functools import lru_cache
 
@@ -44,28 +44,32 @@ class InvalidNodeTypeException(BaseException):
         super().__init__(f"Invalid node type: {type_name}")
 
 
-class Interpreter(BaseInterpreter[AST, None, Shape]):
-    def __init__(self, width: int, height: int, resolution: int):
+class Interpreter(BaseInterpreter[AST, None, Shape, str]):
+    def __init__(self, width: int, height: int, resolution: int,
+                 delete_used_reference: bool):
         self.width = width
         self.height = height
         self.resolution = resolution
+        self.delete_used_reference = delete_used_reference
 
     def eval(self, code: AST, input: None) -> np.array:
-        return self._cached_eval(code).render(
+        return self._eval(code, {})
+
+    def execute(self, code: AST, input: None, state: State[AST, Shape, str]) \
+            -> State[AST, Shape, str]:
+        value = self._eval(code, state.environment)
+        next = state.clone()
+        next.history.append(code)
+        next.type_environment[code] = code.type_name()
+        next.environment[code] = value
+        return next
+
+    def _eval(self, code: AST, env: Dict[AST, Shape]):
+        unref_code = self._unreference(code, env)
+        return self._cached_eval(unref_code).render(
             self.width, self.height, self.resolution)
 
-    def eval_references(self, code: SequentialProgram[AST], input: None) \
-            -> Dict[R, np.array]:
-        unref_code: Dict[R, AST] = {}
-        values = {}
-        for statement in code.statements:
-            ref = statement.reference
-            ast = statement.code
-            unref_code[ref] = self._unreference(ast, unref_code)
-            values[ref] = self.eval(unref_code[ref], input)
-        return values
-
-    def _unreference(self, code: AST, refs: Dict[R, AST]) -> AST:
+    def _unreference(self, code: AST, refs: Dict[AST, Shape]) -> AST:
         if isinstance(code, Circle):
             return code
         elif isinstance(code, Rectangle):
@@ -82,14 +86,11 @@ class Interpreter(BaseInterpreter[AST, None, Shape]):
         elif isinstance(code, Difference):
             return Difference(self._unreference(code.a, refs),
                               self._unreference(code.b, refs))
-            a = self._cached_eval(code.a)
-            b = self._cached_eval(code.b)
-
-            def difference(x, y):
-                return not a(x, y) and b(x, y)
-            return Shape(difference)
         elif isinstance(code, Reference):
-            return self._unreference(refs[code.ref], refs)
+            if self.delete_used_reference and code.ref in refs:
+                del refs[code.ref]
+            return self._unreference(code.ref, refs)
+        # TODO assertion error?
         raise InvalidNodeTypeException(code.type_name())
 
     @lru_cache(maxsize=100)

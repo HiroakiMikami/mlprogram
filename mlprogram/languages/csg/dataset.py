@@ -2,12 +2,9 @@ import numpy as np
 
 from torch.utils import data
 from torch.utils.data import IterableDataset
-from typing import Optional, Any, Tuple, Dict, List
+from typing import Optional, Any, Dict
 
 from mlprogram import Environment
-from mlprogram.interpreters import Reference as R
-from mlprogram.interpreters import Statement
-from mlprogram.interpreters import SequentialProgram
 from mlprogram.languages.csg import AST, Reference
 from mlprogram.languages.csg import Circle, Rectangle
 from mlprogram.languages.csg import Translation, Rotation
@@ -83,51 +80,26 @@ class Dataset(IterableDataset):
                     raise Exception(f"Invalid type: {t}")
         return list(objects.values())[0]
 
-    def to_reference(self, code: AST, n_ref: int = 0) \
-            -> Tuple[List[Statement[AST]], int]:
+    def to_reference(self, code: AST) -> AST:
         if isinstance(code, Circle):
-            return [Statement(R(str(n_ref)), code)], n_ref
+            return code
         elif isinstance(code, Rectangle):
-            return [Statement(R(str(n_ref)), code)], n_ref
+            return code
         elif isinstance(code, Translation):
-            retval, n_ref = self.to_reference(code.child, n_ref)
-            retval.append(Statement(
-                R(str(n_ref + 1)),
-                Translation(code.x, code.y,
-                            Reference(R(str(n_ref))))
-            ))
-            return retval, n_ref + 1
+            child = self.to_reference(code.child)
+            return Translation(code.x, code.y, Reference(child))
         elif isinstance(code, Rotation):
-            retval, n_ref = self.to_reference(code.child, n_ref)
-            retval.append(Statement(
-                R(str(n_ref + 1)),
-                Rotation(code.theta_degree,
-                         Reference(R(str(n_ref))))
-            ))
-            return retval, n_ref + 1
+            child = self.to_reference(code.child)
+            return Rotation(code.theta_degree, Reference(child))
         elif isinstance(code, Union):
-            retval0, n_ref0 = self.to_reference(code.a, n_ref)
-            retval1, n_ref1 = self.to_reference(code.b, n_ref0 + 1)
-            retval0.extend(retval1)
-            retval0.append(Statement(
-                R(str(n_ref1 + 1)),
-                Union(Reference(R(str(n_ref0))),
-                      Reference(R(str(n_ref1))))
-            ))
-            return retval0, n_ref1 + 1
+            retval0 = self.to_reference(code.a)
+            retval1 = self.to_reference(code.b)
+            return Union(Reference(retval0), Reference(retval1))
         elif isinstance(code, Difference):
-            retval0, n_ref0 = self.to_reference(code.a, n_ref)
-            retval1, n_ref1 = self.to_reference(code.b, n_ref0 + 1)
-            retval0.extend(retval1)
-            retval0.append(Statement(
-                R(str(n_ref1 + 1)),
-                Difference(Reference(R(str(n_ref0))),
-                           Reference(R(str(n_ref1))))
-            ))
-            return retval0, n_ref1 + 1
-        logger.warning(f"Invalid node type {code.type_name()}")
-        # TODO throw exception
-        return [], -1
+            retval0 = self.to_reference(code.a)
+            retval1 = self.to_reference(code.b)
+            return Difference(Reference(retval0), Reference(retval1))
+        raise AssertionError(f"Invalid node type {code.type_name()}")
 
     def __iter__(self):
         worker_info = data.get_worker_info()
@@ -150,13 +122,8 @@ class Dataset(IterableDataset):
                 n_object = rng.multinomial(1, self.obj_prob).nonzero()[0] + 1
                 ast = self.parent.sample_ast(rng, n_object)
                 if self.parent.reference:
-                    refs, output = self.parent.to_reference(ast)
-                    retval = Environment(
-                        supervisions={
-                            "ground_truth": SequentialProgram(refs)
-                        })
-                else:
-                    retval = Environment(supervisions={"ground_truth": ast})
+                    ast = self.parent.to_reference(ast)
+                retval = Environment(supervisions={"ground_truth": ast})
                 return retval
 
         return InternalIterator(self)

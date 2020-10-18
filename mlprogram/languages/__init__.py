@@ -10,3 +10,5 @@ from mlprogram.languages.token_sequence import TokenSequence  # noqa
 from mlprogram.languages.lexer import Lexer  # noqa
 
 from mlprogram.languages.parser import Parser  # noqa
+
+from mlprogram.languages.expander import Expander  # noqa

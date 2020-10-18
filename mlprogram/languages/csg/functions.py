@@ -1,5 +1,4 @@
 from typing import Union as U, List
-from mlprogram.interpreters import Reference as R
 from mlprogram.languages import Parser
 from mlprogram.languages.csg import AST as csgAST
 from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
@@ -36,10 +35,10 @@ def get_samples(dataset: Dataset, parser: Parser[csgAST]) -> Samples:
     if dataset.reference:
         xs = [
             Circle(1), Rectangle(1, 2),
-            Translation(1, 1, Reference(R("0"))),
-            Rotation(45, Reference(R("0"))),
-            Union(Reference(R("0")), Reference(R("1"))),
-            Difference(Reference(R("0")), Reference(R("1")))
+            Translation(1, 1, Reference(Circle(1))),
+            Rotation(45, Reference(Circle(1))),
+            Union(Reference(Circle(1)), Reference(Rectangle(1, 2))),
+            Difference(Reference(Circle(1)), Reference(Rectangle(1, 2)))
         ]
     else:
         xs = [
@@ -67,5 +66,7 @@ def get_samples(dataset: Dataset, parser: Parser[csgAST]) -> Samples:
                         if child not in sntype:
                             node_types.append(child)
                             sntype.add(child)
+    tokens = list(set(tokens))
+    tokens.sort()
 
-    return Samples(list(rules), list(node_types), list(set(tokens)))
+    return Samples(rules, node_types, tokens)

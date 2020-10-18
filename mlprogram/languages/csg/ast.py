@@ -1,5 +1,4 @@
 from typing import Any, Dict
-from mlprogram.interpreters import Reference as R
 
 
 class AST:
@@ -116,7 +115,7 @@ class Difference(AST):
 
 
 class Reference(AST):
-    def __init__(self, ref: R):
+    def __init__(self, ref: AST):
         self.ref = ref
 
     def type_name(self) -> str:

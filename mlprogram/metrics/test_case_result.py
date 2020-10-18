@@ -1,31 +1,25 @@
-from typing import Any, Generic, TypeVar, cast
+from typing import Generic, TypeVar
 
 from mlprogram import Environment
 from mlprogram.metrics import Metric, Accuracy
-from mlprogram.interpreters import Interpreter, SequentialProgram
+from mlprogram.interpreters import Interpreter
 
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")
 Result = TypeVar("Result")
+Kind = TypeVar("Kind")
 
 
-class TestCaseResult(Metric[Code], Generic[Code, Input, Result]):
+class TestCaseResult(Metric[Code], Generic[Code, Input, Result, Kind]):
     def __init__(self,
-                 interpreter: Interpreter[Code, Input, Result],
-                 reference: bool = False,
+                 interpreter: Interpreter[Code, Input, Result, Kind],
                  metric: Metric[Result] = Accuracy()):
         self.interpreter = interpreter
-        self.reference = reference
         self.metric = metric
 
     def _eval(self, code: Code, input: Input):
-        if self.reference:
-            ref = cast(SequentialProgram[Any], code)
-            output = self.interpreter.eval_references(ref, input)[
-                ref.statements[-1].reference]
-        else:
-            output = self.interpreter.eval(code, input)
+        output = self.interpreter.eval(code, input)
         return output
 
     def __call__(self, input: Environment, value: Code) -> float:

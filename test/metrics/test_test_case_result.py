@@ -1,9 +1,6 @@
 import numpy as np
 from mlprogram import Environment
 from mlprogram.metrics import TestCaseResult
-from mlprogram.interpreters import Reference
-from mlprogram.interpreters import Statement
-from mlprogram.interpreters import SequentialProgram
 from mlprogram.interpreters import Interpreter
 
 
@@ -26,14 +23,6 @@ class TestTestCaseResult(object):
                            acc(Environment(inputs={"test_case": (1, 0)}), "2"))
         assert np.allclose(1.0,
                            acc(Environment(inputs={"test_case": (1, 1)}), "0"))
-
-    def test_reference(self):
-        acc = TestCaseResult(MockInterpreter(), reference=True)
-        assert np.allclose(
-            1.0,
-            acc(Environment(inputs={"test_case": (0, 0)}),
-                SequentialProgram([Statement(Reference("0"), "0")]))
-        )
 
     def test_custom_metric(self):
         def metric(input, actual):
