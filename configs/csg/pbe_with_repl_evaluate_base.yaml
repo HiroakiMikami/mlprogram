@@ -14,7 +14,6 @@ synthesizer:
   score:
     type: mlprogram.metrics.TestCaseResult
     interpreter: "@/interpreter"
-    reference: True
     metric:
       type: mlprogram.metrics.Iou
   threshold: 0.9

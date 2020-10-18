@@ -18,6 +18,9 @@ class Root:
     def __str__(self) -> str:
         return "<Root>"
 
+    def __repr__(self) -> str:
+        return "<Root>"
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)

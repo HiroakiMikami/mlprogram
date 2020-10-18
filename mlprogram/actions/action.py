@@ -95,6 +95,9 @@ class CloseVariadicFieldRule:
     def __str__(self) -> str:
         return "<close variadic field>"
 
+    def __repr__(self) -> str:
+        return "<close variadic field>"
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)

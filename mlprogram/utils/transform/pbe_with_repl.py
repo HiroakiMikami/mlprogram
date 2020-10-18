@@ -1,71 +1,43 @@
-from typing import List, Any, cast, Callable, Optional, Set
+from typing import List
+from typing import TypeVar
+from typing import Generic
 from mlprogram import Environment
 from mlprogram.languages import Token
-from mlprogram.languages import AST, Node, Leaf
-from mlprogram.interpreters import Interpreter, SequentialProgram, Reference
+from mlprogram.languages import Expander
+from mlprogram.interpreters import State
+from mlprogram.interpreters import Interpreter
+
+Code = TypeVar("Code")
+Input = TypeVar("Input")
+Value = TypeVar("Value")
+Kind = TypeVar("Kind")
 
 
-class ToEpisode:
-    def __init__(self, to_ast: Optional[Callable[[Any], AST]] = None,
-                 remove_used_reference: bool = False):
-        self.to_ast = to_ast
-        self.remove_used_reference = remove_used_reference
+class ToEpisode(Generic[Code, Input, Value]):
+    def __init__(self, interpreter: Interpreter[Code, Input, Value, Kind],
+                 expander: Expander[Code]):
+        self.interpreter = interpreter
+        self.expander = expander
 
     def __call__(self, entry: Environment) -> List[Environment]:
-        ground_truth = cast(SequentialProgram[Any],
-                            entry.supervisions["ground_truth"])
-        gt_refs = {statement.reference: statement.code
-                   for statement in ground_truth.statements}
-
-        def find_refs(ast: AST) -> List[Reference]:
-            if isinstance(ast, Node):
-                retval = []
-                for field in ast.fields:
-                    if isinstance(field.value, list):
-                        for value in field.value:
-                            retval.extend(find_refs(value))
-                    else:
-                        retval.extend(find_refs(field.value))
-                return retval
-            elif isinstance(ast, Leaf):
-                if isinstance(ast.value, Reference):
-                    return [ast.value]
-            return []
+        ground_truth = entry.supervisions["ground_truth"]
+        input, _ = entry.inputs["test_case"]
 
         retval: List[Environment] = []
-        refs: Set[Reference] = set()
-        for i, statement in enumerate(ground_truth.statements):
-            ref = statement.reference
-            rs = list(refs)
-            rs.sort(key=lambda r: r.name)
+        state = State[Code, Value, Kind]({}, {}, [])
+        for code in self.expander.expand(ground_truth):
             xs = entry.clone()
-            xs.states["reference"] = [Token(None, r, r) for r in rs]
-            # TODO "code" may be in supervisions
-            xs.inputs["code"] = \
-                SequentialProgram(ground_truth.statements[:(i + 1)])
-            xs.supervisions["ground_truth"] = gt_refs[ref]
+            # TODO set type of reference
+            xs.states["reference"] = [
+                Token(state.type_environment[v], v, v)
+                for v in state.environment.keys()
+            ]
+            xs.states["variables"] = [
+                state.environment[token.value]
+                for token in xs.states["reference"]
+            ]
+            xs.supervisions["ground_truth"] = code
+            state = self.interpreter.execute(code, input, state)
             retval.append(xs)
-            refs.add(ref)
-            if self.remove_used_reference:
-                assert self.to_ast is not None
-                used = find_refs(self.to_ast(gt_refs[ref]))
-                for r in used:
-                    if r in refs:
-                        refs.remove(r)
 
         return retval
-
-
-class EvaluateCode:
-    def __init__(self, interpreter: Interpreter):
-        self.interpreter = interpreter
-
-    def __call__(self, entry: Environment) -> Environment:
-        code = entry.inputs["code"]
-        input, _ = entry.inputs["test_case"]
-        reference = entry.states["reference"]
-        refs = [token.value for token in reference]
-        result = self.interpreter.eval_references(code, input)
-        variables = [result[ref] for ref in refs]
-        entry.inputs["variables"] = variables
-        return entry

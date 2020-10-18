@@ -15,8 +15,8 @@ class TransformCanvas:
             # TODO use input of test case (?)
             _, output = entry.inputs["test_case"]
             entry.states["test_case_tensor"] = self.per_canvas(output)
-        if "variables" in entry.inputs:
-            variables = entry.inputs["variables"]
+        if "variables" in entry.states:
+            variables = entry.states["variables"]
             s = entry.states["test_case_tensor"].shape
             if len(variables) == 0:
                 entry.states["variables_tensor"] = torch.zeros((0, *s))
@@ -28,17 +28,11 @@ class TransformCanvas:
 
 
 class AddTestCases:
-    def __init__(self, interpreter: Interpreter, reference: bool = False):
+    def __init__(self, interpreter: Interpreter):
         self.interpreter = interpreter
-        self.reference = reference
 
     def __call__(self, entry: Environment) -> Environment:
         ground_truth = entry.supervisions["ground_truth"]
-        if self.reference:
-            results = self.interpreter.eval_references(ground_truth, None)
-            entry.inputs["test_case"] = \
-                (None, results[ground_truth.statements[-1].reference])
-        else:
-            entry.inputs["test_case"] = \
-                (None, self.interpreter.eval(ground_truth, None))
+        entry.inputs["test_case"] = \
+            (None, self.interpreter.eval(ground_truth, None))
         return entry

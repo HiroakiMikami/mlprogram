@@ -17,6 +17,7 @@ from mlprogram.entrypoint.train import Epoch
 from mlprogram.entrypoint.modules.torch import Optimizer, Reshape
 from mlprogram.synthesizers \
     import SMC, FilteredSynthesizer, SynthesizerWithTimeout
+import mlprogram.samplers
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.samplers import SequentialProgramSampler
 from mlprogram.samplers import SamplerWithValueNetwork
@@ -31,6 +32,7 @@ from mlprogram.nn.pbe_with_repl import Encoder
 import mlprogram.nn.action_sequence as a_s
 from mlprogram import metrics
 from mlprogram.languages.csg import get_samples, IsSubtype
+from mlprogram.languages.csg import Expander
 from mlprogram.languages.csg import Interpreter, Parser, Dataset
 from mlprogram.utils.data \
     import to_map_style_dataset, transform as data_transform
@@ -39,7 +41,7 @@ from mlprogram.languages.csg.transform import AddTestCases
 from mlprogram.utils.transform.action_sequence \
     import TransformCode, TransformGroundTruth, \
     TransformActionSequenceForRnnDecoder
-from mlprogram.utils.transform.pbe_with_repl import ToEpisode, EvaluateCode
+from mlprogram.utils.transform.pbe_with_repl import ToEpisode
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -95,12 +97,15 @@ class TestCsgByPbeWithREPL(object):
         subsampler = ActionSequenceSampler(
             encoder, IsSubtype(),
             Compose(OrderedDict([
-                ("ecode", EvaluateCode(interpreter)),
                 ("tcanvas", TransformCanvas())
             ])),
             TransformActionSequenceForRnnDecoder(encoder, train=False),
             collate, model,
             rng=np.random.RandomState(0))
+        subsampler = mlprogram.samplers.transform(
+            subsampler,
+            Parser().unparse
+        )
         subsynthesizer = SMC(
             5, 1,
             subsampler,
@@ -114,22 +119,21 @@ class TestCsgByPbeWithREPL(object):
             TransformCanvas(),
             collate,
             model.encode_input,
-            to_code=Parser().unparse,
+            interpreter=interpreter,
+            expander=Expander(),
             rng=np.random.RandomState(0))
         if rollout:
             sampler = FilteredSampler(
                 sampler,
-                metrics.TestCaseResult(interpreter, reference=True,
-                                       metric=metrics.Iou()),
+                metrics.TestCaseResult(interpreter, metric=metrics.Iou()),
                 0.9
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                       to_key=Pick("input@code"), max_try_num=1)
+                       to_key=Pick("state@interpreter_state"), max_try_num=1)
         else:
             sampler = SamplerWithValueNetwork(
                 sampler,
                 Compose(OrderedDict([
-                    ("ecode", EvaluateCode(interpreter)),
                     ("tcanvas", TransformCanvas())
                 ])),
                 collate,
@@ -143,21 +147,20 @@ class TestCsgByPbeWithREPL(object):
 
             synthesizer = SynthesizerWithTimeout(
                 SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                    to_key=Pick("input@code")),
+                    to_key=Pick("state@interpreter_state")),
                 1
             )
             return FilteredSynthesizer(
                 synthesizer,
-                metrics.TestCaseResult(interpreter, reference=True,
-                                       metric=metrics.Iou()),
+                metrics.TestCaseResult(interpreter, metric=metrics.Iou()),
                 0.9
             )
 
     def interpreter(self):
-        return Interpreter(2, 2, 8)
+        return Interpreter(2, 2, 8, delete_used_reference=True)
 
     def to_episode(self, encoder, interpreter):
-        return ToEpisode(Parser().parse, remove_used_reference=True)
+        return ToEpisode(interpreter, Expander())
 
     def transform(self, encoder, interpreter, parser):
         tcanvas = TransformCanvas()
@@ -166,7 +169,6 @@ class TestCsgByPbeWithREPL(object):
         tgt = TransformGroundTruth(encoder)
         return Sequence(
             OrderedDict([
-                ("evaluate_code", EvaluateCode(interpreter)),
                 ("tcanvas", tcanvas),
                 ("tcode", tcode),
                 ("teval", taction),
@@ -185,7 +187,6 @@ class TestCsgByPbeWithREPL(object):
                 self.prepare_synthesizer(model, encoder, interpreter,
                                          rollout=False),
                 {}, top_n=[],
-                n_process=1
             )
         return torch.load(os.path.join(dir, "result.pt"))
 
@@ -197,7 +198,7 @@ class TestCsgByPbeWithREPL(object):
             interpreter = self.interpreter()
             train_dataset = data_transform(
                 train_dataset,
-                AddTestCases(interpreter, reference=True))
+                AddTestCases(interpreter))
             encoder = self.prepare_encoder(dataset, Parser())
 
             collate = Collate(
@@ -319,8 +320,7 @@ class TestCsgByPbeWithREPL(object):
                     {}, top_n=[]),
                 "generation_rate",
                 metrics.transform(
-                    metrics.TestCaseResult(interpreter, reference=True,
-                                           metric=metrics.Iou()),
+                    metrics.TestCaseResult(interpreter, metric=metrics.Iou()),
                     Threshold(0.9, dtype="float")),
                 collate_fn,
                 1, 1,

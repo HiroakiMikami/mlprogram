@@ -1,6 +1,6 @@
-
 from mlprogram.languages.csg.ast \
     import Circle, Rectangle, Translation, Rotation, Union, Difference
+from mlprogram.languages.csg.ast import Reference
 
 
 class TestAST(object):
@@ -21,3 +21,6 @@ class TestAST(object):
 
     def test_difference(self):
         assert "Difference" == Difference(Circle(2), Circle(3)).type_name()
+
+    def test_reference(self):
+        assert "Reference" == Reference(Circle(2)).type_name()

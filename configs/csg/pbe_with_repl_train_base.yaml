@@ -129,7 +129,6 @@ main:
     metric:
       type: mlprogram.metrics.TestCaseResult
       interpreter: "@/interpreter"
-      reference: true
       metric:
         type: mlprogram.metrics.Iou
     transform:
