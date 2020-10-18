@@ -67,5 +67,6 @@ class EvaluateCode:
         refs = [token.value for token in reference]
         result = self.interpreter.eval_references(code, input)
         variables = [result[ref] for ref in refs]
+        # TODO variables may be in inputs
         entry.inputs["variables"] = variables
         return entry
