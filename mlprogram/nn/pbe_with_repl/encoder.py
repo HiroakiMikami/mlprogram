@@ -55,7 +55,6 @@ class Encoder(nn.Module):
         entry.states["reference_features"] = features
 
         reduced_feature = features.data.sum(dim=0)  # reduce sequence length
-        entry.states["variable_feature"] = reduced_feature
         entry.states["input_feature"] = \
             torch.cat([in_feature, reduced_feature], dim=1)
         return entry

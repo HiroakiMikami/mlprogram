@@ -54,7 +54,8 @@ class TestCsgByPbeWithREPL(object):
     def prepare_model(self, encoder: ActionSequenceEncoder):
         return torch.nn.Sequential(OrderedDict([
             ("encode_input",
-             Apply([("state@test_case_tensor", "x")], "state@test_case_feature",
+             Apply([("state@test_case_tensor", "x")],
+                   "state@test_case_feature",
                    CNN2d(1, 16, 32, 2, 2, 2))),
             ("encoder",
              Encoder(CNN2d(2, 16, 32, 2, 2, 2))),
@@ -73,8 +74,8 @@ class TestCsgByPbeWithREPL(object):
                                 512))
              ]))),
             ("value",
-             Apply([("state@variable_feature", "x")], "state@value",
-                   MLP(16 * 8 * 8, 1, 512, 2,
+             Apply([("state@input_feature", "x")], "state@value",
+                   MLP(16 * 8 * 8 * 2, 1, 512, 2,
                        activation=torch.nn.Sigmoid()),
                    value_type="tensor"))
         ]))
@@ -329,7 +330,7 @@ class TestCsgByPbeWithREPL(object):
                 snapshot_interval=Epoch(30),
                 use_pretrained_model=True,
                 use_pretrained_optimizer=False,
-                threshold=0.9)
+                threshold=1.0)
 
     def test(self):
         torch.manual_seed(0)

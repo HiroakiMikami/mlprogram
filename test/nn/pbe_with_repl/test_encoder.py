@@ -42,7 +42,6 @@ class TestEncoder(object):
             }
         ))
         assert (1, 2) == output.states["input_feature"].shape
-        assert (1, 1) == output.states["variable_feature"].shape
         assert \
             (0, 1, 1) == output.states["reference_features"].data.shape
 

@@ -176,17 +176,20 @@ model:
                 - - "value"
                   - type: mlprogram.nn.Apply
                     in_keys:
-                        - ["state@variable_feature", "x"]
+                        - ["state@input_feature", "x"]
                     out_key: "state@value"
                     module:
                         type: mlprogram.nn.MLP
                         in_channel:
                             type: mul
-                            x: 16  # 16
+                            x: 2
                             y:
                                 type: mul
-                                x: "@/n_feature_pixel"
-                                y: "@/n_feature_pixel"
+                                x: 16  # 16
+                                y:
+                                    type: mul
+                                    x: "@/n_feature_pixel"
+                                    y: "@/n_feature_pixel"
                         out_channel: 1
                         hidden_channel: 512
                         n_linear: 2
