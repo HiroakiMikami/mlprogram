@@ -22,16 +22,15 @@ import mlprogram.synthesizers
 import mlprogram.utils.data
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
+import mlprogram.utils.transform.text
 import mlprogram.encoders
 
 import mlprogram.nn.nl2code
-import mlprogram.utils.transform.nl2code
 
 import mlprogram.nn.treegen
-import mlprogram.utils.transform.treegen
 
 import mlprogram.nn.pbe_with_repl
-import mlprogram.utils.transform.pbe_with_repl
+import mlprogram.utils.transform.pbe
 
 from mlprogram.entrypoint.modules.numpy import types as numpy_types
 from mlprogram.entrypoint.modules.torch import types as torch_types
@@ -150,25 +149,35 @@ types = {
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
 
     "mlprogram.utils.transform.NormalizeGroundTruth":
-        mlprogram.utils.transform.NormalizeGroudTruth,
+        mlprogram.utils.transform.NormalizeGroundTruth,
     "mlprogram.utils.transform.action_sequence.AddEmptyReference":
         mlprogram.utils.transform.action_sequence.AddEmptyReference,
-    "mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder":  # noqa
-        mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder,  # noqa
-    "mlprogram.utils.transform.action_sequence.TransformCode":
-        mlprogram.utils.transform.action_sequence.TransformCode,
-    "mlprogram.utils.transform.action_sequence.TransformGroundTruth":
-        mlprogram.utils.transform.action_sequence.TransformGroundTruth,
-    "mlprogram.utils.transform.nl2code.TransformQuery":
-        mlprogram.utils.transform.nl2code.TransformQuery,
-    "mlprogram.utils.transform.nl2code.TransformActionSequence":
-        mlprogram.utils.transform.nl2code.TransformActionSequence,
-    "mlprogram.utils.transform.treegen.TransformQuery":
-        mlprogram.utils.transform.treegen.TransformQuery,
-    "mlprogram.utils.transform.treegen.TransformActionSequence":
-        mlprogram.utils.transform.treegen.TransformActionSequence,
-    "mlprogram.utils.transform.pbe_with_repl.ToEpisode":
-        mlprogram.utils.transform.pbe_with_repl.ToEpisode,
+    "mlprogram.utils.transform.action_sequence.AddPreviousActions":
+        mlprogram.utils.transform.action_sequence.AddPreviousActions,
+    "mlprogram.utils.transform.action_sequence.AddActions":
+        mlprogram.utils.transform.action_sequence.AddActions,
+    "mlprogram.utils.transform.action_sequence.AddPreviousActionRules":
+        mlprogram.utils.transform.action_sequence.AddPreviousActionRules,
+    "mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree":
+        mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree,
+    "mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder":
+        mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder,
+    "mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder":
+        mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder,
+    "mlprogram.utils.transform.action_sequence.AddHistoryState":
+        mlprogram.utils.transform.action_sequence.AddHistoryState,
+    "mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence":
+        mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence,
+    "mlprogram.utils.transform.action_sequence.EncodeActionSequence":
+        mlprogram.utils.transform.action_sequence.EncodeActionSequence,
+    "mlprogram.utils.transform.text.ExtractReference":
+        mlprogram.utils.transform.text.ExtractReference,
+    "mlprogram.utils.transform.text.EncodeWordQuery":
+        mlprogram.utils.transform.text.EncodeWordQuery,
+    "mlprogram.utils.transform.text.EncodeCharacterQuery":
+        mlprogram.utils.transform.text.EncodeCharacterQuery,
+    "mlprogram.utils.transform.pbe.ToEpisode":
+        mlprogram.utils.transform.pbe.ToEpisode,
 
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,

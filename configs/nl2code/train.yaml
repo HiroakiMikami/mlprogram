@@ -11,19 +11,31 @@ transform:
   funcs:
     type: collections.OrderedDict
     items:
-      - - "transform_input"
-        - type: mlprogram.utils.transform.nl2code.TransformQuery
+      - - "extract_reference"
+        - type: mlprogram.utils.transform.text.ExtractReference
           extract_reference: "@/extract_reference"
+      - - "encode_word_query"
+        - type: mlprogram.utils.transform.text.EncodeWordQuery
           word_encoder: "@/encoder.word_encoder"
       - - "transform_code"
-        - type: mlprogram.utils.transform.action_sequence.TransformCode
+        - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
           parser: "@/parser"
-      - - "transform_action_sequence"
-        - type: mlprogram.utils.transform.nl2code.TransformActionSequence
+      - - "add_previous_action"
+        - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
           train: true
+      - - "add_action"
+        - type: mlprogram.utils.transform.action_sequence.AddActions
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+          train: true
+      - - "add_state"
+        - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+          train: true
+      - - "add_history"
+        - type: mlprogram.utils.transform.action_sequence.AddHistoryState
+          train: true
       - - "transform_ground_truth"
-        - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
+        - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
 
 optimizer:

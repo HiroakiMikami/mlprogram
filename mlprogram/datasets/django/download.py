@@ -19,7 +19,7 @@ def default_get(path: str) -> str:
     return requests.get(path).text
 
 
-def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "django.json"),
+def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "django.pt"),
              base_path: str = BASE_PATH,
              get: Callable[[str], str] = default_get,
              num_train: int = 16000, num_test: int = 1000) \
@@ -39,7 +39,7 @@ def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "django.json"),
     def to_sample(elem: Tuple[str, str]) -> Environment:
         anno, code = elem
         return Environment(
-            inputs={"input": anno},
+            inputs={"text_query": anno},
             supervisions={"ground_truth": code}
         )
     samples = list(map(to_sample, zip(annotation, code)))

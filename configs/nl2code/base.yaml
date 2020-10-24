@@ -163,13 +163,35 @@ synthesizer:
       encoder: "@/encoder.action_sequence_encoder"
       is_subtype: "@/is_subtype"
       transform_input:
-        type: mlprogram.utils.transform.nl2code.TransformQuery
-        extract_reference: "@/extract_reference"
-        word_encoder: "@/encoder.word_encoder"
+        type: mlprogram.functools.Compose
+        funcs:
+          type: collections.OrderedDict
+          items:
+            - - "extract_reference"
+              - type: mlprogram.utils.transform.text.ExtractReference
+                extract_reference: "@/extract_reference"
+            - - "encode_word_query"
+              - type: mlprogram.utils.transform.text.EncodeWordQuery
+                word_encoder: "@/encoder.word_encoder"
       transform_action_sequence:
-        type: mlprogram.utils.transform.nl2code.TransformActionSequence
-        action_sequence_encoder: "@/encoder.action_sequence_encoder"
-        train: false
+        type: mlprogram.functools.Compose
+        funcs:
+          type: collections.OrderedDict
+          items:
+            - - "add_previous_action"
+              - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
+                action_sequence_encoder: "@/encoder.action_sequence_encoder"
+                train: false
+            - - "add_action"
+              - type: mlprogram.utils.transform.action_sequence.AddActions
+                action_sequence_encoder: "@/encoder.action_sequence_encoder"
+                train: false
+            - - "add_state"
+              - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+                train: false
+            - - "add_history"
+              - type: mlprogram.utils.transform.action_sequence.AddHistoryState
+                train: false
       collate: "@/collate"
       module: "@/model"
     transform: "@/parser.unparse"

@@ -186,17 +186,44 @@ synthesizer:
       encoder: "@/encoder.action_sequence_encoder"
       is_subtype: "@/is_subtype"
       transform_input:
-        type: mlprogram.utils.transform.treegen.TransformQuery
-        extract_reference: "@/extract_reference"
-        word_encoder: "@/encoder.word_encoder"
-        char_encoder: "@/encoder.char_encoder"
-        max_word_length: "@/params.max_word_length"
+        type: mlprogram.functools.Compose
+        funcs:
+          type: collections.OrderedDict
+          items:
+            - - "extract_reference"
+              - type: mlprogram.utils.transform.text.ExtractReference
+                extract_reference: "@/extract_reference"
+            - - "encode_word"
+              - type: mlprogram.utils.transform.text.EncodeWordQuery
+                word_encoder: "@/encoder.word_encoder"
+            - - "encode_char"
+              - type: mlprogram.utils.transform.text.EncodeCharacterQuery
+                char_encoder: "@/encoder.char_encoder"
+                max_word_length: "@/params.max_word_length"
       transform_action_sequence:
-        type: mlprogram.utils.transform.treegen.TransformActionSequence
-        action_sequence_encoder: "@/encoder.action_sequence_encoder"
-        max_arity: "@/params.max_arity"
-        max_depth: "@/params.max_tree_depth"
-        train: false
+        type: mlprogram.functools.Compose
+        funcs:
+          type: collections.OrderedDict
+          items:
+            - - "add_previous_action"
+              - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
+                action_sequence_encoder: "@/encoder.action_sequence_encoder"
+                train: false
+                use_last: false
+            - - "add_previous_action_rule"
+              - type: mlprogram.utils.transform.action_sequence.AddPreviousActionRules
+                action_sequence_encoder: "@/encoder.action_sequence_encoder"
+                max_arity: "@/params.max_arity"
+                train: false
+            - - "add_action_sequence_as_tree"
+              - type: mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree
+                action_sequence_encoder: "@/encoder.action_sequence_encoder"
+                train: false
+            - - "add_query"
+              - type: mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder
+                action_sequence_encoder: "@/encoder.action_sequence_encoder"
+                max_depth: "@/params.max_tree_depth"
+                train: false
       collate: "@/collate"
       module: "@/model"
     transform: "@/parser.unparse"

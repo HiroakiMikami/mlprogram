@@ -19,12 +19,18 @@ from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.functools import Sequence, Map
+from mlprogram.functools import Compose
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_samples
 from mlprogram.utils.transform.action_sequence \
-    import TransformCode, TransformGroundTruth
-from mlprogram.utils.transform.nl2code \
-    import TransformQuery, TransformActionSequence
+    import GroundTruthToActionSequence
+from mlprogram.utils.transform.action_sequence import EncodeActionSequence
+from mlprogram.utils.transform.action_sequence import AddActions
+from mlprogram.utils.transform.action_sequence import AddPreviousActions
+from mlprogram.utils.transform.action_sequence import AddHistoryState
+from mlprogram.utils.transform.action_sequence import AddStateForRnnDecoder
+from mlprogram.utils.transform.text import ExtractReference
+from mlprogram.utils.transform.text import EncodeWordQuery
 from mlprogram.nn.action_sequence import Loss
 import mlprogram.nn.nl2code as nl2code
 from mlprogram.metrics import Accuracy
@@ -67,9 +73,16 @@ class TestNL2Code(object):
         return Optimizer(optim.Adam, model)
 
     def prepare_synthesizer(self, model, qencoder, aencoder):
-        transform_input = TransformQuery(tokenize, qencoder)
-        transform_action_sequence = TransformActionSequence(aencoder,
-                                                            train=False)
+        transform_input = Compose(OrderedDict([
+            ("extract_reference", ExtractReference(tokenize)),
+            ("encode_query", EncodeWordQuery(qencoder))
+        ]))
+        transform_action_sequence = Compose(OrderedDict([
+            ("add_previous_action", AddPreviousActions(aencoder, train=False)),
+            ("add_action", AddActions(aencoder, train=False)),
+            ("add_state", AddStateForRnnDecoder(train=False)),
+            ("add_history", AddHistoryState(train=False))
+        ]))
         collate = Collate(
             torch.device("cpu"),
             word_nl_query=CollateOptions(True, 0, -1),
@@ -90,15 +103,17 @@ class TestNL2Code(object):
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, aencoder, parser):
-        tquery = TransformQuery(tokenize, qencoder)
-        tcode = TransformCode(parser)
-        teval = TransformActionSequence(aencoder)
-        tgt = TransformGroundTruth(aencoder)
+        tcode = GroundTruthToActionSequence(parser)
+        tgt = EncodeActionSequence(aencoder)
         return Sequence(
             OrderedDict([
-                ("f1", tquery),
+                ("extract_reference", ExtractReference(tokenize)),
+                ("encode_word_query", EncodeWordQuery(qencoder)),
                 ("f2", tcode),
-                ("f3", teval),
+                ("add_previous_action", AddPreviousActions(aencoder)),
+                ("add_action", AddActions(aencoder)),
+                ("add_state", AddStateForRnnDecoder()),
+                ("add_history", AddHistoryState()),
                 ("f4", tgt)
             ])
         )

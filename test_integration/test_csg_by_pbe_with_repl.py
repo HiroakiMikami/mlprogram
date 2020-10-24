@@ -39,9 +39,9 @@ from mlprogram.utils.data \
 from mlprogram.languages.csg.transform import TransformCanvas
 from mlprogram.languages.csg.transform import AddTestCases
 from mlprogram.utils.transform.action_sequence \
-    import TransformCode, TransformGroundTruth, \
-    TransformActionSequenceForRnnDecoder
-from mlprogram.utils.transform.pbe_with_repl import ToEpisode
+    import GroundTruthToActionSequence, EncodeActionSequence, \
+    AddPreviousActions, AddStateForRnnDecoder
+from mlprogram.utils.transform.pbe import ToEpisode
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -101,7 +101,12 @@ class TestCsgByPbeWithREPL(object):
             Compose(OrderedDict([
                 ("tcanvas", TransformCanvas())
             ])),
-            TransformActionSequenceForRnnDecoder(encoder, train=False),
+            Compose(OrderedDict([
+                ("add_previous_actions",
+                 AddPreviousActions(encoder, train=False)),
+                ("add_state",
+                 AddStateForRnnDecoder(train=False))
+            ])),
             collate, model,
             rng=np.random.RandomState(0))
         subsampler = mlprogram.samplers.transform(
@@ -166,14 +171,16 @@ class TestCsgByPbeWithREPL(object):
 
     def transform(self, encoder, interpreter, parser):
         tcanvas = TransformCanvas()
-        tcode = TransformCode(parser)
-        taction = TransformActionSequenceForRnnDecoder(encoder)
-        tgt = TransformGroundTruth(encoder)
+        tcode = GroundTruthToActionSequence(parser)
+        aaction = AddPreviousActions(encoder)
+        astate = AddStateForRnnDecoder()
+        tgt = EncodeActionSequence(encoder)
         return Sequence(
             OrderedDict([
                 ("tcanvas", tcanvas),
                 ("tcode", tcode),
-                ("teval", taction),
+                ("aaction", aaction),
+                ("astate", astate),
                 ("tgt", tgt)
             ])
         )

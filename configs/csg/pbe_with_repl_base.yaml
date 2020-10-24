@@ -266,9 +266,17 @@ subsampler:
                     - - "transform_canvas"
                       - type: mlprogram.languages.csg.transform.TransformCanvas
         transform_action_sequence:
-            type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
-            action_sequence_encoder: "@/encoder"
-            train: false
+            type: mlprogram.functools.Compose
+            funcs:
+                type: collections.OrderedDict
+                items:
+                    - - "add_previous_actions"
+                      - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
+                        action_sequence_encoder: "@/encoder"
+                        train: false
+                    - - "add_state"
+                      - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+                        train: false
         collate: "@/collate"
         module: "@/model"
     transform: "@/parser.unparse"
@@ -352,7 +360,7 @@ evaluate_synthesizer:
     timeout_sec: "@/option.timeout_sec"
 
 to_episode:
-    type: mlprogram.utils.transform.pbe_with_repl.ToEpisode
+    type: mlprogram.utils.transform.pbe.ToEpisode
     interpreter: "@/interpreter"
     expander:
         type: mlprogram.languages.csg.Expander
@@ -365,12 +373,15 @@ transform:
             - - "transform_canvas"
               - type: mlprogram.languages.csg.transform.TransformCanvas
             - - "transform_code"
-              - type: mlprogram.utils.transform.action_sequence.TransformCode
+              - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
                 parser: "@/parser"
-            - - "transform_action_sequence"
-              - type: mlprogram.utils.transform.action_sequence.TransformActionSequenceForRnnDecoder
+            - - "add_previous_actions"
+              - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
                 action_sequence_encoder: "@/encoder"
                 train: true
+            - - "add_state"
+              - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+                train: true
             - - "transform_ground_truth"
-              - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
+              - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
                 action_sequence_encoder: "@/encoder"
