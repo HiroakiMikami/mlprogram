@@ -119,7 +119,7 @@ model:
                   - type: mlprogram.nn.Apply
                     in_keys:
                         - ["state@test_case_tensor", "x"]
-                    out_key: "state@input_feature"
+                    out_key: "state@test_case_feature"
                     module:
                         type: mlprogram.nn.CNN2d
                         in_channel: 1
@@ -198,6 +198,11 @@ collate:
     type: mlprogram.utils.data.Collate
     device: "@/device"
     test_case_tensor:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+    test_case_feature:
         type: mlprogram.utils.data.CollateOptions
         use_pad_sequence: false
         dim: 0

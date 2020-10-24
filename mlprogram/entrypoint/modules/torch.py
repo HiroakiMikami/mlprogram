@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch import optim
 from typing import List, Union
+from typing import Optional
 from mlprogram import distributed
 
 
@@ -25,6 +26,16 @@ class Reshape(nn.Module):
         return x.reshape(*self.sizes)
 
 
+class Mean(nn.Module):
+    def __init__(self, dim: Optional[int] = None, keepdim: bool = False):
+        super().__init__()
+        self.dim = dim
+        self.keepdim = keepdim
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return torch.mean(input, dim=self.dim, keepdim=self.keepdim)
+
+
 def share_memory_(model: nn.Module):
     for k, v in model.state_dict().items():
         v.share_memory_()
@@ -34,6 +45,7 @@ def share_memory_(model: nn.Module):
 types = {
     "torch.device": device,
     "torch.nn.Sigmoid": lambda: torch.nn.Sigmoid(),
+    "torch.Mean": Mean,
     "torch.nn.Sequential": lambda modules: torch.nn.Sequential(modules),
     "torch.optim.Optimizer": Optimizer,
     "torch.optim.Adam": lambda: torch.optim.Adam,

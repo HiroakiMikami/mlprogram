@@ -1,2 +1,2 @@
-from mlprogram.interpreters.interpreter import State  # noqa
+from mlprogram.interpreters.interpreter import BatchedState  # noqa
 from mlprogram.interpreters.interpreter import Interpreter  # noqa
