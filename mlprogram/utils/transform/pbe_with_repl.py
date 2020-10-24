@@ -4,7 +4,7 @@ from typing import Generic
 from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.languages import Expander
-from mlprogram.interpreters import State
+from mlprogram.interpreters import BatchedState
 from mlprogram.interpreters import Interpreter
 
 Code = TypeVar("Code")
@@ -21,10 +21,11 @@ class ToEpisode(Generic[Code, Input, Value]):
 
     def __call__(self, entry: Environment) -> List[Environment]:
         ground_truth = entry.supervisions["ground_truth"]
-        input, _ = entry.inputs["test_case"]
+        test_cases = entry.inputs["test_cases"]
+        inputs = [input for input, _ in test_cases]
 
         retval: List[Environment] = []
-        state = State[Code, Value, Kind]({}, {}, [])
+        state = BatchedState[Code, Value, Kind]({}, {}, [])
         for code in self.expander.expand(ground_truth):
             xs = entry.clone()
             # TODO set type of reference
@@ -37,7 +38,7 @@ class ToEpisode(Generic[Code, Input, Value]):
                 for token in xs.states["reference"]
             ]
             xs.supervisions["ground_truth"] = code
-            state = self.interpreter.execute(code, input, state)
+            state = self.interpreter.execute(code, inputs, state)
             retval.append(xs)
 
         return retval

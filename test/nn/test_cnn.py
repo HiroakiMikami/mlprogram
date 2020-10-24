@@ -27,3 +27,8 @@ class TestCNN2d(object):
         cnn = CNN2d(1, 2, 3, 1, 2, 2)
         out = cnn(torch.rand(0, 1, 8, 8))
         assert (0, 32) == out.shape
+
+    def test_shape_with_additional_dim(self):
+        cnn = CNN2d(1, 2, 3, 1, 2, 2)
+        out = cnn(torch.rand(1, 1, 1, 8, 8))
+        assert (1, 1, 32) == out.shape

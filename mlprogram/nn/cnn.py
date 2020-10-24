@@ -56,8 +56,11 @@ class CNN2d(nn.Module):
         self.flatten = flatten
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # TODO avoid hidden reshape
+        N = x.shape[:-3]
+        C, H, W = x.shape[-3:]
+        x = x.reshape(-1, C, H, W)
         out = self.module(x)
         if self.flatten:
-            return out.reshape(out.shape[0], np.prod(out.shape[1:]))
-        else:
-            return out
+            out = out.reshape(out.shape[0], np.prod(out.shape[1:]))
+        return out.reshape(*N, *out.shape[1:])

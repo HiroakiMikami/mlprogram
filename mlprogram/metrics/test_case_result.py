@@ -18,18 +18,19 @@ class TestCaseResult(Metric[Code], Generic[Code, Input, Result, Kind]):
         self.interpreter = interpreter
         self.metric = metric
 
-    def _eval(self, code: Code, input: Input):
-        output = self.interpreter.eval(code, input)
-        return output
-
     def __call__(self, input: Environment, value: Code) -> float:
-        t_input, output = input.inputs["test_case"]
+        test_cases = input.inputs["test_cases"]
+        inputs = [input for input, _ in test_cases]
+        outputs = [output for _, output in test_cases]
 
         # calc. metric
-        actual = self._eval(value, t_input)
-        minput = Environment(supervisions={"ground_truth": output})
-        minput.mutable(
-            inputs=False, outputs=False,
-            states=False, supervisions=False
-        )
-        return self.metric(minput, actual)
+        m = 0.0  # TODO reduction function is required
+        for actual, expected in zip(self.interpreter.eval(value, inputs),
+                                    outputs):
+            minput = Environment(supervisions={"ground_truth": expected})
+            minput.mutable(
+                inputs=False, outputs=False,
+                states=False, supervisions=False
+            )
+            m += self.metric(minput, actual)
+        return m / len(outputs)

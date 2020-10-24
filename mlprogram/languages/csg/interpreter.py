@@ -1,11 +1,12 @@
 import numpy as np
-from mlprogram.interpreters import State
+from mlprogram.interpreters import BatchedState
 from mlprogram.interpreters import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
     Reference
 from typing import Callable
 from typing import Dict
+from typing import List
 import math
 from functools import lru_cache
 
@@ -52,44 +53,51 @@ class Interpreter(BaseInterpreter[AST, None, Shape, str]):
         self.resolution = resolution
         self.delete_used_reference = delete_used_reference
 
-    def eval(self, code: AST, input: None) -> np.array:
-        return self._eval(code, {})
+    def eval(self, code: AST, inputs: List[None]) -> List[np.array]:
+        return self._eval(code, {}, len(inputs))
 
-    def execute(self, code: AST, input: None, state: State[AST, Shape, str]) \
-            -> State[AST, Shape, str]:
-        value = self._eval(code, state.environment)
+    def execute(self, code: AST, inputs: List[None],
+                state: BatchedState[AST, Shape, str]) \
+            -> BatchedState[AST, Shape, str]:
+        value = self._eval(code, state.environment, len(inputs))
         next = state.clone()
         next.history.append(code)
         next.type_environment[code] = code.type_name()
         next.environment[code] = value
         return next
 
-    def _eval(self, code: AST, env: Dict[AST, Shape]):
-        unref_code = self._unreference(code, env)
-        return self._cached_eval(unref_code).render(
+    def _eval(self, code: AST, env: Dict[AST, List[Shape]], n_output: int):
+        return [self._cached_eval(c).render(
             self.width, self.height, self.resolution)
+            for c in self._unreference(code, env, n_output)]
 
-    def _unreference(self, code: AST, refs: Dict[AST, Shape]) -> AST:
+    def _unreference(self, code: AST, refs: Dict[AST, List[Shape]],
+                     n_output: int) \
+            -> List[AST]:
         if isinstance(code, Circle):
-            return code
+            return [code for _ in range(n_output)]
         elif isinstance(code, Rectangle):
-            return code
+            return [code for _ in range(n_output)]
         elif isinstance(code, Translation):
-            return Translation(code.x, code.y,
-                               self._unreference(code.child, refs))
+            return [Translation(code.x, code.y, child)
+                    for child in self._unreference(code.child, refs, n_output)]
         elif isinstance(code, Rotation):
-            return Rotation(code.theta_degree,
-                            self._unreference(code.child, refs))
+            return [Rotation(code.theta_degree, child)
+                    for child in self._unreference(code.child, refs, n_output)]
         elif isinstance(code, Union):
-            return Union(self._unreference(code.a, refs),
-                         self._unreference(code.b, refs))
+            return [Union(a, b)
+                    for a, b in zip(self._unreference(code.a, refs, n_output),
+                                    self._unreference(code.b, refs, n_output))
+                    ]
         elif isinstance(code, Difference):
-            return Difference(self._unreference(code.a, refs),
-                              self._unreference(code.b, refs))
+            return [Difference(a, b)
+                    for a, b in zip(self._unreference(code.a, refs, n_output),
+                                    self._unreference(code.b, refs, n_output))
+                    ]
         elif isinstance(code, Reference):
             if self.delete_used_reference and code.ref in refs:
                 del refs[code.ref]
-            return self._unreference(code.ref, refs)
+            return self._unreference(code.ref, refs, n_output)
         # TODO assertion error?
         raise InvalidNodeTypeException(code.type_name())
 

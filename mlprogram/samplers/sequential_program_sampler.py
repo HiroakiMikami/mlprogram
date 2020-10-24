@@ -7,7 +7,7 @@ from typing \
 from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.languages import Expander
-from mlprogram.interpreters import State
+from mlprogram.interpreters import BatchedState
 from mlprogram.interpreters import Interpreter
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.synthesizers import Synthesizer
@@ -52,10 +52,10 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
         state.states["reference"] = []
         state.states["variables"] = []
         state.states["interpreter_state"] = \
-            State[Code, Value, Kind]({}, {}, [])
+            BatchedState[Code, Value, Kind]({}, {}, [])
         return state
 
-    def create_output(self, input, state: Environment) \
+    def create_output(self, input: Input, state: Environment) \
             -> Optional[Tuple[Code, bool]]:
         if len(state.states["interpreter_state"].history) == 0:
             return None
@@ -81,7 +81,8 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
                 if k == 0:
                     continue
 
-                input, _ = state.state.inputs["test_case"]
+                test_cases = state.state.inputs["test_cases"]
+                inputs = [input for input, _ in test_cases]
                 cnt = 0
                 for result in self.synthesizer(state.state,
                                                n_required_output=k):
@@ -94,7 +95,7 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
                     new_state.states["variables"] = []
                     new_state.states["interpreter_state"] = \
                         self.interpreter.execute(
-                            result.output, input,
+                            result.output, inputs,
                             state.state.states["interpreter_state"]
                     )
                     for code in \

@@ -119,7 +119,7 @@ model:
                   - type: mlprogram.nn.Apply
                     in_keys:
                         - ["state@test_case_tensor", "x"]
-                    out_key: "state@input_feature"
+                    out_key: "state@test_case_feature"
                     module:
                         type: mlprogram.nn.CNN2d
                         in_channel: 1
@@ -176,17 +176,20 @@ model:
                 - - "value"
                   - type: mlprogram.nn.Apply
                     in_keys:
-                        - ["state@variable_feature", "x"]
+                        - ["state@input_feature", "x"]
                     out_key: "state@value"
                     module:
                         type: mlprogram.nn.MLP
                         in_channel:
                             type: mul
-                            x: 16  # 16
+                            x: 2
                             y:
                                 type: mul
-                                x: "@/n_feature_pixel"
-                                y: "@/n_feature_pixel"
+                                x: 16  # 16
+                                y:
+                                    type: mul
+                                    x: "@/n_feature_pixel"
+                                    y: "@/n_feature_pixel"
                         out_channel: 1
                         hidden_channel: 512
                         n_linear: 2
@@ -198,6 +201,11 @@ collate:
     type: mlprogram.utils.data.Collate
     device: "@/device"
     test_case_tensor:
+        type: mlprogram.utils.data.CollateOptions
+        use_pad_sequence: false
+        dim: 0
+        padding_value: 0
+    test_case_feature:
         type: mlprogram.utils.data.CollateOptions
         use_pad_sequence: false
         dim: 0

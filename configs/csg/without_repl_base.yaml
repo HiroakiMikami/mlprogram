@@ -114,18 +114,31 @@ model:
             type: collections.OrderedDict
             items:
                 - - "encoder"
-                  - type: mlprogram.nn.Apply
-                    in_keys:
-                        - ["state@test_case_tensor", "x"]
-                    out_key: "state@input_feature"
-                    module:
-                        type: mlprogram.nn.CNN2d
-                        in_channel: 1
-                        out_channel: 16
-                        hidden_channel: 32
-                        n_conv_per_block: 2
-                        n_block: 2
-                        pool: 2
+                  - type: torch.nn.Sequential
+                    modules:
+                        type: collections.OrderedDict
+                        items:
+                            - - "encoder"
+                              - type: mlprogram.nn.Apply
+                                in_keys:
+                                    - ["state@test_case_tensor", "x"]
+                                out_key: "state@input_feature"
+                                module:
+                                    type: mlprogram.nn.CNN2d
+                                    in_channel: 1
+                                    out_channel: 16
+                                    hidden_channel: 32
+                                    n_conv_per_block: 2
+                                    n_block: 2
+                                    pool: 2
+                            - - "reduction"
+                              - type: mlprogram.nn.Apply
+                                in_keys:
+                                    - ["state@input_feature", "input"]
+                                out_key: "state@input_feature"
+                                module:
+                                    type: torch.Mean
+                                    dim: 1
                 - - "decoder"
                   - type: torch.nn.Sequential
                     modules:
