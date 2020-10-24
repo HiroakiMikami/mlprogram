@@ -1,18 +1,19 @@
 import torch
-from typing import List, Any, Callable, TypeVar, Generic
+from typing import List, Callable, TypeVar, Generic
 
+V = TypeVar("V")
 V0 = TypeVar("V0")
 V1 = TypeVar("V1")
 
 
-class ListDataset(torch.utils.data.Dataset):
-    def __init__(self, elems: List[Any]):
+class ListDataset(torch.utils.data.Dataset, Generic[V]):
+    def __init__(self, elems: List[V]):
         self.elems = elems
 
     def __len__(self) -> int:
         return len(self.elems)
 
-    def __getitem__(self, idx) -> Any:
+    def __getitem__(self, idx) -> V:
         return self.elems[idx]
 
 
