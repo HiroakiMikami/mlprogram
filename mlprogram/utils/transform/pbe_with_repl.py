@@ -28,7 +28,6 @@ class ToEpisode(Generic[Code, Input, Value]):
         state = BatchedState[Code, Value, Kind]({}, {}, [])
         for code in self.expander.expand(ground_truth):
             xs = entry.clone()
-            # TODO set type of reference
             xs.states["reference"] = [
                 Token(state.type_environment[v], v, v)
                 for v in state.environment.keys()
