@@ -12,6 +12,10 @@ logger = logging.Logger(__name__)
 
 
 class Lexer(BaseLexer[str]):
+    def __init__(self, delimiter: str = " "):
+        super().__init__()
+        self.delimiter = delimiter
+
     def tokenize(self, code: str) -> Optional[TokenSequence]:
         lines = list(code.split("\n"))
         offsets = [0]
@@ -29,4 +33,8 @@ class Lexer(BaseLexer[str]):
             for token in tokens
         ]
 
-        return TokenSequence(tokens_with_offset, code)
+        return TokenSequence(tokens_with_offset)
+
+    def untokenize(self, sequence: TokenSequence) -> Optional[str]:
+        return self.delimiter.join(token[1].raw_value
+                                   for token in sequence.tokens)

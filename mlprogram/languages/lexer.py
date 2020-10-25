@@ -13,4 +13,4 @@ class Lexer(Generic[Kind]):
         raise NotImplementedError
 
     def untokenize(self, sequnece: TokenSequence[Kind]) -> Optional[str]:
-        return sequnece.raw_text
+        raise NotImplementedError

@@ -13,8 +13,7 @@ class TestLexer(object):
                 (6, Token("EQUALS", "=", "=")),
                 (8, Token("INT_CONST_OCT", "0", "0")),
                 (9, Token("SEMI", ";", ";"))
-            ],
-            "int a = 0;"
+            ]
         ) == lexer.tokenize("int a = 0;")
 
     def test_invalid_program(self):
@@ -25,8 +24,7 @@ class TestLexer(object):
                 (4, Token("ID", "a", "a")),
                 (6, Token("EQUALS", "=", "=")),
                 (8, Token("INT_CONST_OCT", "0", "0"))
-            ],
-            "int a = 0"
+            ]
         ) == lexer.tokenize("int a = 0")
 
     def test_multiple_lines(self):
@@ -40,6 +38,10 @@ class TestLexer(object):
                 (10, Token("INT", "int", "int")),
                 (14, Token("ID", "b", "b")),
                 (15, Token("SEMI", ";", ";"))
-            ],
-            "int a = 0\nint b;"
+            ]
         ) == lexer.tokenize("int a = 0\nint b;")
+
+    def test_untokenize(self):
+        lexer = Lexer()
+        assert lexer.untokenize(lexer.tokenize("int a = 0;\nint b;")) == \
+            "int a = 0 ; int b ;"
