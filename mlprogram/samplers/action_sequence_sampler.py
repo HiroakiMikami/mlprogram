@@ -27,8 +27,9 @@ V = TypeVar("V")
 
 
 class Enumeration(Enum):
-    Random = 1
+    Multinomial = 1
     Top = 2
+    Random = 3
 
 
 Tensor = Union[torch.Tensor, PaddedSequenceWithMask]
@@ -162,16 +163,25 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                                     reference_pred: torch.Tensor,
                                     next_state: Environment,
                                     state: SamplerState[Environment],
-                                    enumerateion: Enumeration,
-                                    k: int) \
+                                    enumeration: Enumeration,
+                                    k: Optional[int]) \
             -> Generator[DuplicatedSamplerState[Environment], None, None]:
         def indices(pred: torch.Tensor):
             # 0 is unknown token
-            if enumerateion == Enumeration.Top:
+            if enumeration == Enumeration.Top:
                 _, indices = torch.sort(pred[1:], descending=True)
-                for index in indices[:k]:
+                if k is not None:
+                    indices = indices[:k]
+                for index in indices:
                     yield index + 1, 1
+            elif enumeration == Enumeration.Random:
+                indices = list(range(1, len(pred)))
+                if k is not None:
+                    indices = indices[:k]
+                for index in indices:
+                    yield index, 1
             else:
+                assert k is not None
                 with logger.block("normalize_prob"):
                     s = pred[1:].sum().item()
                     if s < self.eps:
@@ -316,6 +326,51 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                         SamplerState(state.score + lp, next_state),
                         n)
 
+    def all_samples(
+        self, states: List[SamplerState[Environment]], sorted: bool = True) \
+            -> Generator[DuplicatedSamplerState[Environment], None, None]:
+        assert all([len(state.state.outputs) for state in states]) == 0
+        assert all([len(state.state.supervisions) for state in states]) == 0
+
+        with logger.block("all_samples"):
+            states = [
+                state for state in states
+                if state.state.states["action_sequence"].head is not None]
+            if len(states) == 0:
+                return
+
+            self.module.eval()
+            rule_pred, token_pred, reference_pred, next_states = \
+                self.batch_infer(states)
+            if sorted:
+                samples = []
+                for i, state in logger.iterable_block(
+                        "enumerate_samples_per_state", enumerate(states)):
+                    for state in self.enumerate_samples_per_state(
+                            rule_pred[i], token_pred[i], reference_pred[i],
+                            next_states[i], state,
+                            enumeration=Enumeration.Random,
+                            k=None):
+                        samples.append(state)
+
+                with logger.block("sort_among_all_states"):
+                    samples.sort(key=lambda x: -x.state.score)
+                    for state in samples:
+                        state.state.state.states["action_sequence"] = \
+                            state.state.state.states["action_sequence"]()
+                        yield state
+            else:
+                for i, state in logger.iterable_block(
+                        "enumerate_samples_per_state", enumerate(states)):
+                    for state in self.enumerate_samples_per_state(
+                            rule_pred[i], token_pred[i], reference_pred[i],
+                            next_states[i], state,
+                            enumeration=Enumeration.Random,
+                            k=None):
+                        state.state.state.states["action_sequence"] = \
+                            state.state.state.states["action_sequence"]()
+                        yield state
+
     def top_k_samples(
         self, states: List[SamplerState[Environment]], k: int) \
             -> Generator[DuplicatedSamplerState[Environment], None, None]:
@@ -337,7 +392,7 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                                                   enumerate(states)):
                 for state in self.enumerate_samples_per_state(
                         rule_pred[i], token_pred[i], reference_pred[i],
-                        next_states[i], state, enumerateion=Enumeration.Top,
+                        next_states[i], state, enumeration=Enumeration.Top,
                         k=k):
                     topk.add(state.state.score, state)
 
@@ -372,7 +427,7 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
             for r, t, c, ns, s, k in zip(rule_pred, token_pred, reference_pred,
                                          next_states, states, ks):
                 for state in self.enumerate_samples_per_state(
-                        r, t, c, ns, s, Enumeration.Random, k=k):
+                        r, t, c, ns, s, Enumeration.Multinomial, k=k):
                     state.state.state.states["action_sequence"] = \
                         state.state.state.states["action_sequence"]()
                     yield state
