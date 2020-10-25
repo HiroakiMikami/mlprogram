@@ -2,6 +2,7 @@
 from mlprogram.languages import Node
 from mlprogram.languages import Field
 from mlprogram.languages import Leaf
+from mlprogram.languages import Sugar
 
 
 class TestLeaf(object):
@@ -30,3 +31,12 @@ class TestNode(object):
                      Field("elems", "literal", [
                          Leaf("str", "foo"), Leaf("str", "bar")])
                      ]) == a1
+
+
+class TestSugar(object):
+    def test_node(self):
+        assert Sugar.node("list", name=("literal", Leaf("str", "name"))) == \
+            Node("list", [Field("name", "literal", Leaf("str", "name"))])
+
+    def test_leaf(self):
+        assert Sugar.leaf("str", "name") == Leaf("str", "name")
