@@ -35,6 +35,20 @@ encoder:
         dataset: "@/train_dataset"
         extract_reference: "@/extract_reference"
       min_occurrences: "@/params.word_threshold"
+  char_encoder:
+    type: with_file_cache
+    path:
+      type: os.path.join
+      args:
+        - "@/output_dir"
+        - "char_encoder.pt"
+    config:
+      type: torchnlp.encoders.LabelEncoder
+      sample:
+        type: mlprogram.utils.data.get_characters
+        dataset: "@/train_dataset"
+        extract_reference: "@/extract_reference"
+      min_occurrences: 0
   action_sequence_encoder:
     type: with_file_cache
     path:
@@ -50,13 +64,6 @@ encoder:
         parser: "@/parser"
       token_threshold: "@/params.token_threshold"
 
-action_sequence_reader:
-  type: mlprogram.nn.nl2code.ActionSequenceReader
-  num_rules: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-  num_tokens: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
-  num_node_types: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
-  node_type_embedding_size: "@/params.node_type_embedding_size"
-  embedding_size: "@/params.embedding_size"
 model:
   type: torch.share_memory_
   model:
@@ -65,43 +72,59 @@ model:
       type: collections.OrderedDict
       items:
         - - "encoder"
-          - type: mlprogram.nn.nl2code.NLReader
-            num_words: "@/encoder.word_encoder.vocab_size"
-            embedding_dim: "@/params.embedding_size"
+          - type: mlprogram.nn.treegen.NLReader
+            token_num: "@/encoder.word_encoder.vocab_size"
+            char_num: "@/encoder.char_encoder.vocab_size"
+            max_token_len: "@/params.max_word_length"
+            char_embed_size: "@/params.char_embedding_size"
             hidden_size: "@/params.hidden_size"
+            n_heads: "@/params.n_head"
             dropout: "@/params.dropout"
+            n_blocks: "@/params.n_block"
         - - "decoder"
           - type: torch.nn.Sequential
             modules:
               type: collections.OrderedDict
               items:
                 - - "action_sequence_reader"
-                  - "@/action_sequence_reader"
-                - - "decoder"
-                  - type: mlprogram.nn.nl2code.Decoder
-                    query_size: "@/params.hidden_size"
-                    input_size:
-                      type: add
-                      x:
-                        type: mul
-                        x: 2
-                        y: "@/params.embedding_size"
-                      y: "@/params.node_type_embedding_size"
+                  - type: mlprogram.nn.treegen.ActionSequenceReader
+                    rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+                    token_num: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
+                    node_type_num: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
+                    max_arity: "@/params.max_arity"
+                    rule_embed_size: "@/params.rule_embedding_size"
                     hidden_size: "@/params.hidden_size"
-                    att_hidden_size: "@/params.attr_hidden_size"
+                    tree_conv_kernel_size: "@/params.tree_conv_kernel_size"
+                    n_heads: "@/params.n_head"
                     dropout: "@/params.dropout"
+                    n_blocks: "@/params.n_block"
+                - - "decoder"
+                  - type: mlprogram.nn.treegen.Decoder
+                    rule_num: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+                    max_depth: "@/params.max_tree_depth"
+                    feature_size: "@/params.hidden_size"
+                    hidden_size: "@/params/decoder_hidden_size"
+                    out_size: "@/params.hidden_size"
+                    n_heads: "@/params.n_head"
+                    dropout: "@/params.dropout"
+                    n_blocks: "@/params.n_block"
                 - - "predictor"
-                  - type: mlprogram.nn.nl2code.Predictor
-                    reader: "@/action_sequence_reader"
-                    embedding_size: "@/params.embedding_size"
-                    query_size: "@/params.hidden_size"
+                  - type: mlprogram.nn.action_sequence.Predictor
+                    feature_size: "@/params.hidden_size"
+                    reference_feature_size: "@/params.hidden_size"
+                    rule_size: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
+                    token_size: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"  # TODO
                     hidden_size: "@/params.hidden_size"
-                    att_hidden_size: "@/params.attr_hidden_size"
 
 collate:
   type: mlprogram.utils.data.Collate
   device: "@/device"
   word_nl_query:
+    type: mlprogram.utils.data.CollateOptions
+    use_pad_sequence: true
+    dim: 0
+    padding_value: -1
+  char_nl_query:
     type: mlprogram.utils.data.CollateOptions
     use_pad_sequence: true
     dim: 0
@@ -131,21 +154,21 @@ collate:
     use_pad_sequence: true
     dim: 0
     padding_value: -1
-  history:
+  depthes:
     type: mlprogram.utils.data.CollateOptions
     use_pad_sequence: false
     dim: 1
     padding_value: 0
-  hidden_state:
+  adjacency_matrix:
     type: mlprogram.utils.data.CollateOptions
     use_pad_sequence: false
     dim: 0
     padding_value: 0
-  state:
+  action_queries:
     type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
+    use_pad_sequence: true
     dim: 0
-    padding_value: 0
+    padding_value: -1
   ground_truth_actions:
     type: mlprogram.utils.data.CollateOptions
     use_pad_sequence: true
@@ -163,12 +186,16 @@ synthesizer:
       encoder: "@/encoder.action_sequence_encoder"
       is_subtype: "@/is_subtype"
       transform_input:
-        type: mlprogram.utils.transform.nl2code.TransformQuery
+        type: mlprogram.utils.transform.treegen.TransformQuery
         extract_reference: "@/extract_reference"
         word_encoder: "@/encoder.word_encoder"
+        char_encoder: "@/encoder.char_encoder"
+        max_word_length: "@/params.max_word_length"
       transform_action_sequence:
-        type: mlprogram.utils.transform.nl2code.TransformActionSequence
+        type: mlprogram.utils.transform.treegen.TransformActionSequence
         action_sequence_encoder: "@/encoder.action_sequence_encoder"
+        max_arity: "@/params.max_arity"
+        max_depth: "@/params.max_tree_depth"
         train: false
       collate: "@/collate"
       module: "@/model"

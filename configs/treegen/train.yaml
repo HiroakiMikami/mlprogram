@@ -12,15 +12,19 @@ transform:
     type: collections.OrderedDict
     items:
       - - "transform_input"
-        - type: mlprogram.utils.transform.nl2code.TransformQuery
+        - type: mlprogram.utils.transform.treegen.TransformQuery
           extract_reference: "@/extract_reference"
           word_encoder: "@/encoder.word_encoder"
+          char_encoder: "@/encoder.char_encoder"
+          max_word_length: "@/params.max_word_length"
       - - "transform_code"
         - type: mlprogram.utils.transform.action_sequence.TransformCode
           parser: "@/parser"
       - - "transform_action_sequence"
-        - type: mlprogram.utils.transform.nl2code.TransformActionSequence
+        - type: mlprogram.utils.transform.treegen.TransformActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
+          max_arity: "@/params.max_arity"
+          max_depth: "@/params.max_tree_depth"
           train: true
       - - "transform_ground_truth"
         - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
@@ -29,7 +33,7 @@ transform:
 optimizer:
   type: torch.optim.Optimizer
   optimizer_cls:
-    type: torch.optim.Adam
+    type: fairseq.optim.Adafactor
   model: "@/model"
 
 main:
@@ -58,8 +62,9 @@ main:
     metrics: "@/metrics"
     top_n: "@/params.metric_top_n"
     n_process: "@/params.n_evaluate_process"
-  metric: "@/params.metric"
+  metric: "bleu@1"
   threshold: "@/params.metric_threshold"
+  maximize: True
   collate:
     type: mlprogram.functools.Compose
     funcs:

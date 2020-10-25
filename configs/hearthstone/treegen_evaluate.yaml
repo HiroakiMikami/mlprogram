@@ -1,18 +1,5 @@
 imports:
 - "treegen_base.yaml"
+- "../treegen/evaluate.yaml"
 
 output_dir: "output/output"
-
-main:
-  type: mlprogram.entrypoint.evaluate
-  workspace_dir: "output/workspace"
-  input_dir: "@/output_dir"
-  output_dir: "@/output_dir"
-  valid_dataset: "@/valid_dataset"
-  model: "@/model"
-  synthesizer: "@/synthesizer"
-  metrics: "@/metrics"
-  top_n:
-    - 1
-  device: "@/device"
-  n_process: 2
