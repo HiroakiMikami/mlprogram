@@ -46,6 +46,11 @@ class Sampler(Generic[Input, Output, State]):
             -> Optional[Tuple[Output, bool]]:
         raise NotImplementedError
 
+    def all_samples(self, states: List[SamplerState[State]],
+                    sorted: bool = True) \
+            -> Generator[DuplicatedSamplerState[State], None, None]:
+        raise NotImplementedError
+
     def top_k_samples(self, states: List[SamplerState[State]], k: int) \
             -> Generator[DuplicatedSamplerState[State], None, None]:
         raise NotImplementedError
@@ -77,6 +82,11 @@ class TransformedSampler(Sampler[Input, Output2, State]):
                 return None
             else:
                 return output2, is_finished
+
+    def all_samples(self, states: List[SamplerState[State]],
+                    sorted: bool = True) \
+            -> Generator[DuplicatedSamplerState[State], None, None]:
+        return self.sampler.all_samples(states, sorted)
 
     def top_k_samples(self, states: List[SamplerState[State]], k: int) \
             -> Generator[DuplicatedSamplerState[State], None, None]:

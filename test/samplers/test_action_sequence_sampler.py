@@ -144,6 +144,15 @@ class TestActionSequenceSampler(object):
         assert 1 == random_results[0].state.state.states["length"].item()
         assert \
             log(0.1) - 1e-5 <= random_results[0].state.score <= log(0.2) + 1e-5
+        all_results = list(sampler.all_samples([s]))
+        assert 2 == len(all_results)
+        assert 1 == all_results[0].state.state.states["length"].item()
+        assert np.allclose(log(0.2), all_results[0].state.score)
+        assert np.allclose(log(0.1), all_results[1].state.score)
+        all_results = list(sampler.all_samples([s], sorted=False))
+        assert 1 == all_results[0].state.state.states["length"].item()
+        assert \
+            log(0.1) - 1e-5 <= all_results[0].state.score <= log(0.2) + 1e-5
 
         next = list(sampler.top_k_samples(
             [s.state for s in topk_results], 1))[0]
@@ -203,6 +212,19 @@ class TestActionSequenceSampler(object):
         assert (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
                 random_results[0].state.score <=
                 log(0.2) + log(0.5) + log(0.8) + 1e-5)
+        all_results = list(sampler.all_samples(results[:1]))
+        assert 2 == len(all_results)
+        assert 3 == all_results[0].state.state.states["length"].item()
+        assert np.allclose(log(0.2) + log(0.5) + log(0.8),
+                           all_results[0].state.score)
+        assert np.allclose(log(0.2) + log(0.5) + log(0.2),
+                           all_results[1].state.score)
+        all_results = list(sampler.all_samples(results[:1], sorted=False))
+        assert 2 == len(all_results)
+        assert 3 == all_results[0].state.state.states["length"].item()
+        assert (log(0.2) + log(0.5) + log(0.2) - 1e-5 <=
+                all_results[0].state.score <=
+                log(0.2) + log(0.5) + log(0.8) + 1e-5)
 
     def test_token(self):
         rule_prob = torch.tensor([
@@ -255,6 +277,16 @@ class TestActionSequenceSampler(object):
         assert 3 == random_results[0].state.state.states["length"].item()
         assert log(0.2) + log(0.2) - \
             1e-5 <= random_results[0].state.score <= log(0.2) + log(0.8) + 1e-5
+        all_results = list(sampler.all_samples(results))
+        assert 2 == len(all_results)
+        assert 3 == all_results[0].state.state.states["length"].item()
+        assert np.allclose(log(0.2) + log(0.8), all_results[0].state.score)
+        assert np.allclose(log(0.2) + log(0.2), all_results[1].state.score)
+        all_results = list(sampler.all_samples(results[:1], sorted=False))
+        assert 2 == len(all_results)
+        assert 3 == all_results[0].state.state.states["length"].item()
+        assert log(0.2) + log(0.2) - \
+            1e-5 <= all_results[0].state.score <= log(0.2) + log(0.8) + 1e-5
 
     def test_reference(self):
         torch.manual_seed(0)
@@ -310,3 +342,13 @@ class TestActionSequenceSampler(object):
         assert 3 == random_results[0].state.state.states["length"].item()
         assert np.allclose(log(0.2) + log(1.0),
                            random_results[0].state.score)
+        all_results = list(sampler.all_samples(results))
+        assert 1 == len(all_results)
+        assert 3 == all_results[0].state.state.states["length"].item()
+        assert np.allclose(log(0.2) + log(1.),
+                           all_results[0].state.score)
+        all_results = list(sampler.all_samples(results, sorted=False))
+        assert 1 == len(all_results)
+        assert 3 == all_results[0].state.state.states["length"].item()
+        assert np.allclose(log(0.2) + log(1.),
+                           all_results[0].state.score)
