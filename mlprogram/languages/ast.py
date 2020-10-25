@@ -178,3 +178,17 @@ class Leaf(AST, Generic[V]):
 
     def get_type_name(self) -> Optional[Union[str, Root]]:
         return self.type_name
+
+
+class Sugar:
+    @staticmethod
+    def node(type_name: Optional[Union[str, Root]], **kwargs) -> Node:
+        fields = [
+            Field(name, kind, value)
+            for name, (kind, value) in kwargs.items()
+        ]
+        return Node(type_name, fields)
+
+    @staticmethod
+    def leaf(type_name: Union[str, Root], value: V) -> Leaf[V]:
+        return Leaf(type_name, value)
