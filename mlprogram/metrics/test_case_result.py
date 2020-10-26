@@ -2,7 +2,7 @@ from typing import Generic, TypeVar
 
 from mlprogram import Environment
 from mlprogram.metrics import Metric, Accuracy
-from mlprogram.interpreters import Interpreter
+from mlprogram.languages import Interpreter
 
 
 Code = TypeVar("Code")

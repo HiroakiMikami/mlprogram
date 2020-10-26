@@ -1,6 +1,6 @@
 import numpy as np
-from mlprogram.interpreters import BatchedState
-from mlprogram.interpreters import Interpreter as BaseInterpreter
+from mlprogram.languages import BatchedState
+from mlprogram.languages import Interpreter as BaseInterpreter
 from mlprogram.languages.csg \
     import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
     Reference
