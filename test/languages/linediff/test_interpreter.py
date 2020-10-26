@@ -3,7 +3,7 @@ from mlprogram.languages.linediff import Diff
 from mlprogram.languages.linediff import Insert
 from mlprogram.languages.linediff import Remove
 from mlprogram.languages.linediff import Replace
-from mlprogram.interpreters import BatchedState
+from mlprogram.languages import BatchedState
 
 
 class TestInterpreter(object):

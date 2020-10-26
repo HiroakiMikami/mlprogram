@@ -1,5 +1,5 @@
 import numpy as np
-from mlprogram.interpreters import BatchedState
+from mlprogram.languages import BatchedState
 from mlprogram.languages.csg import show, Shape, Interpreter
 from mlprogram.languages.csg \
     import Circle, Rectangle, Translation, Rotation, Union, Difference, \

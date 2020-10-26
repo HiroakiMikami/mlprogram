@@ -13,3 +13,6 @@ from mlprogram.languages.lexer import Lexer  # noqa
 from mlprogram.languages.parser import Parser  # noqa
 
 from mlprogram.languages.expander import Expander  # noqa
+
+from mlprogram.languages.interpreter import BatchedState  # noqa
+from mlprogram.languages.interpreter import Interpreter  # noqa

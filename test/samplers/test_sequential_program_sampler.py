@@ -5,8 +5,8 @@ from mlprogram import Environment
 from mlprogram.synthesizers import Synthesizer, Result
 from mlprogram.languages import Token
 from mlprogram.languages import Expander
-from mlprogram.interpreters import BatchedState
-from mlprogram.interpreters import Interpreter
+from mlprogram.languages import BatchedState
+from mlprogram.languages import Interpreter
 from mlprogram.utils.data import Collate
 from mlprogram.samplers \
     import SequentialProgramSampler, SamplerState, DuplicatedSamplerState

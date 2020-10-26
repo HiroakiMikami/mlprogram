@@ -7,8 +7,8 @@ from typing \
 from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.languages import Expander
-from mlprogram.interpreters import BatchedState
-from mlprogram.interpreters import Interpreter
+from mlprogram.languages import BatchedState
+from mlprogram.languages import Interpreter
 from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import Collate
