@@ -1,12 +1,10 @@
 imports:
-  - "nl2code_base.yaml"
+- "base.yaml"
 
 device:
   type: torch.device
-  type_str: "cpu"
+  type_str: "cuda"
   index: 0
-
-output_dir: "output/output"
 
 main:
   type: mlprogram.entrypoint.evaluate
@@ -17,8 +15,6 @@ main:
   model: "@/model"
   synthesizer: "@/synthesizer"
   metrics: "@/metrics"
-  top_n:
-    - 1
-    - 3
+  top_n: "@/params.metric_top_n"
   device: "@/device"
-  n_process: 2
+  n_process: "@/params.n_evaluate_process"

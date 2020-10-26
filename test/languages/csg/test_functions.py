@@ -3,7 +3,7 @@ from mlprogram.languages.csg import Parser
 from mlprogram.languages.csg import get_samples, Dataset
 
 
-class TestIsSubType(object):
+class TestIsSubtype(object):
     def test_happy_path(self):
         assert IsSubtype()("CSG", "CSG")
         assert IsSubtype()("Circle", "CSG")

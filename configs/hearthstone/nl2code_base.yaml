@@ -1,197 +1,36 @@
-device:
-  type: torch.device
-  type_str: "cuda"
-  index: 0
+params:
+  word_threshold: 3
+  token_threshold: 0
+  node_type_embedding_size: 64
+  embedding_size: 128
+  hidden_size: 256
+  attr_hidden_size: 50
+  dropout: 0.2
+  batch_size: 1
+  n_epoch: 50
+  eval_interval: 10
+  snapshot_interval: 1
+  beam_size: 15
+  max_step_size: 350
+  metric_top_n:
+    - 1
+  metric_threshold: 1.0
+  metric: "bleu@1"
+  n_evaluate_process: 2
 
 parser:
   type: mlprogram.languages.python.Parser
   split_value:
     type: mlprogram.datasets.hearthstone.SplitValue
 
-normalize_dataset:
-  type: mlprogram.utils.transform.NormalizeGroundTruth
-  normalize:
-    type: mlprogram.functools.Sequence
-    funcs:
-      type: collections.OrderedDict
-      items:
-        - - parse
-          - "@/parser.parse"
-        - - unparse
-          - "@/parser.unparse"
+extract_reference:
+  type: mlprogram.datasets.hearthstone.TokenizeQuery
 
 dataset:
   type: mlprogram.datasets.hearthstone.download
-train_dataset: "@/dataset.train"
-test_dataset:
-  type: mlprogram.utils.data.transform
-  dataset: "@/dataset.test"
-  transform: "@/normalize_dataset"
-valid_dataset:
-  type: mlprogram.utils.data.transform
-  dataset: "@/dataset.valid"
-  transform: "@/normalize_dataset"
 
-words:
-  type: mlprogram.utils.data.get_words
-  dataset: "@/train_dataset"
-  extract_reference:
-    type: mlprogram.datasets.hearthstone.TokenizeQuery
-samples:
-  type: mlprogram.utils.data.get_samples
-  dataset: "@/train_dataset"
-  parser: "@/parser"
-
-encoder:
-  word_encoder:
-    type: with_file_cache
-    path:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "word_encoder.pt"
-    config:
-      type: torchnlp.encoders.LabelEncoder
-      sample: "@/words"
-      min_occurrences: 3
-  action_sequence_encoder:
-    type: with_file_cache
-    path:
-      type: os.path.join
-      args:
-        - "@/output_dir"
-        - "action_sequence_encoder.pt"
-        - "word_encoder.pt"
-    config:
-      type: mlprogram.encoders.ActionSequenceEncoder
-      samples: "@/samples"
-      token_threshold: 0
-
-action_sequence_reader:
-  type: mlprogram.nn.nl2code.ActionSequenceReader
-  num_rules: "@/encoder.action_sequence_encoder._rule_encoder.vocab_size"
-  num_tokens: "@/encoder.action_sequence_encoder._token_encoder.vocab_size"
-  num_node_types: "@/encoder.action_sequence_encoder._node_type_encoder.vocab_size"
-  node_type_embedding_size: 64
-  embedding_size: 128
-model:
-  type: torch.share_memory_
-  model:
-    type: torch.nn.Sequential
-    modules:
-      type: collections.OrderedDict
-      items:
-        - - "encoder"
-          - type: mlprogram.nn.nl2code.NLReader
-            num_words: "@/encoder.word_encoder.vocab_size"
-            embedding_dim: 128
-            hidden_size: 256
-            dropout: 0.2
-        - - "decoder"
-          - type: torch.nn.Sequential
-            modules:
-              type: collections.OrderedDict
-              items:
-                - - "action_sequence_reader"
-                  - "@/action_sequence_reader"
-                - - "decoder"
-                  - type: mlprogram.nn.nl2code.Decoder
-                    query_size: 256
-                    input_size:
-                      type: add
-                      x:
-                        type: mul
-                        x: 2
-                        y: 128
-                      y: 64
-                    hidden_size: 256
-                    att_hidden_size: 50
-                    dropout: 0.2
-                - - "predictor"
-                  - type: mlprogram.nn.nl2code.Predictor
-                    reader: "@/action_sequence_reader"
-                    embedding_size: 128
-                    query_size: 256
-                    hidden_size: 256
-                    att_hidden_size: 50
-
-collate:
-  type: mlprogram.utils.data.Collate
-  device: "@/device"
-  word_nl_query:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  nl_query_features:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  reference_features:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  previous_actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  previous_action_rules:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-  history:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 1
-    padding_value: 0
-  hidden_state:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 0
-    padding_value: 0
-  state:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: false
-    dim: 0
-    padding_value: 0
-  ground_truth_actions:
-    type: mlprogram.utils.data.CollateOptions
-    use_pad_sequence: true
-    dim: 0
-    padding_value: -1
-
-synthesizer:
-  type: mlprogram.synthesizers.BeamSearch
-  beam_size: 15
-  max_step_size: 350
-  sampler:
-    type: mlprogram.samplers.transform
-    sampler:
-      type: mlprogram.samplers.ActionSequenceSampler
-      encoder: "@/encoder.action_sequence_encoder"
-      is_subtype:
-        type: mlprogram.languages.python.IsSubtype
-      transform_input:
-        type: mlprogram.utils.transform.nl2code.TransformQuery
-        extract_reference:
-          type: mlprogram.datasets.hearthstone.TokenizeQuery
-        word_encoder: "@/encoder.word_encoder"
-      transform_action_sequence:
-        type: mlprogram.utils.transform.nl2code.TransformActionSequence
-        action_sequence_encoder: "@/encoder.action_sequence_encoder"
-        train: false
-      collate: "@/collate"
-      module: "@/model"
-    transform:  "@/parser.unparse"
+is_subtype:
+  type: mlprogram.languages.python.IsSubtype
 
 metrics:
   accuracy:
