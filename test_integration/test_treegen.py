@@ -150,7 +150,6 @@ class TestTreeGen(object):
                     model, qencoder, cencoder, aencoder),
                 {"accuracy": Accuracy()},
                 top_n=[5],
-                n_process=1
             )
         return torch.load(os.path.join(dir, "result.pt"))
 
