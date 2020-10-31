@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
 import sys
 
-requires = ["torch", "pytorch-nlp", "requests", "transpyle", "nltk", "bashlex",
-            "pytorch-pfn-extras", "tqdm", "pyyaml", "pycparser"]
+requires = ["torch==1.7.0", "pytorch-nlp==0.5.0", "requests", "transpyle",
+            "nltk", "bashlex", "pytorch-pfn-extras==0.3.0", "tqdm", "pyyaml",
+            "pycparser"]
 
 if sys.version_info.major == 3 and sys.version_info.minor < 7:
     requires.append("dataclasses")
