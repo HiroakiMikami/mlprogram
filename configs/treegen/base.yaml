@@ -198,7 +198,6 @@ transform_action_sequence:
       - - "add_previous_action"
         - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
-          use_last: false
       - - "add_previous_action_rule"
         - type: mlprogram.utils.transform.action_sequence.AddPreviousActionRules
           action_sequence_encoder: "@/encoder.action_sequence_encoder"

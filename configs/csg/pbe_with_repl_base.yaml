@@ -266,6 +266,7 @@ transform_action_sequence:
             - - "add_previous_actions"
               - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
                 action_sequence_encoder: "@/encoder"
+                n_dependent: 1
             - - "add_state"
               - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
 transform:

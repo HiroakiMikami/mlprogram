@@ -93,8 +93,7 @@ class TestTreeGen(object):
             ("encode_char", EncodeCharacterQuery(cencoder, 10))
         ]))
         transform_action_sequence = Compose(OrderedDict([
-            ("add_previous_action",
-             AddPreviousActions(aencoder, use_last=False)),
+            ("add_previous_action", AddPreviousActions(aencoder)),
             ("add_previous_action_rule",
              AddPreviousActionRules(aencoder, 4,)),
             ("add_tree", AddActionSequenceAsTree(aencoder)),

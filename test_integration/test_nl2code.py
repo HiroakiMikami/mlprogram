@@ -78,8 +78,9 @@ class TestNL2Code(object):
             ("encode_query", EncodeWordQuery(qencoder))
         ]))
         transform_action_sequence = Compose(OrderedDict([
-            ("add_previous_action", AddPreviousActions(aencoder)),
-            ("add_action", AddActions(aencoder)),
+            ("add_previous_action",
+             AddPreviousActions(aencoder, n_dependent=1)),
+            ("add_action", AddActions(aencoder, n_dependent=1)),
             ("add_state", AddStateForRnnDecoder()),
             ("add_history", AddHistoryState())
         ]))
@@ -110,8 +111,9 @@ class TestNL2Code(object):
                 ("extract_reference", ExtractReference(tokenize)),
                 ("encode_word_query", EncodeWordQuery(qencoder)),
                 ("f2", tcode),
-                ("add_previous_action", AddPreviousActions(aencoder)),
-                ("add_action", AddActions(aencoder)),
+                ("add_previous_action",
+                 AddPreviousActions(aencoder, n_dependent=1)),
+                ("add_action", AddActions(aencoder, n_dependent=1)),
                 ("add_state", AddStateForRnnDecoder()),
                 ("add_history", AddHistoryState()),
                 ("f4", tgt)

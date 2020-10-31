@@ -56,9 +56,9 @@ class EncodeActionSequence:
 class AddPreviousActions:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 use_last: bool = True):
+                 n_dependent: Optional[int] = None):
         self.action_sequence_encoder = action_sequence_encoder
-        self.use_last = use_last  # TODO
+        self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
         train = "action_sequence" in entry.supervisions
@@ -79,8 +79,8 @@ class AddPreviousActions:
             prev_action = a[:-2, 1:]
         else:
             prev_action = a[:-1, 1:]
-            if self.use_last:
-                prev_action = prev_action[-1, :].view(1, -1)
+            if self.n_dependent is not None:
+                prev_action = prev_action[-self.n_dependent:, :]
 
         entry.states["previous_actions"] = prev_action
 
@@ -90,9 +90,9 @@ class AddPreviousActions:
 class AddActions:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 use_last: bool = True):
+                 n_dependent: Optional[int] = None):
         self.action_sequence_encoder = action_sequence_encoder
-        self.use_last = use_last
+        self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
         train = "action_sequence" in entry.supervisions
@@ -117,8 +117,8 @@ class AddActions:
         else:
             action_tensor = torch.cat(
                 [a[1:, 0].view(-1, 1), p[1:, 1:3].view(-1, 2)], dim=1)
-            if self.use_last:
-                action_tensor = action_tensor[-1, :].view(1, -1)
+            if self.n_dependent is not None:
+                action_tensor = action_tensor[-self.n_dependent:, :]
 
         entry.states["actions"] = action_tensor
 
@@ -128,9 +128,11 @@ class AddActions:
 class AddPreviousActionRules:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 max_arity: int):
+                 max_arity: int,
+                 n_dependent: Optional[int] = None):
         self.action_sequence_encoder = action_sequence_encoder
         self.max_arity = max_arity
+        self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
         train = "action_sequence" in entry.supervisions
@@ -146,6 +148,9 @@ class AddPreviousActionRules:
                 action_sequence, reference, self.max_arity)
         if train:
             rule_prev_action = rule_prev_action[:-1]
+        else:
+            if self.n_dependent is not None:
+                rule_prev_action = rule_prev_action[-self.n_dependent:, :]
 
         entry.states["previous_action_rules"] = rule_prev_action
         return entry
@@ -179,9 +184,11 @@ class AddActionSequenceAsTree:
 class AddQueryForTreeGenDecoder:
     def __init__(self,
                  action_sequence_encoder: ActionSequenceEncoder,
-                 max_depth: int):
+                 max_depth: int,
+                 n_dependent: Optional[int] = None):
         self.action_sequence_encoder = action_sequence_encoder
         self.max_depth = max_depth
+        self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
         train = "action_sequence" in entry.supervisions
@@ -196,6 +203,9 @@ class AddQueryForTreeGenDecoder:
                 action_sequence, self.max_depth)
         if train:
             query = query[:-1, :]
+        else:
+            if self.n_dependent:
+                query = query[-self.n_dependent:, :]
 
         entry.states["action_queries"] = query
 
