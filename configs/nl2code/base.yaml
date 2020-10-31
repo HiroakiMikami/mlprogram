@@ -181,17 +181,13 @@ synthesizer:
             - - "add_previous_action"
               - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
                 action_sequence_encoder: "@/encoder.action_sequence_encoder"
-                train: false
             - - "add_action"
               - type: mlprogram.utils.transform.action_sequence.AddActions
                 action_sequence_encoder: "@/encoder.action_sequence_encoder"
-                train: false
             - - "add_state"
               - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-                train: false
             - - "add_history"
               - type: mlprogram.utils.transform.action_sequence.AddHistoryState
-                train: false
       collate: "@/collate"
       module: "@/model"
     transform: "@/parser.unparse"

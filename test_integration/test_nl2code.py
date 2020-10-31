@@ -78,10 +78,10 @@ class TestNL2Code(object):
             ("encode_query", EncodeWordQuery(qencoder))
         ]))
         transform_action_sequence = Compose(OrderedDict([
-            ("add_previous_action", AddPreviousActions(aencoder, train=False)),
-            ("add_action", AddActions(aencoder, train=False)),
-            ("add_state", AddStateForRnnDecoder(train=False)),
-            ("add_history", AddHistoryState(train=False))
+            ("add_previous_action", AddPreviousActions(aencoder)),
+            ("add_action", AddActions(aencoder)),
+            ("add_state", AddStateForRnnDecoder()),
+            ("add_history", AddHistoryState())
         ]))
         collate = Collate(
             torch.device("cpu"),

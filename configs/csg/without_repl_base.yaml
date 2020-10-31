@@ -232,10 +232,8 @@ sampler:
                     - - "add_previous_actions"
                       - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
                         action_sequence_encoder: "@/encoder"
-                        train: false
                     - - "add_state"
                       - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-                        train: false
         collate: "@/collate"
         module: "@/model"
     transform: "@/parser.unparse"
@@ -281,10 +279,8 @@ transform:
             - - "add_previous_actions"
               - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
                 action_sequence_encoder: "@/encoder"
-                train: true
             - - "add_state"
               - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-                train: true
             - - "transform_ground_truth"
               - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
                 action_sequence_encoder: "@/encoder"

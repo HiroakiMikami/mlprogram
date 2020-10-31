@@ -103,9 +103,9 @@ class TestCsgByPbeWithREPL(object):
             ])),
             Compose(OrderedDict([
                 ("add_previous_actions",
-                 AddPreviousActions(encoder, train=False)),
+                 AddPreviousActions(encoder)),
                 ("add_state",
-                 AddStateForRnnDecoder(train=False))
+                 AddStateForRnnDecoder())
             ])),
             collate, model,
             rng=np.random.RandomState(0))

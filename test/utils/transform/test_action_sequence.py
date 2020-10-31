@@ -152,7 +152,7 @@ class TestAddPreviousActions(object):
         action_sequence = GroundTruthToActionSequence(MockParser())(
             Environment(supervisions={"ground_truth": "y = x + 1"})
         ).supervisions["action_sequence"]
-        transform = AddPreviousActions(aencoder, train=False, use_last=False)
+        transform = AddPreviousActions(aencoder, use_last=False)
         result = transform(Environment(
             states={"reference": [Token(None, "foo", "foo"),
                                   Token(None, "bar", "bar")],
@@ -208,7 +208,7 @@ class TestAddStateForRnnDecoder(object):
         action_sequence = GroundTruthToActionSequence(MockParser())(
             Environment(supervisions={"ground_truth": "y = x + 1"})
         ).supervisions["action_sequence"]
-        transform = AddStateForRnnDecoder(train=False)
+        transform = AddStateForRnnDecoder()
         result = transform(Environment(
             states={"reference": [Token(None, "foo", "foo"),
                                   Token(None, "bar", "bar")],
@@ -258,7 +258,7 @@ class TestAddActions(object):
         action_sequence = GroundTruthToActionSequence(MockParser())(
             Environment(supervisions={"ground_truth": "y = x + 1"})
         ).supervisions["action_sequence"]
-        transform = AddActions(aencoder, train=False, use_last=False)
+        transform = AddActions(aencoder, use_last=False)
         result = transform(Environment(
             states={"reference": [Token(None, "foo", "foo"),
                                   Token(None, "bar", "bar")],
@@ -298,14 +298,7 @@ class TestAddActions(object):
 
 class TestAddHistoryState(object):
     def test_simple_case(self):
-        entries = [Environment(
-            inputs={"text_query": "foo bar"},
-            supervisions={"ground_truth": "y = x + 1"}
-        )]
-        dataset = ListDataset(entries)
-        d = get_samples(dataset, MockParser())
-        aencoder = ActionSequenceEncoder(d, 0)
-        transform = AddHistoryState(aencoder)
+        transform = AddHistoryState()
         action_sequence = GroundTruthToActionSequence(MockParser())(
             Environment(supervisions={"ground_truth": "y = x + 1"})
         ).supervisions["action_sequence"]
@@ -373,7 +366,7 @@ class TestAddPreviousActionRules(object):
             MockParserWithoutVariadicArgs())(
                 Environment(supervisions={"ground_truth": "y = x + 1"})
             ).supervisions["action_sequence"]
-        transform = AddPreviousActionRules(aencoder, 2, train=False)
+        transform = AddPreviousActionRules(aencoder, 2,)
         result = transform(Environment(
             states={"reference": [Token(None, "ab", "ab"),
                                   Token(None, "test", "test")],
@@ -456,7 +449,7 @@ class TestAddActionSequenceAsTree(object):
             MockParserWithoutVariadicArgs())(
                 Environment(supervisions={"ground_truth": "y = x + 1"})
             ).supervisions["action_sequence"]
-        transform = AddActionSequenceAsTree(aencoder, train=False)
+        transform = AddActionSequenceAsTree(aencoder,)
         result = transform(Environment(
             states={"reference": [Token(None, "ab", "ab"),
                                   Token(None, "test", "test")],
@@ -524,7 +517,7 @@ class TestAddQueryForTreeGenDecoder(object):
             MockParserWithoutVariadicArgs())(
                 Environment(supervisions={"ground_truth": "y = x + 1"})
             ).supervisions["action_sequence"]
-        transform = AddQueryForTreeGenDecoder(aencoder, 3, train=False)
+        transform = AddQueryForTreeGenDecoder(aencoder, 3,)
         result = transform(Environment(
             states={"reference": [Token(None, "ab", "ab"),
                                   Token(None, "test", "test")],

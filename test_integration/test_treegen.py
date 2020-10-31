@@ -94,11 +94,11 @@ class TestTreeGen(object):
         ]))
         transform_action_sequence = Compose(OrderedDict([
             ("add_previous_action",
-             AddPreviousActions(aencoder, train=False, use_last=False)),
+             AddPreviousActions(aencoder, use_last=False)),
             ("add_previous_action_rule",
-             AddPreviousActionRules(aencoder, 4, train=False)),
-            ("add_tree", AddActionSequenceAsTree(aencoder, train=False)),
-            ("add_query", AddQueryForTreeGenDecoder(aencoder, 4, train=False))
+             AddPreviousActionRules(aencoder, 4,)),
+            ("add_tree", AddActionSequenceAsTree(aencoder)),
+            ("add_query", AddQueryForTreeGenDecoder(aencoder, 4))
         ]))
 
         collate = Collate(

@@ -208,22 +208,18 @@ synthesizer:
             - - "add_previous_action"
               - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
                 action_sequence_encoder: "@/encoder.action_sequence_encoder"
-                train: false
                 use_last: false
             - - "add_previous_action_rule"
               - type: mlprogram.utils.transform.action_sequence.AddPreviousActionRules
                 action_sequence_encoder: "@/encoder.action_sequence_encoder"
                 max_arity: "@/params.max_arity"
-                train: false
             - - "add_action_sequence_as_tree"
               - type: mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree
                 action_sequence_encoder: "@/encoder.action_sequence_encoder"
-                train: false
             - - "add_query"
               - type: mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder
                 action_sequence_encoder: "@/encoder.action_sequence_encoder"
                 max_depth: "@/params.max_tree_depth"
-                train: false
       collate: "@/collate"
       module: "@/model"
     transform: "@/parser.unparse"

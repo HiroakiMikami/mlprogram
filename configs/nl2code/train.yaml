@@ -23,17 +23,13 @@ transform:
       - - "add_previous_action"
         - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
-          train: true
       - - "add_action"
         - type: mlprogram.utils.transform.action_sequence.AddActions
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
-          train: true
       - - "add_state"
         - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-          train: true
       - - "add_history"
         - type: mlprogram.utils.transform.action_sequence.AddHistoryState
-          train: true
       - - "transform_ground_truth"
         - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
