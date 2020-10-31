@@ -152,6 +152,33 @@ collate:
     dim: 0
     padding_value: -1
 
+transform_input:
+  type: mlprogram.functools.Compose
+  funcs:
+    type: collections.OrderedDict
+    items:
+      - - "extract_reference"
+        - type: mlprogram.utils.transform.text.ExtractReference
+          extract_reference: "@/extract_reference"
+      - - "encode_word_query"
+        - type: mlprogram.utils.transform.text.EncodeWordQuery
+          word_encoder: "@/encoder.word_encoder"
+transform_action_sequence:
+  type: mlprogram.functools.Compose
+  funcs:
+    type: collections.OrderedDict
+    items:
+      - - "add_previous_action"
+        - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+      - - "add_action"
+        - type: mlprogram.utils.transform.action_sequence.AddActions
+          action_sequence_encoder: "@/encoder.action_sequence_encoder"
+      - - "add_state"
+        - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+      - - "add_history"
+        - type: mlprogram.utils.transform.action_sequence.AddHistoryState
+
 synthesizer:
   type: mlprogram.synthesizers.BeamSearch
   beam_size: "@/params.beam_size"
@@ -162,32 +189,8 @@ synthesizer:
       type: mlprogram.samplers.ActionSequenceSampler
       encoder: "@/encoder.action_sequence_encoder"
       is_subtype: "@/is_subtype"
-      transform_input:
-        type: mlprogram.functools.Compose
-        funcs:
-          type: collections.OrderedDict
-          items:
-            - - "extract_reference"
-              - type: mlprogram.utils.transform.text.ExtractReference
-                extract_reference: "@/extract_reference"
-            - - "encode_word_query"
-              - type: mlprogram.utils.transform.text.EncodeWordQuery
-                word_encoder: "@/encoder.word_encoder"
-      transform_action_sequence:
-        type: mlprogram.functools.Compose
-        funcs:
-          type: collections.OrderedDict
-          items:
-            - - "add_previous_action"
-              - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
-                action_sequence_encoder: "@/encoder.action_sequence_encoder"
-            - - "add_action"
-              - type: mlprogram.utils.transform.action_sequence.AddActions
-                action_sequence_encoder: "@/encoder.action_sequence_encoder"
-            - - "add_state"
-              - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-            - - "add_history"
-              - type: mlprogram.utils.transform.action_sequence.AddHistoryState
+      transform_input: "@/transform_input"
+      transform_action_sequence: "@/transform_action_sequence"
       collate: "@/collate"
       module: "@/model"
     transform: "@/parser.unparse"

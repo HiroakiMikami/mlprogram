@@ -11,25 +11,13 @@ transform:
   funcs:
     type: collections.OrderedDict
     items:
-      - - "extract_reference"
-        - type: mlprogram.utils.transform.text.ExtractReference
-          extract_reference: "@/extract_reference"
-      - - "encode_word_query"
-        - type: mlprogram.utils.transform.text.EncodeWordQuery
-          word_encoder: "@/encoder.word_encoder"
+      - - "transform_input"
+        - "@/transform_input"
       - - "transform_code"
         - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
           parser: "@/parser"
-      - - "add_previous_action"
-        - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-      - - "add_action"
-        - type: mlprogram.utils.transform.action_sequence.AddActions
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-      - - "add_state"
-        - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-      - - "add_history"
-        - type: mlprogram.utils.transform.action_sequence.AddHistoryState
+      - - "transform_action_sequence"
+        - "@/transform_action_sequence"
       - - "transform_ground_truth"
         - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"

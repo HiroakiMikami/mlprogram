@@ -251,6 +251,39 @@ collate:
         dim: 0
         padding_value: 0
 
+transform_input:
+    type: mlprogram.functools.Sequence
+    funcs:
+        type: collections.OrderedDict
+        items:
+            - - "transform_canvas"
+              - type: mlprogram.languages.csg.transform.TransformCanvas
+transform_action_sequence:
+    type: mlprogram.functools.Sequence
+    funcs:
+        type: collections.OrderedDict
+        items:
+            - - "add_previous_actions"
+              - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
+                action_sequence_encoder: "@/encoder"
+            - - "add_state"
+              - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+transform:
+    type: mlprogram.functools.Sequence
+    funcs:
+        type: collections.OrderedDict
+        items:
+            - - "transform_input"
+              - "@/transform_input"
+            - - "transform_code"
+              - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
+                parser: "@/parser"
+            - - "transform_action_sequence"
+              - "@/transform_action_sequence"
+            - - "transform_ground_truth"
+              - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
+                action_sequence_encoder: "@/encoder"
+
 subsampler:
     type: mlprogram.samplers.transform
     sampler:
@@ -258,23 +291,8 @@ subsampler:
         encoder: "@/encoder"
         is_subtype:
             type: mlprogram.languages.csg.IsSubtype
-        transform_input:
-            type: mlprogram.functools.Compose
-            funcs:
-                type: collections.OrderedDict
-                items:
-                    - - "transform_canvas"
-                      - type: mlprogram.languages.csg.transform.TransformCanvas
-        transform_action_sequence:
-            type: mlprogram.functools.Compose
-            funcs:
-                type: collections.OrderedDict
-                items:
-                    - - "add_previous_actions"
-                      - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
-                        action_sequence_encoder: "@/encoder"
-                    - - "add_state"
-                      - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
+        transform_input: "@/transform_input"
+        transform_action_sequence: "@/transform_action_sequence"
         collate: "@/collate"
         module: "@/model"
     transform: "@/parser.unparse"
@@ -362,22 +380,3 @@ to_episode:
     interpreter: "@/interpreter"
     expander:
         type: mlprogram.languages.csg.Expander
-
-transform:
-    type: mlprogram.functools.Sequence
-    funcs:
-        type: collections.OrderedDict
-        items:
-            - - "transform_canvas"
-              - type: mlprogram.languages.csg.transform.TransformCanvas
-            - - "transform_code"
-              - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
-                parser: "@/parser"
-            - - "add_previous_actions"
-              - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
-                action_sequence_encoder: "@/encoder"
-            - - "add_state"
-              - type: mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder
-            - - "transform_ground_truth"
-              - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
-                action_sequence_encoder: "@/encoder"

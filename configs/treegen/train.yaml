@@ -11,33 +11,13 @@ transform:
   funcs:
     type: collections.OrderedDict
     items:
-      - - "extract_reference"
-        - type: mlprogram.utils.transform.text.ExtractReference
-          extract_reference: "@/extract_reference"
-      - - "encode_word"
-        - type: mlprogram.utils.transform.text.EncodeWordQuery
-          word_encoder: "@/encoder.word_encoder"
-      - - "encode_char"
-        - type: mlprogram.utils.transform.text.EncodeCharacterQuery
-          char_encoder: "@/encoder.char_encoder"
-          max_word_length: "@/params.max_word_length"
+      - - "transform_input"
+        - "@/transform_input"
       - - "transform_code"
         - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
           parser: "@/parser"
-      - - "add_previous_action"
-        - type: mlprogram.utils.transform.action_sequence.AddPreviousActions
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-      - - "add_previous_action_rule"
-        - type: mlprogram.utils.transform.action_sequence.AddPreviousActionRules
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-          max_arity: "@/params.max_arity"
-      - - "add_action_sequence_as_tree"
-        - type: mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-      - - "add_query"
-        - type: mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-          max_depth: "@/params.max_tree_depth"
+      - - "transform_action_sequence"
+        - "@/transform_action_sequence"
       - - "transform_ground_truth"
         - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
