@@ -40,10 +40,12 @@ make -C $tmpdir/nl2bash/scripts data
 
             def load(name: str):
                 with open(os.path.join(tmpdir, "nl2bash", "data", "bash",
-                                       f"{name}.nl.filtered")) as file:
+                                       f"{name}.nl.filtered"),
+                          encoding="utf-8") as file:
                     inputs = list(file.readlines())
                 with open(os.path.join(tmpdir, "nl2bash", "data", "bash",
-                                       f"{name}.cm.filtered")) as file:
+                                       f"{name}.cm.filtered"),
+                          encoding="utf-8") as file:
                     ground_truths = list(file.readlines())
                 return [
                     Environment(
