@@ -307,6 +307,12 @@ class TestCsgByPbeWithREPL(object):
                                  "output@value_loss",
                                  torch.nn.BCELoss(reduction='sum')))
                      ]))),
+                    ("reweight",
+                     Apply(
+                         [("output@value_loss", "lhs")],
+                         "output@value_loss",
+                         mlprogram.nn.Function(Mul()),
+                         constants={"rhs": 1e-2})),
                     ("aggregate",
                      Apply(
                          ["output@action_sequence_loss", "output@value_loss"],
@@ -333,8 +339,8 @@ class TestCsgByPbeWithREPL(object):
                     Threshold(0.9, dtype="float")),
                 collate_fn,
                 1, 1,
-                Epoch(30), evaluation_interval=Epoch(30),
-                snapshot_interval=Epoch(30),
+                Epoch(10), evaluation_interval=Epoch(10),
+                snapshot_interval=Epoch(10),
                 use_pretrained_model=True,
                 use_pretrained_optimizer=False,
                 threshold=1.0)
