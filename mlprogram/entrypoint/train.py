@@ -396,7 +396,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
                     ppe.reporting.report({"loss": bloss.item()})
                     ppe.reporting.report({
-                        "reward": batch2.inputs["reward"].mean().item()
+                        "reward": batch2.inputs["reward"].float().mean().item()
                     })
                     logger.dump_elapsed_time_log()
                     if device.type == "cuda":
