@@ -1,21 +1,21 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from pycparser.c_lexer import CLexer
 from pycparser.ply.lex import LexToken
 
 from mlprogram import logging
 from mlprogram.languages import Lexer as BaseLexer
-from mlprogram.languages import Token, TokenSequence
+from mlprogram.languages import Token
 
 logger = logging.Logger(__name__)
 
 
-class Lexer(BaseLexer[str]):
+class Lexer(BaseLexer[str, str]):
     def __init__(self, delimiter: str = " "):
         super().__init__()
         self.delimiter = delimiter
 
-    def tokenize(self, code: str) -> Optional[TokenSequence]:
+    def tokenize(self, code: str) -> Optional[List[Token[str, str]]]:
         lines = list(code.split("\n"))
         offsets = [0]
         for line in lines:
@@ -27,13 +27,11 @@ class Lexer(BaseLexer[str]):
         lexer.input(code)
         tokens: List[LexToken] = list(iter(lexer.token, None))
 
-        tokens_with_offset: List[Tuple[int, Token[str, str]]] = [
-            (token.lexpos, Token(token.type, token.value, token.value))
+        return [
+            Token(token.type, token.value, token.value)
             for token in tokens
         ]
 
-        return TokenSequence(tokens_with_offset)
-
-    def untokenize(self, sequence: TokenSequence) -> Optional[str]:
-        return self.delimiter.join(token[1].raw_value
-                                   for token in sequence.tokens)
+    def untokenize(self, sequence: List[Token[str, str]]) -> Optional[str]:
+        return self.delimiter.join(token.raw_value
+                                   for token in sequence)

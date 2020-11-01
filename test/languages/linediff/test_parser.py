@@ -1,6 +1,6 @@
 from mlprogram.languages import Lexer
 from mlprogram.languages import Sugar as S
-from mlprogram.languages import Token, TokenSequence
+from mlprogram.languages import Token
 from mlprogram.languages.linediff import Diff, Insert, Parser, Remove, Replace
 
 
@@ -8,13 +8,12 @@ class MockLexer(Lexer):
     def tokenize(self, value):
         if value == "":
             return None
-        return TokenSequence([(-1, Token(None, v, v))
-                              for v in value.split(" ")])
+        return [Token(None, v, v) for v in value.split(" ")]
 
     def untokenize(self, value):
-        if len(value.tokens) == 0:
+        if len(value) == 0:
             return None
-        return " ".join([x.raw_value for _, x in value.tokens])
+        return " ".join([x.raw_value for x in value])
 
 
 class TestParser(object):
