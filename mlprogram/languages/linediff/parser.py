@@ -1,7 +1,7 @@
 from typing import Generic, List, Optional, TypeVar, cast
 
 from mlprogram import logging
-from mlprogram.languages import AST, Leaf, Lexer, Node
+from mlprogram.languages import AST, Kinds, Leaf, Lexer, Node
 from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages import Sugar as S
 from mlprogram.languages import Token
@@ -33,21 +33,24 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
                 return None
             return S.node(
                 "Insert",
-                line_number=("int", S.leaf("int", code.line_number)),
+                line_number=(Kinds.LineNumber(),
+                             S.leaf(Kinds.LineNumber(), code.line_number)),
                 value=("str", [S.leaf("str", token.value)
                                for token in token_sequence])
             )
         elif isinstance(code, Remove):
             return S.node(
                 "Remove",
-                line_number=("int", S.leaf("int", code.line_number)))
+                line_number=(Kinds.LineNumber(),
+                             S.leaf(Kinds.LineNumber(), code.line_number)))
         elif isinstance(code, Replace):
             token_sequence = self.lexer.tokenize(code.value)
             if token_sequence is None:
                 return None
             return S.node(
                 "Replace",
-                line_number=("int", S.leaf("int", code.line_number)),
+                line_number=(Kinds.LineNumber(),
+                             S.leaf(Kinds.LineNumber(), code.line_number)),
                 value=("str", [S.leaf("str", token.value)
                                for token in token_sequence])
             )

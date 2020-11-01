@@ -7,6 +7,8 @@ from mlprogram.languages.ast import Sugar  # noqa
 from mlprogram.languages.expander import Expander  # noqa
 from mlprogram.languages.interpreter import BatchedState  # noqa
 from mlprogram.languages.interpreter import Interpreter  # noqa
+from mlprogram.languages.kinds import Kinds  # noqa
 from mlprogram.languages.lexer import Lexer  # noqa
+from mlprogram.languages.lexer_with_line_number import LexerWithLineNumber  # noqa
 from mlprogram.languages.parser import Parser  # noqa
 from mlprogram.languages.token import Token  # noqa
