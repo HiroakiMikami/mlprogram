@@ -247,8 +247,8 @@ class TestCsgByPbeWithREPL(object):
                 ])),
                 None, "score",
                 collate_fn,
-                1, Epoch(100), evaluation_interval=Epoch(10),
-                snapshot_interval=Epoch(100)
+                1, Epoch(50), evaluation_interval=Epoch(50),
+                snapshot_interval=Epoch(50)
             )
         return encoder, train_dataset
 

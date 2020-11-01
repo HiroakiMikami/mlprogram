@@ -171,8 +171,8 @@ class TestNL2Code(object):
                 ),
                 "accuracy@5",
                 lambda x: collate(transform(x)),
-                1, Epoch(100), evaluation_interval=Epoch(100),
-                snapshot_interval=Epoch(100),
+                1, Epoch(50), evaluation_interval=Epoch(50),
+                snapshot_interval=Epoch(50),
                 threshold=1.0
             )
         return qencoder, aencoder
