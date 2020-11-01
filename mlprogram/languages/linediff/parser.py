@@ -1,20 +1,21 @@
 from typing import Generic, List, Optional, TypeVar, cast
 
 from mlprogram import logging
-from mlprogram.languages import AST, Leaf, Lexer, Node
+from mlprogram.languages import AST, Kinds, Leaf, Lexer, Node
 from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages import Sugar as S
-from mlprogram.languages import Token, TokenSequence
+from mlprogram.languages import Token
 from mlprogram.languages.linediff import AST as diffAST
 from mlprogram.languages.linediff import Delta, Diff, Insert, Remove, Replace
 
 logger = logging.Logger(__name__)
 
 Kind = TypeVar("Kind")
+Value = TypeVar("Value")
 
 
-class Parser(BaseParser[diffAST], Generic[Kind]):
-    def __init__(self, lexer: Lexer[Kind]):
+class Parser(BaseParser[diffAST], Generic[Kind, Value]):
+    def __init__(self, lexer: Lexer[Kind, Value]):
         super().__init__()
         self.lexer = lexer
 
@@ -32,23 +33,26 @@ class Parser(BaseParser[diffAST], Generic[Kind]):
                 return None
             return S.node(
                 "Insert",
-                line_number=("int", S.leaf("int", code.line_number)),
+                line_number=(Kinds.LineNumber(),
+                             S.leaf(Kinds.LineNumber(), code.line_number)),
                 value=("str", [S.leaf("str", token.value)
-                               for _, token in token_sequence.tokens])
+                               for token in token_sequence])
             )
         elif isinstance(code, Remove):
             return S.node(
                 "Remove",
-                line_number=("int", S.leaf("int", code.line_number)))
+                line_number=(Kinds.LineNumber(),
+                             S.leaf(Kinds.LineNumber(), code.line_number)))
         elif isinstance(code, Replace):
             token_sequence = self.lexer.tokenize(code.value)
             if token_sequence is None:
                 return None
             return S.node(
                 "Replace",
-                line_number=("int", S.leaf("int", code.line_number)),
+                line_number=(Kinds.LineNumber(),
+                             S.leaf(Kinds.LineNumber(), code.line_number)),
                 value=("str", [S.leaf("str", token.value)
-                               for _, token in token_sequence.tokens])
+                               for token in token_sequence])
             )
         logger.warning(f"Invalid node type {code.get_type_name()}")
         # TODO throw exception
@@ -64,11 +68,10 @@ class Parser(BaseParser[diffAST], Generic[Kind]):
                 return None
             return Diff(cast(List[Delta], deltas))
         elif code.get_type_name() == "Insert":
-            # TODO should not instantiate token sequence
-            value = self.lexer.untokenize(TokenSequence([
-                (-1, Token(None, cast(Leaf, v).value, cast(Leaf, v).value))
+            value = self.lexer.untokenize([
+                Token(None, cast(Leaf, v).value, cast(Leaf, v).value)
                 for v in cast(List[AST], fields["value"])
-            ]))
+            ])
             if value is None:
                 return None
             return Insert(cast(Leaf, fields["line_number"]).value, value)
@@ -76,10 +79,10 @@ class Parser(BaseParser[diffAST], Generic[Kind]):
             return Remove(cast(Leaf, fields["line_number"]).value)
         elif code.get_type_name() == "Replace":
             # TODO should not instantiate token sequence
-            value = self.lexer.untokenize(TokenSequence([
-                (-1, Token(None, cast(Leaf, v).value, cast(Leaf, v).value))
+            value = self.lexer.untokenize([
+                Token(None, cast(Leaf, v).value, cast(Leaf, v).value)
                 for v in cast(List[AST], fields["value"])
-            ]))
+            ])
             if value is None:
                 return None
             return Replace(cast(Leaf, fields["line_number"]).value, value)

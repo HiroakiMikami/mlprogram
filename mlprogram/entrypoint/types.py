@@ -171,6 +171,8 @@ types = {
         mlprogram.utils.transform.text.ExtractReference,
     "mlprogram.utils.transform.text.EncodeWordQuery":
         mlprogram.utils.transform.text.EncodeWordQuery,
+    "mlprogram.utils.transform.text.EncodeTokenQuery":
+        mlprogram.utils.transform.text.EncodeTokenQuery,
     "mlprogram.utils.transform.text.EncodeCharacterQuery":
         mlprogram.utils.transform.text.EncodeCharacterQuery,
     "mlprogram.utils.transform.pbe.ToEpisode":

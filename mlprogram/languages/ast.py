@@ -2,6 +2,9 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Generic, List, Optional, TypeVar, Union
 
+Kind = TypeVar("Kind")
+V = TypeVar("V")
+
 
 class Root:
     """
@@ -27,7 +30,7 @@ class Root:
         return cls._instance
 
 
-class AST:
+class AST(Generic[Kind]):
     """
     Abstract syntax tree of the target language
     """
@@ -43,12 +46,12 @@ class AST:
         """
         raise NotImplementedError
 
-    def get_type_name(self) -> Optional[Union[str, Root]]:
+    def get_type_name(self) -> Optional[Union[Kind, Root]]:
         raise NotImplementedError
 
 
 @dataclass
-class Field:
+class Field(Generic[Kind]):
     """
     The field of the AST node.
 
@@ -63,7 +66,7 @@ class Field:
         variadic.
     """
     name: str
-    type_name: Union[str, Root]
+    type_name: Union[Kind, Root]
     value: Union[AST, List[AST]]
 
     def clone(self):
@@ -97,7 +100,7 @@ class Field:
 
 
 @dataclass
-class Node(AST):
+class Node(AST[Kind], Generic[Kind]):
     """
     The node of AST.
 
@@ -108,7 +111,7 @@ class Node(AST):
     fields: List[Field]
         The list of fields
     """
-    type_name: Optional[Union[str, Root]]
+    type_name: Optional[Union[Kind, Root]]
     fields: List[Field]
 
     def clone(self):
@@ -133,15 +136,12 @@ class Node(AST):
         else:
             return False
 
-    def get_type_name(self) -> Optional[Union[str, Root]]:
+    def get_type_name(self) -> Optional[Union[Kind, Root]]:
         return self.type_name
 
 
-V = TypeVar("V")
-
-
 @dataclass
-class Leaf(AST, Generic[V]):
+class Leaf(AST[Kind], Generic[Kind, V]):
     """
     The leaf of AST
 
@@ -152,7 +152,7 @@ class Leaf(AST, Generic[V]):
     value: V
         The value represented by this leaf
     """
-    type_name: Union[str, Root]
+    type_name: Union[Kind, Root]
     value: V
 
     def clone(self):
@@ -176,19 +176,19 @@ class Leaf(AST, Generic[V]):
         else:
             return False
 
-    def get_type_name(self) -> Optional[Union[str, Root]]:
+    def get_type_name(self) -> Optional[Union[Kind, Root]]:
         return self.type_name
 
 
 class Sugar:
     @staticmethod
-    def node(type_name: Optional[Union[str, Root]], **kwargs) -> Node:
+    def node(type_name: Optional[Union[Kind, Root]], **kwargs) -> Node:
         fields = [
-            Field(name, kind, value)
+            Field[Kind](name, kind, value)
             for name, (kind, value) in kwargs.items()
         ]
         return Node(type_name, fields)
 
     @staticmethod
-    def leaf(type_name: Union[str, Root], value: V) -> Leaf[V]:
+    def leaf(type_name: Union[Kind, Root], value: V) -> Leaf[Kind, V]:
         return Leaf(type_name, value)

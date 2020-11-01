@@ -5,6 +5,7 @@ from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.utils.transform.text import (
     EncodeCharacterQuery,
+    EncodeTokenQuery,
     EncodeWordQuery,
     ExtractReference,
 )
@@ -27,6 +28,15 @@ class TestEncodeWordQuery(object):
             states={"reference": [Token(None, "dnn", "")]}
         ))
         assert [1] == result.states["word_nl_query"].numpy().tolist()
+
+
+class TestEncodeTokenQuery(object):
+    def test_happy_path(self):
+        transform = EncodeTokenQuery(LabelEncoder([Token(None, "dnn", "")]))
+        result = transform(Environment(
+            states={"reference": [Token(None, "dnn", "")]}
+        ))
+        assert [1] == result.states["token_nl_query"].numpy().tolist()
 
 
 class TestEncodeCharacterQuery(object):
