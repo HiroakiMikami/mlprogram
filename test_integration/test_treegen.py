@@ -21,12 +21,19 @@ from mlprogram.synthesizers import BeamSearch
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.functools import Sequence, Map
+from mlprogram.functools import Compose
 from mlprogram.utils.data import Collate, CollateOptions
 from mlprogram.utils.data import get_words, get_characters, get_samples
+from mlprogram.utils.transform.action_sequence import AddPreviousActions
+from mlprogram.utils.transform.action_sequence import AddPreviousActionRules
+from mlprogram.utils.transform.action_sequence import AddActionSequenceAsTree
+from mlprogram.utils.transform.action_sequence import AddQueryForTreeGenDecoder
+from mlprogram.utils.transform.action_sequence import EncodeActionSequence
 from mlprogram.utils.transform.action_sequence \
-    import TransformGroundTruth, TransformCode
-from mlprogram.utils.transform.treegen \
-    import TransformQuery, TransformActionSequence
+    import GroundTruthToActionSequence
+from mlprogram.utils.transform.text import ExtractReference
+from mlprogram.utils.transform.text import EncodeWordQuery
+from mlprogram.utils.transform.text import EncodeCharacterQuery
 from mlprogram.nn.action_sequence import Loss, Predictor
 from mlprogram.nn import treegen
 from mlprogram.metrics import Accuracy
@@ -80,10 +87,18 @@ class TestTreeGen(object):
                          model)
 
     def prepare_synthesizer(self, model, qencoder, cencoder, aencoder):
-        transform_input = TransformQuery(tokenize, qencoder,
-                                         cencoder, 10)
-        transform_action_sequence = TransformActionSequence(aencoder, 4, 4,
-                                                            train=False)
+        transform_input = Compose(OrderedDict([
+            ("extract_reference", ExtractReference(tokenize)),
+            ("encode_word", EncodeWordQuery(qencoder)),
+            ("encode_char", EncodeCharacterQuery(cencoder, 10))
+        ]))
+        transform_action_sequence = Compose(OrderedDict([
+            ("add_previous_action", AddPreviousActions(aencoder)),
+            ("add_previous_action_rule",
+             AddPreviousActionRules(aencoder, 4,)),
+            ("add_tree", AddActionSequenceAsTree(aencoder)),
+            ("add_query", AddQueryForTreeGenDecoder(aencoder, 4))
+        ]))
 
         collate = Collate(
             torch.device("cpu"),
@@ -105,15 +120,21 @@ class TestTreeGen(object):
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, cencoder, aencoder, parser):
-        tquery = TransformQuery(tokenize, qencoder, cencoder, 10)
-        tcode = TransformCode(parser)
-        teval = TransformActionSequence(aencoder, 4, 4)
-        tgt = TransformGroundTruth(aencoder)
+        tcode = GroundTruthToActionSequence(parser)
+        tgt = EncodeActionSequence(aencoder)
         return Sequence(
             OrderedDict([
-                ("f1", tquery),
+                ("extract_reference", ExtractReference(tokenize)),
+                ("encode_word", EncodeWordQuery(qencoder)),
+                ("encode_char", EncodeCharacterQuery(cencoder, 10)),
                 ("f2", tcode),
-                ("f3", teval),
+                ("add_previous_action",
+                 AddPreviousActions(aencoder)),
+                ("add_previous_action_rule",
+                 AddPreviousActionRules(aencoder, 4)),
+                ("add_tree", AddActionSequenceAsTree(aencoder)),
+                ("add_query",
+                 AddQueryForTreeGenDecoder(aencoder, 4)),
                 ("f4", tgt)
             ])
         )
@@ -129,7 +150,6 @@ class TestTreeGen(object):
                     model, qencoder, cencoder, aencoder),
                 {"accuracy": Accuracy()},
                 top_n=[5],
-                n_process=1
             )
         return torch.load(os.path.join(dir, "result.pt"))
 

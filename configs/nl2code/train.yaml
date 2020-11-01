@@ -12,18 +12,14 @@ transform:
     type: collections.OrderedDict
     items:
       - - "transform_input"
-        - type: mlprogram.utils.transform.nl2code.TransformQuery
-          extract_reference: "@/extract_reference"
-          word_encoder: "@/encoder.word_encoder"
+        - "@/transform_input"
       - - "transform_code"
-        - type: mlprogram.utils.transform.action_sequence.TransformCode
+        - type: mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence
           parser: "@/parser"
       - - "transform_action_sequence"
-        - type: mlprogram.utils.transform.nl2code.TransformActionSequence
-          action_sequence_encoder: "@/encoder.action_sequence_encoder"
-          train: true
+        - "@/transform_action_sequence"
       - - "transform_ground_truth"
-        - type: mlprogram.utils.transform.action_sequence.TransformGroundTruth
+        - type: mlprogram.utils.transform.action_sequence.EncodeActionSequence
           action_sequence_encoder: "@/encoder.action_sequence_encoder"
 
 optimizer:

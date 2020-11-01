@@ -1,26 +1,43 @@
-"""
+from typing import List
 from typing import TypeVar
 from typing import Generic
+from mlprogram import Environment
+from mlprogram.languages import Token
+from mlprogram.languages import Expander
+from mlprogram.languages import BatchedState
+from mlprogram.languages import Interpreter
 
-from mlprogram.interpreters import Interpreter
-
-
-Input = TypeVar("Input")
 Code = TypeVar("Code")
+Input = TypeVar("Input")
 Value = TypeVar("Value")
+Kind = TypeVar("Kind")
 
-class EvaluateCode(Generic[Input, Code, Value]):
-    def __init__(self, interpreter: Interpreter[Input, Code, Value]):
+
+class ToEpisode(Generic[Code, Input, Value]):
+    def __init__(self, interpreter: Interpreter[Code, Input, Value, Kind],
+                 expander: Expander[Code]):
         self.interpreter = interpreter
+        self.expander = expander
 
-    def __call__(self, entry: Environment) -> Environment:
-        code = entry.inputs["code"]
-        input, _ = entry.inputs["input"]
-        reference = entry.states["reference"]
-        refs = [token.value for token in reference]
-        result = self.interpreter.eval_references(code, input)
-        variables = [result[ref] for ref in refs]
-        # TODO variables may be in inputs
-        entry.inputs["variables"] = variables
-        return entry
-"""
+    def __call__(self, entry: Environment) -> List[Environment]:
+        ground_truth = entry.supervisions["ground_truth"]
+        test_cases = entry.inputs["test_cases"]
+        inputs = [input for input, _ in test_cases]
+
+        retval: List[Environment] = []
+        state = BatchedState[Code, Value, Kind]({}, {}, [])
+        for code in self.expander.expand(ground_truth):
+            xs = entry.clone()
+            xs.states["reference"] = [
+                Token(state.type_environment[v], v, v)
+                for v in state.environment.keys()
+            ]
+            xs.states["variables"] = [
+                state.environment[token.value]
+                for token in xs.states["reference"]
+            ]
+            xs.supervisions["ground_truth"] = code
+            state = self.interpreter.execute(code, inputs, state)
+            retval.append(xs)
+
+        return retval

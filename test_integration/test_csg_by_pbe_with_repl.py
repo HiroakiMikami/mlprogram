@@ -39,9 +39,9 @@ from mlprogram.utils.data \
 from mlprogram.languages.csg.transform import TransformCanvas
 from mlprogram.languages.csg.transform import AddTestCases
 from mlprogram.utils.transform.action_sequence \
-    import TransformCode, TransformGroundTruth, \
-    TransformActionSequenceForRnnDecoder
-from mlprogram.utils.transform.pbe_with_repl import ToEpisode
+    import GroundTruthToActionSequence, EncodeActionSequence, \
+    AddPreviousActions, AddStateForRnnDecoder
+from mlprogram.utils.transform.pbe import ToEpisode
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
@@ -101,7 +101,12 @@ class TestCsgByPbeWithREPL(object):
             Compose(OrderedDict([
                 ("tcanvas", TransformCanvas())
             ])),
-            TransformActionSequenceForRnnDecoder(encoder, train=False),
+            Compose(OrderedDict([
+                ("add_previous_actions",
+                 AddPreviousActions(encoder, n_dependent=1)),
+                ("add_state",
+                 AddStateForRnnDecoder())
+            ])),
             collate, model,
             rng=np.random.RandomState(0))
         subsampler = mlprogram.samplers.transform(
@@ -166,14 +171,16 @@ class TestCsgByPbeWithREPL(object):
 
     def transform(self, encoder, interpreter, parser):
         tcanvas = TransformCanvas()
-        tcode = TransformCode(parser)
-        taction = TransformActionSequenceForRnnDecoder(encoder)
-        tgt = TransformGroundTruth(encoder)
+        tcode = GroundTruthToActionSequence(parser)
+        aaction = AddPreviousActions(encoder, n_dependent=1)
+        astate = AddStateForRnnDecoder()
+        tgt = EncodeActionSequence(encoder)
         return Sequence(
             OrderedDict([
                 ("tcanvas", tcanvas),
                 ("tcode", tcode),
-                ("teval", taction),
+                ("aaction", aaction),
+                ("astate", astate),
                 ("tgt", tgt)
             ])
         )
@@ -300,6 +307,12 @@ class TestCsgByPbeWithREPL(object):
                                  "output@value_loss",
                                  torch.nn.BCELoss(reduction='sum')))
                      ]))),
+                    ("reweight",
+                     Apply(
+                         [("output@value_loss", "lhs")],
+                         "output@value_loss",
+                         mlprogram.nn.Function(Mul()),
+                         constants={"rhs": 1e-2})),
                     ("aggregate",
                      Apply(
                          ["output@action_sequence_loss", "output@value_loss"],
@@ -326,8 +339,8 @@ class TestCsgByPbeWithREPL(object):
                     Threshold(0.9, dtype="float")),
                 collate_fn,
                 1, 1,
-                Epoch(30), evaluation_interval=Epoch(30),
-                snapshot_interval=Epoch(30),
+                Epoch(10), evaluation_interval=Epoch(10),
+                snapshot_interval=Epoch(10),
                 use_pretrained_model=True,
                 use_pretrained_optimizer=False,
                 threshold=1.0)

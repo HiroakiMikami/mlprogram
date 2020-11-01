@@ -22,7 +22,7 @@ def get_words(dataset: torch.utils.data.Dataset,
     words = []
 
     for sample in dataset:
-        reference = extract_reference(sample.inputs["input"])
+        reference = extract_reference(sample.inputs["text_query"])
         words.extend([token.value for token in reference])
 
     return words
@@ -34,7 +34,7 @@ def get_characters(dataset: torch.utils.data.Dataset,
     chars: List[str] = []
 
     for sample in dataset:
-        reference = extract_reference(sample.inputs["input"])
+        reference = extract_reference(sample.inputs["text_query"])
         for token in reference:
             chars.extend(token.value)
 

@@ -7,7 +7,7 @@ from mlprogram.actions \
 from mlprogram.languages import Node, Leaf, Field, Root
 
 
-class Testaction_sequence(object):
+class TestActionSequence(object):
     def test_eval_root(self):
         action_sequence = ActionSequence()
         assert action_sequence.head is None

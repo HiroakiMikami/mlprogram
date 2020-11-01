@@ -5,7 +5,7 @@ from mlprogram import Environment
 Code = TypeVar("Code")
 
 
-class NormalizeGroudTruth(Generic[Code]):
+class NormalizeGroundTruth(Generic[Code]):
     def __init__(self, normalize: Callable[[Code], Optional[Code]]):
         self.normalize = normalize
 

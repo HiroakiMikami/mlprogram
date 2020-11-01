@@ -79,7 +79,8 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
                               evaluate: Optional[Callable[[], None]],
                               metric: str, maximize: bool,
                               threshold: Optional[float],
-                              workspace_dir: str):
+                              workspace_dir: str,
+                              report_metrics: Optional[List[str]] = None):
     model_dir = os.path.join(workspace_dir, "model")
 
     logger.info("Prepare pytorch-pfn-extras")
@@ -103,8 +104,9 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
         manager.extend(SaveTopKModel(model_dir, 1, metric, model,
                                      maximize=maximize),
                        trigger=Trigger(evaluation_interval_iter, n_iter))
+        metrics = report_metrics or []
         manager.extend(extensions.PrintReport(entries=[
-            "loss",
+            "loss", *metrics,
             "iteration", "epoch",
             "time.iteration", "gpu.time.iteration", "elapsed_time"
         ]),
@@ -333,7 +335,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
             iter_per_epoch,
             model, optimizer,
             evaluate, metric, maximize, threshold,
-            workspace_dir)
+            workspace_dir,
+            report_metrics=["reward"])
 
     logger.info("Start training")
     try:
@@ -392,6 +395,9 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         optimizer.step()
 
                     ppe.reporting.report({"loss": bloss.item()})
+                    ppe.reporting.report({
+                        "reward": batch2.inputs["reward"].float().mean().item()
+                    })
                     logger.dump_elapsed_time_log()
                     if device.type == "cuda":
                         ppe.reporting.report({

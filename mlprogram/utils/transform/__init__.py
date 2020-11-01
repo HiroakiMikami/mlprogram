@@ -1,1 +1,1 @@
-from mlprogram.utils.transform.functions import NormalizeGroudTruth  # noqa
+from mlprogram.utils.transform.functions import NormalizeGroundTruth  # noqa

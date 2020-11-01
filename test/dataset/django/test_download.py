@@ -20,19 +20,19 @@ class TestDownload(object):
 
         assert 1 == len(train_dataset)
         assert train_dataset[0] == Environment(
-            inputs={"input": "line0"},
+            inputs={"text_query": "line0"},
             supervisions={"ground_truth": "x = 10"}
         )
 
         assert 1 == len(test_dataset)
         assert test_dataset[0] == Environment(
-            inputs={"input": "line1"},
+            inputs={"text_query": "line1"},
             supervisions={"ground_truth": "if True:"}
         )
 
         assert 1 == len(valid_dataset)
         assert valid_dataset[0] == Environment(
-            inputs={"input": "line2"},
+            inputs={"text_query": "line2"},
             supervisions={"ground_truth": "else:"}
         )
 

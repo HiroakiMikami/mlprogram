@@ -15,9 +15,9 @@ def tokenize(str: str) -> List[Token]:
 
 class TestGetWords(object):
     def test_get_words(self):
-        entries = [Environment(inputs={"input": "foo bar"},
+        entries = [Environment(inputs={"text_query": "foo bar"},
                                supervisions={"ground_truth": "y = x + 1"}),
-                   Environment(inputs={"input": "test foo"},
+                   Environment(inputs={"text_query": "test foo"},
                                supervisions={"ground_truth": "f(x)"})]
         dataset = ListDataset(entries)
         words = get_words(dataset, tokenize)
@@ -26,9 +26,9 @@ class TestGetWords(object):
 
 class TestGetCharacters(object):
     def test_get_characters(self):
-        entries = [Environment(inputs={"input": "foo bar"},
+        entries = [Environment(inputs={"text_query": "foo bar"},
                                supervisions={"ground_truth": "y = x + 1"}),
-                   Environment(inputs={"input": "test foo"},
+                   Environment(inputs={"text_query": "test foo"},
                                supervisions={"ground_truth": "f(x)"})]
         dataset = ListDataset(entries)
         chars = get_characters(dataset, tokenize)
@@ -41,10 +41,8 @@ class TestGetCharacters(object):
 
 class TestGetSamples(object):
     def test_get_samples(self):
-        entries = [Environment(inputs={"input": "foo bar"},
-                               supervisions={"ground_truth": "y = x + 1"}),
-                   Environment(inputs={"input": "test foo"},
-                               supervisions={"ground_truth": "f(x)"})]
+        entries = [Environment(supervisions={"ground_truth": "y = x + 1"}),
+                   Environment(supervisions={"ground_truth": "f(x)"})]
         dataset = ListDataset(entries)
         d = get_samples(dataset, Parser(lambda x: [x]))
         assert [
