@@ -99,7 +99,7 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                     self.encoder._rule_encoder.encode(rule).item()
                 )
 
-    @ logger.function_block("initialize")
+    @logger.function_block("initialize")
     def initialize(self, input: Input) -> Environment:
         self.module.encoder.eval()
         state_list = self.transform_input(input)
