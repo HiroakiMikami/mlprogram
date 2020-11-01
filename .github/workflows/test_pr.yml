@@ -4,14 +4,11 @@
 name: Python application
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,6 +28,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install .
         pip install ."[test]"
+    - name: Create dummy dataset
+      run: |
+        python ./tools/create_dummy_dataset.py
     - name: Check type hits with mypy
       run: |
         ./bin/mypy.bash
