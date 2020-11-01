@@ -1,11 +1,13 @@
 import logging
-import torch
-from typing import Callable, Iterable, Dict, Optional, Tuple
-from contextlib import contextmanager
-from torch.autograd.profiler import record_function
-from pytorch_pfn_extras.reporting import report
-import time
 import sys
+import time
+from contextlib import contextmanager
+from typing import Callable, Dict, Iterable, Optional, Tuple
+
+import torch
+from pytorch_pfn_extras.reporting import report
+from torch.autograd.profiler import record_function
+
 from mlprogram import transpyle  # noqa
 
 

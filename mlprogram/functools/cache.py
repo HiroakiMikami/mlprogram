@@ -1,11 +1,9 @@
 import os
-from typing import Callable
-from typing import TypeVar
-from typing import Generic
+from typing import Callable, Generic, TypeVar
 
-from mlprogram import logging
 import torch
 
+from mlprogram import logging
 
 V = TypeVar("V")
 logger = logging.Logger(__name__)

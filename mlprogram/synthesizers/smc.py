@@ -1,10 +1,11 @@
-from typing \
-    import TypeVar, Generic, Optional, Generator, Dict, Callable, cast
-from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram.synthesizers import Result, Synthesizer
-from mlprogram import logging
 import math
+from typing import Callable, Dict, Generator, Generic, Optional, TypeVar, cast
+
 import numpy as np
+
+from mlprogram import logging
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
+from mlprogram.synthesizers.synthesizer import Result, Synthesizer
 
 logger = logging.Logger(__name__)
 

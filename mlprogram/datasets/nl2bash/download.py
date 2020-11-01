@@ -1,13 +1,13 @@
-import tempfile
-import subprocess
 import os
+import subprocess
+import tempfile
 from typing import Dict
 
-from mlprogram import logging
-from mlprogram import Environment
-from mlprogram.functools import file_cache
+from mlprogram import Environment, logging
 from mlprogram.datasets import DEFAULT_CACHE_DIR
+from mlprogram.functools import file_cache
 from mlprogram.utils.data import ListDataset
+
 logger = logging.Logger(__name__)
 
 
@@ -40,10 +40,12 @@ make -C $tmpdir/nl2bash/scripts data
 
             def load(name: str):
                 with open(os.path.join(tmpdir, "nl2bash", "data", "bash",
-                                       f"{name}.nl.filtered")) as file:
+                                       f"{name}.nl.filtered"),
+                          encoding="utf-8") as file:
                     inputs = list(file.readlines())
                 with open(os.path.join(tmpdir, "nl2bash", "data", "bash",
-                                       f"{name}.cm.filtered")) as file:
+                                       f"{name}.cm.filtered"),
+                          encoding="utf-8") as file:
                     ground_truths = list(file.readlines())
                 return [
                     Environment(

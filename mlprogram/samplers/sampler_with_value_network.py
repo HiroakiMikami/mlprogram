@@ -1,10 +1,10 @@
+from typing import Callable, Generator, Generic, List, Optional, Tuple, TypeVar
+
 import torch
-from typing \
-    import TypeVar, Generic, Generator, Optional, List, Callable, Tuple
-from mlprogram import Environment
-from mlprogram.samplers import SamplerState, Sampler, DuplicatedSamplerState
+
+from mlprogram import Environment, logging
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
 from mlprogram.utils.data import Collate
-from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

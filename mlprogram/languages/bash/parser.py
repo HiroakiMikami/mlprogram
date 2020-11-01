@@ -1,9 +1,9 @@
+from typing import Callable, List, Optional, Union, cast
+
 import bashlex
-from typing import Optional, cast, Callable, List, Union
+
+from mlprogram.languages import AST, Leaf, Node
 from mlprogram.languages import Parser as BaseParser
-from mlprogram.languages import AST
-from mlprogram.languages import Node
-from mlprogram.languages import Leaf
 from mlprogram.languages.bash.bashlex_ast_to_ast import bashlex_ast_to_ast
 
 

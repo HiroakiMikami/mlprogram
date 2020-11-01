@@ -1,5 +1,5 @@
-from mlprogram.languages import Token
 from mlprogram.datasets.hearthstone import TokenizeQuery
+from mlprogram.languages import Token
 
 
 class TestTokenizeQuery(object):

@@ -5,6 +5,8 @@
 !/LICENSE.md
 !/README.md
 !/setup.py
+!/pyproject.toml
+!/setup.cfg
 !/mlprogram/**/*.py
 !/bin/*.bash
 !/test/**/*.py

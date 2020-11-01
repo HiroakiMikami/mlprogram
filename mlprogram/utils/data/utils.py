@@ -1,5 +1,6 @@
+from typing import Callable, Generic, List, TypeVar
+
 import torch
-from typing import List, Callable, TypeVar, Generic
 
 V = TypeVar("V")
 V0 = TypeVar("V0")

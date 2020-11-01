@@ -1,8 +1,8 @@
-from typing \
-    import TypeVar, Generic, Optional, Generator
-from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram.synthesizers import Result, Synthesizer
+from typing import Generator, Generic, Optional, TypeVar
+
 from mlprogram import logging
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
+from mlprogram.synthesizers.synthesizer import Result, Synthesizer
 
 logger = logging.Logger(__name__)
 

@@ -1,22 +1,20 @@
 import numpy as np
 
 from mlprogram import Environment
-from mlprogram.utils.data import ListDataset, get_samples
-from mlprogram.languages import Node, Leaf, Field
-from mlprogram.languages import Token
-from mlprogram.languages import Parser
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.utils.transform.action_sequence \
-    import GroundTruthToActionSequence, EncodeActionSequence
-from mlprogram.utils.transform.action_sequence \
-    import AddPreviousActions
-from mlprogram.utils.transform.action_sequence import AddActions
-from mlprogram.utils.transform.action_sequence import AddPreviousActionRules
-from mlprogram.utils.transform.action_sequence import AddActionSequenceAsTree
-from mlprogram.utils.transform.action_sequence \
-    import AddStateForRnnDecoder
-from mlprogram.utils.transform.action_sequence import AddHistoryState
-from mlprogram.utils.transform.action_sequence import AddQueryForTreeGenDecoder
+from mlprogram.languages import Field, Leaf, Node, Parser, Token
+from mlprogram.utils.data import ListDataset, get_samples
+from mlprogram.utils.transform.action_sequence import (
+    AddActions,
+    AddActionSequenceAsTree,
+    AddHistoryState,
+    AddPreviousActionRules,
+    AddPreviousActions,
+    AddQueryForTreeGenDecoder,
+    AddStateForRnnDecoder,
+    EncodeActionSequence,
+    GroundTruthToActionSequence,
+)
 
 
 class MockParser(Parser[str]):

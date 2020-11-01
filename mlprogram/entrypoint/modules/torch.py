@@ -1,8 +1,8 @@
+from typing import List, Optional, Union
+
 import torch
-from torch import nn
-from torch import optim
-from typing import List, Union
-from typing import Optional
+from torch import nn, optim
+
 from mlprogram import distributed
 
 

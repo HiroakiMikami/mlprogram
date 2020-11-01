@@ -1,6 +1,8 @@
+from typing import Callable, List, cast
+
 import torch
 from torchnlp.encoders import LabelEncoder
-from typing import Callable, List, cast
+
 from mlprogram import Environment
 from mlprogram.languages import Token
 

@@ -1,8 +1,10 @@
-from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram.synthesizers import SMC
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
+
 import numpy as np
 import timeout_decorator
+
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
+from mlprogram.synthesizers import SMC
 
 
 class MockSampler(Sampler[str, str, Tuple[str, str]]):

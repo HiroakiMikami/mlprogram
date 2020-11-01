@@ -1,11 +1,16 @@
+from typing import List
+
 import torch
 import torch.nn as nn
-from typing import List
+
 from mlprogram import Environment
-from mlprogram.samplers \
-    import Sampler, SamplerWithValueNetwork, SamplerState, \
-    DuplicatedSamplerState
-from mlprogram.utils.data import CollateOptions, Collate
+from mlprogram.samplers import (
+    DuplicatedSamplerState,
+    Sampler,
+    SamplerState,
+    SamplerWithValueNetwork,
+)
+from mlprogram.utils.data import Collate, CollateOptions
 
 
 class MockSampler(Sampler[int, int, str]):

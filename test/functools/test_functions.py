@@ -1,7 +1,6 @@
 from collections import OrderedDict
-from mlprogram.functools import Compose
-from mlprogram.functools import Sequence
-from mlprogram.functools import Map
+
+from mlprogram.functools import Compose, Map, Sequence
 
 
 class TestCompose(object):

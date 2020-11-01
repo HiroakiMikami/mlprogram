@@ -1,11 +1,12 @@
+import gzip
+import logging
 import os
+import sqlite3
+import sys
 import tempfile
 import zipfile
-import gzip
-import sqlite3
-import logging
-import sys
-from shutil import copyfileobj, copyfile
+from shutil import copyfile, copyfileobj
+
 from mlprogram import Environment
 from mlprogram.datasets.deepfix import download
 

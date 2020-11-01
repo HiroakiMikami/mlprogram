@@ -1,6 +1,4 @@
-from mlprogram.languages.csg import IsSubtype
-from mlprogram.languages.csg import Parser
-from mlprogram.languages.csg import get_samples, Dataset
+from mlprogram.languages.csg import Dataset, IsSubtype, Parser, get_samples
 
 
 class TestIsSubtype(object):

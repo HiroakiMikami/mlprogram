@@ -1,10 +1,11 @@
-import torch
-import torch.nn as nn
 from typing import cast
 
+import torch
+import torch.nn as nn
+
 from mlprogram import Environment
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.nn import EmbeddingWithMask
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class ActionSequenceReader(nn.Module):

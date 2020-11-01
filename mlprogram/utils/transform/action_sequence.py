@@ -1,12 +1,12 @@
-import torch
-from typing import Optional, cast, List, TypeVar, Generic
-from mlprogram import Environment
-from mlprogram.languages import Token
-from mlprogram.languages import Parser
-from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.actions import ActionSequence
-import numpy as np
+from typing import Generic, List, Optional, TypeVar, cast
 
+import numpy as np
+import torch
+
+from mlprogram import Environment
+from mlprogram.actions import ActionSequence
+from mlprogram.encoders import ActionSequenceEncoder
+from mlprogram.languages import Parser, Token
 
 Code = TypeVar("Code")
 

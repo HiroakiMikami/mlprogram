@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic
+from typing import Generic, TypeVar
 
 from mlprogram import Environment
 from mlprogram.metrics.metric import Metric

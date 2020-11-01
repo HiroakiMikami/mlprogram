@@ -1,8 +1,8 @@
-import torch
 import numpy as np
+import torch
 
 from mlprogram import Environment
-from mlprogram.nn.nl2code import Predictor, ActionSequenceReader
+from mlprogram.nn.nl2code import ActionSequenceReader, Predictor
 from mlprogram.nn.utils import rnn
 
 

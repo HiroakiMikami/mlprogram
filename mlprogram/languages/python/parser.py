@@ -1,10 +1,12 @@
 import ast as python_ast
+from typing import Callable, List, Optional
+
 import transpyle
-from typing import Optional, Callable, List
-from mlprogram.languages import Parser as BaseParser
+
 from mlprogram.languages import AST
-from mlprogram.languages.python.python_ast_to_ast import to_ast
+from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages.python.ast_to_python_ast import to_python_ast
+from mlprogram.languages.python.python_ast_to_ast import to_ast
 
 
 class Parser(BaseParser[str]):

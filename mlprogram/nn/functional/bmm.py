@@ -1,5 +1,6 @@
-import torch
 from typing import Union
+
+import torch
 
 
 def bmm(input: Union[torch.Tensor, torch.sparse_coo_tensor],

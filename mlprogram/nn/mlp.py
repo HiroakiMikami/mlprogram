@@ -1,7 +1,8 @@
+from collections import OrderedDict
+from typing import Optional
+
 import torch
 import torch.nn as nn
-from typing import Optional
-from collections import OrderedDict
 
 
 class MLP(nn.Module):

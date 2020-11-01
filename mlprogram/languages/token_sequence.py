@@ -1,11 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
-from typing import TypeVar
-from typing import Generic
-from typing import Tuple
-from typing import List
-from mlprogram.languages.token import Token
+from typing import Any, Generic, List, Tuple, TypeVar
 
+from mlprogram.languages.token import Token
 
 Kind = TypeVar("Kind")
 

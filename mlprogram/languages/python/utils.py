@@ -1,9 +1,9 @@
 import ast as python_ast
-from typing import Union
 from functools import lru_cache
-from mlprogram.languages import Root
-from mlprogram import logging
+from typing import Union
 
+from mlprogram import logging
+from mlprogram.languages import Root
 
 logger = logging.Logger(__name__)
 

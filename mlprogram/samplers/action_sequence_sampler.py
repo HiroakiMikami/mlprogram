@@ -1,24 +1,37 @@
-import torch
-import numpy as np
 from enum import Enum
-from typing \
-    import List, TypeVar, Generic, Generator, Optional, Callable, Union, \
-    cast, Dict, Tuple
+from typing import (
+    Callable,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
-from mlprogram import Environment
-from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.languages import Root
-from mlprogram.languages import Token
-from mlprogram.actions \
-    import ExpandTreeRule, ApplyRule, NodeConstraint, \
-    GenerateToken, Action, NodeType, CloseVariadicFieldRule
-from mlprogram.actions import ActionSequence
-from mlprogram.languages import AST, Node
-from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
+import numpy as np
+import torch
+
+from mlprogram import Environment, logging
+from mlprogram.actions import (
+    Action,
+    ActionSequence,
+    ApplyRule,
+    CloseVariadicFieldRule,
+    ExpandTreeRule,
+    GenerateToken,
+    NodeConstraint,
+    NodeType,
+)
 from mlprogram.collections import TopKElement
+from mlprogram.encoders import ActionSequenceEncoder
+from mlprogram.languages import AST, Node, Root, Token
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
+from mlprogram.samplers.sampler import DuplicatedSamplerState, Sampler, SamplerState
 from mlprogram.utils.data import Collate
-from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

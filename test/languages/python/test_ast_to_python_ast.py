@@ -1,9 +1,7 @@
 import ast as python_ast
 
 import mlprogram.languages as ast
-
-from mlprogram.languages.python.ast_to_python_ast import to_builtin_type
-from mlprogram.languages.python.ast_to_python_ast import to_python_ast
+from mlprogram.languages.python.ast_to_python_ast import to_builtin_type, to_python_ast
 from mlprogram.languages.python.python_ast_to_ast import to_ast
 
 

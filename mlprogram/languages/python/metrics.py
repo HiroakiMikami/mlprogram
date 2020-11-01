@@ -1,7 +1,7 @@
+import re
 from typing import List
 
-import re
-from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 
 from mlprogram import Environment
 from mlprogram.metrics import Metric

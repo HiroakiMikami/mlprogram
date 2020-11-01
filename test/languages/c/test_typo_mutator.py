@@ -1,6 +1,5 @@
 from mlprogram.languages.c import TypoMutator
-from mlprogram.languages.linediff import Diff
-from mlprogram.languages.linediff import Interpreter
+from mlprogram.languages.linediff import Diff, Interpreter
 
 
 class TestTypoMutator(object):

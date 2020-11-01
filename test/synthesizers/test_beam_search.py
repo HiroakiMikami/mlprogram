@@ -1,6 +1,7 @@
-from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram.synthesizers import BeamSearch, Result
 from typing import List, Tuple
+
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
+from mlprogram.synthesizers import BeamSearch, Result
 
 
 class MockSampler(Sampler[str, str, Tuple[str, List[str]]]):

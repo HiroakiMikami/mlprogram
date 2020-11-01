@@ -1,6 +1,5 @@
+from mlprogram.datasets.django import SplitValue, TokenizeQuery
 from mlprogram.languages import Token
-from mlprogram.datasets.django import TokenizeQuery
-from mlprogram.datasets.django import SplitValue
 
 
 class TestTokenizeQuery(object):

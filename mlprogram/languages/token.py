@@ -1,9 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
-from typing import TypeVar
-from typing import Generic
-from typing import Optional
-
+from typing import Any, Generic, Optional, TypeVar
 
 Kind = TypeVar("Kind")
 Value = TypeVar("Value")

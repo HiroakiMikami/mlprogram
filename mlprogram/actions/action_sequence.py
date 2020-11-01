@@ -1,13 +1,19 @@
-from dataclasses import dataclass
-from typing import Dict, Optional, List, cast, Any
 from copy import deepcopy
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, cast
 
-from mlprogram.actions.action \
-    import Action, ApplyRule, Rule, ExpandTreeRule, NodeConstraint, NodeType, \
-    GenerateToken, CloseVariadicFieldRule
-from mlprogram.languages import AST, Node, Leaf, Field, Root
 from mlprogram import logging
-
+from mlprogram.actions.action import (
+    Action,
+    ApplyRule,
+    CloseVariadicFieldRule,
+    ExpandTreeRule,
+    GenerateToken,
+    NodeConstraint,
+    NodeType,
+    Rule,
+)
+from mlprogram.languages import AST, Field, Leaf, Node, Root
 
 logger = logging.Logger(__name__)
 

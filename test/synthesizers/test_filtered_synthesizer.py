@@ -1,5 +1,6 @@
-from typing import List, Dict, Any
-from mlprogram.synthesizers import Synthesizer, Result, FilteredSynthesizer
+from typing import Any, Dict, List
+
+from mlprogram.synthesizers import FilteredSynthesizer, Result, Synthesizer
 
 
 class MockSynthesizer(Synthesizer[Dict[str, Any], int]):

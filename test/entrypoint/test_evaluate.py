@@ -1,13 +1,14 @@
-import tempfile
 import os
+import tempfile
+
 import torch
 
 from mlprogram import Environment
 from mlprogram.entrypoint import evaluate
-from mlprogram.utils.data import ListDataset
-from mlprogram.metrics import Accuracy, Bleu
 from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
+from mlprogram.metrics import Accuracy, Bleu
 from mlprogram.synthesizers import Result as DecoderResult
+from mlprogram.utils.data import ListDataset
 
 
 class MockModel:

@@ -34,9 +34,9 @@ jobs:
     - name: Check type hits with mypy
       run: |
         ./bin/mypy.bash
-    - name: Lint with flake8
+    - name: Lint
       run: |
-        ./bin/lint.bash
+        ./bin/lint.bash true
     - name: Test
       run: |
         ./bin/run_test.bash all

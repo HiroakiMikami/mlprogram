@@ -1,4 +1,5 @@
 import numpy as np
+
 from mlprogram import Environment
 from mlprogram.metrics import Accuracy
 

@@ -1,8 +1,8 @@
-import torch
 import numpy as np
+import torch
+from torch import nn
 
 from mlprogram.nn import MLP
-from torch import nn
 
 
 class TestMLP(object):

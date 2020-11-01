@@ -1,5 +1,6 @@
+from math import pi, sqrt
+
 import torch
-from math import sqrt, pi
 
 
 def gelu(input: torch.Tensor) -> torch.Tensor:

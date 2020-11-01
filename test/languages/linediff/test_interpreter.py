@@ -1,9 +1,5 @@
-from mlprogram.languages.linediff import Interpreter
-from mlprogram.languages.linediff import Diff
-from mlprogram.languages.linediff import Insert
-from mlprogram.languages.linediff import Remove
-from mlprogram.languages.linediff import Replace
 from mlprogram.languages import BatchedState
+from mlprogram.languages.linediff import Diff, Insert, Interpreter, Remove, Replace
 
 
 class TestInterpreter(object):

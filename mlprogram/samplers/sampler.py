@@ -1,7 +1,5 @@
-from typing \
-    import TypeVar, Generic, Optional, List, Generator, Any, Callable, Tuple
 from dataclasses import dataclass
-
+from typing import Any, Callable, Generator, Generic, List, Optional, Tuple, TypeVar
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")

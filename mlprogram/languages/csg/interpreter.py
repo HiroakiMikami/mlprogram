@@ -1,14 +1,21 @@
-import numpy as np
-from mlprogram.languages import BatchedState
-from mlprogram.languages import Interpreter as BaseInterpreter
-from mlprogram.languages.csg \
-    import AST, Circle, Rectangle, Rotation, Translation, Union, Difference, \
-    Reference
-from typing import Callable
-from typing import Dict
-from typing import List
 import math
 from functools import lru_cache
+from typing import Callable, Dict, List
+
+import numpy as np
+
+from mlprogram.languages import BatchedState
+from mlprogram.languages import Interpreter as BaseInterpreter
+from mlprogram.languages.csg import (
+    AST,
+    Circle,
+    Difference,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 
 def show(canvas: np.array) -> str:

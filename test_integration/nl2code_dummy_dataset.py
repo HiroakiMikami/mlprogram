@@ -1,12 +1,10 @@
-from typing import List
-from typing import Union
-from typing import Optional
-from mlprogram import Environment
-from mlprogram.languages import AST, Node, Leaf, Field, Root
-from mlprogram.languages import Token
-from mlprogram.languages import Parser as BaseParser
-from mlprogram.utils.data import ListDataset
+from typing import List, Optional, Union
 
+from mlprogram import Environment
+from mlprogram.languages import AST, Field, Leaf, Node
+from mlprogram.languages import Parser as BaseParser
+from mlprogram.languages import Root, Token
+from mlprogram.utils.data import ListDataset
 
 # Definition of dummy language
 """

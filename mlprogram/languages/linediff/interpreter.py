@@ -1,14 +1,9 @@
+from functools import lru_cache
+from typing import List, Tuple
+
 from mlprogram.languages import BatchedState
 from mlprogram.languages import Interpreter as BaseInterpreter
-from mlprogram.languages.linediff import AST
-from mlprogram.languages.linediff import Delta
-from mlprogram.languages.linediff import Insert
-from mlprogram.languages.linediff import Remove
-from mlprogram.languages.linediff import Replace
-from mlprogram.languages.linediff import Diff
-from typing import List
-from typing import Tuple
-from functools import lru_cache
+from mlprogram.languages.linediff import AST, Delta, Diff, Insert, Remove, Replace
 
 
 class Interpreter(BaseInterpreter[AST, str, str, str]):

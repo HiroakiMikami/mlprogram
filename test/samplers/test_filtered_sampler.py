@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
-from mlprogram.samplers import Sampler, FilteredSampler
+
+from mlprogram.samplers import FilteredSampler, Sampler
 
 
 class MockSampler(Sampler[int, int, str]):

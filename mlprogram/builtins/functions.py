@@ -1,6 +1,6 @@
-from typing import Generic, TypeVar, Optional, Any, List, Callable
-from mlprogram import Environment
-from mlprogram import logging
+from typing import Any, Callable, Generic, List, Optional, TypeVar
+
+from mlprogram import Environment, logging
 
 logger = logging.Logger(__name__)
 

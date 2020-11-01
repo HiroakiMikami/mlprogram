@@ -1,9 +1,10 @@
 import argparse
-import torch
-import pstats
-import os
-from contextlib import redirect_stdout
 import json
+import os
+import pstats
+from contextlib import redirect_stdout
+
+import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cprofile", type=str, required=True)

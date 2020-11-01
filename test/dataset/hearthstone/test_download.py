@@ -1,5 +1,6 @@
-import tempfile
 import os
+import tempfile
+
 from mlprogram import Environment
 from mlprogram.datasets.hearthstone import download
 

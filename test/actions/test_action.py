@@ -1,6 +1,11 @@
-from mlprogram.actions \
-    import ExpandTreeRule, GenerateToken, ApplyRule, NodeType, \
-    NodeConstraint, CloseVariadicFieldRule
+from mlprogram.actions import (
+    ApplyRule,
+    CloseVariadicFieldRule,
+    ExpandTreeRule,
+    GenerateToken,
+    NodeConstraint,
+    NodeType,
+)
 
 
 class TestNodeType(object):

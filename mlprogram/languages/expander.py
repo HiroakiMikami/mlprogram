@@ -1,6 +1,4 @@
-from typing import Generic
-from typing import TypeVar
-from typing import List
+from typing import Generic, List, TypeVar
 
 Code = TypeVar("Code")
 

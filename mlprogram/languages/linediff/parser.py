@@ -1,23 +1,12 @@
-from typing import Optional
-from typing import TypeVar
-from typing import Generic
-from typing import List
-from typing import cast
-from mlprogram.languages.linediff import AST as diffAST
-from mlprogram.languages.linediff import Diff
-from mlprogram.languages.linediff import Delta
-from mlprogram.languages.linediff import Insert
-from mlprogram.languages.linediff import Remove
-from mlprogram.languages.linediff import Replace
-from mlprogram.languages import Lexer
-from mlprogram.languages import AST
-from mlprogram.languages import Node
-from mlprogram.languages import Leaf
-from mlprogram.languages import TokenSequence
-from mlprogram.languages import Token
-from mlprogram.languages import Sugar as S
-from mlprogram.languages import Parser as BaseParser
+from typing import Generic, List, Optional, TypeVar, cast
+
 from mlprogram import logging
+from mlprogram.languages import AST, Leaf, Lexer, Node
+from mlprogram.languages import Parser as BaseParser
+from mlprogram.languages import Sugar as S
+from mlprogram.languages import Token, TokenSequence
+from mlprogram.languages.linediff import AST as diffAST
+from mlprogram.languages.linediff import Delta, Diff, Insert, Remove, Replace
 
 logger = logging.Logger(__name__)
 

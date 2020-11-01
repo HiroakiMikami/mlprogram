@@ -1,13 +1,8 @@
+from typing import List, Optional, Tuple
+
 import numpy as np
-from typing import Optional
-from typing import Tuple
-from typing import List
 
-from mlprogram.languages.linediff import Diff
-from mlprogram.languages.linediff import Delta
-from mlprogram.languages.linediff import Replace
-
-from mlprogram.languages.linediff import AST
+from mlprogram.languages.linediff import AST, Delta, Diff, Replace
 
 
 class TypoMutator:

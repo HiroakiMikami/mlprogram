@@ -1,8 +1,8 @@
-import torch
 import numpy as np
+import torch
 
 from mlprogram import Environment
-from mlprogram.nn.treegen import NLReaderBlock, NLReader
+from mlprogram.nn.treegen import NLReader, NLReaderBlock
 from mlprogram.nn.utils.rnn import pad_sequence
 
 

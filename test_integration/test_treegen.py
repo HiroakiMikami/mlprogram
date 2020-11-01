@@ -1,48 +1,57 @@
-from collections import OrderedDict
-import sys
 import logging
-import tempfile
 import os
-import numpy as np
 import random
+import sys
+import tempfile
+from collections import OrderedDict
 
+import fairseq.optim as optim
+import numpy as np
 import torch
 import torch.nn as nn
-import fairseq.optim as optim
 from torchnlp.encoders import LabelEncoder
 
 import mlprogram.nn
-from mlprogram.entrypoint import evaluate as eval, train_supervised
-from mlprogram.entrypoint import EvaluateSynthesizer
-from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.builtins import Pick
-from mlprogram.synthesizers import BeamSearch
-from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.functools import Sequence, Map
-from mlprogram.functools import Compose
-from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.utils.data import get_words, get_characters, get_samples
-from mlprogram.utils.transform.action_sequence import AddPreviousActions
-from mlprogram.utils.transform.action_sequence import AddPreviousActionRules
-from mlprogram.utils.transform.action_sequence import AddActionSequenceAsTree
-from mlprogram.utils.transform.action_sequence import AddQueryForTreeGenDecoder
-from mlprogram.utils.transform.action_sequence import EncodeActionSequence
-from mlprogram.utils.transform.action_sequence \
-    import GroundTruthToActionSequence
-from mlprogram.utils.transform.text import ExtractReference
-from mlprogram.utils.transform.text import EncodeWordQuery
-from mlprogram.utils.transform.text import EncodeCharacterQuery
-from mlprogram.nn.action_sequence import Loss, Predictor
-from mlprogram.nn import treegen
+from mlprogram.entrypoint import EvaluateSynthesizer
+from mlprogram.entrypoint import evaluate as eval
+from mlprogram.entrypoint import train_supervised
+from mlprogram.entrypoint.modules.torch import Optimizer
+from mlprogram.entrypoint.train import Epoch
+from mlprogram.functools import Compose, Map, Sequence
 from mlprogram.metrics import Accuracy
-
-from test_integration.nl2code_dummy_dataset import is_subtype
-from test_integration.nl2code_dummy_dataset import train_dataset
-from test_integration.nl2code_dummy_dataset import test_dataset
-from test_integration.nl2code_dummy_dataset import tokenize
-from test_integration.nl2code_dummy_dataset import Parser
+from mlprogram.nn import treegen
+from mlprogram.nn.action_sequence import Loss, Predictor
+from mlprogram.samplers import ActionSequenceSampler
+from mlprogram.synthesizers import BeamSearch
+from mlprogram.utils.data import (
+    Collate,
+    CollateOptions,
+    get_characters,
+    get_samples,
+    get_words,
+)
+from mlprogram.utils.transform.action_sequence import (
+    AddActionSequenceAsTree,
+    AddPreviousActionRules,
+    AddPreviousActions,
+    AddQueryForTreeGenDecoder,
+    EncodeActionSequence,
+    GroundTruthToActionSequence,
+)
+from mlprogram.utils.transform.text import (
+    EncodeCharacterQuery,
+    EncodeWordQuery,
+    ExtractReference,
+)
+from test_integration.nl2code_dummy_dataset import (
+    Parser,
+    is_subtype,
+    test_dataset,
+    tokenize,
+    train_dataset,
+)
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 

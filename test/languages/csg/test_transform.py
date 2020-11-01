@@ -1,13 +1,10 @@
-import torch
 import numpy as np
+import torch
 
 from mlprogram import Environment
-
-from mlprogram.languages.csg import Interpreter
-from mlprogram.languages.csg import show
+from mlprogram.languages.csg import Interpreter, show
 from mlprogram.languages.csg.ast import Rectangle
-from mlprogram.languages.csg.transform import TransformCanvas
-from mlprogram.languages.csg.transform import AddTestCases
+from mlprogram.languages.csg.transform import AddTestCases, TransformCanvas
 
 
 class TestAddTestCases(object):

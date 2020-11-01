@@ -1,6 +1,4 @@
-from mlprogram.languages.linediff import Expander
-from mlprogram.languages.linediff import Diff
-from mlprogram.languages.linediff import Remove
+from mlprogram.languages.linediff import Diff, Expander, Remove
 
 
 class TestExpander(object):

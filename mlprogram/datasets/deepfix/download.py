@@ -1,17 +1,16 @@
+import gzip
+import os
+import sqlite3
 import tempfile
 import urllib
-import os
 import zipfile
-import gzip
-import sqlite3
 from shutil import copyfileobj
 from typing import Callable
 
-from mlprogram import Environment
-from mlprogram import logging
-from mlprogram.utils.data import ListDataset
+from mlprogram import Environment, logging
 from mlprogram.datasets import DEFAULT_CACHE_DIR
 from mlprogram.functools import file_cache
+from mlprogram.utils.data import ListDataset
 
 logger = logging.Logger(__name__)
 

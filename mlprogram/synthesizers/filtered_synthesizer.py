@@ -1,6 +1,7 @@
-from typing import TypeVar, Generic, Generator, Callable, Optional
-from mlprogram.synthesizers import Synthesizer, Result
+from typing import Callable, Generator, Generic, Optional, TypeVar
+
 from mlprogram import logging
+from mlprogram.synthesizers.synthesizer import Result, Synthesizer
 
 logger = logging.Logger(__name__)
 

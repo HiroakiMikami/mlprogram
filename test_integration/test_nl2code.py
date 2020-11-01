@@ -1,45 +1,46 @@
-from collections import OrderedDict
 import logging
+import os
 import sys
 import tempfile
-import os
-import numpy as np
+from collections import OrderedDict
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchnlp.encoders import LabelEncoder
-import mlprogram.nn
-from mlprogram.builtins import Pick
-from mlprogram.entrypoint import evaluate as eval, train_supervised
-from mlprogram.entrypoint import EvaluateSynthesizer
-from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.modules.torch import Optimizer
-from mlprogram.synthesizers import BeamSearch
-from mlprogram.samplers import ActionSequenceSampler
-from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.functools import Sequence, Map
-from mlprogram.functools import Compose
-from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.utils.data import get_words, get_samples
-from mlprogram.utils.transform.action_sequence \
-    import GroundTruthToActionSequence
-from mlprogram.utils.transform.action_sequence import EncodeActionSequence
-from mlprogram.utils.transform.action_sequence import AddActions
-from mlprogram.utils.transform.action_sequence import AddPreviousActions
-from mlprogram.utils.transform.action_sequence import AddHistoryState
-from mlprogram.utils.transform.action_sequence import AddStateForRnnDecoder
-from mlprogram.utils.transform.text import ExtractReference
-from mlprogram.utils.transform.text import EncodeWordQuery
-from mlprogram.nn.action_sequence import Loss
-import mlprogram.nn.nl2code as nl2code
-from mlprogram.metrics import Accuracy
 
-from test_integration.nl2code_dummy_dataset import is_subtype
-from test_integration.nl2code_dummy_dataset import train_dataset
-from test_integration.nl2code_dummy_dataset import test_dataset
-from test_integration.nl2code_dummy_dataset import tokenize
-from test_integration.nl2code_dummy_dataset import Parser
+import mlprogram.nn
+import mlprogram.nn.nl2code as nl2code
+from mlprogram.builtins import Pick
+from mlprogram.encoders import ActionSequenceEncoder
+from mlprogram.entrypoint import EvaluateSynthesizer
+from mlprogram.entrypoint import evaluate as eval
+from mlprogram.entrypoint import train_supervised
+from mlprogram.entrypoint.modules.torch import Optimizer
+from mlprogram.entrypoint.train import Epoch
+from mlprogram.functools import Compose, Map, Sequence
+from mlprogram.metrics import Accuracy
+from mlprogram.nn.action_sequence import Loss
+from mlprogram.samplers import ActionSequenceSampler
+from mlprogram.synthesizers import BeamSearch
+from mlprogram.utils.data import Collate, CollateOptions, get_samples, get_words
+from mlprogram.utils.transform.action_sequence import (
+    AddActions,
+    AddHistoryState,
+    AddPreviousActions,
+    AddStateForRnnDecoder,
+    EncodeActionSequence,
+    GroundTruthToActionSequence,
+)
+from mlprogram.utils.transform.text import EncodeWordQuery, ExtractReference
+from test_integration.nl2code_dummy_dataset import (
+    Parser,
+    is_subtype,
+    test_dataset,
+    tokenize,
+    train_dataset,
+)
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 

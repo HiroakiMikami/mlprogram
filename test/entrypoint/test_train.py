@@ -1,20 +1,17 @@
-import numpy as np
-import tempfile
-import os
 import json
-import torch
-from torch import nn
-from torch import optim
+import os
+import tempfile
 
+import numpy as np
+import torch
 from pytorch_pfn_extras.reporting import report
+from torch import nn, optim
 
 from mlprogram import Environment
+from mlprogram.entrypoint import train_REINFORCE, train_supervised
 from mlprogram.entrypoint.train import Epoch, Iteration
-from mlprogram.entrypoint import train_supervised, train_REINFORCE
-from mlprogram.utils.data import ListDataset
-from mlprogram.utils.data import Collate
-from mlprogram.utils.data import CollateOptions
 from mlprogram.synthesizers import Result
+from mlprogram.utils.data import Collate, CollateOptions, ListDataset
 
 
 class MockSynthesizer:

@@ -1,5 +1,5 @@
-from typing import Any, List, Tuple, Callable, Optional
 from bisect import bisect_left
+from typing import Any, Callable, List, Optional, Tuple
 
 
 class TopKElement:

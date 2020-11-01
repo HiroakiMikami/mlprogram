@@ -1,10 +1,18 @@
 from typing import Optional
-from mlprogram.languages.csg import AST as csgAST
-from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
-from mlprogram.languages.csg import Union, Difference, Reference
-from mlprogram.languages import AST, Node, Field, Leaf
-from mlprogram.languages import Parser as BaseParser
+
 from mlprogram import logging
+from mlprogram.languages import AST, Field, Leaf, Node
+from mlprogram.languages import Parser as BaseParser
+from mlprogram.languages.csg import AST as csgAST
+from mlprogram.languages.csg import (
+    Circle,
+    Difference,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 logger = logging.Logger(__name__)
 

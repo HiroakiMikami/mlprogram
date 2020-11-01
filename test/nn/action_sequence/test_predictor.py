@@ -1,5 +1,5 @@
-import torch
 import numpy as np
+import torch
 
 from mlprogram import Environment
 from mlprogram.nn.action_sequence import Predictor

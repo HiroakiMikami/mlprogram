@@ -1,9 +1,8 @@
 from typing import Generic, TypeVar
 
 from mlprogram import Environment
-from mlprogram.metrics import Metric, Accuracy
 from mlprogram.languages import Interpreter
-
+from mlprogram.metrics import Accuracy, Metric
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")

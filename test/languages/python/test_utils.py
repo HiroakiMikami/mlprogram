@@ -1,7 +1,7 @@
 import ast as python_ast
 
-from mlprogram.languages.python.utils import is_builtin_type
 from mlprogram.languages.python import IsSubtype
+from mlprogram.languages.python.utils import is_builtin_type
 
 
 class TestIsBuiltinType(object):

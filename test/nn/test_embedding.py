@@ -1,8 +1,8 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
-from mlprogram.nn.embedding import EmbeddingWithMask, EmbeddingInverse
+from mlprogram.nn.embedding import EmbeddingInverse, EmbeddingWithMask
 
 
 class TestEmbeddingWithMask(object):

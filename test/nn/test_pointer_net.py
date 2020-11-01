@@ -1,5 +1,5 @@
-import torch
 import numpy as np
+import torch
 
 from mlprogram.nn import PointerNet
 from mlprogram.nn.utils.rnn import pad_sequence
