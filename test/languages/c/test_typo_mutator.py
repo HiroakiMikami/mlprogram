@@ -18,6 +18,4 @@ int y = x.a;
 """
         for _ in range(100):
             mutated, diff = mutator.mutate(orig)
-            print(mutated)
-            print(diff)
             assert interpreter.eval(diff, [mutated])[0] == orig
