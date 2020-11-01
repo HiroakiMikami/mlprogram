@@ -18,6 +18,18 @@ class ExtractReference(object):
         return entry
 
 
+class EncodeTokenQuery(object):
+    def __init__(self, token_encoder: LabelEncoder):
+        self.token_encoder = token_encoder
+
+    def __call__(self, entry: Environment) -> Environment:
+        reference = entry.states["reference"]
+
+        entry.states["token_nl_query"] = self.token_encoder.batch_encode(reference)
+
+        return entry
+
+
 class EncodeWordQuery(object):
     def __init__(self, word_encoder: LabelEncoder):
         self.word_encoder = word_encoder
