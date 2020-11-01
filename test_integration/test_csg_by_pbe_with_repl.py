@@ -103,7 +103,7 @@ class TestCsgByPbeWithREPL(object):
             ])),
             Compose(OrderedDict([
                 ("add_previous_actions",
-                 AddPreviousActions(encoder)),
+                 AddPreviousActions(encoder, n_dependent=1)),
                 ("add_state",
                  AddStateForRnnDecoder())
             ])),
@@ -172,7 +172,7 @@ class TestCsgByPbeWithREPL(object):
     def transform(self, encoder, interpreter, parser):
         tcanvas = TransformCanvas()
         tcode = GroundTruthToActionSequence(parser)
-        aaction = AddPreviousActions(encoder)
+        aaction = AddPreviousActions(encoder, n_dependent=1)
         astate = AddStateForRnnDecoder()
         tgt = EncodeActionSequence(encoder)
         return Sequence(
