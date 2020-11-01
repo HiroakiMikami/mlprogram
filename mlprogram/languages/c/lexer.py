@@ -16,11 +16,6 @@ class Lexer(BaseLexer[str, str]):
         self.delimiter = delimiter
 
     def tokenize(self, code: str) -> Optional[List[Token[str, str]]]:
-        lines = list(code.split("\n"))
-        offsets = [0]
-        for line in lines:
-            offsets.append(offsets[-1] + len(line) + 1)
-
         lexer = CLexer(logger.warning, lambda: None,
                        lambda: None, lambda x: False)
         lexer.build(optimize=False)
