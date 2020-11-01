@@ -1,17 +1,16 @@
+from math import log
+from typing import List
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import List
+
 from mlprogram import Environment
-from mlprogram.samplers \
-    import ActionSequenceSampler, SamplerState
-from mlprogram.encoders import Samples, ActionSequenceEncoder
-from mlprogram.languages import Root
-from mlprogram.languages import Token
-from mlprogram.actions \
-    import NodeConstraint, NodeType, ExpandTreeRule
+from mlprogram.actions import ExpandTreeRule, NodeConstraint, NodeType
+from mlprogram.encoders import ActionSequenceEncoder, Samples
+from mlprogram.languages import Root, Token
+from mlprogram.samplers import ActionSequenceSampler, SamplerState
 from mlprogram.utils.data import Collate, CollateOptions
-from math import log
 
 R = NodeType(Root(), NodeConstraint.Node, False)
 X = NodeType("X", NodeConstraint.Node, False)

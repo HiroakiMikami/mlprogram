@@ -1,9 +1,7 @@
 import ast as python_ast
 
 import mlprogram.languages as ast
-
-from mlprogram.languages.python.python_ast_to_ast import base_ast_type
-from mlprogram.languages.python.python_ast_to_ast import to_ast
+from mlprogram.languages.python.python_ast_to_ast import base_ast_type, to_ast
 
 
 class TestBaseASTType(object):

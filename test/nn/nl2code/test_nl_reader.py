@@ -1,7 +1,7 @@
-import torch
 import numpy as np
-import mlprogram.nn.utils.rnn as rnn
+import torch
 
+import mlprogram.nn.utils.rnn as rnn
 from mlprogram import Environment
 from mlprogram.nn.nl2code import NLReader
 

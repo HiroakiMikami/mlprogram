@@ -1,7 +1,7 @@
 from typing import List
-from mlprogram.languages.linediff import AST
-from mlprogram.languages.linediff import Diff
+
 from mlprogram.languages import Expander as BaseExpander
+from mlprogram.languages.linediff import AST, Diff
 
 
 class Expander(BaseExpander[AST]):

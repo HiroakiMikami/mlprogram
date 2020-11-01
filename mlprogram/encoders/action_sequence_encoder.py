@@ -1,16 +1,19 @@
+from dataclasses import dataclass
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union, cast
+
 import torch
 from torchnlp.encoders import LabelEncoder
-from typing import Any, List, Optional, Union, cast, Generic, TypeVar
-from typing import Tuple
-from typing import Dict
-from dataclasses import dataclass
 
+from mlprogram.actions import (
+    ActionSequence,
+    ApplyRule,
+    CloseVariadicFieldRule,
+    ExpandTreeRule,
+    GenerateToken,
+    NodeType,
+    Rule,
+)
 from mlprogram.languages import Token
-from mlprogram.actions import NodeType
-from mlprogram.actions import ApplyRule, GenerateToken
-from mlprogram.actions import Rule, ExpandTreeRule
-from mlprogram.actions import CloseVariadicFieldRule
-from mlprogram.actions import ActionSequence
 
 V = TypeVar("V")
 

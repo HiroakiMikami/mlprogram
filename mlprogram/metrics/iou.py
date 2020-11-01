@@ -1,7 +1,7 @@
 import numpy as np
 
 from mlprogram import Environment
-from mlprogram.metrics import Metric
+from mlprogram.metrics.metric import Metric
 
 
 class Iou(Metric[np.array]):

@@ -1,7 +1,8 @@
 import numpy as np
+
 from mlprogram import Environment
-from mlprogram.metrics import TestCaseResult
 from mlprogram.languages import Interpreter
+from mlprogram.metrics import TestCaseResult
 
 
 class MockInterpreter(Interpreter):

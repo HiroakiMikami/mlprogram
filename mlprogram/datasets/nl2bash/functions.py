@@ -1,6 +1,8 @@
 import re
-from nltk import tokenize
 from typing import List
+
+from nltk import tokenize
+
 from mlprogram.languages import Token
 
 tokenizer = tokenize.WhitespaceTokenizer()

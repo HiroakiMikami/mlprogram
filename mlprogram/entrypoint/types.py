@@ -1,40 +1,37 @@
-import os
 import collections
+import os
 
-import mlprogram.entrypoint
+import mlprogram.actions
 import mlprogram.builtins
+import mlprogram.datasets.deepfix
 import mlprogram.datasets.django
 import mlprogram.datasets.hearthstone
 import mlprogram.datasets.nl2bash
-import mlprogram.datasets.deepfix
+import mlprogram.encoders
+import mlprogram.entrypoint
 import mlprogram.functools
-import mlprogram.nn
-import mlprogram.nn.action_sequence
-import mlprogram.metrics
-import mlprogram.languages.python
-import mlprogram.languages.python.metrics
 import mlprogram.languages.bash
+import mlprogram.languages.c
 import mlprogram.languages.csg
 import mlprogram.languages.csg.transform
-import mlprogram.languages.c
-import mlprogram.actions
+import mlprogram.languages.python
+import mlprogram.languages.python.metrics
+import mlprogram.metrics
+import mlprogram.nn
+import mlprogram.nn.action_sequence
+import mlprogram.nn.nl2code
+import mlprogram.nn.pbe_with_repl
+import mlprogram.nn.treegen
 import mlprogram.synthesizers
 import mlprogram.utils.data
 import mlprogram.utils.transform
 import mlprogram.utils.transform.action_sequence
-import mlprogram.utils.transform.text
-import mlprogram.encoders
-
-import mlprogram.nn.nl2code
-
-import mlprogram.nn.treegen
-
-import mlprogram.nn.pbe_with_repl
 import mlprogram.utils.transform.pbe
-
+import mlprogram.utils.transform.text
 from mlprogram.entrypoint.modules.numpy import types as numpy_types
 from mlprogram.entrypoint.modules.torch import types as torch_types
 from mlprogram.entrypoint.modules.torchnlp import types as torchnlp_types
+
 try:
     from mlprogram.entrypoint.modules.fairseq import types as fairseq_types
 except:  # noqa

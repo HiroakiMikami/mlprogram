@@ -1,8 +1,5 @@
 
-from mlprogram.languages import Node
-from mlprogram.languages import Field
-from mlprogram.languages import Leaf
-from mlprogram.languages import Sugar
+from mlprogram.languages import Field, Leaf, Node, Sugar
 
 
 class TestLeaf(object):

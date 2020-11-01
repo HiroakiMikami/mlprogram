@@ -1,5 +1,4 @@
-from mlprogram.languages import Token
-from mlprogram.languages import TokenSequence
+from mlprogram.languages import Token, TokenSequence
 from mlprogram.languages.c import Lexer
 
 

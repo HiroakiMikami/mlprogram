@@ -1,5 +1,7 @@
-import numpy as np
 from typing import List
+
+import numpy as np
+
 from mlprogram import logging
 
 logger = logging.Logger(__name__)

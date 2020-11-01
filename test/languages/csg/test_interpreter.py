@@ -1,9 +1,18 @@
 import numpy as np
+
 from mlprogram.languages import BatchedState
-from mlprogram.languages.csg import show, Shape, Interpreter
-from mlprogram.languages.csg \
-    import Circle, Rectangle, Translation, Rotation, Union, Difference, \
-    Reference
+from mlprogram.languages.csg import (
+    Circle,
+    Difference,
+    Interpreter,
+    Rectangle,
+    Reference,
+    Rotation,
+    Shape,
+    Translation,
+    Union,
+    show,
+)
 
 
 class TestShow(object):

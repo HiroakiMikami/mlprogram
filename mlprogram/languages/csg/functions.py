@@ -1,13 +1,20 @@
-from typing import Union as U, List
-from mlprogram.languages import Parser
-from mlprogram.languages.csg import AST as csgAST
-from mlprogram.languages.csg import Circle, Rectangle, Translation, Rotation
-from mlprogram.languages.csg import Union, Difference, Reference
-from mlprogram.languages.csg import Dataset
+from typing import List
+from typing import Union as U
+
+from mlprogram.actions import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
 from mlprogram.encoders import Samples
-from mlprogram.actions \
-    import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
-from mlprogram.languages import Root
+from mlprogram.languages import Parser, Root
+from mlprogram.languages.csg import AST as csgAST
+from mlprogram.languages.csg import (
+    Circle,
+    Dataset,
+    Difference,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 
 class IsSubtype:

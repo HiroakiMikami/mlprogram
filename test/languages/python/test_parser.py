@@ -1,8 +1,8 @@
 import ast
 
-from mlprogram.languages.python.python_ast_to_ast import to_ast
-from mlprogram.languages.python import Parser
 from mlprogram.languages import Node
+from mlprogram.languages.python import Parser
+from mlprogram.languages.python.python_ast_to_ast import to_ast
 
 
 class TestParser(object):

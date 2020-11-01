@@ -2,8 +2,11 @@ import numpy as np
 import torch
 
 from mlprogram.nn import EmbeddingWithMask
-from mlprogram.nn.treegen \
-    import ElementEmbedding, ActionEmbedding, ActionSignatureEmbedding
+from mlprogram.nn.treegen import (
+    ActionEmbedding,
+    ActionSignatureEmbedding,
+    ElementEmbedding,
+)
 
 
 class TestElementEmbedding(object):

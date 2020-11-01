@@ -1,5 +1,7 @@
-import torch
 from typing import Dict
+
+import torch
+
 from mlprogram import logging
 
 logger = logging.Logger(__name__)

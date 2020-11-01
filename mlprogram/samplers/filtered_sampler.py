@@ -1,9 +1,7 @@
-from typing \
-    import TypeVar, Generic, Optional, List, Generator, Callable, Tuple
-from mlprogram.samplers.sampler \
-    import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram import logging
+from typing import Callable, Generator, Generic, List, Optional, Tuple, TypeVar
 
+from mlprogram import logging
+from mlprogram.samplers.sampler import DuplicatedSamplerState, Sampler, SamplerState
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")

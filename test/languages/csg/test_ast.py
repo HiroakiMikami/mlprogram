@@ -1,6 +1,12 @@
-from mlprogram.languages.csg.ast \
-    import Circle, Rectangle, Translation, Rotation, Union, Difference
-from mlprogram.languages.csg.ast import Reference
+from mlprogram.languages.csg.ast import (
+    Circle,
+    Difference,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 
 class TestAST(object):

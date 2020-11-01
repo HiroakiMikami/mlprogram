@@ -1,6 +1,8 @@
-import torch
 import os
 from typing import Optional
+
+import torch
+
 from mlprogram import logging
 
 logger = logging.Logger(__name__)

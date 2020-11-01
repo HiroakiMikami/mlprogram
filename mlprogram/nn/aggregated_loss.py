@@ -1,6 +1,6 @@
 import torch
-from torch import nn
 from pytorch_pfn_extras.reporting import report
+from torch import nn
 
 
 class AggregatedLoss(nn.Module):

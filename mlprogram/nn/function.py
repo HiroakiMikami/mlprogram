@@ -1,5 +1,6 @@
-from torch import nn
 from typing import Callable
+
+from torch import nn
 
 
 class Function(nn.Module):

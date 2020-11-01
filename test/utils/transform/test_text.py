@@ -1,12 +1,13 @@
-from torchnlp.encoders import LabelEncoder
-
 import numpy as np
+from torchnlp.encoders import LabelEncoder
 
 from mlprogram import Environment
 from mlprogram.languages import Token
-from mlprogram.utils.transform.text import ExtractReference
-from mlprogram.utils.transform.text import EncodeWordQuery
-from mlprogram.utils.transform.text import EncodeCharacterQuery
+from mlprogram.utils.transform.text import (
+    EncodeCharacterQuery,
+    EncodeWordQuery,
+    ExtractReference,
+)
 
 
 class TestExtractReference(object):

@@ -1,7 +1,7 @@
 import os
 import tempfile
-from mlprogram.entrypoint.configs import parse_config
-from mlprogram.entrypoint.configs import load_config
+
+from mlprogram.entrypoint.configs import load_config, parse_config
 
 
 class TestParseConfig(object):

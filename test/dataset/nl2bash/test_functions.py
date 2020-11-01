@@ -1,7 +1,6 @@
-from mlprogram.languages import Token
-from mlprogram.datasets.nl2bash import TokenizeQuery
-from mlprogram.datasets.nl2bash import SplitValue
+from mlprogram.datasets.nl2bash import SplitValue, TokenizeQuery
 from mlprogram.datasets.nl2bash.functions import get_subtokens
+from mlprogram.languages import Token
 
 
 class TestGetSubtokens(object):

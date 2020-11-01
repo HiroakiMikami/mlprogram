@@ -1,9 +1,8 @@
+from typing import Any, Callable, List, Union
+
 import bashlex
-from typing import Union, Any, Callable, List
-from mlprogram.languages import AST
-from mlprogram.languages import Node
-from mlprogram.languages import Leaf
-from mlprogram.languages import Field
+
+from mlprogram.languages import AST, Field, Leaf, Node
 
 
 def bashlex_ast_to_ast(script: str,

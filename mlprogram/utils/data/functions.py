@@ -1,16 +1,13 @@
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+
 import torch
 from torch.nn import functional as F
-from dataclasses import dataclass
-from typing import Callable, Sequence, Any, Optional, Dict, List
-from typing import Tuple
-from mlprogram import Environment
-from mlprogram import logging
-from mlprogram.actions \
-    import Rule, ApplyRule, CloseVariadicFieldRule
-from mlprogram.languages import Parser
-from mlprogram.actions import ActionSequence
+
+from mlprogram import Environment, logging
+from mlprogram.actions import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
 from mlprogram.encoders import Samples
-from mlprogram.languages import Token
+from mlprogram.languages import Parser, Token
 from mlprogram.nn.utils import rnn
 
 logger = logging.Logger(__name__)

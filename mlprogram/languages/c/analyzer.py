@@ -1,8 +1,8 @@
-import subprocess
-import tempfile
 import os
 import re
-from typing import List, cast, IO
+import subprocess
+import tempfile
+from typing import IO, List, cast
 
 
 class Analyzer(object):

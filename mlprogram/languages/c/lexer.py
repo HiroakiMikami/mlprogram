@@ -1,12 +1,11 @@
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import List, Optional, Tuple
+
 from pycparser.c_lexer import CLexer
 from pycparser.ply.lex import LexToken
+
 from mlprogram import logging
 from mlprogram.languages import Lexer as BaseLexer
-from mlprogram.languages import Token
-from mlprogram.languages import TokenSequence
+from mlprogram.languages import Token, TokenSequence
 
 logger = logging.Logger(__name__)
 

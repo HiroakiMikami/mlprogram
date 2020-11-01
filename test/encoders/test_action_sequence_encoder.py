@@ -1,12 +1,17 @@
-import torch
 import numpy as np
+import torch
 
-from mlprogram.actions \
-    import ExpandTreeRule, NodeType, NodeConstraint, \
-    ApplyRule, GenerateToken, CloseVariadicFieldRule
-from mlprogram.actions import ActionSequence
+from mlprogram.actions import (
+    ActionSequence,
+    ApplyRule,
+    CloseVariadicFieldRule,
+    ExpandTreeRule,
+    GenerateToken,
+    NodeConstraint,
+    NodeType,
+)
+from mlprogram.encoders import ActionSequenceEncoder, Samples
 from mlprogram.languages import Token
-from mlprogram.encoders import Samples, ActionSequenceEncoder
 
 
 class TestEncoder(object):

@@ -1,4 +1,4 @@
-from typing import Optional, Callable, TypeVar, Generic
+from typing import Callable, Generic, Optional, TypeVar
 
 from mlprogram import Environment
 

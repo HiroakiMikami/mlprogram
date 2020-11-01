@@ -1,15 +1,17 @@
+from typing import List
+
 import torch
 import torch.nn as nn
-from typing import List
+
 from mlprogram import Environment
-from mlprogram.synthesizers import Synthesizer, Result
-from mlprogram.languages import Token
-from mlprogram.languages import Expander
-from mlprogram.languages import BatchedState
-from mlprogram.languages import Interpreter
+from mlprogram.languages import BatchedState, Expander, Interpreter, Token
+from mlprogram.samplers import (
+    DuplicatedSamplerState,
+    SamplerState,
+    SequentialProgramSampler,
+)
+from mlprogram.synthesizers import Result, Synthesizer
 from mlprogram.utils.data import Collate
-from mlprogram.samplers \
-    import SequentialProgramSampler, SamplerState, DuplicatedSamplerState
 
 
 def transform_input(x):

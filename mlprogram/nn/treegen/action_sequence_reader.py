@@ -1,15 +1,24 @@
+from typing import Tuple, cast
+
 import torch
 import torch.nn as nn
-from typing import Tuple, cast
 
 from mlprogram import Environment
 from mlprogram.nn import TreeConvolution
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
-from mlprogram.nn.functional \
-    import index_embeddings, position_embeddings, gelu, lne_to_nel, nel_to_lne
+from mlprogram.nn.functional import (
+    gelu,
+    index_embeddings,
+    lne_to_nel,
+    nel_to_lne,
+    position_embeddings,
+)
+from mlprogram.nn.treegen.embedding import (
+    ActionEmbedding,
+    ActionSignatureEmbedding,
+    ElementEmbedding,
+)
 from mlprogram.nn.treegen.gating import Gating
-from mlprogram.nn.treegen.embedding \
-    import ActionEmbedding, ActionSignatureEmbedding, ElementEmbedding
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class ActionSequenceReaderBlock(nn.Module):

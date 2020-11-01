@@ -49,7 +49,8 @@ SOFTWARE.
 """
 
 import re
-from typing import Optional, Callable, List
+from typing import Callable, List, Optional
+
 from mlprogram.languages import AST
 from mlprogram.languages.python import Parser as BaseParser
 

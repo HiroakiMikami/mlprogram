@@ -1,5 +1,5 @@
 
-from mlprogram.languages import Node, Leaf, Field
+from mlprogram.languages import Field, Leaf, Node
 from mlprogram.languages.bash import Parser
 
 

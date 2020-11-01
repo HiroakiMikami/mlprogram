@@ -1,12 +1,7 @@
 from mlprogram.languages import Lexer
-from mlprogram.languages import Token
-from mlprogram.languages import TokenSequence
 from mlprogram.languages import Sugar as S
-from mlprogram.languages.linediff import Parser
-from mlprogram.languages.linediff import Diff
-from mlprogram.languages.linediff import Insert
-from mlprogram.languages.linediff import Remove
-from mlprogram.languages.linediff import Replace
+from mlprogram.languages import Token, TokenSequence
+from mlprogram.languages.linediff import Diff, Insert, Parser, Remove, Replace
 
 
 class MockLexer(Lexer):

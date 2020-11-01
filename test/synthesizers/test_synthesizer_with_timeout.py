@@ -1,6 +1,7 @@
-from typing import List, Dict, Any
-from mlprogram.synthesizers import Synthesizer, Result, SynthesizerWithTimeout
 import time
+from typing import Any, Dict, List
+
+from mlprogram.synthesizers import Result, Synthesizer, SynthesizerWithTimeout
 
 
 class MockSynthesizer(Synthesizer[Dict[str, Any], int]):

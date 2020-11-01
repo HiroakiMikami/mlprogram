@@ -1,11 +1,5 @@
-from typing import Dict
-from typing import Any
-from typing import Generic
-from typing import List
-from typing import TypeVar
-from typing import Optional
 from dataclasses import dataclass
-
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")

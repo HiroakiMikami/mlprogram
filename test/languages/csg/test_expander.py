@@ -1,8 +1,4 @@
-from mlprogram.languages.csg import Expander
-from mlprogram.languages.csg import Circle
-from mlprogram.languages.csg import Rotation
-from mlprogram.languages.csg import Difference
-from mlprogram.languages.csg import Reference
+from mlprogram.languages.csg import Circle, Difference, Expander, Reference, Rotation
 
 
 class TestExpander(object):

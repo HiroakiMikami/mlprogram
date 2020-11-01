@@ -1,12 +1,19 @@
-import torch
-import numpy as np
 from typing import List
+
+import numpy as np
+import torch
+
 from mlprogram import Environment
 from mlprogram.languages import Token
 from mlprogram.languages.python import Parser
-from mlprogram.utils.data \
-    import ListDataset, get_samples, get_words, \
-    get_characters, Collate, CollateOptions
+from mlprogram.utils.data import (
+    Collate,
+    CollateOptions,
+    ListDataset,
+    get_characters,
+    get_samples,
+    get_words,
+)
 
 
 def tokenize(str: str) -> List[Token]:

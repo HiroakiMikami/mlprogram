@@ -1,7 +1,7 @@
-import torch
 import numpy as np
+import torch
 
-from mlprogram.nn.functional import position_embeddings, index_embeddings
+from mlprogram.nn.functional import index_embeddings, position_embeddings
 
 
 class TestPostionEmbeddings(object):

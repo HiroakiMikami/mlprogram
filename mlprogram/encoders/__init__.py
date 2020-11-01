@@ -1,1 +1,4 @@
-from mlprogram.encoders.action_sequence_encoder import Samples, ActionSequenceEncoder  # noqa
+from mlprogram.encoders.action_sequence_encoder import (  # noqa
+    ActionSequenceEncoder,
+    Samples,
+)

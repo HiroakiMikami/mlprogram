@@ -1,13 +1,12 @@
-import tempfile
-import torch
-import torch.nn as nn
 import os
-import pytorch_pfn_extras as ppe
+import tempfile
 
 import pytest
+import pytorch_pfn_extras as ppe
+import torch
+import torch.nn as nn
 
-from mlprogram.pytorch_pfn_extras import SaveTopKModel
-from mlprogram.pytorch_pfn_extras import StopByThreshold
+from mlprogram.pytorch_pfn_extras import SaveTopKModel, StopByThreshold
 
 
 class TestSaveTopKModel(object):

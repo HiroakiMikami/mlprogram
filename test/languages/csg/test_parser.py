@@ -1,8 +1,14 @@
-from mlprogram.languages import Node, Leaf, Field
-from mlprogram.languages.csg import Parser
-from mlprogram.languages.csg import Circle, Rectangle, Reference
-from mlprogram.languages.csg import Translation, Rotation
-from mlprogram.languages.csg import Union, Difference
+from mlprogram.languages import Field, Leaf, Node
+from mlprogram.languages.csg import (
+    Circle,
+    Difference,
+    Parser,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 
 class TestParser(object):

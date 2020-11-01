@@ -1,9 +1,9 @@
-import torch
 import numpy as np
+import torch
+
 from mlprogram import Environment
+from mlprogram.languages import Interpreter, Token
 from mlprogram.utils.transform.pbe import ToEpisode
-from mlprogram.languages import Token
-from mlprogram.languages import Interpreter
 
 
 class MockInterpreter(Interpreter):

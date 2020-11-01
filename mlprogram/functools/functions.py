@@ -1,6 +1,8 @@
-from torch import multiprocessing
 from collections import OrderedDict
-from typing import Generic, TypeVar, Optional, Any, List, Callable
+from typing import Any, Callable, Generic, List, Optional, TypeVar
+
+from torch import multiprocessing
+
 from mlprogram import logging
 
 logger = logging.Logger(__name__)

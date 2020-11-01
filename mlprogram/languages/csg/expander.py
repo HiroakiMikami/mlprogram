@@ -1,13 +1,16 @@
 from typing import List
-from mlprogram.languages.csg import AST
-from mlprogram.languages.csg import Circle
-from mlprogram.languages.csg import Rectangle
-from mlprogram.languages.csg import Translation
-from mlprogram.languages.csg import Rotation
-from mlprogram.languages.csg import Union
-from mlprogram.languages.csg import Difference
-from mlprogram.languages.csg import Reference
+
 from mlprogram.languages import Expander as BaseExpander
+from mlprogram.languages.csg import (
+    AST,
+    Circle,
+    Difference,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 
 class Expander(BaseExpander[AST]):

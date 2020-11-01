@@ -1,18 +1,14 @@
+from typing import Callable, Generator, Generic, List, Optional, Tuple, TypeVar
+
 import numpy as np
 import torch
 from torch import nn
-from typing \
-    import TypeVar, Generic, Generator, Optional, Callable, \
-    List, Tuple
-from mlprogram import Environment
-from mlprogram.languages import Token
-from mlprogram.languages import Expander
-from mlprogram.languages import BatchedState
-from mlprogram.languages import Interpreter
-from mlprogram.samplers import SamplerState, DuplicatedSamplerState, Sampler
-from mlprogram.synthesizers import Synthesizer
+
+from mlprogram import Environment, logging
+from mlprogram.languages import BatchedState, Expander, Interpreter, Token
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
+from mlprogram.synthesizers.synthesizer import Synthesizer
 from mlprogram.utils.data import Collate
-from mlprogram import logging
 
 logger = logging.Logger(__name__)
 

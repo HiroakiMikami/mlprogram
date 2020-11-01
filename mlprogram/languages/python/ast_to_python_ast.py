@@ -1,9 +1,7 @@
 import ast as python_ast  # noqa
-# from typing import List
 
 import mlprogram.languages as ast
-from mlprogram.languages.python import PythonAST
-from mlprogram.languages.python.utils import BuiltinType
+from mlprogram.languages.python.utils import BuiltinType, PythonAST
 
 
 def to_builtin_type(value: str, type_name: str) -> BuiltinType:

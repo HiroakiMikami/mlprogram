@@ -1,6 +1,7 @@
+from typing import Tuple, cast
+
 import torch
 import torch.nn as nn
-from typing import Tuple, cast
 
 from mlprogram import Environment
 from mlprogram.nn.utils import rnn
@@ -65,7 +66,9 @@ class DecoderCell(nn.Module):
         """
         super(DecoderCell, self).__init__()
         self._lstm_cell = nn.LSTMCell(
-            input_size+query_size+hidden_size, hidden_size)
+            input_size + query_size + hidden_size,
+            hidden_size
+        )
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
         self._attention_layer1 = nn.Linear(

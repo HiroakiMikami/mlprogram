@@ -1,13 +1,13 @@
-import requests
-from typing import Callable, Tuple, Dict
 import os
+from typing import Callable, Dict, Tuple
 
-from mlprogram import logging
-from mlprogram import Environment
-from mlprogram.functools import file_cache
-from mlprogram.utils.data import ListDataset
+import requests
+
+from mlprogram import Environment, logging
 from mlprogram.datasets import DEFAULT_CACHE_DIR
 from mlprogram.datasets.django.format_annotations import format_annotations
+from mlprogram.functools import file_cache
+from mlprogram.utils.data import ListDataset
 
 logger = logging.Logger(__name__)
 

@@ -1,46 +1,53 @@
-import numpy as np
-from collections import OrderedDict
 import logging
-import sys
-import tempfile
 import os
 import random
+import sys
+import tempfile
+from collections import OrderedDict
 
+import numpy as np
 import torch
 import torch.optim as optim
-from mlprogram.builtins import Div, Mul
-from mlprogram.builtins import Flatten, Threshold, Pick
-from mlprogram.entrypoint \
-    import train_supervised, train_REINFORCE, evaluate as eval
-from mlprogram.entrypoint import EvaluateSynthesizer
-from mlprogram.entrypoint.train import Epoch
-from mlprogram.entrypoint.modules.torch import Optimizer, Reshape
-from mlprogram.synthesizers \
-    import SMC, FilteredSynthesizer, SynthesizerWithTimeout
-import mlprogram.samplers
-from mlprogram.samplers import ActionSequenceSampler
-from mlprogram.samplers import SequentialProgramSampler
-from mlprogram.samplers import SamplerWithValueNetwork
-from mlprogram.samplers import FilteredSampler
-from mlprogram.encoders import ActionSequenceEncoder
-from mlprogram.functools import Sequence, Map, Compose
-from mlprogram.utils.data import Collate, CollateOptions
+
 import mlprogram.nn
-from mlprogram.nn.action_sequence import Loss
-from mlprogram.nn import CNN2d, Apply, AggregatedLoss, MLP
-from mlprogram.nn.pbe_with_repl import Encoder
 import mlprogram.nn.action_sequence as a_s
+import mlprogram.samplers
 from mlprogram import metrics
-from mlprogram.languages.csg import get_samples, IsSubtype
-from mlprogram.languages.csg import Expander
-from mlprogram.languages.csg import Interpreter, Parser, Dataset
-from mlprogram.utils.data \
-    import to_map_style_dataset, transform as data_transform
-from mlprogram.languages.csg.transform import TransformCanvas
-from mlprogram.languages.csg.transform import AddTestCases
-from mlprogram.utils.transform.action_sequence \
-    import GroundTruthToActionSequence, EncodeActionSequence, \
-    AddPreviousActions, AddStateForRnnDecoder
+from mlprogram.builtins import Div, Flatten, Mul, Pick, Threshold
+from mlprogram.encoders import ActionSequenceEncoder
+from mlprogram.entrypoint import EvaluateSynthesizer
+from mlprogram.entrypoint import evaluate as eval
+from mlprogram.entrypoint import train_REINFORCE, train_supervised
+from mlprogram.entrypoint.modules.torch import Optimizer, Reshape
+from mlprogram.entrypoint.train import Epoch
+from mlprogram.functools import Compose, Map, Sequence
+from mlprogram.languages.csg import (
+    Dataset,
+    Expander,
+    Interpreter,
+    IsSubtype,
+    Parser,
+    get_samples,
+)
+from mlprogram.languages.csg.transform import AddTestCases, TransformCanvas
+from mlprogram.nn import MLP, AggregatedLoss, Apply, CNN2d
+from mlprogram.nn.action_sequence import Loss
+from mlprogram.nn.pbe_with_repl import Encoder
+from mlprogram.samplers import (
+    ActionSequenceSampler,
+    FilteredSampler,
+    SamplerWithValueNetwork,
+    SequentialProgramSampler,
+)
+from mlprogram.synthesizers import SMC, FilteredSynthesizer, SynthesizerWithTimeout
+from mlprogram.utils.data import Collate, CollateOptions, to_map_style_dataset
+from mlprogram.utils.data import transform as data_transform
+from mlprogram.utils.transform.action_sequence import (
+    AddPreviousActions,
+    AddStateForRnnDecoder,
+    EncodeActionSequence,
+    GroundTruthToActionSequence,
+)
 from mlprogram.utils.transform.pbe import ToEpisode
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)

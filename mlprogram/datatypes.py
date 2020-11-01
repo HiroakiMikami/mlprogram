@@ -1,11 +1,4 @@
-from typing import Dict
-from typing import Tuple
-from typing import Any
-from typing import Iterable
-from typing import Optional
-from typing import TypeVar
-from typing import Generic
-
+from typing import Any, Dict, Generic, Iterable, Optional, Tuple, TypeVar
 
 K = TypeVar("K")
 V = TypeVar("V")

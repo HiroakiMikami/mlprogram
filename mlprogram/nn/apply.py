@@ -1,6 +1,7 @@
+from typing import Any, Dict, List, Tuple, Union
+
 import torch
 from torch import nn
-from typing import Dict, Any, List, Union, Tuple
 
 from mlprogram import Environment
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask

@@ -1,11 +1,7 @@
-from typing import List
-from typing import TypeVar
-from typing import Generic
+from typing import Generic, List, TypeVar
+
 from mlprogram import Environment
-from mlprogram.languages import Token
-from mlprogram.languages import Expander
-from mlprogram.languages import BatchedState
-from mlprogram.languages import Interpreter
+from mlprogram.languages import BatchedState, Expander, Interpreter, Token
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")

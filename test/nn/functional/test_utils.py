@@ -1,6 +1,6 @@
 import torch
 
-from mlprogram.nn.functional import nel_to_lne, lne_to_nel
+from mlprogram.nn.functional import lne_to_nel, nel_to_lne
 
 
 class TestEmbeddings(object):

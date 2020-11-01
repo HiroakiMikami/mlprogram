@@ -1,16 +1,20 @@
-import numpy as np
+from typing import Any, Dict, Optional
 
+import numpy as np
 from torch.utils import data
 from torch.utils.data import IterableDataset
-from typing import Optional, Any, Dict
 
-from mlprogram import Environment
-from mlprogram.languages.csg import AST, Reference
-from mlprogram.languages.csg import Circle, Rectangle
-from mlprogram.languages.csg import Translation, Rotation
-from mlprogram.languages.csg import Union, Difference
-from mlprogram import logging
-
+from mlprogram import Environment, logging
+from mlprogram.languages.csg import (
+    AST,
+    Circle,
+    Difference,
+    Rectangle,
+    Reference,
+    Rotation,
+    Translation,
+    Union,
+)
 
 logger = logging.Logger(__name__)
 

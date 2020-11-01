@@ -1,9 +1,8 @@
 import ast as python_ast
-from typing import List, Type, Union, Callable
+from typing import Callable, List, Type, Union
 
 import mlprogram.languages as ast
-from mlprogram.languages.python import PythonAST
-from mlprogram.languages.python.utils import is_builtin_type, BuiltinType
+from mlprogram.languages.python.utils import BuiltinType, PythonAST, is_builtin_type
 
 
 def base_ast_type(node: PythonAST) \

@@ -1,10 +1,12 @@
-import torch
 import os
-from torch import nn
+
+import torch
 from pytorch_pfn_extras import training
 from pytorch_pfn_extras.training import extension
-from mlprogram.collections import TopKElement
+from torch import nn
+
 from mlprogram import logging
+from mlprogram.collections import TopKElement
 
 logger = logging.Logger(__name__)
 

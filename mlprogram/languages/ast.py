@@ -1,6 +1,6 @@
-from dataclasses import dataclass
-from typing import Union, List, Any, Generic, TypeVar, Optional
 from copy import deepcopy
+from dataclasses import dataclass
+from typing import Any, Generic, List, Optional, TypeVar, Union
 
 
 class Root:

@@ -1,10 +1,17 @@
 import pytest
+
+from mlprogram.actions import (
+    ActionSequence,
+    ApplyRule,
+    CloseVariadicFieldRule,
+    ExpandTreeRule,
+    GenerateToken,
+    InvalidActionException,
+    NodeConstraint,
+    NodeType,
+)
 from mlprogram.actions.action_sequence import Parent
-from mlprogram.actions import ActionSequence, InvalidActionException
-from mlprogram.actions \
-    import ExpandTreeRule, NodeType, NodeConstraint, ApplyRule, \
-    GenerateToken, CloseVariadicFieldRule
-from mlprogram.languages import Node, Leaf, Field, Root
+from mlprogram.languages import Field, Leaf, Node, Root
 
 
 class TestActionSequence(object):

@@ -1,6 +1,7 @@
 import pytest
-from mlprogram.datatypes import _Dict
+
 from mlprogram import Environment
+from mlprogram.datatypes import _Dict
 
 
 class Test_Dict(object):

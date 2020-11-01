@@ -1,6 +1,7 @@
-from mlprogram.samplers import Sampler, SamplerState, DuplicatedSamplerState
-from mlprogram.synthesizers import DFS, Result
 from typing import List, Tuple
+
+from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
+from mlprogram.synthesizers import DFS, Result
 
 
 class MockSampler(Sampler[str, str, Tuple[str, List[int]]]):

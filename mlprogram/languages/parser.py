@@ -1,9 +1,6 @@
-from typing import TypeVar
-from typing import Generic
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 
 from mlprogram.languages import AST
-
 
 Code = TypeVar("Code")
 

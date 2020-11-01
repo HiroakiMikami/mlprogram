@@ -1,21 +1,20 @@
+import json
+import multiprocessing as mp
+import os
 import time
 from dataclasses import dataclass
-import multiprocessing as mp
-from typing \
-    import List, Dict, TypeVar, Generic, Mapping, Any, Optional, Tuple
+from typing import Any, Dict, Generic, List, Mapping, Optional, Tuple, TypeVar
+
 import numpy as np
 import torch
+from pytorch_pfn_extras.reporting import report
 from torch import nn
 from tqdm import tqdm
-import os
-import json
-from pytorch_pfn_extras.reporting import report
-from mlprogram import Environment
+
+from mlprogram import Environment, logging
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
-from mlprogram import logging
-
 
 logger = logging.Logger(__name__)
 
