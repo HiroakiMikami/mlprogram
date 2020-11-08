@@ -1,3 +1,4 @@
+from mlprogram.languages.analyzer import Analyzer  # noqa
 from mlprogram.languages.ast import AST  # noqa
 from mlprogram.languages.ast import Field  # noqa
 from mlprogram.languages.ast import Leaf  # noqa

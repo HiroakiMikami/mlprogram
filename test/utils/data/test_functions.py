@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from mlprogram import Environment
-from mlprogram.languages import Token
+from mlprogram.languages import Analyzer, Token
 from mlprogram.languages.python import Parser
 from mlprogram.utils.data import (
     Collate,
@@ -13,6 +13,7 @@ from mlprogram.utils.data import (
     get_characters,
     get_samples,
     get_words,
+    split_by_n_error,
 )
 
 
@@ -190,3 +191,30 @@ class TestCollate(object):
         retval = collate.split(collate.collate(data))
         assert 1 == retval[0]["input@pad0"]
         assert 2 == retval[1]["input@pad0"]
+
+
+class MockAnalyzer(Analyzer[str, str]):
+    def __init__(self, errors):
+        self.errors = errors
+
+    def __call__(self, code):
+        return self.errors[code]
+
+
+class TestSplitByNError(object):
+    def test_split(self):
+        dataset = ListDataset([
+            Environment(inputs={"code": "x"}),
+            Environment(inputs={"code": "y"})
+        ])
+        splitted = split_by_n_error(dataset,
+                                    MockAnalyzer({
+                                        "x": [],
+                                        "y": ["error"]
+                                    }))
+        assert list(splitted["no_error"]) == [
+            Environment(inputs={"code": "x"})
+        ]
+        assert list(splitted["with_error"]) == [
+            Environment(inputs={"code": "y"})
+        ]

@@ -4,8 +4,10 @@ import subprocess
 import tempfile
 from typing import IO, List, cast
 
+from mlprogram.languages import Analyzer as BaseAnalyzer
 
-class Analyzer(object):
+
+class Analyzer(BaseAnalyzer[str, str]):
     def __init__(self, clang_cmd: str = "clang"):
         self.clang_cmd = clang_cmd
 

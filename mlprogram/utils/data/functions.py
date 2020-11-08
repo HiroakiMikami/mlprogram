@@ -7,8 +7,9 @@ from torch.nn import functional as F
 from mlprogram import Environment, logging
 from mlprogram.actions import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
 from mlprogram.encoders import Samples
-from mlprogram.languages import Parser, Token
+from mlprogram.languages import Analyzer, Parser, Token
 from mlprogram.nn.utils import rnn
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 
@@ -184,3 +185,18 @@ class Collate:
                 logger.debug(f"{name} is invalid type: {type(t)}")
 
         return retval
+
+
+def split_by_n_error(dataset: torch.utils.data.Dataset,
+                     analyzer: Analyzer) -> Dict[str, torch.utils.data.Dataset]:
+    no_error = []
+    with_error = []
+    for data in dataset:
+        if len(analyzer(data.inputs["code"])) == 0:
+            no_error.append(data)
+        else:
+            with_error.append(data)
+    return {
+        "no_error": ListDataset(no_error),
+        "with_error": ListDataset(with_error)
+    }
