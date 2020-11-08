@@ -1,5 +1,0 @@
-imports:
-  - "nl2code_base.yaml"
-  - "../nl2code/evaluate.yaml"
-
-output_dir: "output/output"

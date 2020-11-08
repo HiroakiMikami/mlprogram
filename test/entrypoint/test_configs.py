@@ -43,40 +43,29 @@ class TestParseConfig(object):
 class TestLoadConfig(object):
     def test_simple_case(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(os.path.join(tmpdir, "x.yaml"), "w") as file:
-                file.writelines([
-                    "x:",
-                    "  10"
-                ])
-            assert {"x": 10} == load_config(os.path.join(tmpdir, "x.yaml"))
+            with open(os.path.join(tmpdir, "x.py"), "w") as file:
+                file.write("x = 10")
+            assert {"x": 10} == load_config(os.path.join(tmpdir, "x.py"))
 
     def test_load_config(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(os.path.join(tmpdir, "sub.yaml"), "w") as file:
+            with open(os.path.join(tmpdir, "sub.py"), "w") as file:
+                file.writelines(["y = 0"])
+            with open(os.path.join(tmpdir, "x.py"), "w") as file:
                 file.writelines([
-                    "y:\n",
-                    "  0\n"
-                ])
-            with open(os.path.join(tmpdir, "x.yaml"), "w") as file:
-                file.writelines([
-                    "imports:\n",
-                    "  - sub.yaml\n",
-                    "x: 10\n"
+                    "imports = [\"sub.py\"]\n"
+                    "x = 10"
                 ])
             assert {"x": 10,
-                    "y": 0} == load_config(os.path.join(tmpdir, "x.yaml"))
+                    "y": 0} == load_config(os.path.join(tmpdir, "x.py"))
 
     def test_overwrite(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(os.path.join(tmpdir, "sub.yaml"), "w") as file:
+            with open(os.path.join(tmpdir, "sub.py"), "w") as file:
+                file.writelines(["x = 0"])
+            with open(os.path.join(tmpdir, "x.py"), "w") as file:
                 file.writelines([
-                    "x:\n",
-                    "  0\n"
+                    "imports = [\"sub.py\"]\n"
+                    "x = 10"
                 ])
-            with open(os.path.join(tmpdir, "x.yaml"), "w") as file:
-                file.writelines([
-                    "imports:\n",
-                    "  - sub.yaml\n",
-                    "x: 10\n"
-                ])
-            assert {"x": 10} == load_config(os.path.join(tmpdir, "x.yaml"))
+            assert {"x": 10} == load_config(os.path.join(tmpdir, "x.py"))

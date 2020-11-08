@@ -1,5 +1,0 @@
-imports:
-  - "treegen_base.yaml"
-  - "../treegen/train.yaml"
-
-output_dir: "output/output"

@@ -1,7 +1,0 @@
-imports:
-    - "pbe_with_repl_pretrain_base.yaml"
-
-option:
-  type: select
-  key: large
-  options: "@/options"

@@ -74,8 +74,8 @@ Usage Examples
 It requires CUDA enabled GPU.
 
 ```bash
-$ python tools/launch.py --config configs/nl2code/nl2code_train.yaml
-$ python tools/launch.py --config configs/nl2code/nl2code_evaluate.yaml
+$ python tools/launch.py --config configs/nl2code/nl2code_train.py
+$ python tools/launch.py --config configs/nl2code/nl2code_evaluate.py
 ```
 
 
