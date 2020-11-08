@@ -1,7 +1,0 @@
-imports:
-    - "without_repl_train_base.yaml"
-
-option:
-  type: select
-  key: large
-  options: "@/options"

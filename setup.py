@@ -11,8 +11,8 @@ requires = [
     "bashlex",
     "pytorch-pfn-extras==0.3.0",
     "tqdm",
-    "pyyaml",
     "pycparser",
+    "python-config @ git+https://github.com/HiroakiMikami/python-config",
 ]
 
 if sys.version_info.major == 3 and sys.version_info.minor < 7:

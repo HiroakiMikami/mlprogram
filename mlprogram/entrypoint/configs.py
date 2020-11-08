@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict
 
-import yaml
+import python_config
 from pytorch_pfn_extras.config import Config
 
 from mlprogram.entrypoint.types import types
@@ -60,7 +60,7 @@ def parse_config(configs: Dict[str, Any]) -> Config:
 
 def load_config(file: str) -> Dict[str, Any]:
     with open(file) as f:
-        orig = yaml.load(f)
+        orig = python_config.load(f)
     dir = os.path.dirname(file)
     if "imports" in orig:
         imports = orig.pop("imports")
@@ -72,7 +72,7 @@ def load_config(file: str) -> Dict[str, Any]:
         for key, value in subconfig.items():
             configs[key] = value
     with open(file) as f:
-        main = yaml.load(f)
+        main = python_config.load(f)
     for key, value in main.items():
         if key == "imports":
             continue

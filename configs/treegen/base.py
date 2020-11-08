@@ -1,0 +1,252 @@
+normalize_dataset = mlprogram.utils.transform.NormalizeGroundTruth(
+    normalize=mlprogram.functools.Sequence(
+        funcs=collections.OrderedDict(
+            items=[["parse", parser.parse], ["unparse", parser.unparse]],
+        ),
+    ),
+)
+train_dataset = dataset.train
+test_dataset = mlprogram.utils.data.transform(
+    dataset=dataset.test,
+    transform=normalize_dataset,
+)
+valid_dataset = mlprogram.utils.data.transform(
+    dataset=dataset.valid,
+    transform=normalize_dataset,
+)
+encoder = {
+    "word_encoder": with_file_cache(
+        path=os.path.join(
+            args=[output_dir, "word_encoder.pt"],
+        ),
+        config=torchnlp.encoders.LabelEncoder(
+            sample=mlprogram.utils.data.get_words(
+                dataset=train_dataset,
+                extract_reference=extract_reference,
+            ),
+            min_occurrences=params.word_threshold,
+        ),
+    ),
+    "char_encoder": with_file_cache(
+        path=os.path.join(
+            args=[output_dir, "char_encoder.pt"],
+        ),
+        config=torchnlp.encoders.LabelEncoder(
+            sample=mlprogram.utils.data.get_characters(
+                dataset=train_dataset,
+                extract_reference=extract_reference,
+            ),
+            min_occurrences=0,
+        ),
+    ),
+    "action_sequence_encoder": with_file_cache(
+        path=os.path.join(
+            args=[output_dir, "action_sequence_encoder.pt"],
+        ),
+        config=mlprogram.encoders.ActionSequenceEncoder(
+            samples=mlprogram.utils.data.get_samples(
+                dataset=train_dataset,
+                parser=parser,
+            ),
+            token_threshold=params.token_threshold,
+        ),
+    ),
+}
+model = torch.share_memory_(
+    model=torch.nn.Sequential(
+        modules=collections.OrderedDict(
+            items=[
+                [
+                    "encoder",
+                    mlprogram.nn.treegen.NLReader(
+                        token_num=encoder.word_encoder.vocab_size,
+                        char_num=encoder.char_encoder.vocab_size,
+                        max_token_len=params.max_word_length,
+                        char_embed_size=params.char_embedding_size,
+                        hidden_size=params.hidden_size,
+                        n_heads=params.n_head,
+                        dropout=params.dropout,
+                        n_blocks=params.n_block,
+                    ),
+                ],
+                [
+                    "decoder",
+                    torch.nn.Sequential(
+                        modules=collections.OrderedDict(
+                            items=[
+                                [
+                                    "action_sequence_reader",
+                                    mlprogram.nn.treegen.ActionSequenceReader(
+                                        rule_num=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+                                        token_num=encoder.action_sequence_encoder._token_encoder.vocab_size,
+                                        node_type_num=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
+                                        max_arity=params.max_arity,
+                                        rule_embed_size=params.rule_embedding_size,
+                                        hidden_size=params.hidden_size,
+                                        tree_conv_kernel_size=params.tree_conv_kernel_size,
+                                        n_heads=params.n_head,
+                                        dropout=params.dropout,
+                                        n_blocks=params.n_block,
+                                    ),
+                                ],
+                                [
+                                    "decoder",
+                                    mlprogram.nn.treegen.Decoder(
+                                        rule_num=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+                                        max_depth=params.max_tree_depth,
+                                        feature_size=params.hidden_size,
+                                        hidden_size=params / decoder_hidden_size,
+                                        out_size=params.hidden_size,
+                                        n_heads=params.n_head,
+                                        dropout=params.dropout,
+                                        n_blocks=params.n_block,
+                                    ),
+                                ],
+                                [
+                                    "predictor",
+                                    mlprogram.nn.action_sequence.Predictor(
+                                        feature_size=params.hidden_size,
+                                        reference_feature_size=params.hidden_size,
+                                        rule_size=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+                                        token_size=encoder.action_sequence_encoder._token_encoder.vocab_size,
+                                        hidden_size=params.hidden_size,
+                                    ),
+                                ],
+                            ],
+                        ),
+                    ),
+                ],
+            ],
+        ),
+    ),
+)
+collate = mlprogram.utils.data.Collate(
+    device=device,
+    word_nl_query=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    char_nl_query=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    nl_query_features=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    reference_features=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    actions=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    previous_actions=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    previous_action_rules=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    depthes=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=False,
+        dim=1,
+        padding_value=0,
+    ),
+    adjacency_matrix=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=False,
+        dim=0,
+        padding_value=0,
+    ),
+    action_queries=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+    ground_truth_actions=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=-1,
+    ),
+)
+transform_input = mlprogram.functools.Compose(
+    funcs=collections.OrderedDict(
+        items=[
+            [
+                "extract_reference",
+                mlprogram.utils.transform.text.ExtractReference(
+                    extract_reference=extract_reference,
+                ),
+            ],
+            [
+                "encode_word",
+                mlprogram.utils.transform.text.EncodeWordQuery(
+                    word_encoder=encoder.word_encoder,
+                ),
+            ],
+            [
+                "encode_char",
+                mlprogram.utils.transform.text.EncodeCharacterQuery(
+                    char_encoder=encoder.char_encoder,
+                    max_word_length=params.max_word_length,
+                ),
+            ],
+        ],
+    ),
+)
+transform_action_sequence = mlprogram.functools.Compose(
+    funcs=collections.OrderedDict(
+        items=[
+            [
+                "add_previous_action",
+                mlprogram.utils.transform.action_sequence.AddPreviousActions(
+                    action_sequence_encoder=encoder.action_sequence_encoder,
+                ),
+            ],
+            [
+                "add_previous_action_rule",
+                mlprogram.utils.transform.action_sequence.AddPreviousActionRules(
+                    action_sequence_encoder=encoder.action_sequence_encoder,
+                    max_arity=params.max_arity,
+                ),
+            ],
+            [
+                "add_action_sequence_as_tree",
+                mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree(
+                    action_sequence_encoder=encoder.action_sequence_encoder,
+                ),
+            ],
+            [
+                "add_query",
+                mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder(
+                    action_sequence_encoder=encoder.action_sequence_encoder,
+                    max_depth=params.max_tree_depth,
+                ),
+            ],
+        ],
+    ),
+)
+synthesizer = mlprogram.synthesizers.BeamSearch(
+    beam_size=params.beam_size,
+    max_step_size=params.max_step_size,
+    sampler=mlprogram.samplers.transform(
+        sampler=mlprogram.samplers.ActionSequenceSampler(
+            encoder=encoder.action_sequence_encoder,
+            is_subtype=is_subtype,
+            transform_input=transform_input,
+            transform_action_sequence=transform_action_sequence,
+            collate=collate,
+            module=model,
+        ),
+        transform=parser.unparse,
+    ),
+)
