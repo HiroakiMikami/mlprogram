@@ -78,7 +78,6 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
         elif code.get_type_name() == "Remove":
             return Remove(cast(Leaf, fields["line_number"]).value)
         elif code.get_type_name() == "Replace":
-            # TODO should not instantiate token sequence
             value = self.lexer.untokenize([
                 Token(None, cast(Leaf, v).value, cast(Leaf, v).value)
                 for v in cast(List[AST], fields["value"])
