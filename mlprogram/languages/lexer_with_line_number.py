@@ -10,8 +10,8 @@ Value = TypeVar("Value")
 
 class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]],
                           Generic[Kind, Value]):
-    def __init__(self, baselexer: Lexer[Kind, Value]):
-        self.baselexer = baselexer
+    def __init__(self, lexer: Lexer[Kind, Value]):
+        self.lexer = lexer
 
     def tokenize(self, text: str) -> Optional[List[Token[Union[Kinds.LineNumber, Kind],
                                                          Union[int, Value]]]]:
@@ -19,7 +19,7 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
         tokens: List[Token[Union[Kinds.LineNumber, Kind], Union[int, Value]]] = []
         for i, line in enumerate(lines):
             tokens.append(Token(Kinds.LineNumber(), i, i))
-            line_tokens = self.baselexer.tokenize(line)
+            line_tokens = self.lexer.tokenize(line)
             if line_tokens is None:
                 return None
             tokens.extend(cast(List[Token[Union[Kinds.LineNumber, Kind],
@@ -35,7 +35,7 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
         for token in sequnece:
             if token.kind == Kinds.LineNumber():
                 if len(line) != 0:
-                    linestr = self.baselexer.untokenize(line)
+                    linestr = self.lexer.untokenize(line)
                     if linestr is None:
                         return None
                     text += linestr
@@ -44,7 +44,7 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
             else:
                 line.append(cast(Token[Kind, Value], token))
         if len(line) != 0:
-            linestr = self.baselexer.untokenize(line)
+            linestr = self.lexer.untokenize(line)
             if linestr is None:
                 return None
             text += linestr
