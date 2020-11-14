@@ -43,4 +43,6 @@ class TestToEpisode(object):
         ))
         assert len(episode) == 2
         assert episode[0].inputs["code"] == "xxx\nyyy"
+        assert episode[0].inputs["test_cases"] == [("xxx\nyyy", "zzz\nyyy")]
         assert episode[1].inputs["code"] == "zzz\nyyy"
+        assert episode[1].inputs["test_cases"] == [("zzz\nyyy", "zzz\n")]

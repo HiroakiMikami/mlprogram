@@ -51,6 +51,8 @@ class ToEpisode:
             xs.inputs["text_query"] = inputs[0]
             xs.supervisions["ground_truth"] = code
             state = self.interpreter.execute(code, inputs, state)
-            inputs = list(state.environment.values())[0]
+            next_inputs = list(state.environment.values())[0]
+            xs.inputs["test_cases"] = [(inputs[0], next_inputs)]
+            inputs = next_inputs
             retval.append(xs)
         return retval
