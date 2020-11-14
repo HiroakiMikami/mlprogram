@@ -202,7 +202,6 @@ model = torch.share_memory_(
                             n_linear=2,
                             activation=torch.nn.Sigmoid(),
                         ),
-                        value_type="tensor",
                     ),
                 ],
             ],
