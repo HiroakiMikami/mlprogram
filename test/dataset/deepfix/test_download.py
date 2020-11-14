@@ -52,11 +52,7 @@ class TestDownload(object):
             dataset1 = download(cache_path=cache_path, path=path, get=get2)
 
         assert 2 == len(dataset0)
-        assert dataset0[0] == Environment(
-            inputs={"code": "foo"},
-            supervisions={"error": "bar", "n_error": 1})
-        assert dataset0[1] == Environment(
-            inputs={"code": "foo"},
-            supervisions={"error": "", "n_error": 0})
+        assert dataset0[0] == Environment(inputs={"code": "foo"})
+        assert dataset0[1] == Environment(inputs={"code": "foo"})
 
         assert list(dataset0) == list(dataset1)
