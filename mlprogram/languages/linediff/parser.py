@@ -35,8 +35,8 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
                 "Insert",
                 line_number=(Kinds.LineNumber(),
                              S.leaf(Kinds.LineNumber(), code.line_number)),
-                value=("str", [S.leaf("str", token.value)
-                               for token in token_sequence])
+                value=("value", [S.leaf(token.kind or "value", token.value)
+                                 for token in token_sequence])
             )
         elif isinstance(code, Remove):
             return S.node(
@@ -51,8 +51,8 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
                 "Replace",
                 line_number=(Kinds.LineNumber(),
                              S.leaf(Kinds.LineNumber(), code.line_number)),
-                value=("str", [S.leaf("str", token.value)
-                               for token in token_sequence])
+                value=("value", [S.leaf(token.kind or "value", token.value)
+                                 for token in token_sequence])
             )
         logger.warning(f"Invalid node type {code.get_type_name()}")
         # TODO throw exception

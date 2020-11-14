@@ -22,7 +22,7 @@ class TestParser(object):
         assert parser.parse(Insert(0, "foo bar")) == \
             S.node("Insert", line_number=(Kinds.LineNumber(),
                                           S.leaf(Kinds.LineNumber(), 0)),
-                   value=("str", [S.leaf("str", "foo"), S.leaf("str", "bar")]))
+                   value=("value", [S.leaf("value", "foo"), S.leaf("value", "bar")]))
         assert parser.parse(Insert(0, "")) is None
         assert parser.parse(Remove(0)) == \
             S.node("Remove", line_number=(Kinds.LineNumber(),
@@ -30,7 +30,7 @@ class TestParser(object):
         assert parser.parse(Replace(0, "foo bar")) == \
             S.node("Replace", line_number=(Kinds.LineNumber(),
                                            S.leaf(Kinds.LineNumber(), 0)),
-                   value=("str", [S.leaf("str", "foo"), S.leaf("str", "bar")]))
+                   value=("value", [S.leaf("value", "foo"), S.leaf("value", "bar")]))
         assert parser.parse(Replace(0, "")) is None
         assert parser.parse(Diff([Remove(0)])) == \
             S.node("Diff",
@@ -47,14 +47,14 @@ class TestParser(object):
         assert parser.unparse(S.node("Insert",
                                      line_number=(Kinds.LineNumber(),
                                                   S.leaf(Kinds.LineNumber(), 0)),
-                                     value=("str", []))) is None
+                                     value=("value", []))) is None
         assert parser.unparse(parser.parse(Remove(0))) == Remove(0)
         assert parser.unparse(parser.parse(Replace(0, "foo bar"))) == \
             Replace(0, "foo bar")
         assert parser.unparse(S.node("Replace",
                                      line_number=(Kinds.LineNumber(),
                                                   S.leaf(Kinds.LineNumber(), 0)),
-                                     value=("str", []))) is None
+                                     value=("value", []))) is None
         assert parser.unparse(parser.parse(Diff([Remove(0)]))) == \
             Diff([Remove(0)])
         assert parser.unparse(
@@ -63,4 +63,4 @@ class TestParser(object):
                        S.node("Replace",
                               line_number=(Kinds.LineNumber(),
                                            S.leaf(Kinds.LineNumber(), 0)),
-                              value=("str", []))]))) is None
+                              value=("value", []))]))) is None
