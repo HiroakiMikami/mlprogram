@@ -98,12 +98,17 @@ types = {
         mlprogram.datasets.nl2bash.SplitValue,
     "mlprogram.datasets.deepfix.download":
         mlprogram.datasets.deepfix.download,
+    "mlprogram.datasets.deepfix.Lexer":
+        mlprogram.datasets.deepfix.Lexer,
 
     "mlprogram.metrics.transform": mlprogram.metrics.transform,
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
     "mlprogram.metrics.Iou": mlprogram.metrics.Iou,
     "mlprogram.metrics.TestCaseResult": mlprogram.metrics.TestCaseResult,
+    "mlprogram.metrics.ErrorCorrectRate": mlprogram.metrics.ErrorCorrectRate,
+
+    "mlprogram.languages.LexerWithLineNumber": mlprogram.languages.LexerWithLineNumber,
 
     "mlprogram.languages.python.Parser": mlprogram.languages.python.Parser,
     "mlprogram.languages.python.IsSubtype":
@@ -117,6 +122,7 @@ types = {
     "mlprogram.functools.Compose": mlprogram.functools.Compose,
     "mlprogram.functools.Map": mlprogram.functools.Map,
     "mlprogram.functools.Sequence": mlprogram.functools.Sequence,
+    "mlprogram.functools.Identity": mlprogram.functools.Identity,
 
     "mlprogram.synthesizers.BeamSearch": mlprogram.synthesizers.BeamSearch,
     "mlprogram.synthesizers.SMC": mlprogram.synthesizers.SMC,
@@ -141,9 +147,10 @@ types = {
     "mlprogram.utils.data.get_samples": mlprogram.utils.data.get_samples,
     "mlprogram.utils.data.to_map_style_dataset":
         mlprogram.utils.data.to_map_style_dataset,
-    "mlprogram.utils.data.random.random_split":
+    "mlprogram.utils.data.random_split":
         mlprogram.utils.data.random.random_split,
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
+    "mlprogram.utils.data.split_by_n_error": mlprogram.utils.data.split_by_n_error,
 
     "mlprogram.utils.transform.NormalizeGroundTruth":
         mlprogram.utils.transform.NormalizeGroundTruth,
@@ -218,7 +225,19 @@ types = {
         mlprogram.languages.csg.transform.AddTestCases,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
-    "mlprogram.languages.c.Lexer": mlprogram.languages.c.Lexer
+    "mlprogram.languages.c.Lexer": mlprogram.languages.c.Lexer,
+    "mlprogram.languages.c.TypoMutator": mlprogram.languages.c.TypoMutator,
+
+    "mlprogram.languages.linediff.Interpreter":
+    mlprogram.languages.linediff.Interpreter,
+    "mlprogram.languages.linediff.Expander": mlprogram.languages.linediff.Expander,
+    "mlprogram.languages.linediff.Parser": mlprogram.languages.linediff.Parser,
+    "mlprogram.languages.linediff.IsSubtype": mlprogram.languages.linediff.IsSubtype,
+    "mlprogram.languages.linediff.get_samples":
+    mlprogram.languages.linediff.get_samples,
+    "mlprogram.languages.linediff.ToEpisode":
+    mlprogram.languages.linediff.ToEpisode,
+
 }
 
 types.update(torch_types)

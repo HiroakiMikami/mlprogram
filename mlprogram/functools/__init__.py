@@ -3,3 +3,4 @@ from mlprogram.functools.cache import file_cache  # noqa
 from mlprogram.functools.functions import Compose  # noqa
 from mlprogram.functools.functions import Map  # noqa
 from mlprogram.functools.functions import Sequence  # noqa
+from mlprogram.functools.functions import Identity  # noqa

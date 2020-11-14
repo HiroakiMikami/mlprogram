@@ -57,3 +57,8 @@ class Map(Generic[V0, V1]):
                     for v0 in logger.iterable_block("values", values)]
         else:
             return list(self.pool.map(self.func, values))
+
+
+class Identity(object):
+    def __call__(self, x):
+        return x
