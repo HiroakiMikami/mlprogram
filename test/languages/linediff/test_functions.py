@@ -1,5 +1,5 @@
 from mlprogram import Environment
-from mlprogram.languages import Lexer, Token
+from mlprogram.languages import Kinds, Lexer, Token
 from mlprogram.languages.linediff import (
     Diff,
     Expander,
@@ -22,6 +22,9 @@ class TestIsSubType(object):
     def test_happy_path(self):
         assert IsSubtype()("Delta", "Delta")
         assert IsSubtype()("Insert", "Delta")
+        assert IsSubtype()("Delta", "Delta")
+        assert IsSubtype()("str", "value")
+        assert not IsSubtype()(Kinds.LineNumber(), "value")
 
 
 class TestGetSamples(object):

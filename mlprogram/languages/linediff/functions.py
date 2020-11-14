@@ -18,7 +18,7 @@ class IsSubtype:
             return True
         if basetype == "Delta":
             return subtype in set(["Delta", "Insert", "Remove", "Replace"])
-        if basetype == "value" and not isinstance(basetype, Kinds.LineNumber):
+        if basetype == "value" and not isinstance(subtype, Kinds.LineNumber):
             return True
         return subtype == basetype
 
