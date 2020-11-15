@@ -1,4 +1,4 @@
-imports = ["../nl2code/base.py"]
+imports = ["../nl2code/base.py", "base.py"]
 params = {
     "word_threshold": 5,
     "token_threshold": 5,
@@ -17,14 +17,4 @@ params = {
     "metric_threshold": 1.0,
     "metric": "bleu@1",
     "n_evaluate_process": 2,
-}
-parser = mlprogram.datasets.django.Parser(
-    split_value=mlprogram.datasets.django.SplitValue(),
-)
-extract_reference = mlprogram.datasets.django.TokenizeQuery()
-is_subtype = mlprogram.languages.python.IsSubtype()
-dataset = mlprogram.datasets.django.download()
-metrics = {
-    "accuracy": mlprogram.metrics.Accuracy(),
-    "bleu": mlprogram.languages.python.metrics.Bleu(),
 }

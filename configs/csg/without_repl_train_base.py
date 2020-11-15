@@ -1,4 +1,9 @@
 imports = ["without_repl_base.py"]
+device = torch.device(
+    type_str="cuda",
+    index=0,
+)
+batch_size = 32
 output_dir = "output/output"
 optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
@@ -17,7 +22,6 @@ collate_fn = mlprogram.functools.Sequence(
         ],
     ),
 )
-batch_size = 32
 loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
         items=[

@@ -1,3 +1,5 @@
+imports = ["../nl2code/base.py", "base.py"]
+
 params = {
     "word_threshold": 3,
     "token_threshold": 0,
@@ -16,14 +18,4 @@ params = {
     "metric_threshold": 1.0,
     "metric": "bleu@1",
     "n_evaluate_process": 2,
-}
-parser = mlprogram.languages.python.Parser(
-    split_value=mlprogram.datasets.hearthstone.SplitValue(),
-)
-extract_reference = mlprogram.datasets.hearthstone.TokenizeQuery()
-dataset = mlprogram.datasets.hearthstone.download()
-is_subtype = mlprogram.languages.python.IsSubtype()
-metrics = {
-    "accuracy": mlprogram.metrics.Accuracy(),
-    "bleu": mlprogram.languages.python.metrics.Bleu(),
 }
