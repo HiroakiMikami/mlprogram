@@ -1,30 +1,14 @@
 imports = ["pbe_with_repl_base.py"]
+device = torch.device(
+    type_str="cuda",
+    index=0,
+)
+batch_size = 32
 output_dir = "output/output"
 optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
     model=model,
 )
-collate_fn = mlprogram.functools.Sequence(
-    funcs=collections.OrderedDict(
-        items=[
-            [
-                "to_episode",
-                mlprogram.functools.Map(
-                    func=to_episode,
-                ),
-            ],
-            ["flatten", Flatten()],
-            [
-                "transform",
-                mlprogram.functools.Map(
-                    func=transform,
-                ),
-            ],
-            ["collate", collate.collate],
-        ],
-    ),
-)
-batch_size = 32
 loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
         items=[

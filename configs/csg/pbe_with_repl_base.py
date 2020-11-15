@@ -1,3 +1,5 @@
+imports = ["base.py"]
+
 options = {
     "small": {
         "n_pretrain_iteration": 5000,
@@ -22,85 +24,7 @@ options = {
         "interval_iter": 50000,
     },
 }
-device = torch.device(
-    type_str="cuda",
-    index=0,
-)
-parser = mlprogram.languages.csg.Parser()
-n_pixel = mul(
-    x=option.size,
-    y=option.resolution,
-)
-n_feature_pixel = intdiv(
-    lhs=n_pixel,
-    rhs=2,
-)
-dataset = mlprogram.languages.csg.Dataset(
-    canvas_size=option.size,
-    min_object=1,
-    max_object=option.train_max_object,
-    length_stride=1,
-    degree_stride=15,
-    reference=True,
-)
-encoder = with_file_cache(
-    path=os.path.join(
-        args=[output_dir, "encoder.pt"],
-    ),
-    config=mlprogram.encoders.ActionSequenceEncoder(
-        samples=mlprogram.languages.csg.get_samples(
-            dataset=dataset,
-            parser=parser,
-        ),
-        token_threshold=0,
-    ),
-)
-train_dataset = mlprogram.utils.data.transform(
-    dataset=dataset,
-    transform=mlprogram.languages.csg.transform.AddTestCases(
-        interpreter=interpreter,
-    ),
-)
-test_dataset = mlprogram.utils.data.transform(
-    dataset=mlprogram.utils.data.to_map_style_dataset(
-        dataset=mlprogram.languages.csg.Dataset(
-            canvas_size=option.size,
-            min_object=option.train_max_object,
-            max_object=option.evaluate_max_object,
-            length_stride=1,
-            degree_stride=15,
-            reference=True,
-            seed=10000,
-        ),
-        n=option.n_evaluate_dataset,
-    ),
-    transform=mlprogram.languages.csg.transform.AddTestCases(
-        interpreter=interpreter,
-    ),
-)
-valid_dataset = mlprogram.utils.data.transform(
-    dataset=mlprogram.utils.data.to_map_style_dataset(
-        dataset=mlprogram.languages.csg.Dataset(
-            canvas_size=option.size,
-            min_object=option.train_max_object,
-            max_object=option.evaluate_max_object,
-            length_stride=1,
-            degree_stride=15,
-            reference=True,
-            seed=20000,
-        ),
-        n=option.n_evaluate_dataset,
-    ),
-    transform=mlprogram.languages.csg.transform.AddTestCases(
-        interpreter=interpreter,
-    ),
-)
-interpreter = mlprogram.languages.csg.Interpreter(
-    width=option.size,
-    height=option.size,
-    resolution=option.resolution,
-    delete_used_reference=True,
-)
+reference = True
 model = torch.share_memory_(
     model=torch.nn.Sequential(
         modules=collections.OrderedDict(
@@ -306,6 +230,31 @@ transform = mlprogram.functools.Sequence(
         ],
     ),
 )
+to_episode = mlprogram.utils.transform.pbe.ToEpisode(
+    interpreter=interpreter,
+    expander=mlprogram.languages.csg.Expander(),
+)
+collate_fn = mlprogram.functools.Sequence(
+    funcs=collections.OrderedDict(
+        items=[
+            [
+                "to_episode",
+                mlprogram.functools.Map(
+                    func=to_episode,
+                ),
+            ],
+            ["flatten", Flatten()],
+            [
+                "transform",
+                mlprogram.functools.Map(
+                    func=transform,
+                ),
+            ],
+            ["collate", collate.collate],
+        ],
+    ),
+)
+
 subsampler = mlprogram.samplers.transform(
     sampler=mlprogram.samplers.ActionSequenceSampler(
         encoder=encoder,
@@ -353,51 +302,54 @@ train_synthesizer = mlprogram.synthesizers.SMC(
         key="state@interpreter_state",
     ),
 )
-evaluate_synthesizer = mlprogram.synthesizers.SynthesizerWithTimeout(
-    synthesizer=mlprogram.synthesizers.SMC(
-        max_step_size=mul(
-            x=option.evaluate_max_object,
-            y=5,
-        ),
-        initial_particle_size=100,
-        sampler=mlprogram.samplers.SamplerWithValueNetwork(
-            sampler=sampler,
-            transform=mlprogram.functools.Compose(
-                funcs=collections.OrderedDict(
-                    items=[
-                        [
-                            "transform_canvas",
-                            mlprogram.languages.csg.transform.TransformCanvas(),
-                        ]
-                    ],
-                ),
+evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
+    synthesizer=mlprogram.synthesizers.SynthesizerWithTimeout(
+        synthesizer=mlprogram.synthesizers.SMC(
+            max_step_size=mul(
+                x=option.evaluate_max_object,
+                y=5,
             ),
-            collate=collate,
-            value_network=torch.nn.Sequential(
-                modules=collections.OrderedDict(
-                    items=[
-                        ["encoder", model.encoder],
-                        ["value", model.value],
-                        [
-                            "pick",
-                            mlprogram.nn.Function(
-                                f=Pick(
-                                    key="state@value",
-                                ),
-                            ),
+            initial_particle_size=100,
+            sampler=mlprogram.samplers.SamplerWithValueNetwork(
+                sampler=sampler,
+                transform=mlprogram.functools.Compose(
+                    funcs=collections.OrderedDict(
+                        items=[
+                            [
+                                "transform_canvas",
+                                mlprogram.languages.csg.transform.TransformCanvas(),
+                            ]
                         ],
-                    ],
+                    ),
                 ),
+                collate=collate,
+                value_network=torch.nn.Sequential(
+                    modules=collections.OrderedDict(
+                        items=[
+                            ["encoder", model.encoder],
+                            ["value", model.value],
+                            [
+                                "pick",
+                                mlprogram.nn.Function(
+                                    f=Pick(
+                                        key="state@value",
+                                    ),
+                                ),
+                            ],
+                        ],
+                    ),
+                ),
+                batch_size=1,
             ),
-            batch_size=1,
+            to_key=Pick(
+                key="state@interpreter_state",
+            ),
         ),
-        to_key=Pick(
-            key="state@interpreter_state",
-        ),
+        timeout_sec=option.timeout_sec,
     ),
-    timeout_sec=option.timeout_sec,
-)
-to_episode = mlprogram.utils.transform.pbe.ToEpisode(
-    interpreter=interpreter,
-    expander=mlprogram.languages.csg.Expander(),
+    score=mlprogram.metrics.TestCaseResult(
+        interpreter=interpreter,
+        metric=mlprogram.metrics.Iou(),
+    ),
+    threshold=0.9,
 )

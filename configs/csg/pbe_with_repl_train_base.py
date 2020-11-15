@@ -3,33 +3,12 @@ device = torch.device(
     type_str="cpu",
     index=0,
 )
+batch_size = 1
+n_rollout = 16
 output_dir = "output/output"
 optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
     model=model,
-)
-synthesizer = train_synthesizer
-batch_size = 1
-n_rollout = 16
-collate_fn = mlprogram.functools.Sequence(
-    funcs=collections.OrderedDict(
-        items=[
-            [
-                "to_episode",
-                mlprogram.functools.Map(
-                    func=to_episode,
-                ),
-            ],
-            ["flatten", Flatten()],
-            [
-                "transform",
-                mlprogram.functools.Map(
-                    func=transform,
-                ),
-            ],
-            ["collate", collate.collate],
-        ],
-    ),
 )
 loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
@@ -129,13 +108,13 @@ main = mlprogram.entrypoint.train_REINFORCE(
     workspace_dir="output/workspace",
     output_dir=output_dir,
     dataset=train_dataset,
-    synthesizer=synthesizer,
+    synthesizer=train_synthesizer,
     model=model,
     optimizer=optimizer,
     loss=loss_fn,
     evaluate=mlprogram.entrypoint.EvaluateSynthesizer(
         dataset=test_dataset,
-        synthesizer=synthesizer,
+        synthesizer=train_synthesizer,
         metrics={},
         top_n=[],
     ),
