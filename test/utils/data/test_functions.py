@@ -218,3 +218,20 @@ class TestSplitByNError(object):
         assert list(splitted["with_error"]) == [
             Environment(inputs={"code": "y"})
         ]
+
+    def test_multiprocess(self):
+        dataset = ListDataset([
+            Environment(inputs={"code": "x"}),
+            Environment(inputs={"code": "y"})
+        ])
+        splitted = split_by_n_error(dataset,
+                                    MockAnalyzer({
+                                        "x": [],
+                                        "y": ["error"]
+                                    }), n_process=2)
+        assert list(splitted["no_error"]) == [
+            Environment(inputs={"code": "x"})
+        ]
+        assert list(splitted["with_error"]) == [
+            Environment(inputs={"code": "y"})
+        ]
