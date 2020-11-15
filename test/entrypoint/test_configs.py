@@ -5,7 +5,7 @@ from mlprogram.entrypoint.configs import load_config, parse_config
 
 
 class TestParseConfig(object):
-    def test_lazy_config(self):
+    def test_with_file_cache(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "cache")
             config = {
@@ -38,6 +38,15 @@ class TestParseConfig(object):
             }
             result = parse_config(config)
             assert result["/main"] == 0
+
+    def test_custom_types(self):
+        config = {
+            "main": {
+                "type": "foo"
+            }
+        }
+        result = parse_config(config, custom_types={"foo": lambda: 10})
+        assert result["/main"] == 10
 
 
 class TestLoadConfig(object):
