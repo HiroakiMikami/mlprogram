@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import python_config
 from pytorch_pfn_extras.config import Config
@@ -31,8 +31,12 @@ def with_file_cache(path, config, types):
     return f()
 
 
-def parse_config(configs: Dict[str, Any]) -> Config:
+def parse_config(configs: Dict[str, Any],
+                 custom_types: Optional[Dict[str, Any]] = None) -> Config:
     _types = {k: v for k, v in types.items()}
+    if custom_types is not None:
+        for k, v in custom_types.items():
+            _types[k] = v
     _types["with_file_cache"] = \
         lambda path, config: with_file_cache(path, config, _types)
 
