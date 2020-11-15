@@ -41,14 +41,12 @@ class ToEpisode:
 
     def __call__(self, entry: Environment) -> List[Environment]:
         ground_truth = entry.supervisions["ground_truth"]
-        inputs = [entry.inputs["text_query"]]
+        inputs = [input for input, _ in entry.inputs["test_cases"]]
 
         retval: List[Environment] = []
         state = BatchedState[linediffAST, str, str]({}, {}, [])
         for code in self.expander.expand(ground_truth):
             xs = entry.clone()
-            xs.inputs["code"] = inputs[0]
-            xs.inputs["text_query"] = inputs[0]
             xs.supervisions["ground_truth"] = code
             state = self.interpreter.execute(code, inputs, state)
             next_inputs = list(state.environment.values())[0]
@@ -61,7 +59,26 @@ class ToEpisode:
 # TODO remove this class
 class AddTestCases:
     def __call__(self, entry: Environment) -> Environment:
+        if "test_cases" in entry.inputs:
+            return entry
         query = entry.inputs["code"]
         entry.inputs.mutable(True)  # TODO
         entry.inputs["test_cases"] = [(query, None)]
+        return entry
+
+
+# TODO remove this class
+class UpdateInput:
+    def __call__(self, entry: Environment) -> Environment:
+        entry.inputs.mutable(True)  # TODO
+        if "interpreter_state" in entry.states \
+                and len(entry.states["interpreter_state"].history) > 0:
+            state = entry.states["interpreter_state"]
+            inputs = state.environment[state.history[-1]]
+        else:
+            inputs = [input for input, _ in entry.inputs["test_cases"]]
+        code = inputs[0]
+        entry.inputs["code"] = code
+        entry.inputs["text_query"] = code
+
         return entry

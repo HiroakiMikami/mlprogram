@@ -239,6 +239,8 @@ types = {
     mlprogram.languages.linediff.ToEpisode,
     "mlprogram.languages.linediff.AddTestCases":
     mlprogram.languages.linediff.AddTestCases,
+    "mlprogram.languages.linediff.UpdateInput":
+    mlprogram.languages.linediff.UpdateInput,
 
 }
 

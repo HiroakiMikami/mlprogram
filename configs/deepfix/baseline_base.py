@@ -10,7 +10,7 @@ params = {
     "eval_interval": 10,
     "snapshot_interval": 1,
     "particle_size": 15,
-    "n_evaluate_process": 2,
+    "n_evaluate_process": None,  # 2,
     "seed": 0,
     "max_mutation": 5,
     "mutation_seed": 1,
@@ -27,23 +27,26 @@ expander = mlprogram.languages.linediff.Expander()
 dataset = mlprogram.utils.data.split_by_n_error(
     dataset=mlprogram.datasets.deepfix.download(), analyzer=analyzer
 )
-mutator = mlprogram.languages.c.TypoMutator(
+typo_mutator = mlprogram.languages.c.TypoMutator(
     max_mutation=params.max_mutation, seed=params.mutation_seed
 )
-seeded_dataset = mlprogram.utils.data.transform(
-    dataset=dataset.no_error,
-    # TODO mutator is not nn.Module
-    transform=mlprogram.nn.Apply(
-        in_keys=[["input@code", "code"]],
-        out_key=["input@text_query", "supervision@ground_truth"],
-        module=mutator.mutate,
-    ),
-)
 splitted = mlprogram.utils.data.random_split(
-    dataset=seeded_dataset, ratio={"train": 0.8, "test": 0.2}, seed=params.seed
+    dataset=dataset.no_error, ratio={"train": 0.8, "test": 0.2}, seed=params.seed
 )
-train_dataset = splitted.train
-test_dataset = splitted.test
+# TODO mutator is not nn.Module
+mutator = mlprogram.nn.Apply(
+    in_keys=[["input@code", "code"]],
+    out_key=["input@text_query", "input@test_cases", "supervision@ground_truth"],
+    module=typo_mutator.mutate,
+)
+train_dataset = mlprogram.utils.data.transform(
+    dataset=splitted.train,
+    transform=mutator,
+)
+test_dataset = mlprogram.utils.data.transform(
+    dataset=splitted.test,
+    transform=mutator,
+)
 valid_dataset = dataset.with_error
 
 encoder = {
@@ -52,6 +55,7 @@ encoder = {
             args=[output_dir, "word_encoder.pt"],
         ),
         config=torchnlp.encoders.LabelEncoder(
+            # TODO use not seeded dataset
             sample=mlprogram.utils.data.get_words(
                 dataset=train_dataset,
                 extract_reference=lexer.tokenize,
@@ -192,6 +196,10 @@ transform_input = mlprogram.functools.Compose(
     funcs=collections.OrderedDict(
         items=[
             [
+                "update_input",
+                mlprogram.languages.linediff.UpdateInput(),
+            ],
+            [
                 "extract_reference",
                 mlprogram.utils.transform.text.ExtractReference(
                     extract_reference=lexer.tokenize,
@@ -276,11 +284,11 @@ subsynthesizer = mlprogram.synthesizers.SMC(
 )
 sampler = mlprogram.samplers.SequentialProgramSampler(
     synthesizer=subsynthesizer,
-    transform_input=mlprogram.languages.csg.transform.TransformCanvas(),
+    transform_input=mlprogram.languages.linediff.AddTestCases(),
     collate=collate,
     encoder=mlprogram.nn.Function(f=mlprogram.functools.Identity()),
     interpreter=interpreter,
-    expander=mlprogram.languages.csg.Expander(),
+    expander=expander,
 )
 train_synthesizer = mlprogram.synthesizers.SMC(
     max_step_size=mul(

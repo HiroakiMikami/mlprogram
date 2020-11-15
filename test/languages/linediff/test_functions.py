@@ -1,5 +1,5 @@
 from mlprogram import Environment
-from mlprogram.languages import Kinds, Lexer, Token
+from mlprogram.languages import BatchedState, Kinds, Lexer, Token
 from mlprogram.languages.linediff import (
     AddTestCases,
     Diff,
@@ -10,6 +10,7 @@ from mlprogram.languages.linediff import (
     Remove,
     Replace,
     ToEpisode,
+    UpdateInput,
     get_samples,
 )
 
@@ -39,13 +40,11 @@ class TestToEpisode(object):
     def test_happy_path(self):
         to_episode = ToEpisode(Interpreter(), Expander())
         episode = to_episode(Environment(
-            inputs={"text_query": "xxx\nyyy"},
+            inputs={"test_cases": [("xxx\nyyy", None)]},
             supervisions={"ground_truth": Diff([Replace(0, "zzz"), Remove(1)])}
         ))
         assert len(episode) == 2
-        assert episode[0].inputs["code"] == "xxx\nyyy"
         assert episode[0].inputs["test_cases"] == [("xxx\nyyy", "zzz\nyyy")]
-        assert episode[1].inputs["code"] == "zzz\nyyy"
         assert episode[1].inputs["test_cases"] == [("zzz\nyyy", "zzz")]
 
 
@@ -56,3 +55,19 @@ class TestAddTestCases(object):
             inputs={"code": "xxx\nyyy"},
         ))
         assert entry.inputs["test_cases"] == [("xxx\nyyy", None)]
+
+
+class TestUpdateInput(object):
+    def test_happy_path(self):
+        f = UpdateInput()
+        entry = f(Environment(
+            inputs={"test_cases": [("xxx\nyyy", None)]},
+        ))
+        assert entry.inputs["code"] == "xxx\nyyy"
+        assert entry.inputs["text_query"] == "xxx\nyyy"
+        state = BatchedState({}, {Diff([]): ["foo"]}, [Diff([])])
+        entry = f(Environment(
+            states={"interpreter_state": state},
+        ))
+        assert entry.inputs["code"] == "foo"
+        assert entry.inputs["text_query"] == "foo"
