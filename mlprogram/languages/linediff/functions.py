@@ -52,7 +52,16 @@ class ToEpisode:
             xs.supervisions["ground_truth"] = code
             state = self.interpreter.execute(code, inputs, state)
             next_inputs = list(state.environment.values())[0]
-            xs.inputs["test_cases"] = [(inputs[0], next_inputs)]
+            xs.inputs["test_cases"] = list(zip(inputs, next_inputs))
             inputs = next_inputs
             retval.append(xs)
         return retval
+
+
+# TODO remove this class
+class AddTestCases:
+    def __call__(self, entry: Environment) -> Environment:
+        query = entry.inputs["code"]
+        entry.inputs.mutable(True)  # TODO
+        entry.inputs["test_cases"] = [(query, None)]
+        return entry

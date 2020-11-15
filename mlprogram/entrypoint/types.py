@@ -237,6 +237,8 @@ types = {
     mlprogram.languages.linediff.get_samples,
     "mlprogram.languages.linediff.ToEpisode":
     mlprogram.languages.linediff.ToEpisode,
+    "mlprogram.languages.linediff.AddTestCases":
+    mlprogram.languages.linediff.AddTestCases,
 
 }
 

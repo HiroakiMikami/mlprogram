@@ -1,6 +1,7 @@
 from mlprogram import Environment
 from mlprogram.languages import Kinds, Lexer, Token
 from mlprogram.languages.linediff import (
+    AddTestCases,
     Diff,
     Expander,
     Interpreter,
@@ -45,4 +46,13 @@ class TestToEpisode(object):
         assert episode[0].inputs["code"] == "xxx\nyyy"
         assert episode[0].inputs["test_cases"] == [("xxx\nyyy", "zzz\nyyy")]
         assert episode[1].inputs["code"] == "zzz\nyyy"
-        assert episode[1].inputs["test_cases"] == [("zzz\nyyy", "zzz\n")]
+        assert episode[1].inputs["test_cases"] == [("zzz\nyyy", "zzz")]
+
+
+class TestAddTestCases(object):
+    def test_happy_path(self):
+        f = AddTestCases()
+        entry = f(Environment(
+            inputs={"code": "xxx\nyyy"},
+        ))
+        assert entry.inputs["test_cases"] == [("xxx\nyyy", None)]

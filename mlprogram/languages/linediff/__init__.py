@@ -5,6 +5,7 @@ from mlprogram.languages.linediff.ast import Insert  # noqa
 from mlprogram.languages.linediff.ast import Remove  # noqa
 from mlprogram.languages.linediff.ast import Replace  # noqa
 from mlprogram.languages.linediff.expander import Expander  # noqa
+from mlprogram.languages.linediff.functions import AddTestCases  # noqa
 from mlprogram.languages.linediff.functions import IsSubtype  # noqa
 from mlprogram.languages.linediff.functions import ToEpisode  # noqa
 from mlprogram.languages.linediff.functions import get_samples  # noqa
