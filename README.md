@@ -79,11 +79,6 @@ $ python tools/launch.py --config configs/nl2code/nl2code_evaluate.py
 ```
 
 
-### Run Job in Colab
-
-`tools/colab_gpu.ipynb` and `tools/colab_cpu.ipynb` can be used to launch jobs in Colab.
-
-
 Reference
 ---
 
