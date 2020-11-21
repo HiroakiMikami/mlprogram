@@ -14,6 +14,7 @@ params = {
     "seed": 0,
     "max_mutation": 5,
     "mutation_seed": 1,
+    "timeout_sec": 10
 }
 lexer = mlprogram.languages.LexerWithLineNumber(
     lexer=mlprogram.datasets.deepfix.Lexer()
@@ -290,36 +291,21 @@ sampler = mlprogram.samplers.SequentialProgramSampler(
     interpreter=interpreter,
     expander=expander,
 )
-train_synthesizer = mlprogram.synthesizers.SMC(
-    max_step_size=mul(
-        x=params.max_mutation,
-        y=3,
-    ),
-    initial_particle_size=1,
-    max_try_num=1,
-    sampler=mlprogram.samplers.FilteredSampler(
-        sampler=sampler,
-        threshold=1.0,
-    ),
-    to_key=Pick(
-        key="state@interpreter_state",
-    ),
-)
-
 synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
     synthesizer=mlprogram.synthesizers.SynthesizerWithTimeout(
         synthesizer=mlprogram.synthesizers.SMC(
             max_step_size=mul(
-                x=option.evaluate_max_object,
-                y=5,
+                x=params.max_mutation,
+                y=3,
             ),
-            initial_particle_size=params.particle_size,
+            initial_particle_size=1,
+            max_try_num=1,
             sampler=sampler,
             to_key=Pick(
                 key="state@interpreter_state",
             ),
         ),
-        timeout_sec=option.timeout_sec,
+        timeout_sec=params.timeout_sec,
     ),
     score=mlprogram.metrics.ErrorCorrectRate(
         interpreter=interpreter,
