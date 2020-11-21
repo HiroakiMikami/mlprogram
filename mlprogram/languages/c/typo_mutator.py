@@ -10,7 +10,7 @@ class TypoMutator:
         self.max_mutation = max_mutation
         self.rng = np.random.RandomState(seed or 0)
 
-    def mutate(self, code: str) -> Tuple[str, AST]:
+    def mutate(self, code: str) -> Tuple[str, List[Tuple[str, str]], AST]:
         n_mutation = self.rng.randint(1, self.max_mutation + 1)
 
         # Based on https://bitbucket.org/iiscseal/deepfix/src/master/data_processing/typo_mutator.py  # noqa
@@ -41,7 +41,7 @@ class TypoMutator:
             return candidates
 
         if len(code) == 0:
-            return (code, Diff([]))
+            return (code, [(code, code)], Diff([]))
         lines = list(code.split("\n"))
         targets = self.rng.choice(len(lines), size=min(len(lines), n_mutation),
                                   replace=False)
@@ -73,4 +73,5 @@ class TypoMutator:
             lines[line] = new_line
 
         text = "\n".join(lines)
-        return (text, Diff(deltas))
+        # TODO remove test case from the outputs
+        return (text, [(text, code)], Diff(deltas))

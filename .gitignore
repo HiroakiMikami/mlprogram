@@ -3,6 +3,7 @@
 !/.gitignore
 !/.github/workflows/*.yml
 !/LICENSE.md
+!/NOTICE
 !/README.md
 !/setup.py
 !/pyproject.toml

@@ -5,44 +5,49 @@ from mlprogram.languages import Token
 class TestLexer(object):
     def test_id_placeholder(self):
         lexer = Lexer()
-        assert lexer.tokenize("int a;a;b;") == [
-            Token("INT", "int", "int"),
-            Token("ID", "___id@0___", "a"),
-            Token("SEMI", ";", ";"),
-            Token("ID", "___id@0___", "a"),
-            Token("SEMI", ";", ";"),
-            Token("ID", "___id@1___", "b"),
-            Token("SEMI", ";", ";")
+        assert lexer.tokenize_with_offset("int a;a;b;") == [
+            (0, Token("name", "___name@0___", "int")),
+            (4, Token("name", "___name@1___", "a")),
+            (5, Token("op", ";", ";")),
+            (6, Token("name", "___name@1___", "a")),
+            (7, Token("op", ";", ";")),
+            (8, Token("name", "___name@2___", "b")),
+            (9, Token("op", ";", ";"))
         ]
 
     def test_int_placeholder(self):
         lexer = Lexer()
-        assert lexer.tokenize("int a = 1;") == [
-            Token("INT", "int", "int"),
-            Token("ID", "___id@0___", "a"),
-            Token("EQUALS", "=", "="),
-            Token("INT_CONST_DEC", "___int@0___", "1"),
-            Token("SEMI", ";", ";")
+        assert lexer.tokenize_with_offset("int a = 1;") == [
+            (0, Token("name", "___name@0___", "int")),
+            (4, Token("name", "___name@1___", "a")),
+            (6, Token("op", "=", "=")),
+            (8, Token("number", "___number@0___", "1")),
+            (9, Token("op", ";", ";"))
         ]
 
     def test_float_placeholder(self):
         lexer = Lexer()
-        assert lexer.tokenize("float a = 1.0;") == [
-            Token("FLOAT", "float", "float"),
-            Token("ID", "___id@0___", "a"),
-            Token("EQUALS", "=", "="),
-            Token("FLOAT_CONST", "___float@0___", "1.0"),
-            Token("SEMI", ";", ";")
+        assert lexer.tokenize_with_offset("float a = 1.0;") == [
+            (0, Token("name", "___name@0___", "float")),
+            (6, Token("name", "___name@1___", "a")),
+            (8, Token("op", "=", "=")),
+            (10, Token("number", "___number@0___", "1.0")),
+            (13, Token("op", ";", ";"))
         ]
 
     def test_str_placeholder(self):
         lexer = Lexer()
-        assert lexer.tokenize("\"foo\"") == [
-            Token("STRING_LITERAL", "___string@0___", "\"foo\""),
+        assert lexer.tokenize_with_offset("\"foo\"") == [
+            (0, Token("string", "___string@0___", "\"foo\"")),
         ]
 
     def test_char_placeholder(self):
         lexer = Lexer()
-        assert lexer.tokenize("'a'") == [
-            Token("CHAR_CONST", "___char@0___", "'a'"),
+        assert lexer.tokenize_with_offset("'a'") == [
+            (0, Token("char", "___char@0___", "'a'")),
         ]
+
+    def test_untokenize(self):
+        lexer = Lexer()
+        assert lexer.untokenize(lexer.tokenize("int x = 0;")) == \
+            "int x = 0 ;"

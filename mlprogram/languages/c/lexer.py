@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from pycparser.c_lexer import CLexer
 from pycparser.ply.lex import LexToken
@@ -15,7 +15,10 @@ class Lexer(BaseLexer[str, str]):
         super().__init__()
         self.delimiter = delimiter
 
-    def tokenize(self, code: str) -> Optional[List[Token[str, str]]]:
+    def tokenize_with_offset(self, code: str) \
+            -> Optional[List[Tuple[int, Token[str, str]]]]:
+        code = code.replace("\r", "")
+
         lexer = CLexer(logger.warning, lambda: None,
                        lambda: None, lambda x: False)
         lexer.build(optimize=False)
@@ -23,7 +26,7 @@ class Lexer(BaseLexer[str, str]):
         tokens: List[LexToken] = list(iter(lexer.token, None))
 
         return [
-            Token(token.type, token.value, token.value)
+            (token.lexpos, Token(token.type, token.value, token.value))
             for token in tokens
         ]
 

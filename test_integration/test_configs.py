@@ -78,3 +78,11 @@ class TestConfig(object):
             (os.path.join("configs", "csg",
                           "pbe_with_repl_evaluate_large.py"), 0),
         ])
+
+    def test_deepfix_baseline(self):
+        self.launch_config([
+            (os.path.join("configs", "deepfix",
+                          "baseline_train.py"), 0),
+            (os.path.join("configs", "deepfix",
+                          "baseline_evaluate.py"), 0),
+        ])

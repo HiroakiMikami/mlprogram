@@ -35,8 +35,8 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
                 "Insert",
                 line_number=(Kinds.LineNumber(),
                              S.leaf(Kinds.LineNumber(), code.line_number)),
-                value=("str", [S.leaf("str", token.value)
-                               for token in token_sequence])
+                value=("value", [S.leaf(token.kind or "value", token.raw_value)
+                                 for token in token_sequence])
             )
         elif isinstance(code, Remove):
             return S.node(
@@ -51,8 +51,8 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
                 "Replace",
                 line_number=(Kinds.LineNumber(),
                              S.leaf(Kinds.LineNumber(), code.line_number)),
-                value=("str", [S.leaf("str", token.value)
-                               for token in token_sequence])
+                value=("value", [S.leaf(token.kind or "value", token.raw_value)
+                                 for token in token_sequence])
             )
         logger.warning(f"Invalid node type {code.get_type_name()}")
         # TODO throw exception
@@ -78,7 +78,6 @@ class Parser(BaseParser[diffAST], Generic[Kind, Value]):
         elif code.get_type_name() == "Remove":
             return Remove(cast(Leaf, fields["line_number"]).value)
         elif code.get_type_name() == "Replace":
-            # TODO should not instantiate token sequence
             value = self.lexer.untokenize([
                 Token(None, cast(Leaf, v).value, cast(Leaf, v).value)
                 for v in cast(List[AST], fields["value"])

@@ -1,14 +1,17 @@
+import multiprocessing as mp
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import torch
 from torch.nn import functional as F
+from tqdm import tqdm
 
 from mlprogram import Environment, logging
 from mlprogram.actions import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
 from mlprogram.encoders import Samples
-from mlprogram.languages import Parser, Token
+from mlprogram.languages import Analyzer, Parser, Token
 from mlprogram.nn.utils import rnn
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 
@@ -184,3 +187,42 @@ class Collate:
                 logger.debug(f"{name} is invalid type: {type(t)}")
 
         return retval
+
+
+class _CalcNError:
+    def __init__(self, analyzer: Analyzer):
+        self.analyzer = analyzer
+
+    def __call__(self, elem: Tuple[int, Environment]):
+        i, data = elem
+        if "n_error" in data.supervisions:
+            return i, data.supervisions["n_error"]
+        return i, len(self.analyzer(data.inputs["code"]))
+
+
+def split_by_n_error(dataset: torch.utils.data.Dataset,
+                     analyzer: Analyzer,
+                     n_process: int = 0) -> Dict[str, torch.utils.data.Dataset]:
+    no_error = []
+    with_error = []
+    calc_n_error = _CalcNError(analyzer)
+    if n_process == 0:
+        n_errors = [calc_n_error(data) for data in enumerate(tqdm(dataset))]
+    else:
+        n_errors = []
+        with mp.Pool(processes=n_process) as pool:
+            with tqdm(total=len(dataset)) as _t:
+                for _r in pool.imap_unordered(calc_n_error,
+                                              enumerate(dataset)):
+                    _t.update(1)
+                    n_errors.append(_r)
+    for i, n_error in n_errors:
+        if n_error == 0:
+            no_error.append(dataset[i])
+        else:
+            with_error.append(dataset[i])
+
+    return {
+        "no_error": ListDataset(no_error),
+        "with_error": ListDataset(with_error)
+    }

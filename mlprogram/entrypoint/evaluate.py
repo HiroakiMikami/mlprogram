@@ -93,7 +93,7 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
         super().__init__()
         self.dataset = dataset
         if n_samples is not None:
-            self.dataset = ListDataset(self.dataset[:n_samples])
+            self.dataset = ListDataset([self.dataset[i] for i in range(n_samples)])
         self.synthesizer = synthesizer
         self.metrics = metrics
         self.top_n = top_n
@@ -180,8 +180,10 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         valid_dataset, synthesizer, metrics, top_n, n_process, n_samples)
 
     model_dir = os.path.join(input_dir, "model")
-    if len(os.listdir(model_dir)) != 1:
+    if len(os.listdir(model_dir)) > 1:
         logger.warning(f"There are multiple models in {model_dir}")
+    if len(os.listdir(model_dir)) == 0:
+        logger.warning(f"There are no models in {model_dir}")
     pathes = []
     for model_path in os.listdir(model_dir):
         model_path = os.path.join(model_dir, os.path.basename(model_path))

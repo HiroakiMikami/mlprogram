@@ -36,8 +36,15 @@ def create_dummy_nl2bash(path):
     torch.save({"train": data, "test": data, "valid": data}, path)
 
 
+def create_dummy_deepfix(path):
+    data = ([Environment(inputs={"code": "int main(){ return 0;}"})] * 100) + \
+        ([Environment(inputs={"code": "int main(){ return 0}"})] * 10)
+    torch.save(data, path)
+
+
 if __name__ == "__main__":
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
     create_dummy_django(os.path.join(DEFAULT_CACHE_DIR, "django.pt"))
     create_dummy_hearthstone(os.path.join(DEFAULT_CACHE_DIR, "hearthstone.pt"))
     create_dummy_nl2bash(os.path.join(DEFAULT_CACHE_DIR, "nl2bash.pt"))
+    create_dummy_deepfix(os.path.join(DEFAULT_CACHE_DIR, "deepfix.pt"))

@@ -84,7 +84,7 @@ class TestCsgByPbeWithREPL(object):
              Apply([("state@input_feature", "x")], "state@value",
                    MLP(16 * 8 * 8 * 2, 1, 512, 2,
                        activation=torch.nn.Sigmoid()),
-                   value_type="tensor"))
+                   ))
         ]))
 
     def prepare_optimizer(self, model):

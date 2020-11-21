@@ -1,4 +1,4 @@
-from typing import Generic, List, Optional, TypeVar, Union, cast
+from typing import Generic, List, Optional, Tuple, TypeVar, Union, cast
 
 from mlprogram.languages.kinds import Kinds
 from mlprogram.languages.lexer import Lexer
@@ -10,21 +10,29 @@ Value = TypeVar("Value")
 
 class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]],
                           Generic[Kind, Value]):
-    def __init__(self, baselexer: Lexer[Kind, Value]):
-        self.baselexer = baselexer
+    def __init__(self, lexer: Lexer[Kind, Value]):
+        self.lexer = lexer
 
-    def tokenize(self, text: str) -> Optional[List[Token[Union[Kinds.LineNumber, Kind],
-                                                         Union[int, Value]]]]:
+    def tokenize_with_offset(self, text: str) \
+            -> Optional[List[Tuple[int, Token[Union[Kinds.LineNumber, Kind],
+                                              Union[int, Value]]]]]:
         lines = text.split("\n")
-        tokens: List[Token[Union[Kinds.LineNumber, Kind], Union[int, Value]]] = []
-        for i, line in enumerate(lines):
-            tokens.append(Token(Kinds.LineNumber(), i, i))
-            line_tokens = self.baselexer.tokenize(line)
-            if line_tokens is None:
-                return None
-            tokens.extend(cast(List[Token[Union[Kinds.LineNumber, Kind],
-                                          Union[int, Value]]],
-                               line_tokens))
+        offsets = [0]
+        for line in lines:
+            offsets.append(offsets[-1] + len(line) + 1)
+        tokens: List[Tuple[int, Token[Union[Kinds.LineNumber, Kind],
+                                      Union[int, Value]]]] = []
+        linenum = 0
+        origs = self.lexer.tokenize_with_offset(text)
+        if origs is None:
+            return None
+        for offset, token in origs:
+            if offsets[linenum] <= offset:
+                tokens.append((offset, Token(Kinds.LineNumber(), linenum, linenum)))
+                linenum += 1
+            tokens.append((offset,
+                           cast(Token[Union[Kinds.LineNumber, Kind], Union[int, Value]],
+                                token)))
         return tokens
 
     def untokenize(self, sequnece: List[Token[Union[Kinds.LineNumber, Kind],
@@ -35,7 +43,7 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
         for token in sequnece:
             if token.kind == Kinds.LineNumber():
                 if len(line) != 0:
-                    linestr = self.baselexer.untokenize(line)
+                    linestr = self.lexer.untokenize(line)
                     if linestr is None:
                         return None
                     text += linestr
@@ -44,7 +52,7 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
             else:
                 line.append(cast(Token[Kind, Value], token))
         if len(line) != 0:
-            linestr = self.baselexer.untokenize(line)
+            linestr = self.lexer.untokenize(line)
             if linestr is None:
                 return None
             text += linestr
