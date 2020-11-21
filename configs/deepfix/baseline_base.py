@@ -10,7 +10,7 @@ params = {
     "eval_interval": 10,
     "snapshot_interval": 1,
     "particle_size": 15,
-    "n_evaluate_process": None,  # 2,
+    "n_evaluate_process": 8,
     "seed": 0,
     "max_mutation": 5,
     "mutation_seed": 1,
