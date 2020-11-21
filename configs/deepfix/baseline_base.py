@@ -14,7 +14,7 @@ params = {
     "seed": 0,
     "max_mutation": 5,
     "mutation_seed": 1,
-    "timeout_sec": 10
+    "timeout_sec": 10,
 }
 lexer = mlprogram.languages.LexerWithLineNumber(
     lexer=mlprogram.datasets.deepfix.Lexer()
