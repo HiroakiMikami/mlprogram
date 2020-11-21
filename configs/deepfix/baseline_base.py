@@ -5,7 +5,7 @@ params = {
     "hidden_size": 256,
     "attr_hidden_size": 50,
     "dropout": 0.2,
-    "batch_size": 1,  # 32,
+    "batch_size": 8,
     "n_epoch": 50,
     "eval_interval": 10,
     "snapshot_interval": 1,
