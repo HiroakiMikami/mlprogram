@@ -46,3 +46,8 @@ class TestLexer(object):
         assert lexer.tokenize_with_offset("'a'") == [
             (0, Token("char", "___char@0___", "'a'")),
         ]
+
+    def test_untokenize(self):
+        lexer = Lexer()
+        assert lexer.untokenize(lexer.tokenize("int x = 0;")) == \
+            "int x = 0 ;"

@@ -138,3 +138,6 @@ class Lexer(BaseLexer[str, str]):
             else:
                 retval.append((offset, token))
         return retval
+
+    def untokenize(self, sequnece: List[Token[str, str]]) -> Optional[str]:
+        return self.delimiter.join([x.raw_value for x in sequnece])
