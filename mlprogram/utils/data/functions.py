@@ -195,6 +195,8 @@ class _CalcNError:
 
     def __call__(self, elem: Tuple[int, Environment]):
         i, data = elem
+        if "n_error" in data.supervisions:
+            return i, data.supervisions["n_error"]
         return i, len(self.analyzer(data.inputs["code"]))
 
 

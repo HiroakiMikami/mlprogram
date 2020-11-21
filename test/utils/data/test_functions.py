@@ -219,6 +219,23 @@ class TestSplitByNError(object):
             Environment(inputs={"code": "y"})
         ]
 
+    def test_precomputed_n_error(self):
+        dataset = ListDataset([
+            Environment(inputs={"code": "x"}, supervisions={"n_error": 0}),
+            Environment(inputs={"code": "y"})
+        ])
+        splitted = split_by_n_error(dataset,
+                                    MockAnalyzer({
+                                        "x": ["error"],
+                                        "y": ["error"]
+                                    }))
+        assert list(splitted["no_error"]) == [
+            Environment(inputs={"code": "x"}, supervisions={"n_error": 0})
+        ]
+        assert list(splitted["with_error"]) == [
+            Environment(inputs={"code": "y"})
+        ]
+
     def test_multiprocess(self):
         dataset = ListDataset([
             Environment(inputs={"code": "x"}),

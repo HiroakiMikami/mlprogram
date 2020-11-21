@@ -30,3 +30,12 @@ class TestErrorCorrectRate(object):
         assert np.allclose(
             0.0,
             acc(Environment(inputs={"test_cases": [("foo", None)]}), "foobar"))
+
+    def test_original_has_no_error(self):
+        acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
+        assert np.allclose(
+            1.0,
+            acc(Environment(inputs={"test_cases": [("", None)]}), ""))
+        assert np.allclose(
+            0.0,
+            acc(Environment(inputs={"test_cases": [("", None)]}), "foobar"))

@@ -55,6 +55,10 @@ def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "deepfix.pt"),
                     c.execute("SELECT code, error, errorcount FROM Code"):
                 samples.append(Environment(
                     inputs={"code": code},
+                    supervisions={
+                        "error": error,
+                        "n_error": errorcount,
+                    }
                 ))
         return samples
 

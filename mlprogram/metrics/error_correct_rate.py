@@ -24,6 +24,9 @@ class ErrorCorrectRate(Metric[Diff], Generic[Code, Error, Diff, Input, Kind]):
 
         n_error = len(self.analyzer(fixed))
 
+        if n_orig_error == 0:
+            return 1.0 if n_error == 0 else 0.0
+
         if n_orig_error < n_error:
             return 0.0
         else:
