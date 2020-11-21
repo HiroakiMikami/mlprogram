@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from mlprogram import logging
 from mlprogram.languages import Token
@@ -23,8 +23,9 @@ class Lexer(BaseLexer):
         super().__init__()
         self.delimiter = delimiter
 
-    def tokenize(self, code: str) -> Optional[List[Token[str, str]]]:
-        tokens = super().tokenize(code)
+    def tokenize_with_offset(self, code: str) \
+            -> Optional[List[Tuple[int, Token[str, str]]]]:
+        tokens = super().tokenize_with_offset(code)
         id_to_idx = _Mapping("id")
         int_to_idx = _Mapping("int")
         float_to_idx = _Mapping("float")
@@ -34,22 +35,22 @@ class Lexer(BaseLexer):
         if tokens is None:
             return None
         retval = []
-        for token in tokens:
+        for offset, token in tokens:
             if token.kind == "ID":
-                retval.append(Token(token.kind, id_to_idx(token.raw_value),
-                                    token.raw_value))
+                retval.append((offset, Token(token.kind, id_to_idx(token.raw_value),
+                                             token.raw_value)))
             elif token.kind is not None and token.kind.startswith("INT_CONST_"):
-                retval.append(Token(token.kind, int_to_idx(token.raw_value),
-                                    token.raw_value))
+                retval.append((offset, Token(token.kind, int_to_idx(token.raw_value),
+                                             token.raw_value)))
             elif token.kind == "FLOAT_CONST":
-                retval.append(Token(token.kind, float_to_idx(token.raw_value),
-                                    token.raw_value))
+                retval.append((offset, Token(token.kind, float_to_idx(token.raw_value),
+                                             token.raw_value)))
             elif token.kind == "STRING_LITERAL":
-                retval.append(Token(token.kind, str_to_idx(token.raw_value),
-                                    token.raw_value))
+                retval.append((offset, Token(token.kind, str_to_idx(token.raw_value),
+                                             token.raw_value)))
             elif token.kind == "CHAR_CONST":
-                retval.append(Token(token.kind, chr_to_idx(token.raw_value),
-                                    token.raw_value))
+                retval.append((offset, Token(token.kind, chr_to_idx(token.raw_value),
+                                             token.raw_value)))
             else:
-                retval.append(token)
+                retval.append((offset, token))
         return retval

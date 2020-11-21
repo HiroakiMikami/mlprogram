@@ -25,8 +25,7 @@ interpreter = mlprogram.languages.linediff.Interpreter()
 expander = mlprogram.languages.linediff.Expander()
 
 dataset = mlprogram.utils.data.split_by_n_error(
-    dataset=mlprogram.datasets.deepfix.download(), analyzer=analyzer,
-    n_process=4
+    dataset=mlprogram.datasets.deepfix.download(), analyzer=analyzer, n_process=4
 )
 typo_mutator = mlprogram.languages.c.TypoMutator(
     max_mutation=params.max_mutation, seed=params.mutation_seed
