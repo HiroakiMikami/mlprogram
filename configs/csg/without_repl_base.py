@@ -152,7 +152,7 @@ transform_input = mlprogram.functools.Sequence(
                 "add_reference",
                 mlprogram.transforms.action_sequence.AddEmptyReference(),
             ],
-            ["transform_canvas", mlprogram.languages.csg.transform.TransformCanvas()],
+            ["transform_canvas", mlprogram.languages.csg.transforms.TransformCanvas()],
         ],
     ),
 )

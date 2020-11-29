@@ -13,7 +13,7 @@ import mlprogram.functools
 import mlprogram.languages.bash
 import mlprogram.languages.c
 import mlprogram.languages.csg
-import mlprogram.languages.csg.transform
+import mlprogram.languages.csg.transforms
 import mlprogram.languages.python
 import mlprogram.languages.python.metrics
 import mlprogram.metrics
@@ -219,10 +219,10 @@ types = {
     "mlprogram.languages.csg.Expander": mlprogram.languages.csg.Expander,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
-    "mlprogram.languages.csg.transform.TransformCanvas":
-        mlprogram.languages.csg.transform.TransformCanvas,
-    "mlprogram.languages.csg.transform.AddTestCases":
-        mlprogram.languages.csg.transform.AddTestCases,
+    "mlprogram.languages.csg.transforms.TransformCanvas":
+        mlprogram.languages.csg.transforms.TransformCanvas,
+    "mlprogram.languages.csg.transforms.AddTestCases":
+        mlprogram.languages.csg.transforms.AddTestCases,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
     "mlprogram.languages.c.Lexer": mlprogram.languages.c.Lexer,

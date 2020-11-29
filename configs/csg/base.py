@@ -29,7 +29,7 @@ encoder = with_file_cache(
 )
 train_dataset = mlprogram.utils.data.transform(
     dataset=dataset,
-    transform=mlprogram.languages.csg.transform.AddTestCases(
+    transform=mlprogram.languages.csg.transforms.AddTestCases(
         interpreter=interpreter,
     ),
 )
@@ -46,7 +46,7 @@ test_dataset = mlprogram.utils.data.transform(
         ),
         n=option.n_evaluate_dataset,
     ),
-    transform=mlprogram.languages.csg.transform.AddTestCases(
+    transform=mlprogram.languages.csg.transforms.AddTestCases(
         interpreter=interpreter,
     ),
 )
@@ -63,7 +63,7 @@ valid_dataset = mlprogram.utils.data.transform(
         ),
         n=option.n_evaluate_dataset,
     ),
-    transform=mlprogram.languages.csg.transform.AddTestCases(
+    transform=mlprogram.languages.csg.transforms.AddTestCases(
         interpreter=interpreter,
     ),
 )

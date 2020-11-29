@@ -188,7 +188,7 @@ collate = mlprogram.utils.data.Collate(
 transform_input = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
-            ["transform_canvas", mlprogram.languages.csg.transform.TransformCanvas()]
+            ["transform_canvas", mlprogram.languages.csg.transforms.TransformCanvas()]
         ],
     ),
 )
@@ -276,7 +276,7 @@ subsynthesizer = mlprogram.synthesizers.SMC(
 )
 sampler = mlprogram.samplers.SequentialProgramSampler(
     synthesizer=subsynthesizer,
-    transform_input=mlprogram.languages.csg.transform.TransformCanvas(),
+    transform_input=mlprogram.languages.csg.transforms.TransformCanvas(),
     collate=collate,
     encoder=model.encode_input,
     interpreter=interpreter,
@@ -316,7 +316,7 @@ evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
                         items=[
                             [
                                 "transform_canvas",
-                                mlprogram.languages.csg.transform.TransformCanvas(),
+                                mlprogram.languages.csg.transforms.TransformCanvas(),
                             ]
                         ],
                     ),
