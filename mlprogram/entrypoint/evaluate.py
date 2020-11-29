@@ -118,8 +118,9 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
             results = [
                 evaluate_sample(elem)
                 for elem in tqdm(
-                    logger.iterable_block("evaluate_sample",
-                                          enumerate(self.dataset)))]
+                    total=len(self.dataset),
+                    iterable=logger.iterable_block("evaluate_sample",
+                                                   enumerate(self.dataset)))]
         else:
             logger.info(
                 f"Evalute with {len(self.dataset)} samples "
