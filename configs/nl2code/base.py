@@ -1,4 +1,4 @@
-normalize_dataset = mlprogram.utils.transform.NormalizeGroundTruth(
+normalize_dataset = mlprogram.transforms.NormalizeGroundTruth(
     normalize=mlprogram.functools.Sequence(
         funcs=collections.OrderedDict(
             items=[["parse", parser.parse], ["unparse", parser.unparse]],
@@ -158,13 +158,13 @@ transform_input = mlprogram.functools.Compose(
         items=[
             [
                 "extract_reference",
-                mlprogram.utils.transform.text.ExtractReference(
+                mlprogram.transforms.text.ExtractReference(
                     extract_reference=extract_reference,
                 ),
             ],
             [
                 "encode_word_query",
-                mlprogram.utils.transform.text.EncodeWordQuery(
+                mlprogram.transforms.text.EncodeWordQuery(
                     word_encoder=encoder.word_encoder,
                 ),
             ],
@@ -176,25 +176,25 @@ transform_action_sequence = mlprogram.functools.Compose(
         items=[
             [
                 "add_previous_action",
-                mlprogram.utils.transform.action_sequence.AddPreviousActions(
+                mlprogram.transforms.action_sequence.AddPreviousActions(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                     n_dependent=1,
                 ),
             ],
             [
                 "add_action",
-                mlprogram.utils.transform.action_sequence.AddActions(
+                mlprogram.transforms.action_sequence.AddActions(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                     n_dependent=1,
                 ),
             ],
             [
                 "add_state",
-                mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder(),
+                mlprogram.transforms.action_sequence.AddStateForRnnDecoder(),
             ],
             [
                 "add_history",
-                mlprogram.utils.transform.action_sequence.AddHistoryState(),
+                mlprogram.transforms.action_sequence.AddHistoryState(),
             ],
         ],
     ),

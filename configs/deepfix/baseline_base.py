@@ -202,13 +202,13 @@ transform_input = mlprogram.functools.Compose(
             ],
             [
                 "extract_reference",
-                mlprogram.utils.transform.text.ExtractReference(
+                mlprogram.transforms.text.ExtractReference(
                     extract_reference=lexer.tokenize,
                 ),
             ],
             [
                 "encode_word_query",
-                mlprogram.utils.transform.text.EncodeWordQuery(
+                mlprogram.transforms.text.EncodeWordQuery(
                     word_encoder=encoder.word_encoder,
                 ),
             ],
@@ -220,25 +220,25 @@ transform_action_sequence = mlprogram.functools.Compose(
         items=[
             [
                 "add_previous_action",
-                mlprogram.utils.transform.action_sequence.AddPreviousActions(
+                mlprogram.transforms.action_sequence.AddPreviousActions(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                     n_dependent=1,
                 ),
             ],
             [
                 "add_action",
-                mlprogram.utils.transform.action_sequence.AddActions(
+                mlprogram.transforms.action_sequence.AddActions(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                     n_dependent=1,
                 ),
             ],
             [
                 "add_state",
-                mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder(),
+                mlprogram.transforms.action_sequence.AddStateForRnnDecoder(),
             ],
             [
                 "add_history",
-                mlprogram.utils.transform.action_sequence.AddHistoryState(),
+                mlprogram.transforms.action_sequence.AddHistoryState(),
             ],
         ],
     ),
@@ -249,14 +249,14 @@ transform = mlprogram.functools.Sequence(
             ["transform_input", transform_input],
             [
                 "transform_code",
-                mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence(
+                mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
                     parser=parser,
                 ),
             ],
             ["transform_action_sequence", transform_action_sequence],
             [
                 "transform_ground_truth",
-                mlprogram.utils.transform.action_sequence.EncodeActionSequence(
+                mlprogram.transforms.action_sequence.EncodeActionSequence(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                 ),
             ],

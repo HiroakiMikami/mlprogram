@@ -120,6 +120,55 @@ class TestTrainSupervised(object):
             assert os.path.exists(os.path.join(output, "model.pt"))
             assert os.path.exists(os.path.join(output, "optimizer.pt"))
 
+    def test_resume_from_eval_mode(self):
+        class DummyModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.m = nn.Linear(1, 1)
+
+            def forward(self, kwargs):
+                assert self.training
+                kwargs.outputs["value"] = self.m(kwargs.inputs["value"].float())
+                return kwargs
+
+        class MockEvaluate(object):
+            def __init__(self, key, model):
+                self.key = key
+                self.model = model
+
+            def __call__(self):
+                self.model.eval()
+                report({self.key: 0.0})
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = os.path.join(tmpdir, "ws")
+            output = os.path.join(tmpdir, "out")
+            model = DummyModel()
+            train_supervised(ws, output,
+                             self.prepare_dataset(),
+                             model,
+                             self.prepare_optimizer(model),
+                             self.loss_fn,
+                             MockEvaluate("key", model), "key",
+                             collate.collate, 1, Epoch(2))
+            assert os.path.exists(
+                os.path.join(ws, "snapshot_iter_6"))
+            assert os.path.exists(os.path.join(ws, "log"))
+            with open(os.path.join(ws, "log")) as file:
+                log = json.load(file)
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(ws, "model")))
+
+            assert os.path.exists(os.path.join(output, "log.json"))
+            with open(os.path.join(output, "log.json")) as file:
+                log = json.load(file)
+            assert isinstance(log, list)
+            assert 1 == len(log)
+            assert 1 == len(os.listdir(os.path.join(output, "model")))
+            assert os.path.exists(os.path.join(output, "model.pt"))
+            assert os.path.exists(os.path.join(output, "optimizer.pt"))
+
     def test_threshold(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = os.path.join(tmpdir, "ws")

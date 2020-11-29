@@ -24,8 +24,7 @@ from mlprogram.metrics import Accuracy
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.synthesizers import BeamSearch
-from mlprogram.utils.data import Collate, CollateOptions, get_samples, get_words
-from mlprogram.utils.transform.action_sequence import (
+from mlprogram.transforms.action_sequence import (
     AddActions,
     AddHistoryState,
     AddPreviousActions,
@@ -33,7 +32,8 @@ from mlprogram.utils.transform.action_sequence import (
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
-from mlprogram.utils.transform.text import EncodeWordQuery, ExtractReference
+from mlprogram.transforms.text import EncodeWordQuery, ExtractReference
+from mlprogram.utils.data import Collate, CollateOptions, get_samples, get_words
 from test_integration.nl2code_dummy_dataset import (
     Parser,
     is_subtype,

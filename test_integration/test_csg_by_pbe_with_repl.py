@@ -40,15 +40,15 @@ from mlprogram.samplers import (
     SequentialProgramSampler,
 )
 from mlprogram.synthesizers import SMC, FilteredSynthesizer, SynthesizerWithTimeout
-from mlprogram.utils.data import Collate, CollateOptions, to_map_style_dataset
-from mlprogram.utils.data import transform as data_transform
-from mlprogram.utils.transform.action_sequence import (
+from mlprogram.transforms.action_sequence import (
     AddPreviousActions,
     AddStateForRnnDecoder,
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
-from mlprogram.utils.transform.pbe import ToEpisode
+from mlprogram.transforms.pbe import ToEpisode
+from mlprogram.utils.data import Collate, CollateOptions, to_map_style_dataset
+from mlprogram.utils.data import transform as data_transform
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 

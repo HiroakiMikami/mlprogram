@@ -3,7 +3,7 @@ from torchnlp.encoders import LabelEncoder
 
 from mlprogram import Environment
 from mlprogram.languages import Token
-from mlprogram.utils.transform.text import (
+from mlprogram.transforms.text import (
     EncodeCharacterQuery,
     EncodeTokenQuery,
     EncodeWordQuery,
