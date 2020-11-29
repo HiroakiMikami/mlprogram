@@ -3,7 +3,7 @@ import torch
 
 from mlprogram import Environment
 from mlprogram.languages import Interpreter, Token
-from mlprogram.utils.transform.pbe import ToEpisode
+from mlprogram.transforms.pbe import ToEpisode
 
 
 class MockInterpreter(Interpreter):

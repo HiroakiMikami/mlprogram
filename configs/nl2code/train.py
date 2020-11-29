@@ -9,14 +9,14 @@ transform = mlprogram.functools.Sequence(
             ["transform_input", transform_input],
             [
                 "transform_code",
-                mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence(
+                mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
                     parser=parser,
                 ),
             ],
             ["transform_action_sequence", transform_action_sequence],
             [
                 "transform_ground_truth",
-                mlprogram.utils.transform.action_sequence.EncodeActionSequence(
+                mlprogram.transforms.action_sequence.EncodeActionSequence(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                 ),
             ],

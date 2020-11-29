@@ -1,5 +1,5 @@
 from mlprogram import Environment
-from mlprogram.utils.transform import NormalizeGroundTruth
+from mlprogram.transforms import NormalizeGroundTruth
 
 
 class TestNormalizeGroundTruth(object):

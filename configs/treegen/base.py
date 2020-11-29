@@ -1,4 +1,4 @@
-normalize_dataset = mlprogram.utils.transform.NormalizeGroundTruth(
+normalize_dataset = mlprogram.transforms.NormalizeGroundTruth(
     normalize=mlprogram.functools.Sequence(
         funcs=collections.OrderedDict(
             items=[["parse", parser.parse], ["unparse", parser.unparse]],
@@ -183,19 +183,19 @@ transform_input = mlprogram.functools.Compose(
         items=[
             [
                 "extract_reference",
-                mlprogram.utils.transform.text.ExtractReference(
+                mlprogram.transforms.text.ExtractReference(
                     extract_reference=extract_reference,
                 ),
             ],
             [
                 "encode_word",
-                mlprogram.utils.transform.text.EncodeWordQuery(
+                mlprogram.transforms.text.EncodeWordQuery(
                     word_encoder=encoder.word_encoder,
                 ),
             ],
             [
                 "encode_char",
-                mlprogram.utils.transform.text.EncodeCharacterQuery(
+                mlprogram.transforms.text.EncodeCharacterQuery(
                     char_encoder=encoder.char_encoder,
                     max_word_length=params.max_word_length,
                 ),
@@ -208,26 +208,26 @@ transform_action_sequence = mlprogram.functools.Compose(
         items=[
             [
                 "add_previous_action",
-                mlprogram.utils.transform.action_sequence.AddPreviousActions(
+                mlprogram.transforms.action_sequence.AddPreviousActions(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                 ),
             ],
             [
                 "add_previous_action_rule",
-                mlprogram.utils.transform.action_sequence.AddPreviousActionRules(
+                mlprogram.transforms.action_sequence.AddPreviousActionRules(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                     max_arity=params.max_arity,
                 ),
             ],
             [
                 "add_action_sequence_as_tree",
-                mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree(
+                mlprogram.transforms.action_sequence.AddActionSequenceAsTree(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                 ),
             ],
             [
                 "add_query",
-                mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder(
+                mlprogram.transforms.action_sequence.AddQueryForTreeGenDecoder(
                     action_sequence_encoder=encoder.action_sequence_encoder,
                     max_depth=params.max_tree_depth,
                 ),

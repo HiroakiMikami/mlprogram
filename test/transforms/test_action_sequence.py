@@ -3,8 +3,7 @@ import numpy as np
 from mlprogram import Environment
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Field, Leaf, Node, Parser, Token
-from mlprogram.utils.data import ListDataset, get_samples
-from mlprogram.utils.transform.action_sequence import (
+from mlprogram.transforms.action_sequence import (
     AddActions,
     AddActionSequenceAsTree,
     AddHistoryState,
@@ -15,6 +14,7 @@ from mlprogram.utils.transform.action_sequence import (
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
+from mlprogram.utils.data import ListDataset, get_samples
 
 
 class MockParser(Parser[str]):

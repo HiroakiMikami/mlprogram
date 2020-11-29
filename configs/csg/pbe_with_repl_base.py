@@ -188,7 +188,7 @@ collate = mlprogram.utils.data.Collate(
 transform_input = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
-            ["transform_canvas", mlprogram.languages.csg.transform.TransformCanvas()]
+            ["transform_canvas", mlprogram.languages.csg.transforms.TransformCanvas()]
         ],
     ),
 )
@@ -197,14 +197,14 @@ transform_action_sequence = mlprogram.functools.Sequence(
         items=[
             [
                 "add_previous_actions",
-                mlprogram.utils.transform.action_sequence.AddPreviousActions(
+                mlprogram.transforms.action_sequence.AddPreviousActions(
                     action_sequence_encoder=encoder,
                     n_dependent=1,
                 ),
             ],
             [
                 "add_state",
-                mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder(),
+                mlprogram.transforms.action_sequence.AddStateForRnnDecoder(),
             ],
         ],
     ),
@@ -215,21 +215,21 @@ transform = mlprogram.functools.Sequence(
             ["transform_input", transform_input],
             [
                 "transform_code",
-                mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence(
+                mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
                     parser=parser,
                 ),
             ],
             ["transform_action_sequence", transform_action_sequence],
             [
                 "transform_ground_truth",
-                mlprogram.utils.transform.action_sequence.EncodeActionSequence(
+                mlprogram.transforms.action_sequence.EncodeActionSequence(
                     action_sequence_encoder=encoder,
                 ),
             ],
         ],
     ),
 )
-to_episode = mlprogram.utils.transform.pbe.ToEpisode(
+to_episode = mlprogram.transforms.pbe.ToEpisode(
     interpreter=interpreter,
     expander=mlprogram.languages.csg.Expander(),
 )
@@ -276,7 +276,7 @@ subsynthesizer = mlprogram.synthesizers.SMC(
 )
 sampler = mlprogram.samplers.SequentialProgramSampler(
     synthesizer=subsynthesizer,
-    transform_input=mlprogram.languages.csg.transform.TransformCanvas(),
+    transform_input=mlprogram.languages.csg.transforms.TransformCanvas(),
     collate=collate,
     encoder=model.encode_input,
     interpreter=interpreter,
@@ -316,7 +316,7 @@ evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
                         items=[
                             [
                                 "transform_canvas",
-                                mlprogram.languages.csg.transform.TransformCanvas(),
+                                mlprogram.languages.csg.transforms.TransformCanvas(),
                             ]
                         ],
                     ),

@@ -13,7 +13,7 @@ import mlprogram.functools
 import mlprogram.languages.bash
 import mlprogram.languages.c
 import mlprogram.languages.csg
-import mlprogram.languages.csg.transform
+import mlprogram.languages.csg.transforms
 import mlprogram.languages.python
 import mlprogram.languages.python.metrics
 import mlprogram.metrics
@@ -23,11 +23,11 @@ import mlprogram.nn.nl2code
 import mlprogram.nn.pbe_with_repl
 import mlprogram.nn.treegen
 import mlprogram.synthesizers
+import mlprogram.transforms
+import mlprogram.transforms.action_sequence
+import mlprogram.transforms.pbe
+import mlprogram.transforms.text
 import mlprogram.utils.data
-import mlprogram.utils.transform
-import mlprogram.utils.transform.action_sequence
-import mlprogram.utils.transform.pbe
-import mlprogram.utils.transform.text
 from mlprogram.entrypoint.modules.numpy import types as numpy_types
 from mlprogram.entrypoint.modules.torch import types as torch_types
 from mlprogram.entrypoint.modules.torchnlp import types as torchnlp_types
@@ -152,38 +152,38 @@ types = {
     "mlprogram.utils.data.transform": mlprogram.utils.data.transform,
     "mlprogram.utils.data.split_by_n_error": mlprogram.utils.data.split_by_n_error,
 
-    "mlprogram.utils.transform.NormalizeGroundTruth":
-        mlprogram.utils.transform.NormalizeGroundTruth,
-    "mlprogram.utils.transform.action_sequence.AddEmptyReference":
-        mlprogram.utils.transform.action_sequence.AddEmptyReference,
-    "mlprogram.utils.transform.action_sequence.AddPreviousActions":
-        mlprogram.utils.transform.action_sequence.AddPreviousActions,
-    "mlprogram.utils.transform.action_sequence.AddActions":
-        mlprogram.utils.transform.action_sequence.AddActions,
-    "mlprogram.utils.transform.action_sequence.AddPreviousActionRules":
-        mlprogram.utils.transform.action_sequence.AddPreviousActionRules,
-    "mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree":
-        mlprogram.utils.transform.action_sequence.AddActionSequenceAsTree,
-    "mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder":
-        mlprogram.utils.transform.action_sequence.AddQueryForTreeGenDecoder,
-    "mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder":
-        mlprogram.utils.transform.action_sequence.AddStateForRnnDecoder,
-    "mlprogram.utils.transform.action_sequence.AddHistoryState":
-        mlprogram.utils.transform.action_sequence.AddHistoryState,
-    "mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence":
-        mlprogram.utils.transform.action_sequence.GroundTruthToActionSequence,
-    "mlprogram.utils.transform.action_sequence.EncodeActionSequence":
-        mlprogram.utils.transform.action_sequence.EncodeActionSequence,
-    "mlprogram.utils.transform.text.ExtractReference":
-        mlprogram.utils.transform.text.ExtractReference,
-    "mlprogram.utils.transform.text.EncodeWordQuery":
-        mlprogram.utils.transform.text.EncodeWordQuery,
-    "mlprogram.utils.transform.text.EncodeTokenQuery":
-        mlprogram.utils.transform.text.EncodeTokenQuery,
-    "mlprogram.utils.transform.text.EncodeCharacterQuery":
-        mlprogram.utils.transform.text.EncodeCharacterQuery,
-    "mlprogram.utils.transform.pbe.ToEpisode":
-        mlprogram.utils.transform.pbe.ToEpisode,
+    "mlprogram.transforms.NormalizeGroundTruth":
+        mlprogram.transforms.NormalizeGroundTruth,
+    "mlprogram.transforms.action_sequence.AddEmptyReference":
+        mlprogram.transforms.action_sequence.AddEmptyReference,
+    "mlprogram.transforms.action_sequence.AddPreviousActions":
+        mlprogram.transforms.action_sequence.AddPreviousActions,
+    "mlprogram.transforms.action_sequence.AddActions":
+        mlprogram.transforms.action_sequence.AddActions,
+    "mlprogram.transforms.action_sequence.AddPreviousActionRules":
+        mlprogram.transforms.action_sequence.AddPreviousActionRules,
+    "mlprogram.transforms.action_sequence.AddActionSequenceAsTree":
+        mlprogram.transforms.action_sequence.AddActionSequenceAsTree,
+    "mlprogram.transforms.action_sequence.AddQueryForTreeGenDecoder":
+        mlprogram.transforms.action_sequence.AddQueryForTreeGenDecoder,
+    "mlprogram.transforms.action_sequence.AddStateForRnnDecoder":
+        mlprogram.transforms.action_sequence.AddStateForRnnDecoder,
+    "mlprogram.transforms.action_sequence.AddHistoryState":
+        mlprogram.transforms.action_sequence.AddHistoryState,
+    "mlprogram.transforms.action_sequence.GroundTruthToActionSequence":
+        mlprogram.transforms.action_sequence.GroundTruthToActionSequence,
+    "mlprogram.transforms.action_sequence.EncodeActionSequence":
+        mlprogram.transforms.action_sequence.EncodeActionSequence,
+    "mlprogram.transforms.text.ExtractReference":
+        mlprogram.transforms.text.ExtractReference,
+    "mlprogram.transforms.text.EncodeWordQuery":
+        mlprogram.transforms.text.EncodeWordQuery,
+    "mlprogram.transforms.text.EncodeTokenQuery":
+        mlprogram.transforms.text.EncodeTokenQuery,
+    "mlprogram.transforms.text.EncodeCharacterQuery":
+        mlprogram.transforms.text.EncodeCharacterQuery,
+    "mlprogram.transforms.pbe.ToEpisode":
+        mlprogram.transforms.pbe.ToEpisode,
 
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
@@ -219,10 +219,10 @@ types = {
     "mlprogram.languages.csg.Expander": mlprogram.languages.csg.Expander,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
-    "mlprogram.languages.csg.transform.TransformCanvas":
-        mlprogram.languages.csg.transform.TransformCanvas,
-    "mlprogram.languages.csg.transform.AddTestCases":
-        mlprogram.languages.csg.transform.AddTestCases,
+    "mlprogram.languages.csg.transforms.TransformCanvas":
+        mlprogram.languages.csg.transforms.TransformCanvas,
+    "mlprogram.languages.csg.transforms.AddTestCases":
+        mlprogram.languages.csg.transforms.AddTestCases,
 
     "mlprogram.languages.c.Analyzer": mlprogram.languages.c.Analyzer,
     "mlprogram.languages.c.Lexer": mlprogram.languages.c.Lexer,

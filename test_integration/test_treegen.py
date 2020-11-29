@@ -25,14 +25,7 @@ from mlprogram.nn import treegen
 from mlprogram.nn.action_sequence import Loss, Predictor
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.synthesizers import BeamSearch
-from mlprogram.utils.data import (
-    Collate,
-    CollateOptions,
-    get_characters,
-    get_samples,
-    get_words,
-)
-from mlprogram.utils.transform.action_sequence import (
+from mlprogram.transforms.action_sequence import (
     AddActionSequenceAsTree,
     AddPreviousActionRules,
     AddPreviousActions,
@@ -40,10 +33,17 @@ from mlprogram.utils.transform.action_sequence import (
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
-from mlprogram.utils.transform.text import (
+from mlprogram.transforms.text import (
     EncodeCharacterQuery,
     EncodeWordQuery,
     ExtractReference,
+)
+from mlprogram.utils.data import (
+    Collate,
+    CollateOptions,
+    get_characters,
+    get_samples,
+    get_words,
 )
 from test_integration.nl2code_dummy_dataset import (
     Parser,
