@@ -237,7 +237,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
             # TODO num_workers > 0 causes the RuntimeError
             loader = create_dataloader(dataset, batch_size, 0, collate)
 
-            model.train()
             for batch in logger.iterable_block("iteration", loader, True):
                 batch.mutable(
                     inputs=False,
@@ -249,6 +248,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     logger.warning(f"Skip {manager.iteration} th batch")
                     continue
                 with manager.run_iteration():
+                    model.train()
                     with logger.block("forward"):
                         output = model(batch)
                         bloss = loss(output)
@@ -342,12 +342,12 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
             # TODO num_workers > 0 causes the RuntimeError
             loader = create_dataloader(dataset, batch_size, 0, lambda x: x)
 
-            model.train()
             for samples in logger.iterable_block("iteration", loader, True):
                 if manager.iteration >= n_iter:
                     break
                 # Rollout
                 rollouts = []
+                model.train()
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
                         sample_inputs = Environment(
@@ -377,6 +377,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         f"expected={n_rollout} actual={len(rollouts)}")
 
                 with manager.run_iteration():
+                    model.train()
                     with logger.block("collate"):
                         batch2 = collate(rollouts)
                     with logger.block("forward"):
