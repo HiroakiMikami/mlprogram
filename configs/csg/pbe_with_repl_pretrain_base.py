@@ -21,8 +21,8 @@ loss_fn = torch.nn.Sequential(
             [
                 "normalize",
                 mlprogram.nn.Apply(
-                    in_keys=[["output@action_sequence_loss", "lhs"]],
-                    out_key="output@action_sequence_loss",
+                    in_keys=[["action_sequence_loss", "lhs"]],
+                    out_key="action_sequence_loss",
                     module=mlprogram.nn.Function(
                         f=Div(),
                     ),
@@ -33,7 +33,7 @@ loss_fn = torch.nn.Sequential(
                 "pick",
                 mlprogram.nn.Function(
                     f=Pick(
-                        key="output@action_sequence_loss",
+                        key="action_sequence_loss",
                     ),
                 ),
             ],

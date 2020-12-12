@@ -35,7 +35,7 @@ loss_fn = torch.nn.Sequential(
                 "pick",
                 mlprogram.nn.Function(
                     f=Pick(
-                        key="output@action_sequence_loss",
+                        key="action_sequence_loss",
                     ),
                 ),
             ],

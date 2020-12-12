@@ -6,8 +6,8 @@ class TestBleu(object):
     def test_bleu(self):
         bleu = Bleu()
         assert bleu(
-            Environment(supervisions={"ground_truth": "def f():\n  pass\n"}),
+            Environment({"ground_truth": "def f():\n  pass\n"}, set(["ground_truth"])),
             "def f():\n  pass\n") == 1
         assert bleu(
-            Environment(supervisions={"ground_truth": "def f():\n  pass\n"}),
+            Environment({"ground_truth": "def f():\n  pass\n"}, set(["ground_truth"])),
             "def f(arg):\n  pass\n") > 0.9

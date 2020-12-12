@@ -22,8 +22,8 @@ class TestActionSequenceReader(object):
         prev_action = rnn.pad_sequence(
             [prev_action0, prev_action1])  # (2, 2, 3)
 
-        data = reader(Environment(states={"previous_actions": prev_action}))
-        feature = data.states["action_features"]
+        data = reader(Environment({"previous_actions": prev_action}))
+        feature = data["action_features"]
         assert np.array_equal(
             [[1, 1], [0, 1]], feature.mask.numpy())
         assert (2, 2, 5) == feature.data.shape

@@ -21,7 +21,7 @@ class Apply(nn.Module):
         for i, in_key in enumerate(self.in_keys):
             if isinstance(in_key, str):
                 original_key = in_key
-                _, renamed_key = Environment.parse_key(in_key)
+                renamed_key = in_key
             else:
                 original_key, renamed_key = in_key
             kwargs[renamed_key] = entry[original_key]

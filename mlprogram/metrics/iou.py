@@ -7,7 +7,7 @@ from mlprogram.metrics.metric import Metric
 class Iou(Metric[np.array]):
     def __call__(self, input: Environment,
                  actual: np.array) -> float:
-        ground_truth = input.supervisions["ground_truth"]
+        ground_truth = input["ground_truth"]
 
         if ground_truth.sum() == 0:
             iou = 1.0 - actual.sum() / np.prod(actual.shape)

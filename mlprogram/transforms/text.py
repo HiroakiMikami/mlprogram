@@ -12,8 +12,8 @@ class ExtractReference(object):
         self.extract_reference = extract_reference
 
     def __call__(self, entry: Environment) -> Environment:
-        text_query = cast(str, entry.inputs["text_query"])
-        entry.states["reference"] = self.extract_reference(text_query)
+        text_query = cast(str, entry["text_query"])
+        entry["reference"] = self.extract_reference(text_query)
 
         return entry
 
@@ -23,9 +23,9 @@ class EncodeTokenQuery(object):
         self.token_encoder = token_encoder
 
     def __call__(self, entry: Environment) -> Environment:
-        reference = entry.states["reference"]
+        reference = entry["reference"]
 
-        entry.states["token_nl_query"] = self.token_encoder.batch_encode(reference)
+        entry["token_nl_query"] = self.token_encoder.batch_encode(reference)
 
         return entry
 
@@ -35,9 +35,9 @@ class EncodeWordQuery(object):
         self.word_encoder = word_encoder
 
     def __call__(self, entry: Environment) -> Environment:
-        reference = entry.states["reference"]
+        reference = entry["reference"]
 
-        entry.states["word_nl_query"] = self.word_encoder.batch_encode([
+        entry["word_nl_query"] = self.word_encoder.batch_encode([
             token.value for token in reference
         ])
 
@@ -50,7 +50,7 @@ class EncodeCharacterQuery(object):
         self.max_word_length = max_word_length
 
     def __call__(self, entry: Environment) -> Environment:
-        reference = entry.states["reference"]
+        reference = entry["reference"]
 
         char_query = \
             torch.ones(len(reference), self.max_word_length).long() \
@@ -59,6 +59,6 @@ class EncodeCharacterQuery(object):
             chars = self.char_encoder.batch_encode(token.value)
             length = min(self.max_word_length, len(chars))
             char_query[i, :length] = chars[:length]
-        entry.states["char_nl_query"] = char_query
+        entry["char_nl_query"] = char_query
 
         return entry

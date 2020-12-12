@@ -39,10 +39,10 @@ class RnnDecoder(nn.Module):
             The tuple of the next state. The shape is (B, hidden_size)
         """
         action_features = cast(PaddedSequenceWithMask,
-                               inputs.states["action_features"])
-        input_feature = cast(torch.Tensor, inputs.states["input_feature"])
-        h_n = inputs.states["hidden_state"]
-        c_n = inputs.states["state"]
+                               inputs["action_features"])
+        input_feature = cast(torch.Tensor, inputs["input_feature"])
+        h_n = inputs["hidden_state"]
+        c_n = inputs["state"]
         B = input_feature.data.shape[0]
         if h_n is None:
             h_n = torch.zeros(B, self.output_feature_size,
@@ -64,9 +64,9 @@ class RnnDecoder(nn.Module):
         hs = torch.stack(hs)
         cs = torch.stack(cs)
 
-        inputs.states["action_features"] = rnn.PaddedSequenceWithMask(
+        inputs["action_features"] = rnn.PaddedSequenceWithMask(
             hs, action_features.mask)
-        inputs.states["hidden_state"] = h1
-        inputs.states["state"] = c1
+        inputs["hidden_state"] = h1
+        inputs["state"] = c1
 
         return inputs

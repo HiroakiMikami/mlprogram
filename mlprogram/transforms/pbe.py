@@ -16,23 +16,24 @@ class ToEpisode(Generic[Code, Input, Value]):
         self.expander = expander
 
     def __call__(self, entry: Environment) -> List[Environment]:
-        ground_truth = entry.supervisions["ground_truth"]
-        test_cases = entry.inputs["test_cases"]
+        ground_truth = entry["ground_truth"]
+        test_cases = entry["test_cases"]
         inputs = [input for input, _ in test_cases]
 
         retval: List[Environment] = []
         state = BatchedState[Code, Value, Kind]({}, {}, [])
         for code in self.expander.expand(ground_truth):
             xs = entry.clone()
-            xs.states["reference"] = [
+            xs["reference"] = [
                 Token(state.type_environment[v], v, v)
                 for v in state.environment.keys()
             ]
-            xs.states["variables"] = [
+            xs["variables"] = [
                 state.environment[token.value]
-                for token in xs.states["reference"]
+                for token in xs["reference"]
             ]
-            xs.supervisions["ground_truth"] = code
+            xs["ground_truth"] = code
+            xs.mark_as_supervision("ground_truth")
             state = self.interpreter.execute(code, inputs, state)
             retval.append(xs)
 

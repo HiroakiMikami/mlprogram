@@ -155,16 +155,16 @@ class ActionSequenceReader(nn.Module):
             N is the batch size.
         """
         previous_actions = cast(PaddedSequenceWithMask,
-                                inputs.states["previous_actions"])
+                                inputs["previous_actions"])
         rule_previous_actions = cast(PaddedSequenceWithMask,
-                                     inputs.states["previous_action_rules"])
-        depthes = cast(torch.Tensor, inputs.states["depthes"])
+                                     inputs["previous_action_rules"])
+        depthes = cast(torch.Tensor, inputs["depthes"])
         adjacency_matrix = cast(torch.Tensor,
-                                inputs.states["adjacency_matrix"])
+                                inputs["adjacency_matrix"])
         e_action = self.action_embed(previous_actions.data)
         e_rule_action = self.elem_embed(rule_previous_actions.data)
         input = PaddedSequenceWithMask(e_action, previous_actions.mask)
         for block in self.blocks:
             input, _ = block(input, depthes, e_rule_action, adjacency_matrix)
-        inputs.states["action_features"] = input
+        inputs["action_features"] = input
         return inputs

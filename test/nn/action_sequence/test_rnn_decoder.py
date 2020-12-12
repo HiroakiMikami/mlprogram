@@ -20,15 +20,15 @@ class TestRnnDecoder(object):
         h_0 = torch.rand(2, 5)
         c_0 = torch.rand(2, 5)
 
-        inputs = decoder(Environment(states={
+        inputs = decoder(Environment({
             "input_feature": input,
             "action_features": action,
             "hidden_state": h_0,
             "state": c_0
         }))
-        output = inputs.states["action_features"]
-        h_n = inputs.states["hidden_state"]
-        c_n = inputs.states["state"]
+        output = inputs["action_features"]
+        h_n = inputs["hidden_state"]
+        c_n = inputs["state"]
         assert (3, 2, 5) == output.data.shape
         assert np.array_equal(
             [[1, 1], [1, 0], [1, 0]], output.mask.numpy())
@@ -43,13 +43,13 @@ class TestRnnDecoder(object):
         h_0 = torch.zeros(1, 5)
         c_0 = torch.zeros(1, 5)
 
-        inputs = decoder(Environment(states={
+        inputs = decoder(Environment({
             "input_feature": input,
             "action_features": action,
             "hidden_state": h_0,
             "state": c_0
         }))
-        output = inputs.states["action_features"].data
+        output = inputs["action_features"].data
         assert not np.array_equal(
             output[0, 0, :].detach().numpy(), output[1, 0, :].detach().numpy()
         )

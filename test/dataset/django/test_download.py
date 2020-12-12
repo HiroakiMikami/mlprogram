@@ -21,20 +21,20 @@ class TestDownload(object):
 
         assert 1 == len(train_dataset)
         assert train_dataset[0] == Environment(
-            inputs={"text_query": "line0"},
-            supervisions={"ground_truth": "x = 10"}
+            {"text_query": "line0", "ground_truth": "x = 10"},
+            set(["ground_truth"])
         )
 
         assert 1 == len(test_dataset)
         assert test_dataset[0] == Environment(
-            inputs={"text_query": "line1"},
-            supervisions={"ground_truth": "if True:"}
+            {"text_query": "line1", "ground_truth": "if True:"},
+            set(["ground_truth"])
         )
 
         assert 1 == len(valid_dataset)
         assert valid_dataset[0] == Environment(
-            inputs={"text_query": "line2"},
-            supervisions={"ground_truth": "else:"}
+            {"text_query": "line2", "ground_truth": "else:"},
+            set(["ground_truth"])
         )
 
     def test_cache(self):

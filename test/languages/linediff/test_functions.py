@@ -40,34 +40,29 @@ class TestToEpisode(object):
     def test_happy_path(self):
         to_episode = ToEpisode(Interpreter(), Expander())
         episode = to_episode(Environment(
-            inputs={"test_cases": [("xxx\nyyy", None)]},
-            supervisions={"ground_truth": Diff([Replace(0, "zzz"), Remove(1)])}
+            {"test_cases": [("xxx\nyyy", None)],
+             "ground_truth": Diff([Replace(0, "zzz"), Remove(1)])},
+            set(["ground_truth"])
         ))
         assert len(episode) == 2
-        assert episode[0].inputs["test_cases"] == [("xxx\nyyy", "zzz\nyyy")]
-        assert episode[1].inputs["test_cases"] == [("zzz\nyyy", "zzz")]
+        assert episode[0]["test_cases"] == [("xxx\nyyy", "zzz\nyyy")]
+        assert episode[1]["test_cases"] == [("zzz\nyyy", "zzz")]
 
 
 class TestAddTestCases(object):
     def test_happy_path(self):
         f = AddTestCases()
-        entry = f(Environment(
-            inputs={"code": "xxx\nyyy"},
-        ))
-        assert entry.inputs["test_cases"] == [("xxx\nyyy", None)]
+        entry = f(Environment({"code": "xxx\nyyy"}))
+        assert entry["test_cases"] == [("xxx\nyyy", None)]
 
 
 class TestUpdateInput(object):
     def test_happy_path(self):
         f = UpdateInput()
-        entry = f(Environment(
-            inputs={"test_cases": [("xxx\nyyy", None)]},
-        ))
-        assert entry.inputs["code"] == "xxx\nyyy"
-        assert entry.inputs["text_query"] == "xxx\nyyy"
+        entry = f(Environment({"test_cases": [("xxx\nyyy", None)]}))
+        assert entry["code"] == "xxx\nyyy"
+        assert entry["text_query"] == "xxx\nyyy"
         state = BatchedState({}, {Diff([]): ["foo"]}, [Diff([])])
-        entry = f(Environment(
-            states={"interpreter_state": state},
-        ))
-        assert entry.inputs["code"] == "foo"
-        assert entry.inputs["text_query"] == "foo"
+        entry = f(Environment({"interpreter_state": state}))
+        assert entry["code"] == "foo"
+        assert entry["text_query"] == "foo"

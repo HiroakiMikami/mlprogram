@@ -37,7 +37,7 @@ class ActionSequenceReader(nn.Module):
             N is the batch size.
         """
         previous_actions = cast(PaddedSequenceWithMask,
-                                inputs.states["previous_actions"])
+                                inputs["previous_actions"])
         L_a, B, _ = previous_actions.data.shape
         prev_rules, prev_tokens, _ = torch.split(
             previous_actions.data, 1, dim=2)  # (L_a, B, 1)
@@ -59,6 +59,6 @@ class ActionSequenceReader(nn.Module):
         # Embed previous actions
         feature = self._rule_embed(prev_rules) + \
             self._token_embed(prev_tokens)  # (L_a, B, embedding_size)
-        inputs.states["action_features"] = \
+        inputs["action_features"] = \
             PaddedSequenceWithMask(feature, previous_actions.mask)
         return inputs

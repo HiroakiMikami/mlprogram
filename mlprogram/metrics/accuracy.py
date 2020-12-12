@@ -8,5 +8,5 @@ Value = TypeVar("Value")
 
 class Accuracy(Metric[Value], Generic[Value]):
     def __call__(self, input: Environment, value: Value) -> float:
-        ground_truth = input.supervisions["ground_truth"]
+        ground_truth = input["ground_truth"]
         return 1.0 if value == ground_truth else 0.0

@@ -25,9 +25,9 @@ class IsSubtype:
 
 def get_samples(parser: Parser[linediffAST]) -> Samples:
     dataset = ListDataset([Environment(
-        supervisions={"ground_truth":
-                      Diff([Insert(0, "x"), Remove(1), Replace(2, "y")])})
-    ])
+        {"ground_truth": Diff([Insert(0, "x"), Remove(1), Replace(2, "y")])},
+        set(["ground_truth"])
+    )])
     samples = data.get_samples(dataset, parser)
     samples.tokens.clear()
 
@@ -40,17 +40,17 @@ class ToEpisode:
         self.expander = expander
 
     def __call__(self, entry: Environment) -> List[Environment]:
-        ground_truth = entry.supervisions["ground_truth"]
-        inputs = [input for input, _ in entry.inputs["test_cases"]]
+        ground_truth = entry["ground_truth"]
+        inputs = [input for input, _ in entry["test_cases"]]
 
         retval: List[Environment] = []
         state = BatchedState[linediffAST, str, str]({}, {}, [])
         for code in self.expander.expand(ground_truth):
             xs = entry.clone()
-            xs.supervisions["ground_truth"] = code
+            xs["ground_truth"] = code
             state = self.interpreter.execute(code, inputs, state)
             next_inputs = list(state.environment.values())[0]
-            xs.inputs["test_cases"] = list(zip(inputs, next_inputs))
+            xs["test_cases"] = list(zip(inputs, next_inputs))
             inputs = next_inputs
             retval.append(xs)
         return retval
@@ -59,26 +59,24 @@ class ToEpisode:
 # TODO remove this class
 class AddTestCases:
     def __call__(self, entry: Environment) -> Environment:
-        if "test_cases" in entry.inputs:
+        if "test_cases" in entry:
             return entry
-        query = entry.inputs["code"]
-        entry.inputs.mutable(True)  # TODO
-        entry.inputs["test_cases"] = [(query, None)]
+        query = entry["code"]
+        entry["test_cases"] = [(query, None)]
         return entry
 
 
 # TODO remove this class
 class UpdateInput:
     def __call__(self, entry: Environment) -> Environment:
-        entry.inputs.mutable(True)  # TODO
-        if "interpreter_state" in entry.states \
-                and len(entry.states["interpreter_state"].history) > 0:
-            state = entry.states["interpreter_state"]
+        if "interpreter_state" in entry \
+                and len(entry["interpreter_state"].history) > 0:
+            state = entry["interpreter_state"]
             inputs = state.environment[state.history[-1]]
         else:
-            inputs = [input for input, _ in entry.inputs["test_cases"]]
+            inputs = [input for input, _ in entry["test_cases"]]
         code = inputs[0]
-        entry.inputs["code"] = code
-        entry.inputs["text_query"] = code
+        entry["code"] = code
+        entry["text_query"] = code
 
         return entry

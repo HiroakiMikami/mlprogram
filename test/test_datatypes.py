@@ -1,74 +1,39 @@
 import pytest
 
-from mlprogram import Environment
-from mlprogram.datatypes import _Dict
+from mlprogram.datatypes import Environment
 
 
-class Test_Dict(object):
-    def test_use_as_dict(self):
-        d = _Dict()
-        d["0"] = 0
-        d["1"] = 1
-        assert len(d) == 2
-        assert d["0"] == 0
-        assert d["1"] == 1
-        assert set(d.keys()) == set(["0", "1"])
-        assert set(d.values()) == set([0, 1])
-        assert set(d.items()) == set([("0", 0), ("1", 1)])
-        d.clear()
-        assert len(d) == 0
-
-    def test_to_dict(self):
-        d = _Dict()
-        d["0"] = 0
-        d["1"] = 1
-        assert d.to_dict() == {"0": 0, "1": 1}
-        d.to_dict()["2"] = 2
-        assert d.to_dict() == {"0": 0, "1": 1}
-
-    def test_immutable(self):
-        d = _Dict()
-        d["0"] = 0
-        d["1"] = 1
-        d.mutable(False)
+class TestEnv(object):
+    def test_constructor(self) -> None:
+        e = Environment()
+        assert e.to_dict() == {}
+        e["key"] = 0
+        e["key2"] = 1
+        e.mark_as_supervision("key2")
+        assert e["key"] == 0
         with pytest.raises(AssertionError):
-            d["2"] = 2
+            e["key3"]
+        assert e.to_dict() == {"key": 0, "key2": 1}
+
+    def test_mark_as_supervision(self) -> None:
         with pytest.raises(AssertionError):
-            d.clear()
-        d.mutable()
-        d["2"] = 2
+            e = Environment()
+            e.mark_as_supervision("key2")
 
-
-class TestEnvironment(object):
-    def test_constructor(self):
+    def test_clone(self) -> None:
         e = Environment()
-        e.inputs["0"] = 0
-        assert e.inputs.to_dict() == {"0": 0}
-        assert e.outputs.to_dict() == {}
+        e2 = e.clone()
+        e["key"] = 0
+        assert e2.to_dict() == {}
 
-    def test_to_dict(self):
+    def test_clone_without_supervision(self) -> None:
         e = Environment()
-        e.inputs["0"] = 0
-        e.states["1"] = 1
-        e.outputs["2"] = 2
-        e.supervisions["3"] = 3
-        assert e.to_dict() == {"input@0": 0, "state@1": 1, "output@2": 2,
-                               "supervision@3": 3}
+        e["key"] = 0
+        e.mark_as_supervision("key")
+        e2 = e.clone_without_supervision()
+        assert e2.to_dict() == {}
 
-    def test_clone(self):
-        e0 = Environment()
-        e1 = e0.clone()
-        e1.inputs["0"] = 0
-        e1.states["1"] = 1
-        e1.outputs["2"] = 2
-        e1.supervisions["3"] = 3
-        assert e0.to_dict() == {}
-        assert e1.to_dict() == {"input@0": 0, "state@1": 1, "output@2": 2,
-                                "supervision@3": 3}
-
-    def test_setitem(self):
+    def test_get(self) -> None:
         e = Environment()
-        e["input@0"] = 0
-        assert e["input@0"] == 0
-        assert e.inputs.to_dict() == {"0": 0}
-        assert e.outputs.to_dict() == {}
+        e["key"] = 0
+        assert e["key"] == 0

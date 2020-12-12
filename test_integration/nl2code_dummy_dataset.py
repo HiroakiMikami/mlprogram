@@ -72,39 +72,47 @@ def FunctionCall(name: str, args: List[AST]):
 # Dataset
 train_dataset = ListDataset([
     Environment(
-        inputs={"text_query": "x is assigned the value of 0"},
-        supervisions={"ground_truth": Assign("x", Number(0))}
+        {"text_query": "x is assigned the value of 0",
+         "ground_truth": Assign("x", Number(0))},
+        set(["ground_truth"])
     ),
     Environment(
-        inputs={"text_query": "dump the value of xy"},
-        supervisions={
+        {
+            "text_query": "dump the value of xy",
             "ground_truth": FunctionCall("print", [Name(["x", "y"])])
-        }
+        },
+        set(["ground_truth"])
     ),
     Environment(
-        inputs={"text_query": "dump the value of xy and x"},
-        supervisions={
+        {
+            "text_query": "dump the value of xy and x",
             "ground_truth":
                 FunctionCall("print", [Name(["x", "y"]), Name("x")])
-        }
+        },
+        set(["ground_truth"])
     )
 ])
 test_dataset = ListDataset([
     Environment(
-        inputs={"text_query": "x is assigned the value of 4"},
-        supervisions={"ground_truth": Assign("x", Number(4))},
+        {
+            "text_query": "x is assigned the value of 4",
+            "ground_truth": Assign("x", Number(4))
+        },
+        set(["ground_truth"])
     ),
     Environment(
-        inputs={"text_query": "dump the value of xy"},
-        supervisions={
+        {
+            "text_query": "dump the value of xy",
             "ground_truth": FunctionCall("print", [Name(["x", "y"])])
-        }
+        },
+        set(["ground_truth"])
     ),
     Environment(
-        inputs={"text_query": "dump the value of xy and x"},
-        supervisions={
+        {
+            "text_query": "dump the value of xy and x",
             "ground_truth":
                 FunctionCall("print", [Name(["x", "y"]), Name("x")])
-        }
+        },
+        set(["ground_truth"])
     )
 ])

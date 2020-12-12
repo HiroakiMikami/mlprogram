@@ -208,14 +208,14 @@ class Decoder(nn.Module):
             The tuple of the next state. The shape is (B, hidden_size)
         """
         action_features = cast(PaddedSequenceWithMask,
-                               inputs.states["action_features"])
+                               inputs["action_features"])
         parent_indexes = cast(PaddedSequenceWithMask,
-                              inputs.states["parent_indexes"])
+                              inputs["parent_indexes"])
         nl_query_features = cast(PaddedSequenceWithMask,
-                                 inputs.states["nl_query_features"])
-        history = inputs.states["history"]
-        h_n = inputs.states["hidden_state"]
-        c_n = inputs.states["state"]
+                                 inputs["nl_query_features"])
+        history = inputs["history"]
+        h_n = inputs["hidden_state"]
+        c_n = inputs["state"]
         B = nl_query_features.data.shape[1]
         if history is None:
             history = torch.zeros(1, B, self.hidden_size,
@@ -244,12 +244,12 @@ class Decoder(nn.Module):
         cs = torch.stack(cs)
         h_n, c_n = s
 
-        inputs.states["action_features"] = \
+        inputs["action_features"] = \
             rnn.PaddedSequenceWithMask(hs, action_features.mask)
-        inputs.states["action_contexts"] = \
+        inputs["action_contexts"] = \
             rnn.PaddedSequenceWithMask(cs, action_features.mask)
-        inputs.states["history"] = history
-        inputs.states["hidden_state"] = h_n
-        inputs.states["state"] = c_n
+        inputs["history"] = history
+        inputs["hidden_state"] = h_n
+        inputs["state"] = c_n
 
         return inputs

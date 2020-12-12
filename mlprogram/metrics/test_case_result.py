@@ -18,7 +18,7 @@ class TestCaseResult(Metric[Code], Generic[Code, Input, Result, Kind]):
         self.metric = metric
 
     def __call__(self, input: Environment, value: Code) -> float:
-        test_cases = input.inputs["test_cases"]
+        test_cases = input["test_cases"]
         inputs = [input for input, _ in test_cases]
         outputs = [output for _, output in test_cases]
 
@@ -26,10 +26,6 @@ class TestCaseResult(Metric[Code], Generic[Code, Input, Result, Kind]):
         m = 0.0  # TODO reduction function is required
         for actual, expected in zip(self.interpreter.eval(value, inputs),
                                     outputs):
-            minput = Environment(supervisions={"ground_truth": expected})
-            minput.mutable(
-                inputs=False, outputs=False,
-                states=False, supervisions=False
-            )
+            minput = Environment({"ground_truth": expected}, set(["ground_truth"]))
             m += self.metric(minput, actual)
         return m / len(outputs)

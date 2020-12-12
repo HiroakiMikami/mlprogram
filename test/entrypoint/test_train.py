@@ -21,11 +21,11 @@ class MockSynthesizer:
     def __call__(self, input, n_required_output=None):
         n_required_output = n_required_output or 1
         for _ in range(n_required_output):
-            yield Result(input.inputs["value"], 0, True, 1)
+            yield Result(input["value"], 0, True, 1)
 
 
 def reward(sample, output):
-    return sample.inputs["value"] == output
+    return sample["value"] == output
 
 
 collate = Collate(device=torch.device("cpu"),
@@ -41,7 +41,7 @@ class DummyModel(nn.Module):
         self.m = nn.Linear(1, 1)
 
     def forward(self, kwargs):
-        kwargs.outputs["value"] = self.m(kwargs.inputs["value"].float())
+        kwargs["value"] = self.m(kwargs["value"].float())
         return kwargs
 
 
@@ -56,12 +56,12 @@ class MockEvaluate(object):
 class TestTrainSupervised(object):
     def prepare_dataset(self):
         return ListDataset([
-            Environment(inputs={"value": torch.tensor(0)},
-                        supervisions={"value": torch.tensor(0)}),
-            Environment(inputs={"value": torch.tensor(1)},
-                        supervisions={"value": torch.tensor(1)}),
-            Environment(inputs={"value": torch.tensor(2)},
-                        supervisions={"value": torch.tensor(2)})
+            Environment({"value": torch.tensor(0), "ground_truth": torch.tensor(0)},
+                        set(["ground_truth"])),
+            Environment({"value": torch.tensor(1), "ground_truth": torch.tensor(1)},
+                        set(["ground_truth"])),
+            Environment({"value": torch.tensor(2), "ground_truth": torch.tensor(2)},
+                        set(["ground_truth"])),
         ])
 
     def prepare_iterable_dataset(self):
@@ -74,8 +74,9 @@ class TestTrainSupervised(object):
                     def __next__(self) -> Environment:
                         self.n += 1
                         return Environment(
-                            inputs={"value": torch.tensor(self.n)},
-                            supervisions={"value": torch.tensor(self.n)}
+                            {"value": torch.tensor(self.n),
+                             "ground_truth": torch.tensor(self.n)},
+                            set(["ground_truth"])
                         )
                 return InternalIterator()
         return MockDataset()
@@ -87,8 +88,8 @@ class TestTrainSupervised(object):
         return optim.SGD(model.parameters(), 0.1)
 
     def loss_fn(self, input):
-        return nn.MSELoss()(input.outputs["value"].float(),
-                            input.supervisions["value"].float())
+        return nn.MSELoss()(input["value"].float(),
+                            input["ground_truth"].float())
 
     def test_happy_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -128,7 +129,7 @@ class TestTrainSupervised(object):
 
             def forward(self, kwargs):
                 assert self.training
-                kwargs.outputs["value"] = self.m(kwargs.inputs["value"].float())
+                kwargs["value"] = self.m(kwargs["value"].float())
                 return kwargs
 
         class MockEvaluate(object):
@@ -322,9 +323,9 @@ class TestTrainSupervised(object):
 class TestTrainREINFORCE(object):
     def prepare_dataset(self):
         return ListDataset([
-            Environment(inputs={"value": torch.tensor(0)}),
-            Environment(inputs={"value": torch.tensor(1)}),
-            Environment(inputs={"value": torch.tensor(2)})
+            Environment({"value": torch.tensor(0)}),
+            Environment({"value": torch.tensor(1)}),
+            Environment({"value": torch.tensor(2)})
         ])
 
     def prepare_model(self):
@@ -337,8 +338,8 @@ class TestTrainREINFORCE(object):
         return MockSynthesizer(model)
 
     def loss_fn(self, input):
-        return nn.MSELoss()(input.outputs["value"].float(),
-                            input.supervisions["ground_truth"].float())
+        return nn.MSELoss()(input["value"].float(),
+                            input["ground_truth"].float())
 
     def test_happy_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -350,7 +351,7 @@ class TestTrainREINFORCE(object):
                             self.prepare_synthesizer(model),
                             model,
                             self.prepare_optimizer(model),
-                            lambda x: self.loss_fn(x) * x.inputs["reward"],
+                            lambda x: self.loss_fn(x) * x["reward"],
                             MockEvaluate("key"), "key",
                             reward,
                             collate.collate,
@@ -390,7 +391,7 @@ class TestTrainREINFORCE(object):
                             self.prepare_synthesizer(model),
                             model,
                             self.prepare_optimizer(model),
-                            lambda x: self.loss_fn(x) * x.inputs["reward"],
+                            lambda x: self.loss_fn(x) * x["reward"],
                             MockEvaluate("key"), "key",
                             reward,
                             collate.collate,
@@ -414,7 +415,7 @@ class TestTrainREINFORCE(object):
                             self.prepare_synthesizer(model),
                             model,
                             self.prepare_optimizer(model),
-                            lambda x: self.loss_fn(x) * x.inputs["reward"],
+                            lambda x: self.loss_fn(x) * x["reward"],
                             MockEvaluate("key"), "key",
                             reward,
                             collate.collate,

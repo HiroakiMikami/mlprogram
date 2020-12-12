@@ -25,11 +25,14 @@ class TestAccuracy(object):
 
         acc = Accuracy()
         a = acc(Environment(
-            outputs={"rule_probs": rule_prob,
-                     "token_probs": token_prob,
-                     "reference_probs": reference_prob},
-            supervisions={"ground_truth_actions": gt})
-        ).outputs["action_sequence_accuracy"]
+            {
+                "rule_probs": rule_prob,
+                "token_probs": token_prob,
+                "reference_probs": reference_prob,
+                "ground_truth_actions": gt
+            },
+            set(["ground_truth_actions"]))
+        )["action_sequence_accuracy"]
         assert () == a.shape
 
     def test_accuracy_if_match(self):
@@ -49,9 +52,12 @@ class TestAccuracy(object):
 
         acc = Accuracy()
         a = acc(Environment(
-            outputs={"rule_probs": rule_prob,
-                     "token_probs": token_prob,
-                     "reference_probs": reference_prob},
-            supervisions={"ground_truth_actions": gt})
-        ).outputs["action_sequence_accuracy"]
+            {
+                "rule_probs": rule_prob,
+                "token_probs": token_prob,
+                "reference_probs": reference_prob,
+                "ground_truth_actions": gt
+            },
+            set(["ground_truth_actions"]))
+        )["action_sequence_accuracy"]
         assert np.allclose(1.0, float(a.numpy()))

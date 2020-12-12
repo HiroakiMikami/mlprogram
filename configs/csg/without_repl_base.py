@@ -35,8 +35,8 @@ model = torch.share_memory_(
                                 [
                                     "encoder",
                                     mlprogram.nn.Apply(
-                                        in_keys=[["state@test_case_tensor", "x"]],
-                                        out_key="state@input_feature",
+                                        in_keys=[["test_case_tensor", "x"]],
+                                        out_key="input_feature",
                                         module=mlprogram.nn.CNN2d(
                                             in_channel=1,
                                             out_channel=16,
@@ -50,8 +50,8 @@ model = torch.share_memory_(
                                 [
                                     "reduction",
                                     mlprogram.nn.Apply(
-                                        in_keys=[["state@input_feature", "input"]],
-                                        out_key="state@input_feature",
+                                        in_keys=[["input_feature", "input"]],
+                                        out_key="input_feature",
                                         module=torch.Mean(
                                             dim=1,
                                         ),
@@ -218,7 +218,7 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
             max_try_num=50,
             sampler=sampler,
             to_key=Pick(
-                key="state@action_sequence",
+                key="action_sequence",
             ),
         ),
         timeout_sec=option.timeout_sec,

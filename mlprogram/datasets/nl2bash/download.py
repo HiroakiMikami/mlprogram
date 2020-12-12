@@ -49,8 +49,11 @@ make -C $tmpdir/nl2bash/scripts data
                     ground_truths = list(file.readlines())
                 return [
                     Environment(
-                        inputs={"text_query": input},
-                        supervisions={"ground_truth": ground_truth}
+                        {
+                            "text_query": input,
+                            "ground_truth": ground_truth
+                        },
+                        set(["ground_truth"])
                     )
                     for input, ground_truth in zip(inputs, ground_truths)
                 ]

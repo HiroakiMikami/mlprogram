@@ -43,8 +43,12 @@ def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR,
                 if q == "" and c == "":
                     continue
                 samples.append(Environment(
-                    inputs={"text_query": q},
-                    supervisions={"ground_truth": c}))
+                    {
+                        "text_query": q,
+                        "ground_truth": c
+                    },
+                    set(["ground_truth"])
+                ))
             dataset[target] = samples
         return dataset
     dataset = _download()

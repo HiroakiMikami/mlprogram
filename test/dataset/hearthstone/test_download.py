@@ -30,20 +30,20 @@ class TestDownload(object):
         assert 1 == len(train_dataset)
         assert list(train_dataset) == list(dataset1["train"])
         assert train_dataset[0] == Environment(
-            inputs={"text_query": "line0"},
-            supervisions={"ground_truth": "x = 10"}
+            {"text_query": "line0", "ground_truth": "x = 10"},
+            set(["ground_truth"])
         )
 
         assert 1 == len(test_dataset)
         assert list(test_dataset) == list(dataset1["test"])
         assert test_dataset[0] == Environment(
-            inputs={"text_query": "line1"},
-            supervisions={"ground_truth": "if True:\n  pass"}
+            {"text_query": "line1", "ground_truth": "if True:\n  pass"},
+            set(["ground_truth"])
         )
 
         assert 1 == len(valid_dataset)
         assert list(valid_dataset) == list(dataset1["valid"])
         assert valid_dataset[0] == Environment(
-            inputs={"text_query": "line2"},
-            supervisions={"ground_truth": "if True and True:\n  pass"}
+            {"text_query": "line2", "ground_truth": "if True and True:\n  pass"},
+            set(["ground_truth"])
         )

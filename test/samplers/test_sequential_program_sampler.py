@@ -15,7 +15,7 @@ from mlprogram.utils.data import Collate
 
 
 def transform_input(x):
-    return Environment(inputs={"test_cases": x})
+    return Environment({"test_cases": x})
 
 
 class MockSynthesizer(Synthesizer[Environment, str]):
@@ -56,12 +56,12 @@ class TestSequentialProgramSampler(object):
             MockInterpreter())
         assert sampler.create_output(
             None,
-            Environment(states={"interpreter_state": BatchedState({}, {}, [])})
+            Environment({"interpreter_state": BatchedState({}, {}, [])})
         ) is None
-        assert sampler.create_output(None, Environment(states={
+        assert sampler.create_output(None, Environment({
             "interpreter_state": BatchedState({}, {}, ["tmp"])
         })) == ("tmp", False)
-        assert sampler.create_output(None, Environment(states={
+        assert sampler.create_output(None, Environment({
             "interpreter_state": BatchedState({}, {}, ["line0", "line1"])
         })) == ("line0\nline1", False)
 
@@ -80,10 +80,8 @@ class TestSequentialProgramSampler(object):
         assert 3 == len(samples)
         assert samples[0] == DuplicatedSamplerState(
             SamplerState(1, Environment(
-                inputs={
-                    "test_cases": [(None, None)]
-                },
-                states={
+                {
+                    "test_cases": [(None, None)],
                     "reference": [Token(None, str(asts[0]), str(asts[0]))],
                     "variables": [["#" + str(asts[0])]],
                     "interpreter_state": BatchedState(
@@ -94,10 +92,8 @@ class TestSequentialProgramSampler(object):
             1)
         assert DuplicatedSamplerState(
             SamplerState(0.5, Environment(
-                inputs={
-                    "test_cases": [(None, None)]
-                },
-                states={
+                {
+                    "test_cases": [(None, None)],
                     "reference": [Token(None, str(asts[1]), str(asts[1]))],
                     "variables": [["#" + str(asts[1])]],
                     "interpreter_state": BatchedState(
@@ -108,10 +104,8 @@ class TestSequentialProgramSampler(object):
             1) == samples[1]
         assert DuplicatedSamplerState(
             SamplerState(1.0 / 3, Environment(
-                inputs={
-                    "test_cases": [(None, None)]
-                },
-                states={
+                {
+                    "test_cases": [(None, None)],
                     "reference": [Token(None, str(asts[2]), str(asts[2]))],
                     "variables": [["#" + str(asts[2])]],
                     "interpreter_state": BatchedState(

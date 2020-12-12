@@ -10,7 +10,7 @@ from pytorch_pfn_extras.training import extension, extensions
 from torch import nn
 from torch.utils.data import DataLoader
 
-from mlprogram import Environment, distributed, logging
+from mlprogram import distributed, logging
 from mlprogram.metrics import Metric
 from mlprogram.pytorch_pfn_extras import SaveTopKModel, StopByThreshold
 from mlprogram.synthesizers import Synthesizer
@@ -238,10 +238,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
             loader = create_dataloader(dataset, batch_size, 0, collate)
 
             for batch in logger.iterable_block("iteration", loader, True):
-                batch.mutable(
-                    inputs=False,
-                    supervisions=False
-                )
                 if manager.iteration >= n_iter:
                     break
                 if len(batch.to_dict()) == 0:
@@ -350,10 +346,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 model.train()
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
-                        sample_inputs = Environment(
-                            inputs=sample.inputs.to_dict()
-                        )
-                        # TODO set mutable flag
+                        sample_inputs = sample.clone_without_supervision()
                         for rollout in logger.iterable_block(
                                 "sample",
                                 synthesizer(sample_inputs,
@@ -362,9 +355,9 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                 continue
                             for _ in range(rollout.num):
                                 output = sample.clone()
-                                output.supervisions["ground_truth"] = \
-                                    rollout.output
-                                output.inputs["reward"] = \
+                                output["ground_truth"] = rollout.output
+                                output.mark_as_supervision("ground_truth")
+                                output["reward"] = \
                                     torch.tensor(reward(sample,
                                                         rollout.output))
                                 rollouts.append(output)
@@ -395,7 +388,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
 
                     ppe.reporting.report({"loss": bloss.item()})
                     ppe.reporting.report({
-                        "reward": batch2.inputs["reward"].float().mean().item()
+                        "reward": batch2["reward"].float().mean().item()
                     })
                     logger.dump_elapsed_time_log()
                     if device.type == "cuda":

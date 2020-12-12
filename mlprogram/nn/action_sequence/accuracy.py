@@ -29,14 +29,14 @@ class Accuracy(nn.Module):
             The padding value should be -1.
         """
         rule_probs = cast(PaddedSequenceWithMask,
-                          inputs.outputs["rule_probs"])
+                          inputs["rule_probs"])
         token_probs = cast(PaddedSequenceWithMask,
-                           inputs.outputs["token_probs"])
+                           inputs["token_probs"])
         reference_probs = \
-            cast(PaddedSequenceWithMask, inputs.outputs["reference_probs"])
+            cast(PaddedSequenceWithMask, inputs["reference_probs"])
         ground_truth_actions = cast(
             PaddedSequenceWithMask,
-            inputs.supervisions["ground_truth_actions"])
+            inputs["ground_truth_actions"])
         L_a, B, num_rules = rule_probs.data.shape
         _, _, num_tokens = token_probs.data.shape
         _, _, reference_length = reference_probs.data.shape
@@ -65,6 +65,6 @@ class Accuracy(nn.Module):
              (gt_reference != -1).long()).sum()
 
         acc = rule_acc + token_acc + reference_acc
-        inputs.outputs["action_sequence_accuracy"] = \
+        inputs["action_sequence_accuracy"] = \
             acc.to(rule_probs.data.dtype) / (n_rule + n_token + n_reference)
         return inputs
