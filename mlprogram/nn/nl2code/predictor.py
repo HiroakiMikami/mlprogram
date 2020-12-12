@@ -72,11 +72,11 @@ class Predictor(nn.Module):
             N is the batch_size.
         """
         reference_features = cast(PaddedSequenceWithMask,
-                                  inputs.states["reference_features"])
+                                  inputs["reference_features"])
         action_features = cast(PaddedSequenceWithMask,
-                               inputs.states["action_features"])
+                               inputs["action_features"])
         action_contexts = cast(PaddedSequenceWithMask,
-                               inputs.states["action_contexts"])
+                               inputs["action_contexts"])
         L_q, B, _ = reference_features.data.shape
 
         # Decode embeddings
@@ -116,14 +116,14 @@ class Predictor(nn.Module):
         reference_pred = reference * reference_pred  # (L_a, B, query_length)
 
         if self.training:
-            inputs.outputs["rule_probs"] = \
+            inputs["rule_probs"] = \
                 PaddedSequenceWithMask(rule_pred, action_features.mask)
-            inputs.outputs["token_probs"] = \
+            inputs["token_probs"] = \
                 PaddedSequenceWithMask(token_pred, action_features.mask)
-            inputs.outputs["reference_probs"] = \
+            inputs["reference_probs"] = \
                 PaddedSequenceWithMask(reference_pred, action_features.mask)
         else:
-            inputs.outputs["rule_probs"] = rule_pred[-1, :, :]
-            inputs.outputs["token_probs"] = token_pred[-1, :, :]
-            inputs.outputs["reference_probs"] = reference_pred[-1, :, :]
+            inputs["rule_probs"] = rule_pred[-1, :, :]
+            inputs["token_probs"] = token_pred[-1, :, :]
+            inputs["reference_probs"] = reference_pred[-1, :, :]
         return inputs

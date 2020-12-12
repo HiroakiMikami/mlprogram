@@ -118,9 +118,9 @@ class NLReader(nn.Module):
             N is the batch size.
         """
         token_nl_query = cast(PaddedSequenceWithMask,
-                              inputs.states["word_nl_query"])
+                              inputs["word_nl_query"])
         char_nl_query = cast(PaddedSequenceWithMask,
-                             inputs.states["char_nl_query"])
+                             inputs["char_nl_query"])
         e_token_query = self.query_embed(token_nl_query.data)
         char_nl_query = \
             char_nl_query.data + \
@@ -130,6 +130,6 @@ class NLReader(nn.Module):
                                              token_nl_query.mask)
         for block in self.blocks:
             block_input, _ = block(block_input, e_char_query)
-        inputs.states["nl_query_features"] = block_input
-        inputs.states["reference_features"] = block_input
+        inputs["nl_query_features"] = block_input
+        inputs["reference_features"] = block_input
         return inputs

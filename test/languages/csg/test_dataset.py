@@ -21,8 +21,9 @@ class TestDataset(object):
             samples.append(xs)
             if i == 1:
                 break
-        assert samples[0][0].supervisions["ground_truth"] != \
-            samples[1][0].supervisions["ground_truth"]
+        assert samples[0][0].is_supervision("ground_truth")
+        assert samples[0][0]["ground_truth"] != \
+            samples[1][0]["ground_truth"]
 
     def test_reference(self):
         torch.manual_seed(0)
@@ -33,4 +34,5 @@ class TestDataset(object):
             if cnt == 10:
                 sample = x
                 break
-        assert "Reference" in str(sample.supervisions["ground_truth"])
+        assert sample.is_supervision("ground_truth")
+        assert "Reference" in str(sample["ground_truth"])

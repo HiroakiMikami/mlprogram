@@ -61,8 +61,8 @@ class TestCsgByPbeWithREPL(object):
     def prepare_model(self, encoder: ActionSequenceEncoder):
         return torch.nn.Sequential(OrderedDict([
             ("encode_input",
-             Apply([("state@test_case_tensor", "x")],
-                   "state@test_case_feature",
+             Apply([("test_case_tensor", "x")],
+                   "test_case_feature",
                    CNN2d(1, 16, 32, 2, 2, 2))),
             ("encoder",
              Encoder(CNN2d(2, 16, 32, 2, 2, 2))),
@@ -81,7 +81,7 @@ class TestCsgByPbeWithREPL(object):
                                 512))
              ]))),
             ("value",
-             Apply([("state@input_feature", "x")], "state@value",
+             Apply([("input_feature", "x")], "value",
                    MLP(16 * 8 * 8 * 2, 1, 512, 2,
                        activation=torch.nn.Sigmoid()),
                    ))
@@ -124,7 +124,7 @@ class TestCsgByPbeWithREPL(object):
             5, 1,
             subsampler,
             max_try_num=1,
-            to_key=Pick("state@action_sequence"),
+            to_key=Pick("action_sequence"),
             rng=np.random.RandomState(0)
         )
 
@@ -143,7 +143,7 @@ class TestCsgByPbeWithREPL(object):
                 0.9
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                       to_key=Pick("state@interpreter_state"), max_try_num=1)
+                       to_key=Pick("interpreter_state"), max_try_num=1)
         else:
             sampler = SamplerWithValueNetwork(
                 sampler,
@@ -156,12 +156,12 @@ class TestCsgByPbeWithREPL(object):
                     ("value", model.value),
                     ("pick",
                      mlprogram.nn.Function(
-                         Pick("state@value")))
+                         Pick("value")))
                 ])))
 
             synthesizer = SynthesizerWithTimeout(
                 SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                    to_key=Pick("state@interpreter_state")),
+                    to_key=Pick("interpreter_state")),
                 1
             )
             return FilteredSynthesizer(
@@ -244,13 +244,13 @@ class TestCsgByPbeWithREPL(object):
                     ("loss", Loss(reduction="sum")),
                     ("normalize",  # divided by batch_size
                      Apply(
-                         [("output@action_sequence_loss", "lhs")],
-                         "output@loss",
+                         [("action_sequence_loss", "lhs")],
+                         "loss",
                          mlprogram.nn.Function(Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(
-                         Pick("output@loss")))
+                         Pick("loss")))
                 ])),
                 None, "score",
                 collate_fn,
@@ -295,45 +295,45 @@ class TestCsgByPbeWithREPL(object):
                          ("loss", Loss(reduction="none")),
                          ("weight_by_reward",
                              Apply(
-                                 [("input@reward", "lhs"),
-                                  ("output@action_sequence_loss", "rhs")],
-                                 "output@action_sequence_loss",
+                                 [("reward", "lhs"),
+                                  ("action_sequence_loss", "rhs")],
+                                 "action_sequence_loss",
                                  mlprogram.nn.Function(Mul())))
                      ]))),
                     ("value",
                      torch.nn.Sequential(OrderedDict([
                          ("reshape_reward",
                              Apply(
-                                 [("input@reward", "x")],
-                                 "state@value_loss_target",
+                                 [("reward", "x")],
+                                 "value_loss_target",
                                  Reshape([-1, 1]))),
                          ("BCE",
                              Apply(
-                                 [("state@value", "input"),
-                                  ("state@value_loss_target", "target")],
-                                 "output@value_loss",
+                                 [("value", "input"),
+                                  ("value_loss_target", "target")],
+                                 "value_loss",
                                  torch.nn.BCELoss(reduction='sum')))
                      ]))),
                     ("reweight",
                      Apply(
-                         [("output@value_loss", "lhs")],
-                         "output@value_loss",
+                         [("value_loss", "lhs")],
+                         "value_loss",
                          mlprogram.nn.Function(Mul()),
                          constants={"rhs": 1e-2})),
                     ("aggregate",
                      Apply(
-                         ["output@action_sequence_loss", "output@value_loss"],
-                         "output@loss",
+                         ["action_sequence_loss", "value_loss"],
+                         "loss",
                          AggregatedLoss())),
                     ("normalize",
                      Apply(
-                         [("output@loss", "lhs")],
-                         "output@loss",
+                         [("loss", "lhs")],
+                         "loss",
                          mlprogram.nn.Function(Div()),
                          constants={"rhs": 1})),
                     ("pick",
                      mlprogram.nn.Function(
-                         Pick("output@loss")))
+                         Pick("loss")))
                 ])),
                 EvaluateSynthesizer(
                     train_dataset,

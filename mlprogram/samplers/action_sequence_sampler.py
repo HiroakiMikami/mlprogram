@@ -127,19 +127,15 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
             ExpandTreeRule(NodeType(None, NodeConstraint.Node, False),
                            [("root",
                              NodeType(Root(), NodeConstraint.Node, False))])))
-        state.states["action_sequence"] = action_sequence
+        state["action_sequence"] = action_sequence
 
-        state.mutable(
-            inputs=False,
-            supervisions=False
-        )
         return state
 
     def create_output(self, input, state: Environment) \
             -> Optional[Tuple[AST, bool]]:
-        if state.states["action_sequence"].head is None:
+        if state["action_sequence"].head is None:
             # complete
-            ast = cast(Node, state.states["action_sequence"].generate())
+            ast = cast(Node, state["action_sequence"].generate())
             return cast(AST, ast.fields[0].value), True
         return None
 
@@ -156,17 +152,17 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
             else:
                 logger.warning(
                     "Invalid action_sequence is in the set of hypothesis" +
-                    str(s.state.outputs["action_sequence"]))
+                    str(s.state["action_sequence"]))
         states_tensor = self.collate.collate(state_list)
 
         with torch.no_grad(), logger.block("decode_state"):
             next_states = self.module.decoder(states_tensor)
 
-        rule_pred = next_states.outputs["rule_probs"].data.cpu().reshape(N, -1)
+        rule_pred = next_states["rule_probs"].data.cpu().reshape(N, -1)
         token_pred = \
-            next_states.outputs["token_probs"].data.cpu().reshape(N, -1)
+            next_states["token_probs"].data.cpu().reshape(N, -1)
         reference_pred = \
-            next_states.outputs["reference_probs"].data.cpu().reshape(N, -1)
+            next_states["reference_probs"].data.cpu().reshape(N, -1)
         next_state_list = self.collate.split(next_states)
         return rule_pred, token_pred, reference_pred, next_state_list
 
@@ -207,21 +203,21 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                     yield i + 1, n
 
         with logger.block("enumerate_samples_per_state"):
-            head = state.state.states["action_sequence"].head
+            head = state.state["action_sequence"].head
             assert head is not None
             head_field = \
                 cast(ExpandTreeRule, cast(
                     ApplyRule,
-                    state.state.states["action_sequence"]
+                    state.state["action_sequence"]
                     .action_sequence[head.action]
                 ).rule).children[head.field][1]
             if head_field.constraint == NodeConstraint.Token:
                 # Generate token
                 ref_ids = self.encoder.batch_encode_raw_value(
-                    [x.raw_value for x in state.state.states["reference"]]
+                    [x.raw_value for x in state.state["reference"]]
                 )
                 tokens = list(self.encoder._token_encoder.vocab) + \
-                    state.state.states["reference"]
+                    state.state["reference"]
                 # the score will be merged into predefined token
                 for i, ids in enumerate(ref_ids):
                     for ref_id in ids:
@@ -288,10 +284,10 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
 
                     n_action += n
                     next_state = next_state.clone()
-                    next_state.outputs.clear()
-                    next_state.states["action_sequence"] = \
+                    # TODO we may have to clear outputs
+                    next_state["action_sequence"] = \
                         LazyActionSequence(
-                            state.state.states["action_sequence"], action)
+                            state.state["action_sequence"], action)
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
                         n)
@@ -331,9 +327,9 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                     rule = self.encoder._rule_encoder.vocab[x]
 
                     next_state = next_state.clone()
-                    next_state.states["action_sequence"] = \
+                    next_state["action_sequence"] = \
                         LazyActionSequence(
-                            state.state.states["action_sequence"],
+                            state.state["action_sequence"],
                             ApplyRule(rule))
                     yield DuplicatedSamplerState(
                         SamplerState(state.score + lp, next_state),
@@ -342,13 +338,12 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
     def all_samples(
         self, states: List[SamplerState[Environment]], sorted: bool = True) \
             -> Generator[DuplicatedSamplerState[Environment], None, None]:
-        assert all([len(state.state.outputs) for state in states]) == 0
-        assert all([len(state.state.supervisions) for state in states]) == 0
+        assert all([len(state.state._supervisions) == 0 for state in states])
 
         with logger.block("all_samples"):
             states = [
                 state for state in states
-                if state.state.states["action_sequence"].head is not None]
+                if state.state["action_sequence"].head is not None]
             if len(states) == 0:
                 return
 
@@ -369,8 +364,8 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                 with logger.block("sort_among_all_states"):
                     samples.sort(key=lambda x: -x.state.score)
                     for state in samples:
-                        state.state.state.states["action_sequence"] = \
-                            state.state.state.states["action_sequence"]()
+                        state.state.state["action_sequence"] = \
+                            state.state.state["action_sequence"]()
                         yield state
             else:
                 for i, state in logger.iterable_block(
@@ -380,20 +375,19 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                             next_states[i], state,
                             enumeration=Enumeration.Random,
                             k=None):
-                        state.state.state.states["action_sequence"] = \
-                            state.state.state.states["action_sequence"]()
+                        state.state.state["action_sequence"] = \
+                            state.state.state["action_sequence"]()
                         yield state
 
     def top_k_samples(
         self, states: List[SamplerState[Environment]], k: int) \
             -> Generator[DuplicatedSamplerState[Environment], None, None]:
-        assert all([len(state.state.outputs) for state in states]) == 0
-        assert all([len(state.state.supervisions) for state in states]) == 0
+        assert all([len(state.state._supervisions) == 0 for state in states])
 
         with logger.block("top_k_samples"):
             states = [
                 state for state in states
-                if state.state.states["action_sequence"].head is not None]
+                if state.state["action_sequence"].head is not None]
             if len(states) == 0:
                 return
 
@@ -412,25 +406,24 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
             # Instantiate top-k hypothesis
             with logger.block("find_top_k_among_all_states"):
                 for score, state in topk.elements:
-                    state.state.state.states["action_sequence"] = \
-                        state.state.state.states["action_sequence"]()
+                    state.state.state["action_sequence"] = \
+                        state.state.state["action_sequence"]()
                     yield state
 
     def batch_k_samples(
         self, states: List[SamplerState[Environment]], ks: List[int]) \
             -> Generator[DuplicatedSamplerState[Environment],
                          None, None]:
-        assert all([len(state.state.outputs) for state in states]) == 0
-        assert all([len(state.state.supervisions) for state in states]) == 0
+        assert all([len(state.state._supervisions) == 0 for state in states])
 
         with logger.block("batch_k_samples"):
             self.module.eval()
             ks = [
                 ks[i] for i in range(len(states))
-                if states[i].state.states["action_sequence"].head is not None]
+                if states[i].state["action_sequence"].head is not None]
             states = [
                 state for state in states
-                if state.state.states["action_sequence"].head is not None]
+                if state.state["action_sequence"].head is not None]
             if len(states) == 0:
                 return
 
@@ -441,6 +434,6 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                                          next_states, states, ks):
                 for state in self.enumerate_samples_per_state(
                         r, t, c, ns, s, Enumeration.Multinomial, k=k):
-                    state.state.state.states["action_sequence"] = \
-                        state.state.state.states["action_sequence"]()
+                    state.state.state["action_sequence"] = \
+                        state.state.state["action_sequence"]()
                     yield state

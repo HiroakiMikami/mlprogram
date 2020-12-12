@@ -19,8 +19,8 @@ def create_dummy_django(path):
 def create_dummy_hearthstone(path):
     data = [
         Environment(
-            inputs={"text_query": "foo"},
-            supervisions={"ground_truth": "1 + 1"}
+            {"text_query": "foo", "ground_truth": "1 + 1"},
+            set(["ground_truth"])
         )
     ]
     torch.save({"train": data, "test": data, "valid": data}, path)
@@ -29,16 +29,16 @@ def create_dummy_hearthstone(path):
 def create_dummy_nl2bash(path):
     data = [
         Environment(
-            inputs={"text_query": "foo"},
-            supervisions={"ground_truth": "echoa"}
+            {"text_query": "foo", "ground_truth": "echoa"},
+            set(["ground_truth"])
         )
     ]
     torch.save({"train": data, "test": data, "valid": data}, path)
 
 
 def create_dummy_deepfix(path):
-    data = ([Environment(inputs={"code": "int main(){ return 0;}"})] * 100) + \
-        ([Environment(inputs={"code": "int main(){ return 0}"})] * 10)
+    data = ([Environment({"code": "int main(){ return 0;}"})] * 100) + \
+        ([Environment({"code": "int main(){ return 0}"})] * 10)
     torch.save(data, path)
 
 

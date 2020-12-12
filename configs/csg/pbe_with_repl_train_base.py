@@ -28,10 +28,10 @@ loss_fn = torch.nn.Sequential(
                                 "weight_by_reward",
                                 mlprogram.nn.Apply(
                                     in_keys=[
-                                        ["input@reward", "lhs"],
-                                        ["output@action_sequence_loss", "rhs"],
+                                        ["reward", "lhs"],
+                                        ["action_sequence_loss", "rhs"],
                                     ],
-                                    out_key="output@action_sequence_loss",
+                                    out_key="action_sequence_loss",
                                     module=mlprogram.nn.Function(
                                         f=Mul(),
                                     ),
@@ -49,8 +49,8 @@ loss_fn = torch.nn.Sequential(
                             [
                                 "reshape_reward",
                                 mlprogram.nn.Apply(
-                                    in_keys=[["input@reward", "x"]],
-                                    out_key="state@value_loss_target",
+                                    in_keys=[["reward", "x"]],
+                                    out_key="value_loss_target",
                                     module=torch.Reshape(
                                         sizes=[-1, 1],
                                     ),
@@ -60,10 +60,10 @@ loss_fn = torch.nn.Sequential(
                                 "BCE",
                                 mlprogram.nn.Apply(
                                     in_keys=[
-                                        ["state@value", "input"],
-                                        ["state@value_loss_target", "target"],
+                                        ["value", "input"],
+                                        ["value_loss_target", "target"],
                                     ],
-                                    out_key="output@value_loss",
+                                    out_key="value_loss",
                                     module=torch.nn.BCELoss(
                                         reduction="sum",
                                     ),
@@ -76,16 +76,16 @@ loss_fn = torch.nn.Sequential(
             [
                 "aggregate",
                 mlprogram.nn.Apply(
-                    in_keys=["output@action_sequence_loss", "output@value_loss"],
-                    out_key="output@loss",
+                    in_keys=["action_sequence_loss", "value_loss"],
+                    out_key="loss",
                     module=mlprogram.nn.AggregatedLoss(),
                 ),
             ],
             [
                 "normalize",
                 mlprogram.nn.Apply(
-                    in_keys=[["output@loss", "lhs"]],
-                    out_key="output@loss",
+                    in_keys=[["loss", "lhs"]],
+                    out_key="loss",
                     module=mlprogram.nn.Function(
                         f=Div(),
                     ),
@@ -96,7 +96,7 @@ loss_fn = torch.nn.Sequential(
                 "pick",
                 mlprogram.nn.Function(
                     f=Pick(
-                        key="output@loss",
+                        key="loss",
                     ),
                 ),
             ],

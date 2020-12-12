@@ -48,7 +48,7 @@ class NLReader(nn.Module):
         word_nl_query_features: rnn.PaddedSeqeunceWithMask
             The output sequences of the LSTM
         """
-        nl_query = cast(PaddedSequenceWithMask, inputs.states["word_nl_query"])
+        nl_query = cast(PaddedSequenceWithMask, inputs["word_nl_query"])
         # Embed query
         q = nl_query.data + (nl_query.data == -1).long() * (self.num_words + 1)
         embeddings = self._embedding(q)  # (embedding_dim,)
@@ -85,6 +85,6 @@ class NLReader(nn.Module):
 
         output = torch.cat(output, dim=0)  # (L, B, hidden_size)
         features = rnn.PaddedSequenceWithMask(output, nl_query.mask)
-        inputs.states["nl_query_features"] = features
-        inputs.states["reference_features"] = features
+        inputs["nl_query_features"] = features
+        inputs["reference_features"] = features
         return inputs

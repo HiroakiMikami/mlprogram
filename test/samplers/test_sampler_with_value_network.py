@@ -26,13 +26,13 @@ class MockSampler(Sampler[int, int, str]):
 
 class MockValueNetwork(nn.Module):
     def forward(self, state: Environment) -> torch.Tensor:
-        return state.inputs["x"]
+        return state["x"]
 
 
 class TestSamplerWithValueNetwork(object):
     def test_rescore(self):
         def transform(state: str) -> Environment:
-            return Environment(inputs={"x": torch.tensor([int(state)])})
+            return Environment({"x": torch.tensor([int(state)])})
 
         collate = Collate(device=torch.device("cpu"),
                           x=CollateOptions(False, 0, 0))

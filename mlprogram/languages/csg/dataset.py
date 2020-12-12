@@ -127,7 +127,7 @@ class Dataset(IterableDataset):
                 ast = self.parent.sample_ast(rng, n_object)
                 if self.parent.reference:
                     ast = self.parent.to_reference(ast)
-                retval = Environment(supervisions={"ground_truth": ast})
+                retval = Environment({"ground_truth": ast}, set(["ground_truth"]))
                 return retval
 
         return InternalIterator(self)

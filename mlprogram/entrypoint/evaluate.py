@@ -56,11 +56,7 @@ class EvaluateSample(Generic[Code]):
     def __call__(self, elem: Tuple[int, Environment]) \
             -> Result:
         i, sample = elem
-        input = Environment(inputs=sample.inputs.to_dict())
-        input.mutable(
-            inputs=False,
-            supervisions=False
-        )
+        input = sample.clone_without_supervision()
         begin = time.time()
         logger.debug(f"Start evaluation of {i}-th sample")
         with logger.block("synthesizer"):

@@ -9,7 +9,7 @@ from mlprogram.metrics import Metric
 
 class Bleu(Metric[str]):
     def __call__(self, input: Environment, value: str) -> float:
-        ground_truth = input.supervisions["ground_truth"]
+        ground_truth = input["ground_truth"]
         sm = SmoothingFunction()
 
         def tokenize(code: str) -> List[str]:

@@ -10,7 +10,7 @@ class TestIou(object):
         gt = np.array([False, True, False], dtype=np.bool)
         assert np.allclose(
             0.5,
-            iou(Environment(supervisions={"ground_truth": gt}),
+            iou(Environment({"ground_truth": gt}),
                 np.array([True, True, False], dtype=np.bool)
                 ))
 
@@ -19,11 +19,11 @@ class TestIou(object):
         gt = np.array([False, False, False], dtype=np.bool)
         assert np.allclose(
             1.0 / 3,
-            iou(Environment(supervisions={"ground_truth": gt}),
+            iou(Environment({"ground_truth": gt}),
                 np.array([True, True, False], dtype=np.bool)
                 ))
         assert np.allclose(
             1.0,
-            iou(Environment(supervisions={"ground_truth": gt}),
+            iou(Environment({"ground_truth": gt}),
                 np.array([False, False, False], dtype=np.bool)
                 ))

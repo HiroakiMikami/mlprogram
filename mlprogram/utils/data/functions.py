@@ -22,7 +22,7 @@ def get_words(dataset: torch.utils.data.Dataset,
     words = []
 
     for sample in dataset:
-        reference = extract_reference(sample.inputs["text_query"])
+        reference = extract_reference(sample["text_query"])
         words.extend([token.value for token in reference])
 
     return words
@@ -34,7 +34,7 @@ def get_characters(dataset: torch.utils.data.Dataset,
     chars: List[str] = []
 
     for sample in dataset:
-        reference = extract_reference(sample.inputs["text_query"])
+        reference = extract_reference(sample["text_query"])
         for token in reference:
             chars.extend(token.value)
 
@@ -48,7 +48,7 @@ def get_samples(dataset: torch.utils.data.Dataset,
     tokens: List[Tuple[str, str]] = []
 
     for sample in dataset:
-        ground_truth = sample.supervisions["ground_truth"]
+        ground_truth = sample["ground_truth"]
         ast = parser.parse(ground_truth)
         if ast is None:
             continue
@@ -86,24 +86,23 @@ class Collate:
         for i, t in enumerate(tensors):
             if t is None:
                 continue
-            for name, item in t.to_dict().items():
-                if name not in tmp:
-                    tmp[name] = []
-                tmp[name].append(item)
+            for key, item in t.items():
+                if key not in tmp:
+                    tmp[key] = []
+                tmp[key].append(item)
 
         retval = Environment()
-        for name, values in tmp.items():
+        for key, values in tmp.items():
             if all([x is None for x in values]):
-                retval[name] = None
+                retval[key] = None
                 continue
 
-            _, key = Environment.parse_key(name)
             if key not in self.options:
-                retval[name] = values
+                retval[key] = values
                 continue
             option = self.options[key]
             if option.use_pad_sequence:
-                retval[name] = \
+                retval[key] = \
                     rnn.pad_sequence(values,
                                      padding_value=option.padding_value) \
                     .to(self.device)
@@ -127,15 +126,16 @@ class Collate:
                     padded_ts.append(F.pad(item, p,
                                            value=option.padding_value))
 
-                retval[name] = \
+                retval[key] = \
                     torch.stack(padded_ts, dim=option.dim).to(self.device)
         return retval
 
     def split(self, values: Environment) -> Sequence[Environment]:
         retval: List[Environment] = []
         B = None
-        for name, t in values.to_dict().items():
-            _, key = Environment.parse_key(name)
+        for key, t in values.items():
+            if t is None:
+                continue
             if key in self.options:
                 option = self.options[key]
                 if option.use_pad_sequence:
@@ -152,15 +152,13 @@ class Collate:
         for _ in range(B):
             retval.append(Environment())
 
-        for name, t in values.to_dict().items():
-            _, key = Environment.parse_key(name)
+        for key, t in values.items():
+            if t is None:
+                for b in range(B):
+                    retval[b][key] = None
+                continue
             if key in self.options:
                 option = self.options[key]
-                if option.use_pad_sequence:
-                    B = t.data.shape[1]
-                else:
-                    B = t.data.shape[option.dim]
-
                 if option.use_pad_sequence:
                     for b in range(B):
                         inds = torch.nonzero(t.mask[:, b], as_tuple=False)
@@ -168,7 +166,7 @@ class Collate:
                         shape = data.shape[1:]
                         data = data[inds]
                         data = data.reshape(-1, *shape)
-                        retval[b][name] = data
+                        retval[b][key] = data
                 else:
                     shape = list(t.data.shape)
                     del shape[option.dim]
@@ -179,12 +177,12 @@ class Collate:
                             d = d.reshape(())
                         else:
                             d = d.reshape(*shape)
-                        retval[b][name] = d
+                        retval[b][key] = d
             elif isinstance(t, list):
                 for b in range(B):
-                    retval[b][name] = t[b]
+                    retval[b][key] = t[b]
             else:
-                logger.debug(f"{name} is invalid type: {type(t)}")
+                logger.debug(f"{key} is invalid type: {type(t)}")
 
         return retval
 
@@ -195,9 +193,9 @@ class _CalcNError:
 
     def __call__(self, elem: Tuple[int, Environment]):
         i, data = elem
-        if "n_error" in data.supervisions:
-            return i, data.supervisions["n_error"]
-        return i, len(self.analyzer(data.inputs["code"]))
+        if "n_error" in data:
+            return i, data["n_error"]
+        return i, len(self.analyzer(data["code"]))
 
 
 def split_by_n_error(dataset: torch.utils.data.Dataset,

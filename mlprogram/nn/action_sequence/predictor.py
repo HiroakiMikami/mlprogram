@@ -42,9 +42,9 @@ class Predictor(nn.Module):
             N is the batch_size.
         """
         reference_features = cast(PaddedSequenceWithMask,
-                                  inputs.states["reference_features"])
+                                  inputs["reference_features"])
         action_features = cast(PaddedSequenceWithMask,
-                               inputs.states["action_features"])
+                               inputs["action_features"])
         rule_pred = self.rule(action_features.data)
         rule_prob = torch.softmax(rule_pred, dim=2)
 
@@ -62,16 +62,16 @@ class Predictor(nn.Module):
         token_log_prob = select_prob[:, :, 1:2] * token_prob
         reference_log_prob = select_prob[:, :, 2:3] * reference_prob
         if self.training:
-            inputs.outputs["rule_probs"] = \
+            inputs["rule_probs"] = \
                 PaddedSequenceWithMask(rule_log_prob, action_features.mask)
-            inputs.outputs["token_probs"] = \
+            inputs["token_probs"] = \
                 PaddedSequenceWithMask(token_log_prob, action_features.mask)
-            inputs.outputs["reference_probs"] = \
+            inputs["reference_probs"] = \
                 PaddedSequenceWithMask(reference_log_prob,
                                        action_features.mask)
         else:
-            inputs.outputs["rule_probs"] = rule_log_prob[-1, :, :]
-            inputs.outputs["token_probs"] = token_log_prob[-1, :, :]
-            inputs.outputs["reference_probs"] = reference_log_prob[-1, :, :]
+            inputs["rule_probs"] = rule_log_prob[-1, :, :]
+            inputs["token_probs"] = token_log_prob[-1, :, :]
+            inputs["reference_probs"] = reference_log_prob[-1, :, :]
 
         return inputs

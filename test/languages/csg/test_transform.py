@@ -10,9 +10,10 @@ from mlprogram.languages.csg.transforms import AddTestCases, TransformCanvas
 class TestAddTestCases(object):
     def test_non_reference(self):
         f = AddTestCases(Interpreter(1, 1, 1, False))
-        result = f(Environment(supervisions={"ground_truth": Rectangle(1, 1)}))
-        assert len(result.inputs["test_cases"]) == 1
-        assert "#\n" == show(result.inputs["test_cases"][0][1])
+        result = f(Environment({"ground_truth": Rectangle(1, 1)},
+                               set(["ground_truth"])))
+        assert len(result["test_cases"]) == 1
+        assert "#\n" == show(result["test_cases"][0][1])
 
 
 class TestTransformCanvas(object):
@@ -20,18 +21,16 @@ class TestTransformCanvas(object):
         f = TransformCanvas()
         assert np.array_equal(
             torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 1, 2, 2),
-            f(Environment(inputs={
+            f(Environment({
                 "test_cases":
                     [(None, np.array([[True, False], [False, True]]))]
-            })).states["test_case_tensor"]
+            }))["test_case_tensor"]
         )
 
         assert np.array_equal(
             torch.tensor([[0.5, -0.5], [-0.5, 0.5]]).reshape(1, 1, 1, 2, 2),
-            f(Environment(inputs={
+            f(Environment({
                 "test_cases": [np.array([[True, False], [False, True]])],
-            },
-                states={
                 "variables": [[np.array([[True, False], [False, True]])]]
-            })).states["variables_tensor"]
+            }))["variables_tensor"]
         )

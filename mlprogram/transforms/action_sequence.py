@@ -13,8 +13,8 @@ Code = TypeVar("Code")
 
 class AddEmptyReference(object):
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        entry.states["reference"] = []
-        entry.states["reference_features"] = torch.zeros((0, 1))
+        entry["reference"] = []
+        entry["reference_features"] = torch.zeros((0, 1))
         return entry
 
 
@@ -23,12 +23,13 @@ class GroundTruthToActionSequence(Generic[Code]):
         self.parser = parser
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        code = cast(Code, entry.supervisions["ground_truth"])
+        code = cast(Code, entry["ground_truth"])
         ast = self.parser.parse(code)
         if ast is None:
             return None
         seq = ActionSequence.create(ast)
-        entry.supervisions["action_sequence"] = seq
+        entry["action_sequence"] = seq
+        entry.mark_as_supervision("action_sequence")
         return entry
 
 
@@ -40,8 +41,8 @@ class EncodeActionSequence:
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
         action_sequence = cast(ActionSequence,
-                               entry.supervisions["action_sequence"])
-        reference = cast(List[Token[str, str]], entry.states["reference"])
+                               entry["action_sequence"])
+        reference = cast(List[Token[str, str]], entry["reference"])
         a = self.action_sequence_encoder.encode_action(
             action_sequence, reference)
         if a is None:
@@ -49,7 +50,8 @@ class EncodeActionSequence:
         if np.any(a[-1, :].numpy() != -1):
             return None
         ground_truth = a[1:-1, 1:]
-        entry.supervisions["ground_truth_actions"] = ground_truth
+        entry["ground_truth_actions"] = ground_truth
+        entry.mark_as_supervision("ground_truth_actions")
         return entry
 
 
@@ -61,14 +63,14 @@ class AddPreviousActions:
         self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
+        train = entry.is_supervision("action_sequence")
         if train:
             action_sequence = cast(ActionSequence,
-                                   entry.supervisions["action_sequence"])
+                                   entry["action_sequence"])
         else:
             action_sequence = cast(ActionSequence,
-                                   entry.states["action_sequence"])
-        reference = cast(List[Token[str, str]], entry.states["reference"])
+                                   entry["action_sequence"])
+        reference = cast(List[Token[str, str]], entry["reference"])
         a = self.action_sequence_encoder.encode_action(
             action_sequence, reference)
         if a is None:
@@ -82,7 +84,7 @@ class AddPreviousActions:
             if self.n_dependent is not None:
                 prev_action = prev_action[-self.n_dependent:, :]
 
-        entry.states["previous_actions"] = prev_action
+        entry["previous_actions"] = prev_action
 
         return entry
 
@@ -95,14 +97,14 @@ class AddActions:
         self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
+        train = entry.is_supervision("action_sequence")
         if train:
             action_sequence = cast(ActionSequence,
-                                   entry.supervisions["action_sequence"])
+                                   entry["action_sequence"])
         else:
             action_sequence = cast(ActionSequence,
-                                   entry.states["action_sequence"])
-        reference = cast(List[Token[str, str]], entry.states["reference"])
+                                   entry["action_sequence"])
+        reference = cast(List[Token[str, str]], entry["reference"])
         a = self.action_sequence_encoder.encode_action(
             action_sequence, reference)
         p = self.action_sequence_encoder.encode_parent(action_sequence)
@@ -120,7 +122,7 @@ class AddActions:
             if self.n_dependent is not None:
                 action_tensor = action_tensor[-self.n_dependent:, :]
 
-        entry.states["actions"] = action_tensor
+        entry["actions"] = action_tensor
 
         return entry
 
@@ -135,14 +137,14 @@ class AddPreviousActionRules:
         self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
+        train = entry.is_supervision("action_sequence")
         if train:
             action_sequence = cast(ActionSequence,
-                                   entry.supervisions["action_sequence"])
+                                   entry["action_sequence"])
         else:
             action_sequence = cast(ActionSequence,
-                                   entry.states["action_sequence"])
-        reference = cast(List[Token[str, str]], entry.states["reference"])
+                                   entry["action_sequence"])
+        reference = cast(List[Token[str, str]], entry["reference"])
         rule_prev_action = \
             self.action_sequence_encoder.encode_each_action(
                 action_sequence, reference, self.max_arity)
@@ -152,7 +154,7 @@ class AddPreviousActionRules:
             if self.n_dependent is not None:
                 rule_prev_action = rule_prev_action[-self.n_dependent:, :]
 
-        entry.states["previous_action_rules"] = rule_prev_action
+        entry["previous_action_rules"] = rule_prev_action
         return entry
 
 
@@ -162,21 +164,21 @@ class AddActionSequenceAsTree:
         self.action_sequence_encoder = action_sequence_encoder
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
+        train = entry.is_supervision("action_sequence")
         if train:
             action_sequence = cast(ActionSequence,
-                                   entry.supervisions["action_sequence"])
+                                   entry["action_sequence"])
         else:
             action_sequence = cast(ActionSequence,
-                                   entry.states["action_sequence"])
+                                   entry["action_sequence"])
         depth, matrix = self.action_sequence_encoder.encode_tree(
             action_sequence)
         if train:
             depth = depth[:-1]
             matrix = matrix[:-1, :-1]
 
-        entry.states["adjacency_matrix"] = matrix
-        entry.states["depthes"] = depth
+        entry["adjacency_matrix"] = matrix
+        entry["depthes"] = depth
 
         return entry
 
@@ -191,13 +193,13 @@ class AddQueryForTreeGenDecoder:
         self.n_dependent = n_dependent
 
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
+        train = entry.is_supervision("action_sequence")
         if train:
             action_sequence = cast(ActionSequence,
-                                   entry.supervisions["action_sequence"])
+                                   entry["action_sequence"])
         else:
             action_sequence = cast(ActionSequence,
-                                   entry.states["action_sequence"])
+                                   entry["action_sequence"])
         query = \
             self.action_sequence_encoder.encode_path(
                 action_sequence, self.max_depth)
@@ -207,26 +209,26 @@ class AddQueryForTreeGenDecoder:
             if self.n_dependent:
                 query = query[-self.n_dependent:, :]
 
-        entry.states["action_queries"] = query
+        entry["action_queries"] = query
 
         return entry
 
 
 class AddStateForRnnDecoder:
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
-        if train or "hidden_state" not in entry.states:
-            entry.states["hidden_state"] = None
-        if train or "state" not in entry.states:
-            entry.states["state"] = None
+        train = entry.is_supervision("action_sequence")
+        if train or "hidden_state" not in entry:
+            entry["hidden_state"] = None
+        if train or "state" not in entry:
+            entry["state"] = None
 
         return entry
 
 
 class AddHistoryState:
     def __call__(self, entry: Environment) -> Optional[Environment]:
-        train = "action_sequence" in entry.supervisions
-        if train or "history" not in entry.states:
-            entry.states["history"] = None
+        train = entry.is_supervision("action_sequence")
+        if train or "history" not in entry:
+            entry["history"] = None
 
         return entry

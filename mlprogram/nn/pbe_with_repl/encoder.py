@@ -14,12 +14,12 @@ class Encoder(nn.Module):
 
     def forward(self, entry: Environment) -> Environment:
         # (B, N, c)
-        processed_input = cast(torch.Tensor, entry.states["test_case_tensor"])
+        processed_input = cast(torch.Tensor, entry["test_case_tensor"])
         # (L, B, N, c)
         variables = cast(PaddedSequenceWithMask,
-                         entry.states["variables_tensor"])
+                         entry["variables_tensor"])
         # (B, N, C)
-        in_feature = cast(torch.Tensor, entry.states["test_case_feature"])
+        in_feature = cast(torch.Tensor, entry["test_case_feature"])
 
         B, N = in_feature.shape[:2]
         C = in_feature.shape[2:]
@@ -53,9 +53,9 @@ class Encoder(nn.Module):
             features.data = torch.zeros(0, B, *C, device=in_feature.device,
                                         dtype=in_feature.dtype)
 
-        entry.states["reference_features"] = features
+        entry["reference_features"] = features
 
         reduced_feature = features.data.sum(dim=0)  # reduce sequence length
-        entry.states["input_feature"] = \
+        entry["input_feature"] = \
             torch.cat([in_feature, reduced_feature], dim=1)
         return entry

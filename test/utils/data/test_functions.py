@@ -23,10 +23,10 @@ def tokenize(str: str) -> List[Token]:
 
 class TestGetWords(object):
     def test_get_words(self):
-        entries = [Environment(inputs={"text_query": "foo bar"},
-                               supervisions={"ground_truth": "y = x + 1"}),
-                   Environment(inputs={"text_query": "test foo"},
-                               supervisions={"ground_truth": "f(x)"})]
+        entries = [Environment({"text_query": "foo bar", "ground_truth": "y = x + 1"},
+                               set(["ground_truth"])),
+                   Environment({"text_query": "test foo", "ground_truth": "f(x)"},
+                               set(["ground_truth"]))]
         dataset = ListDataset(entries)
         words = get_words(dataset, tokenize)
         assert ["foo", "bar", "test", "foo"] == words
@@ -34,10 +34,10 @@ class TestGetWords(object):
 
 class TestGetCharacters(object):
     def test_get_characters(self):
-        entries = [Environment(inputs={"text_query": "foo bar"},
-                               supervisions={"ground_truth": "y = x + 1"}),
-                   Environment(inputs={"text_query": "test foo"},
-                               supervisions={"ground_truth": "f(x)"})]
+        entries = [Environment({"text_query": "foo bar", "ground_truth": "y = x + 1"},
+                               set(["ground_truth"])),
+                   Environment({"text_query": "test foo", "ground_truth": "f(x)"},
+                               set(["ground_truth"]))]
         dataset = ListDataset(entries)
         chars = get_characters(dataset, tokenize)
         assert [
@@ -49,8 +49,8 @@ class TestGetCharacters(object):
 
 class TestGetSamples(object):
     def test_get_samples(self):
-        entries = [Environment(supervisions={"ground_truth": "y = x + 1"}),
-                   Environment(supervisions={"ground_truth": "f(x)"})]
+        entries = [Environment({"ground_truth": "y = x + 1"}, set(["ground_truth"])),
+                   Environment({"ground_truth": "f(x)"}, set(["ground_truth"]))]
         dataset = ListDataset(entries)
         d = get_samples(dataset, Parser(lambda x: [x]))
         assert [
@@ -67,13 +67,13 @@ class TestGetSamples(object):
 class TestCollate(object):
     def test_collate(self):
         data = [
-            Environment(inputs={
+            Environment({
                 "pad0": torch.zeros(1),
                 "pad1": torch.ones(2, 1),
                 "stack0": torch.zeros(1),
                 "stack1": torch.ones(1, 3)
             }),
-            Environment(inputs={
+            Environment({
                 "pad0": torch.zeros(2) + 1,
                 "pad1": torch.ones(1, 1) + 1,
                 "stack0": torch.zeros(1) + 1,
@@ -87,26 +87,26 @@ class TestCollate(object):
                           stack1=CollateOptions(False, 1, -1))
         retval = collate.collate(data)
         assert set(retval.to_dict().keys()) == set([
-            "input@pad0", "input@pad1", "input@stack0", "input@stack1"
+            "pad0", "pad1", "stack0", "stack1"
         ])
 
         assert np.array_equal([[0, 1], [-1, 1]],
-                              retval.inputs["pad0"].data.numpy())
+                              retval["pad0"].data.numpy())
         assert np.array_equal([[1, 1], [0, 1]],
-                              retval.inputs["pad0"].mask.numpy())
+                              retval["pad0"].mask.numpy())
         assert np.array_equal([[[1], [2]], [[1], [-1]]],
-                              retval.inputs["pad1"].data.numpy())
+                              retval["pad1"].data.numpy())
         assert np.array_equal([[1, 1], [1, 0]],
-                              retval.inputs["pad1"].mask.numpy())
+                              retval["pad1"].mask.numpy())
 
         assert np.array_equal([[0], [1]],
-                              retval.inputs["stack0"].data.numpy())
+                              retval["stack0"].data.numpy())
         assert np.array_equal([[[1, 1, 1], [2, 2, 2]]],
-                              retval.inputs["stack1"].data.numpy())
+                              retval["stack1"].data.numpy())
 
     def test_collate_with_skip(self):
         data = [
-            Environment(inputs={
+            Environment({
                 "pad0": torch.zeros(1),
             }),
             None
@@ -114,18 +114,18 @@ class TestCollate(object):
         collate = Collate(device=torch.device("cpu"),
                           pad0=CollateOptions(True, 0, -1))
         retval = collate.collate(data)
-        assert set(["input@pad0"]) == set(retval.to_dict().keys())
-        assert np.array_equal([[0]], retval["input@pad0"].data.numpy())
+        assert set(["pad0"]) == set(retval.to_dict().keys())
+        assert np.array_equal([[0]], retval["pad0"].data.numpy())
 
     def test_collate_with_additional_key(self):
         data = [
-            Environment(inputs={"pad0": 1}),
-            Environment(inputs={"pad0": 2})
+            Environment({"pad0": 1}),
+            Environment({"pad0": 2})
         ]
         collate = Collate(device=torch.device("cpu"))
         retval = collate.collate(data)
-        assert set(["input@pad0"]) == set(retval.to_dict().keys())
-        assert [1, 2] == retval["input@pad0"]
+        assert set(["pad0"]) == set(retval.to_dict().keys())
+        assert [1, 2] == retval["pad0"]
 
     def test_collate_with_all_none_batch(self):
         data = [None]
@@ -136,31 +136,27 @@ class TestCollate(object):
 
     def test_collate_with_pad(self):
         data = [
-            Environment(inputs={
-                "x": torch.zeros(2, 1),
-            }),
-            Environment(inputs={
-                "x": torch.zeros(1, 2),
-            })
+            Environment({"x": torch.zeros(2, 1)}),
+            Environment({"x": torch.zeros(1, 2)})
         ]
         collate = Collate(device=torch.device("cpu"),
                           x=CollateOptions(False, 0, -1))
         retval = collate.collate(data)
-        assert set(["input@x"]) == set(retval.to_dict().keys())
-        assert np.array_equal((2, 2, 2), retval["input@x"].shape)
+        assert set(["x"]) == set(retval.to_dict().keys())
+        assert np.array_equal((2, 2, 2), retval["x"].shape)
         assert np.array_equal([[[0, -1], [0, -1]],
                                [[0, 0], [-1, -1]]],
-                              retval["input@x"].numpy())
+                              retval["x"].numpy())
 
     def test_split(self):
         data = [
-            Environment(inputs={
+            Environment({
                 "pad0": torch.zeros(1),
                 "pad1": torch.ones(2, 1),
                 "stack0": torch.zeros(1),
                 "stack1": torch.ones(1, 3)
             }),
-            Environment(inputs={
+            Environment({
                 "pad0": torch.zeros(2) + 1,
                 "pad1": torch.ones(1, 1) + 1,
                 "stack0": torch.zeros(1) + 1,
@@ -184,13 +180,13 @@ class TestCollate(object):
 
     def test_split_with_additional_key(self):
         data = [
-            Environment(inputs={"pad0": 1}),
-            Environment(inputs={"pad0": 2})
+            Environment({"pad0": 1}),
+            Environment({"pad0": 2})
         ]
         collate = Collate(device=torch.device("cpu"))
         retval = collate.split(collate.collate(data))
-        assert 1 == retval[0]["input@pad0"]
-        assert 2 == retval[1]["input@pad0"]
+        assert 1 == retval[0]["pad0"]
+        assert 2 == retval[1]["pad0"]
 
 
 class MockAnalyzer(Analyzer[str, str]):
@@ -204,8 +200,8 @@ class MockAnalyzer(Analyzer[str, str]):
 class TestSplitByNError(object):
     def test_split(self):
         dataset = ListDataset([
-            Environment(inputs={"code": "x"}),
-            Environment(inputs={"code": "y"})
+            Environment({"code": "x"}),
+            Environment({"code": "y"})
         ])
         splitted = split_by_n_error(dataset,
                                     MockAnalyzer({
@@ -213,16 +209,16 @@ class TestSplitByNError(object):
                                         "y": ["error"]
                                     }))
         assert list(splitted["no_error"]) == [
-            Environment(inputs={"code": "x"})
+            Environment({"code": "x"})
         ]
         assert list(splitted["with_error"]) == [
-            Environment(inputs={"code": "y"})
+            Environment({"code": "y"})
         ]
 
     def test_precomputed_n_error(self):
         dataset = ListDataset([
-            Environment(inputs={"code": "x"}, supervisions={"n_error": 0}),
-            Environment(inputs={"code": "y"})
+            Environment({"code": "x", "n_error": 0}, set(["n_error"])),
+            Environment({"code": "y"})
         ])
         splitted = split_by_n_error(dataset,
                                     MockAnalyzer({
@@ -230,16 +226,16 @@ class TestSplitByNError(object):
                                         "y": ["error"]
                                     }))
         assert list(splitted["no_error"]) == [
-            Environment(inputs={"code": "x"}, supervisions={"n_error": 0})
+            Environment({"code": "x", "n_error": 0}, set(["n_error"]))
         ]
         assert list(splitted["with_error"]) == [
-            Environment(inputs={"code": "y"})
+            Environment({"code": "y"})
         ]
 
     def test_multiprocess(self):
         dataset = ListDataset([
-            Environment(inputs={"code": "x"}),
-            Environment(inputs={"code": "y"})
+            Environment({"code": "x"}),
+            Environment({"code": "y"})
         ])
         splitted = split_by_n_error(dataset,
                                     MockAnalyzer({
@@ -247,8 +243,8 @@ class TestSplitByNError(object):
                                         "y": ["error"]
                                     }), n_process=2)
         assert list(splitted["no_error"]) == [
-            Environment(inputs={"code": "x"})
+            Environment({"code": "x"})
         ]
         assert list(splitted["with_error"]) == [
-            Environment(inputs={"code": "y"})
+            Environment({"code": "y"})
         ]

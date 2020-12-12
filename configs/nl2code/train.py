@@ -41,7 +41,7 @@ main = mlprogram.entrypoint.train_supervised(
                     "pick",
                     mlprogram.nn.Function(
                         f=Pick(
-                            key="output@action_sequence_loss",
+                            key="action_sequence_loss",
                         ),
                     ),
                 ],

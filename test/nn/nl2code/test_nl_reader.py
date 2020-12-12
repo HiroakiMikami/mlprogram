@@ -16,9 +16,7 @@ class TestNLReader(object):
         q0 = torch.LongTensor([1, 2])
         q1 = torch.LongTensor([1, 2, 3])
         query = rnn.pad_sequence([q0, q1])
-        output = encoder(Environment(
-            states={"word_nl_query": query}
-        )).states["nl_query_features"]
+        output = encoder(Environment({"word_nl_query": query}))["nl_query_features"]
         assert (3, 2, 14) == output.data.shape
 
     def test_mask(self):
@@ -26,7 +24,5 @@ class TestNLReader(object):
         q0 = torch.LongTensor([1, 2])
         q1 = torch.LongTensor([1, 2, 3])
         query = rnn.pad_sequence([q0, q1])
-        output = encoder(Environment(
-            states={"word_nl_query": query}
-        )).states["nl_query_features"]
+        output = encoder(Environment({"word_nl_query": query}))["nl_query_features"]
         assert np.all(output.data[2, 0, :].detach().numpy() == 0)

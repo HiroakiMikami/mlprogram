@@ -36,8 +36,8 @@ splitted = mlprogram.utils.data.random_split(
 )
 # TODO mutator is not nn.Module
 mutator = mlprogram.nn.Apply(
-    in_keys=[["input@code", "code"]],
-    out_key=["input@text_query", "input@test_cases", "supervision@ground_truth"],
+    in_keys=[["code", "code"]],
+    out_key=["text_query", "test_cases", "ground_truth"],
     module=typo_mutator.mutate,
 )
 train_dataset = mlprogram.utils.data.transform(
@@ -280,7 +280,7 @@ subsynthesizer = mlprogram.synthesizers.SMC(
     initial_particle_size=1,
     sampler=subsampler,
     to_key=Pick(
-        key="state@action_sequence",
+        key="action_sequence",
     ),
 )
 sampler = mlprogram.samplers.SequentialProgramSampler(
@@ -302,7 +302,7 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
             max_try_num=1,
             sampler=sampler,
             to_key=Pick(
-                key="state@interpreter_state",
+                key="interpreter_state",
             ),
         ),
         timeout_sec=params.timeout_sec,

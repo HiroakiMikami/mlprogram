@@ -17,26 +17,26 @@ class TestExtractReference(object):
             return [Token(None, value + "dnn", value)]
 
         transform = ExtractReference(tokenize)
-        result = transform(Environment(inputs={"text_query": ""}))
-        assert [Token(None, "dnn", "")] == result.states["reference"]
+        result = transform(Environment({"text_query": ""}))
+        assert [Token(None, "dnn", "")] == result["reference"]
 
 
 class TestEncodeWordQuery(object):
     def test_happy_path(self):
         transform = EncodeWordQuery(LabelEncoder(["dnn"]))
         result = transform(Environment(
-            states={"reference": [Token(None, "dnn", "")]}
+            {"reference": [Token(None, "dnn", "")]}
         ))
-        assert [1] == result.states["word_nl_query"].numpy().tolist()
+        assert [1] == result["word_nl_query"].numpy().tolist()
 
 
 class TestEncodeTokenQuery(object):
     def test_happy_path(self):
         transform = EncodeTokenQuery(LabelEncoder([Token(None, "dnn", "")]))
         result = transform(Environment(
-            states={"reference": [Token(None, "dnn", "")]}
+            {"reference": [Token(None, "dnn", "")]}
         ))
-        assert [1] == result.states["token_nl_query"].numpy().tolist()
+        assert [1] == result["token_nl_query"].numpy().tolist()
 
 
 class TestEncodeCharacterQuery(object):
@@ -44,11 +44,11 @@ class TestEncodeCharacterQuery(object):
         cencoder = LabelEncoder(["a", "b", "t", "e"], 0)
         transform = EncodeCharacterQuery(cencoder, 3)
         result = transform(Environment(
-            states={"reference": [
+            {"reference": [
                 Token(None, "ab", "ab"),
                 Token(None, "test", "test")
             ]}
         ))
-        char_query = result.states["char_nl_query"]
+        char_query = result["char_nl_query"]
         assert np.array_equal([[1, 2, -1], [3, 4, 0]],
                               char_query.numpy())

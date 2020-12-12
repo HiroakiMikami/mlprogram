@@ -20,22 +20,22 @@ class TestErrorCorrectRate(object):
         acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
         assert np.allclose(
             1.0,
-            acc(Environment(inputs={"test_cases": [("foo", None)]}), ""))
+            acc(Environment({"test_cases": [("foo", None)]}), ""))
         assert np.allclose(
             0.0,
-            acc(Environment(inputs={"test_cases": [("foo", None)]}), "foo"))
+            acc(Environment({"test_cases": [("foo", None)]}), "foo"))
 
     def test_increasing_errors(self):
         acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
         assert np.allclose(
             0.0,
-            acc(Environment(inputs={"test_cases": [("foo", None)]}), "foobar"))
+            acc(Environment({"test_cases": [("foo", None)]}), "foobar"))
 
     def test_original_has_no_error(self):
         acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
         assert np.allclose(
             1.0,
-            acc(Environment(inputs={"test_cases": [("", None)]}), ""))
+            acc(Environment({"test_cases": [("", None)]}), ""))
         assert np.allclose(
             0.0,
-            acc(Environment(inputs={"test_cases": [("", None)]}), "foobar"))
+            acc(Environment({"test_cases": [("", None)]}), "foobar"))

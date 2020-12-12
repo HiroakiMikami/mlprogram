@@ -39,8 +39,11 @@ def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "django.pt"),
     def to_sample(elem: Tuple[str, str]) -> Environment:
         anno, code = elem
         return Environment(
-            inputs={"text_query": anno},
-            supervisions={"ground_truth": code}
+            {
+                "text_query": anno,
+                "ground_truth": code
+            },
+            set(["ground_truth"])
         )
     samples = list(map(to_sample, zip(annotation, code)))
 

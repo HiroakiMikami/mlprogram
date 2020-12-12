@@ -137,16 +137,16 @@ class Decoder(nn.Module):
             N is the batch_size.
         """
         nl_query_features = cast(PaddedSequenceWithMask,
-                                 inputs.states["nl_query_features"])
+                                 inputs["nl_query_features"])
         action_queries = cast(PaddedSequenceWithMask,
-                              inputs.states["action_queries"])
+                              inputs["action_queries"])
         action_features = cast(PaddedSequenceWithMask,
-                               inputs.states["action_features"])
+                               inputs["action_features"])
         q = action_queries.data + \
             (action_queries.data == -1) * (self.rule_num + 1)
         embed = self.query_embed(q)
         input = PaddedSequenceWithMask(embed, action_queries.mask)
         for block in self.blocks:
             input, _, _ = block(input, nl_query_features, action_features)
-        inputs.states["action_features"] = input
+        inputs["action_features"] = input
         return inputs

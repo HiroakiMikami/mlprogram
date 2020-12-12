@@ -59,20 +59,19 @@ class TestDecoder(object):
         h_0 = torch.rand(2, 5)
         c_0 = torch.rand(2, 5)
 
-        inputs = decoder(Environment(
-            states={
-                "nl_query_features": query,
-                "action_features": input,
-                "parent_indexes": parent_index,
-                "history": history,
-                "hidden_state": h_0,
-                "state": c_0
-            }))
-        output = inputs.states["action_features"]
-        contexts = inputs.states["action_contexts"]
-        history = inputs.states["history"]
-        h_n = inputs.states["hidden_state"]
-        c_n = inputs.states["state"]
+        inputs = decoder(Environment({
+            "nl_query_features": query,
+            "action_features": input,
+            "parent_indexes": parent_index,
+            "history": history,
+            "hidden_state": h_0,
+            "state": c_0
+        }))
+        output = inputs["action_features"]
+        contexts = inputs["action_contexts"]
+        history = inputs["history"]
+        h_n = inputs["hidden_state"]
+        c_n = inputs["state"]
         assert (3, 2, 5) == output.data.shape
         assert np.array_equal(
             [[1, 1], [1, 0], [1, 0]], output.mask.numpy())

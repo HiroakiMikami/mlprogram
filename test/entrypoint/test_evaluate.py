@@ -34,7 +34,7 @@ class MockSynthesizer:
 
 
 def synthesize(input):
-    input = input.inputs["query"]
+    input = input["query"]
     output = []
     if input == "query0":
         output = ["c0", "c1", "c2"]
@@ -52,16 +52,16 @@ class TestEvaluateSynthesizer(object):
         accuracy = Accuracy()
         dataset = ListDataset([
             Environment(
-                inputs={"query": "query0"},
-                supervisions={"ground_truth": "c0"}
+                {"query": "query0", "ground_truth": "c0"},
+                set(["ground_truth"])
             ),
             Environment(
-                inputs={"query": "query1"},
-                supervisions={"ground_truth": "c0"}
+                {"query": "query1", "ground_truth": "c0"},
+                set(["ground_truth"])
             ),
             Environment(
-                inputs={"query": "query2"},
-                supervisions={"ground_truth": "c0"}
+                {"query": "query2", "ground_truth": "c0"},
+                set(["ground_truth"])
             ),
         ])
         results = EvaluateSynthesizer(dataset, synthesize,
@@ -73,18 +73,18 @@ class TestEvaluateSynthesizer(object):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
-        assert Result({"input@query": "query0",
-                       "supervision@ground_truth": "c0"},
+        assert Result({"query": "query0",
+                       "ground_truth": "c0"},
                       ["c0", "c1", "c2"],
                       {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[0]
-        assert Result({"input@query": "query1",
-                       "supervision@ground_truth": "c0"},
+        assert Result({"query": "query1",
+                       "ground_truth": "c0"},
                       ["c2", "c3", "c0"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[1]
-        assert Result({"input@query": "query2",
-                       "supervision@ground_truth": "c0"},
+        assert Result({"query": "query2",
+                       "ground_truth": "c0"},
                       ["c2", "c3", "c5"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
                       True, 0.0) == results.results[2]
@@ -93,16 +93,16 @@ class TestEvaluateSynthesizer(object):
         accuracy = Accuracy()
         dataset = ListDataset([
             Environment(
-                inputs={"query": "query0"},
-                supervisions={"ground_truth": "c0"}
+                {"query": "query0", "ground_truth": "c0"},
+                set(["ground_truth"])
             ),
             Environment(
-                inputs={"query": "query1"},
-                supervisions={"ground_truth": "c0"}
+                {"query": "query1", "ground_truth": "c0"},
+                set(["ground_truth"])
             ),
             Environment(
-                inputs={"query": "query2"},
-                supervisions={"ground_truth": "c0"}
+                {"query": "query2", "ground_truth": "c0"},
+                set(["ground_truth"])
             ),
         ])
         results = EvaluateSynthesizer(dataset, synthesize,
@@ -115,19 +115,19 @@ class TestEvaluateSynthesizer(object):
         results.results[0].time = 0.0
         results.results[1].time = 0.0
         results.results[2].time = 0.0
-        results.results.sort(key=lambda x: x.sample["input@query"])
-        assert Result({"input@query": "query0",
-                       "supervision@ground_truth": "c0"},
+        results.results.sort(key=lambda x: x.sample["query"])
+        assert Result({"query": "query0",
+                       "ground_truth": "c0"},
                       ["c0", "c1", "c2"],
                       {1: {"accuracy": 1.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[0]
-        assert Result({"input@query": "query1",
-                       "supervision@ground_truth": "c0"},
+        assert Result({"query": "query1",
+                       "ground_truth": "c0"},
                       ["c2", "c3", "c0"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 1.0}},
                       True, 0.0) == results.results[1]
-        assert Result({"input@query": "query2",
-                       "supervision@ground_truth": "c0"},
+        assert Result({"query": "query2",
+                       "ground_truth": "c0"},
                       ["c2", "c3", "c5"],
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
                       True, 0.0) == results.results[2]
@@ -136,8 +136,8 @@ class TestEvaluateSynthesizer(object):
 class TestEvaluate(object):
     def prepare_dataset(self):
         return ListDataset([
-            Environment(inputs={"query": "query"},
-                        supervisions={"ground_truth": "name0"})
+            Environment({"query": "query", "ground_truth": "name0"},
+                        set(["ground_truth"]))
         ])
 
     def prepare_model(self):

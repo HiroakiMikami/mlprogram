@@ -32,8 +32,8 @@ model = torch.share_memory_(
                 [
                     "encode_input",
                     mlprogram.nn.Apply(
-                        in_keys=[["state@test_case_tensor", "x"]],
-                        out_key="state@test_case_feature",
+                        in_keys=[["test_case_tensor", "x"]],
+                        out_key="test_case_feature",
                         module=mlprogram.nn.CNN2d(
                             in_channel=1,
                             out_channel=16,
@@ -108,8 +108,8 @@ model = torch.share_memory_(
                 [
                     "value",
                     mlprogram.nn.Apply(
-                        in_keys=[["state@input_feature", "x"]],
-                        out_key="state@value",
+                        in_keys=[["input_feature", "x"]],
+                        out_key="value",
                         module=mlprogram.nn.MLP(
                             in_channel=mul(
                                 x=2,
@@ -271,7 +271,7 @@ subsynthesizer = mlprogram.synthesizers.SMC(
     initial_particle_size=1,
     sampler=subsampler,
     to_key=Pick(
-        key="state@action_sequence",
+        key="action_sequence",
     ),
 )
 sampler = mlprogram.samplers.SequentialProgramSampler(
@@ -298,7 +298,7 @@ train_synthesizer = mlprogram.synthesizers.SMC(
         threshold=0.9,
     ),
     to_key=Pick(
-        key="state@interpreter_state",
+        key="interpreter_state",
     ),
 )
 evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
@@ -331,7 +331,7 @@ evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
                                 "pick",
                                 mlprogram.nn.Function(
                                     f=Pick(
-                                        key="state@value",
+                                        key="value",
                                     ),
                                 ),
                             ],
@@ -341,7 +341,7 @@ evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
                 batch_size=1,
             ),
             to_key=Pick(
-                key="state@interpreter_state",
+                key="interpreter_state",
             ),
         ),
         timeout_sec=option.timeout_sec,

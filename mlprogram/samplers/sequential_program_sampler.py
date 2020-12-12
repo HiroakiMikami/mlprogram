@@ -45,18 +45,18 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
         with torch.no_grad(), logger.block("encode_state"):
             state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
-        state.states["reference"] = []
-        state.states["variables"] = []
-        state.states["interpreter_state"] = \
+        state["reference"] = []
+        state["variables"] = []
+        state["interpreter_state"] = \
             BatchedState[Code, Value, Kind]({}, {}, [])
         return state
 
     def create_output(self, input: Input, state: Environment) \
             -> Optional[Tuple[Code, bool]]:
-        if len(state.states["interpreter_state"].history) == 0:
+        if len(state["interpreter_state"].history) == 0:
             return None
         code = self.expander.unexpand(
-            state.states["interpreter_state"].history
+            state["interpreter_state"].history
         )
         return code, False
 
@@ -64,46 +64,39 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
                         ks: List[int]) \
             -> Generator[DuplicatedSamplerState[Environment],
                          None, None]:
-        assert all([len(state.state.outputs) for state in states]) == 0
-        assert all([len(state.state.supervisions) for state in states]) == 0
+        assert all([len(state.state._supervisions) for state in states]) == 0
 
-        orig_inputs = [state.state.inputs.to_dict() for state in states]
-        orig_states = [state.state.states.to_dict() for state in states]
+        originals = [state.state.clone() for state in states]
 
         with logger.block("batch_k_samples"):
-            for orig_input, orig_state, state, k in zip(orig_inputs,
-                                                        orig_states, states,
-                                                        ks):
+            for original, state, k in zip(originals, states, ks):
                 if k == 0:
                     continue
 
-                test_cases = state.state.inputs["test_cases"]
+                test_cases = state.state["test_cases"]
                 inputs = [input for input, _ in test_cases]
                 cnt = 0
                 for result in self.synthesizer(state.state,
                                                n_required_output=k):
-
-                    # TODO recompute state (?)
-                    new_state = Environment(inputs=orig_input,
-                                            states=orig_state)
+                    new_state = original.clone()
                     # Clear reference and variables
-                    new_state.states["reference"] = []
-                    new_state.states["variables"] = []
-                    new_state.states["interpreter_state"] = \
+                    new_state["reference"] = []
+                    new_state["variables"] = []
+                    new_state["interpreter_state"] = \
                         self.interpreter.execute(
                             result.output, inputs,
-                            state.state.states["interpreter_state"]
+                            state.state["interpreter_state"]
                     )
                     for code in \
-                            new_state.states["interpreter_state"].environment:
-                        new_state.states["reference"].append(
+                            new_state["interpreter_state"].environment:
+                        new_state["reference"].append(
                             Token[Kind, Code](
-                                new_state.states["interpreter_state"]
+                                new_state["interpreter_state"]
                                 .type_environment[code],
                                 code, code)
                         )
-                        new_state.states["variables"].append(
-                            new_state.states["interpreter_state"]
+                        new_state["variables"].append(
+                            new_state["interpreter_state"]
                             .environment[code]
                         )
                     yield DuplicatedSamplerState(

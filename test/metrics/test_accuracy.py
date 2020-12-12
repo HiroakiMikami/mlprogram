@@ -9,7 +9,7 @@ class TestAccuracy(object):
         acc = Accuracy()
         assert np.allclose(
             1.0,
-            acc(Environment(supervisions={"ground_truth": "str"}), "str"))
+            acc(Environment({"ground_truth": "str"}), "str"))
         assert np.allclose(
             0.0,
-            acc(Environment(supervisions={"ground_truth": "int"}), "str"))
+            acc(Environment({"ground_truth": "int"}), "str"))

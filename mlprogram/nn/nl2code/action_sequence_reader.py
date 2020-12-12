@@ -64,9 +64,9 @@ class ActionSequenceReader(nn.Module):
         parent_indexes: PaddedSequenceWithMask
             The indexes of the parent nodes
         """
-        actions = cast(PaddedSequenceWithMask, inputs.states["actions"])
+        actions = cast(PaddedSequenceWithMask, inputs["actions"])
         previous_actions = cast(PaddedSequenceWithMask,
-                                inputs.states["previous_actions"])
+                                inputs["previous_actions"])
         L_a, B, _ = actions.data.shape
         node_types, parent_rule, parent_index = torch.split(
             actions.data, 1, dim=2)  # (L_a, B, 1)
@@ -100,8 +100,8 @@ class ActionSequenceReader(nn.Module):
         feature = torch.cat(
             [prev_action_embed, node_type_embed, parent_rule_embed],
             dim=2)  # (L_a, B, input_size)
-        inputs.states["action_features"] = \
+        inputs["action_features"] = \
             PaddedSequenceWithMask(feature, actions.mask)
-        inputs.states["parent_indexes"] = \
+        inputs["parent_indexes"] = \
             PaddedSequenceWithMask(parent_index, actions.mask)
         return inputs

@@ -18,7 +18,7 @@ class ErrorCorrectRate(Metric[Diff], Generic[Code, Error, Diff, Input, Kind]):
         self.interpreter = interpreter
 
     def __call__(self, input: Environment, value: Diff) -> float:
-        original = input.inputs["test_cases"][0][0]
+        original = input["test_cases"][0][0]
         n_orig_error = len(self.analyzer(original))
         fixed = self.interpreter.eval(value, [original])[0]
 

@@ -26,10 +26,10 @@ class TestActionSequenceReader(object):
         prev_action = rnn.pad_sequence(
             [prev_action0, prev_action1])  # (2, 2, 3)
 
-        data = reader(Environment(states={"actions": action,
-                                          "previous_actions": prev_action}))
-        feature = data.states["action_features"]
-        index = data.states["parent_indexes"]
+        data = reader(Environment({"actions": action,
+                                   "previous_actions": prev_action}))
+        feature = data["action_features"]
+        index = data["parent_indexes"]
         assert np.array_equal(
             [[1, 1], [0, 1]], feature.mask.numpy())
         assert (2, 2, 8) == feature.data.shape
