@@ -31,6 +31,6 @@ class Threshold(object):
         elif dtype == "float":
             self.dtype = float
 
-    def __call__(self, value: float) -> bool:
+    def __call__(self, value: float) -> Any:
         out = value >= self.threshold
         return self.dtype(out)

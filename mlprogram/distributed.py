@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 
@@ -52,25 +52,25 @@ def initialize(tmpdir: str,
 
 
 def is_initialized() -> bool:
-    return torch.distributed.is_initialized()
+    return cast(bool, torch.distributed.is_initialized())
 
 
 def is_main_process() -> bool:
     if torch.distributed.is_initialized():
-        return torch.distributed.get_rank() == 0
+        return cast(int, torch.distributed.get_rank()) == 0
     else:
         return True
 
 
 def rank() -> int:
     if torch.distributed.is_initialized():
-        return torch.distributed.get_rank()
+        return cast(int, torch.distributed.get_rank())
     else:
         return 0
 
 
 def size() -> int:
     if torch.distributed.is_initialized():
-        return torch.distributed.get_world_size()
+        return cast(int, torch.distributed.get_world_size())
     else:
         return 1

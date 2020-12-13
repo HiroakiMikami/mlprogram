@@ -7,10 +7,12 @@ mypy \
     --allow-redefinition \
     --warn-redundant-casts \
     --warn-unused-ignores \
+    --warn-return-any \
+    --no-implicit-optional \
+    --show-column-numbers \
     mlprogram/**/*.py test/**/*.py || exit 1
 
 
-# --diallow-any-unimported
 # --disallow-any-expr
 # --disallow-any-decorated
 # --disallow-any-explicit
@@ -18,9 +20,7 @@ mypy \
 # --disallow-untyped-calls
 # --disallow-untyped-defs
 # --disallow-subclassing-any
-# --check-untyped-defs
 # --disallow-untyped-decorators
-# --no-implicit-optional
-# --no-warn-no-return
-# --warn-return-any
-
+# --disallow-any-unimported
+# --check-untyped-defs
+# --warn-unreachable

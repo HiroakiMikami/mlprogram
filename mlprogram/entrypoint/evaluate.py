@@ -188,7 +188,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         score = \
             torch.load(model_path, map_location=torch.device("cpu"))["score"]
         pathes.append((score, model_path))
-    pathes.sort(key=lambda x: -x[0])
+    pathes.sort(key=lambda x: -x[0])  # type: ignore
     model_path = pathes[0][1]
 
     logger.info(f"Start evaluation: {model_path}")

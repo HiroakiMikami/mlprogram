@@ -10,7 +10,7 @@ class Iou(Metric[np.array]):
         ground_truth = input["ground_truth"]
 
         if ground_truth.sum() == 0:
-            iou = 1.0 - actual.sum() / np.prod(actual.shape)
+            iou = float(1.0 - actual.sum() / np.prod(actual.shape))
         else:
             intersection = (ground_truth & actual).astype(np.float).sum()
             union = (ground_truth | actual).astype(np.float).sum()

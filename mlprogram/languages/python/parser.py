@@ -1,5 +1,5 @@
 import ast as python_ast
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, cast
 
 import transpyle
 
@@ -35,6 +35,6 @@ class Parser(BaseParser[str]):
         unparser = transpyle.python.unparser.NativePythonUnparser()
 
         try:
-            return unparser.unparse(to_python_ast(ast))
+            return cast(str, unparser.unparse(to_python_ast(ast)))
         except:  # noqa
             return None

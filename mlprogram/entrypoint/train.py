@@ -156,7 +156,7 @@ def get_world_process_group(device: torch.device) \
 
 def all_reduce(model: nn.Module, group: torch.distributed.group):
     nparams = list(model.named_parameters())
-    nparams.sort(key=lambda x: x[0])
+    nparams.sort(key=lambda x: x[0])  # type: ignore
     params = [p.grad if p.grad is not None else torch.zeros_like(p.data)
               for _, p in nparams]
     size = torch.distributed.get_world_size(group)

@@ -22,7 +22,7 @@ class Bleu(Metric[str]):
 
         ref = [tokenize(ground_truth)]
         cand = tokenize(value)
-        return sentence_bleu(ref,
-                             cand,
-                             weights=[0.25] * min(4, len(ref)),
-                             smoothing_function=sm.method3)
+        return float(sentence_bleu(ref,
+                                   cand,
+                                   weights=[0.25] * min(4, len(ref)),
+                                   smoothing_function=sm.method3))
