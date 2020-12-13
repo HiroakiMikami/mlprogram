@@ -1,10 +1,7 @@
 from nltk.translate.bleu_score import sentence_bleu
-
-from mlprogram.builtins import Environment
-from mlprogram.metrics.metric import Metric
+from torch import nn
 
 
-class Bleu(Metric[str]):
-    def __call__(self, input: Environment, value: str) -> float:
-        ground_truth = input["ground_truth"]
-        return float(sentence_bleu([ground_truth], value))
+class Bleu(nn.Module):
+    def forward(self, expected: str, actual: str) -> float:
+        return float(sentence_bleu([expected], actual))

@@ -1,3 +1,5 @@
+import functools
+import traceback
 from collections import OrderedDict
 from typing import Any, Callable, Generic, List, Optional, TypeVar
 
@@ -50,13 +52,23 @@ class Map(Generic[V0, V1]):
         else:
             self.pool = None
 
+    @staticmethod
+    def _apply(func: Callable[[V0], V1], value: V0) -> Optional[V1]:
+        try:
+            return func(value)
+        except Exception as e:  # noqa
+            logger.error(traceback.format_exc())
+            return None
+
     @logger.function_block("Map.__call__")
-    def __call__(self, values: List[V0]) -> List[V1]:
+    def __call__(self, values: List[V0]) -> List[Optional[V1]]:
         if self.pool is None:
-            return [self.func(v0)
+            return [Map._apply(self.func, v0)
                     for v0 in logger.iterable_block("values", values)]
         else:
-            return list(self.pool.map(self.func, values))
+            return list(self.pool.map(
+                functools.partial(Map._apply, self.func),
+                values))
 
 
 class Identity(object):

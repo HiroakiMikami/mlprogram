@@ -12,7 +12,7 @@ from torchnlp.encoders import LabelEncoder
 
 import mlprogram.nn
 import mlprogram.nn.nl2code as nl2code
-from mlprogram.builtins import Pick
+from mlprogram.builtins import Apply, Pick
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint import evaluate as eval
@@ -20,19 +20,18 @@ from mlprogram.entrypoint import train_supervised
 from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.functools import Compose, Map, Sequence
-from mlprogram.metrics import Accuracy
+from mlprogram.metrics import Accuracy, use_environment
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.samplers import ActionSequenceSampler
 from mlprogram.synthesizers import BeamSearch
 from mlprogram.transforms.action_sequence import (
     AddActions,
-    AddHistoryState,
     AddPreviousActions,
-    AddStateForRnnDecoder,
+    AddState,
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
-from mlprogram.transforms.text import EncodeWordQuery, ExtractReference
+from mlprogram.transforms.text import EncodeWordQuery
 from mlprogram.utils.data import Collate, CollateOptions, get_samples, get_words
 from test_integration.nl2code_dummy_dataset import (
     Parser,
@@ -61,12 +60,46 @@ class TestNL2Code(object):
             64, 256
         )
         return torch.nn.Sequential(OrderedDict([
-            ("encoder", nl2code.NLReader(qencoder.vocab_size, 256, 256, 0.0)),
+            ("encoder",
+             Apply(
+                 module=nl2code.NLReader(qencoder.vocab_size, 256, 256, 0.0),
+                 in_keys=["word_nl_query"],
+                 out_key="reference_features"
+             )),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
-                 ("action_sequence_reader", reader),
-                 ("decoder", nl2code.Decoder(256, 2 * 256 + 64, 256, 64, 0.0)),
-                 ("predictor", nl2code.Predictor(reader, 256, 256, 256, 64))
+                 ("action_sequence_reader",
+                  Apply(
+                      module=reader,
+                      in_keys=["actions", "previous_actions"],
+                      out_key=["action_features", "parent_indexes"]
+                  )),
+                 ("decoder",
+                  Apply(
+                      module=nl2code.Decoder(256, 2 * 256 + 64, 256, 64, 0.0),
+                      in_keys=[
+                          ["reference_features", "nl_query_features"],
+                          "action_features",
+                          "parent_indexes",
+                          "history",
+                          "hidden_state",
+                          "state",
+                      ],
+                      out_key=[
+                          "action_features",
+                          "action_contexts",
+                          "history",
+                          "hidden_state",
+                          "state",
+                      ]
+                  )),
+                 ("predictor",
+                  Apply(
+                      module=nl2code.Predictor(reader, 256, 256, 256, 64),
+                      in_keys=["reference_features",
+                               "action_features", "action_contexts"],
+                      out_key=["rule_probs", "token_probs", "reference_probs"],
+                  ))
              ])))
         ]))
 
@@ -75,15 +108,32 @@ class TestNL2Code(object):
 
     def prepare_synthesizer(self, model, qencoder, aencoder):
         transform_input = Compose(OrderedDict([
-            ("extract_reference", ExtractReference(tokenize)),
-            ("encode_query", EncodeWordQuery(qencoder))
+            ("extract_reference", Apply(
+                module=mlprogram.nn.Function(tokenize),
+                in_keys=[["text_query", "str"]], out_key="reference")),
+            ("encode_query", Apply(
+                module=EncodeWordQuery(qencoder),
+                in_keys=["reference"],
+                out_key="word_nl_query"))
         ]))
         transform_action_sequence = Compose(OrderedDict([
             ("add_previous_action",
-             AddPreviousActions(aencoder, n_dependent=1)),
-            ("add_action", AddActions(aencoder, n_dependent=1)),
-            ("add_state", AddStateForRnnDecoder()),
-            ("add_history", AddHistoryState())
+             Apply(
+                 module=AddPreviousActions(aencoder, n_dependent=1),
+                 in_keys=["action_sequence", "reference"],
+                 constants={"train": False},
+                 out_key="previous_actions",
+             )),
+            ("add_action",
+             Apply(
+                 module=AddActions(aencoder, n_dependent=1),
+                 in_keys=["action_sequence", "reference"],
+                 constants={"train": False},
+                 out_key="actions",
+             )),
+            ("add_state", AddState("state")),
+            ("add_hidden_state", AddState("hidden_state")),
+            ("add_history", AddState("history"))
         ]))
         collate = Collate(
             torch.device("cpu"),
@@ -105,19 +155,44 @@ class TestNL2Code(object):
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, aencoder, parser):
-        tcode = GroundTruthToActionSequence(parser)
-        tgt = EncodeActionSequence(aencoder)
         return Sequence(
             OrderedDict([
-                ("extract_reference", ExtractReference(tokenize)),
-                ("encode_word_query", EncodeWordQuery(qencoder)),
-                ("f2", tcode),
+                ("extract_reference", Apply(
+                    module=mlprogram.nn.Function(tokenize),
+                    in_keys=[["text_query", "str"]], out_key="reference")),
+                ("encode_word_query", Apply(
+                    module=EncodeWordQuery(qencoder),
+                    in_keys=["reference"],
+                    out_key="word_nl_query")),
+                ("f2",
+                 Apply(
+                     module=GroundTruthToActionSequence(parser),
+                     in_keys=["ground_truth"],
+                     out_key="action_sequence",
+                 )),
                 ("add_previous_action",
-                 AddPreviousActions(aencoder, n_dependent=1)),
-                ("add_action", AddActions(aencoder, n_dependent=1)),
-                ("add_state", AddStateForRnnDecoder()),
-                ("add_history", AddHistoryState()),
-                ("f4", tgt)
+                 Apply(
+                     module=AddPreviousActions(aencoder, n_dependent=1),
+                     in_keys=["action_sequence", "reference"],
+                     constants={"train": True},
+                     out_key="previous_actions",
+                 )),
+                ("add_action",
+                 Apply(
+                     module=AddActions(aencoder, n_dependent=1),
+                     in_keys=["action_sequence", "reference"],
+                     constants={"train": True},
+                     out_key="actions",
+                 )),
+                ("add_state", AddState("state")),
+                ("add_hidden_state", AddState("hidden_state")),
+                ("add_history", AddState("history")),
+                ("f4",
+                 Apply(
+                     module=EncodeActionSequence(aencoder),
+                     in_keys=["action_sequence", "reference"],
+                     out_key="ground_truth_actions",
+                 ))
             ])
         )
 
@@ -128,7 +203,11 @@ class TestNL2Code(object):
                 dir, tmpdir, dir,
                 test_dataset, model,
                 self.prepare_synthesizer(model, qencoder, aencoder),
-                {"accuracy": Accuracy()},
+                {"accuracy": use_environment(
+                    metric=Accuracy(),
+                    in_keys=["actual", ["ground_truth", "expected"]],
+                    value_key="actual"
+                )},
                 top_n=[5],
             )
         return torch.load(os.path.join(dir, "result.pt"))
@@ -136,7 +215,17 @@ class TestNL2Code(object):
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             loss_fn = nn.Sequential(OrderedDict([
-                ("loss", Loss()),
+                ("loss",
+                 Apply(
+                     module=Loss(),
+                     in_keys=[
+                         "rule_probs",
+                         "token_probs",
+                         "reference_probs",
+                         "ground_truth_actions",
+                     ],
+                     out_key="action_sequence_loss",
+                 )),
                 ("pick",
                  mlprogram.nn.Function(
                      Pick("action_sequence_loss")))

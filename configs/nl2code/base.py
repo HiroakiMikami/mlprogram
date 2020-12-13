@@ -1,9 +1,13 @@
-normalize_dataset = mlprogram.transforms.NormalizeGroundTruth(
-    normalize=mlprogram.functools.Sequence(
-        funcs=collections.OrderedDict(
-            items=[["parse", parser.parse], ["unparse", parser.unparse]],
-        ),
+normalize_dataset = Apply(
+    module=mlprogram.transforms.NormalizeGroundTruth(
+        normalize=mlprogram.functools.Sequence(
+            funcs=collections.OrderedDict(
+                items=[["parse", parser.parse], ["unparse", parser.unparse]],
+            ),
+        )
     ),
+    in_keys=["ground_truth"],
+    out_key="ground_truth",
 )
 train_dataset = dataset.train
 test_dataset = mlprogram.utils.data.transform(
@@ -53,11 +57,15 @@ model = torch.share_memory_(
             items=[
                 [
                     "encoder",
-                    mlprogram.nn.nl2code.NLReader(
-                        num_words=encoder.word_encoder.vocab_size,
-                        embedding_dim=params.embedding_size,
-                        hidden_size=params.hidden_size,
-                        dropout=params.dropout,
+                    Apply(
+                        module=mlprogram.nn.nl2code.NLReader(
+                            num_words=encoder.word_encoder.vocab_size,
+                            embedding_dim=params.embedding_size,
+                            hidden_size=params.hidden_size,
+                            dropout=params.dropout,
+                        ),
+                        in_keys=["word_nl_query"],
+                        out_key="reference_features",
                     ),
                 ],
                 [
@@ -65,31 +73,67 @@ model = torch.share_memory_(
                     torch.nn.Sequential(
                         modules=collections.OrderedDict(
                             items=[
-                                ["action_sequence_reader", action_sequence_reader],
+                                [
+                                    "action_sequence_reader",
+                                    Apply(
+                                        module=action_sequence_reader,
+                                        in_keys=["actions", "previous_actions"],
+                                        out_key=["action_features", "parent_indexes"],
+                                    ),
+                                ],
                                 [
                                     "decoder",
-                                    mlprogram.nn.nl2code.Decoder(
-                                        query_size=params.hidden_size,
-                                        input_size=add(
-                                            x=mul(
-                                                x=2,
-                                                y=params.embedding_size,
+                                    Apply(
+                                        module=mlprogram.nn.nl2code.Decoder(
+                                            query_size=params.hidden_size,
+                                            input_size=add(
+                                                x=mul(
+                                                    x=2,
+                                                    y=params.embedding_size,
+                                                ),
+                                                y=params.node_type_embedding_size,
                                             ),
-                                            y=params.node_type_embedding_size,
+                                            hidden_size=params.hidden_size,
+                                            att_hidden_size=params.attr_hidden_size,
+                                            dropout=params.dropout,
                                         ),
-                                        hidden_size=params.hidden_size,
-                                        att_hidden_size=params.attr_hidden_size,
-                                        dropout=params.dropout,
+                                        in_keys=[
+                                            ["reference_features", "nl_query_features"],
+                                            "action_features",
+                                            "parent_indexes",
+                                            "history",
+                                            "hidden_state",
+                                            "state",
+                                        ],
+                                        out_key=[
+                                            "action_features",
+                                            "action_contexts",
+                                            "history",
+                                            "hidden_state",
+                                            "state",
+                                        ],
                                     ),
                                 ],
                                 [
                                     "predictor",
-                                    mlprogram.nn.nl2code.Predictor(
-                                        reader=action_sequence_reader,
-                                        embedding_size=params.embedding_size,
-                                        query_size=params.hidden_size,
-                                        hidden_size=params.hidden_size,
-                                        att_hidden_size=params.attr_hidden_size,
+                                    Apply(
+                                        module=mlprogram.nn.nl2code.Predictor(
+                                            reader=action_sequence_reader,
+                                            embedding_size=params.embedding_size,
+                                            query_size=params.hidden_size,
+                                            hidden_size=params.hidden_size,
+                                            att_hidden_size=params.attr_hidden_size,
+                                        ),
+                                        in_keys=[
+                                            "reference_features",
+                                            "action_features",
+                                            "action_contexts",
+                                        ],
+                                        out_key=[
+                                            "rule_probs",
+                                            "token_probs",
+                                            "reference_probs",
+                                        ],
                                     ),
                                 ],
                             ],
@@ -158,14 +202,20 @@ transform_input = mlprogram.functools.Compose(
         items=[
             [
                 "extract_reference",
-                mlprogram.transforms.text.ExtractReference(
-                    extract_reference=extract_reference,
+                Apply(
+                    module=mlprogram.nn.Function(f=extract_reference),
+                    in_keys=[["text_query", "query"]],
+                    out_key="reference",
                 ),
             ],
             [
                 "encode_word_query",
-                mlprogram.transforms.text.EncodeWordQuery(
-                    word_encoder=encoder.word_encoder,
+                Apply(
+                    module=mlprogram.transforms.text.EncodeWordQuery(
+                        word_encoder=encoder.word_encoder,
+                    ),
+                    in_keys=["reference"],
+                    out_key="word_nl_query",
                 ),
             ],
         ],
@@ -176,25 +226,37 @@ transform_action_sequence = mlprogram.functools.Compose(
         items=[
             [
                 "add_previous_action",
-                mlprogram.transforms.action_sequence.AddPreviousActions(
-                    action_sequence_encoder=encoder.action_sequence_encoder,
-                    n_dependent=1,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.AddPreviousActions(
+                        action_sequence_encoder=encoder.action_sequence_encoder,
+                        n_dependent=1,
+                    ),
+                    in_keys=["action_sequence", "reference", "train"],
+                    out_key="previous_actions",
                 ),
             ],
             [
                 "add_action",
-                mlprogram.transforms.action_sequence.AddActions(
-                    action_sequence_encoder=encoder.action_sequence_encoder,
-                    n_dependent=1,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.AddActions(
+                        action_sequence_encoder=encoder.action_sequence_encoder,
+                        n_dependent=1,
+                    ),
+                    in_keys=["action_sequence", "reference", "train"],
+                    out_key="actions",
                 ),
             ],
             [
                 "add_state",
-                mlprogram.transforms.action_sequence.AddStateForRnnDecoder(),
+                mlprogram.transforms.action_sequence.AddState(key="state"),
+            ],
+            [
+                "add_hidden_state",
+                mlprogram.transforms.action_sequence.AddState(key="hidden_state"),
             ],
             [
                 "add_history",
-                mlprogram.transforms.action_sequence.AddHistoryState(),
+                mlprogram.transforms.action_sequence.AddState(key="history"),
             ],
         ],
     ),
@@ -207,7 +269,21 @@ synthesizer = mlprogram.synthesizers.BeamSearch(
             encoder=encoder.action_sequence_encoder,
             is_subtype=is_subtype,
             transform_input=transform_input,
-            transform_action_sequence=transform_action_sequence,
+            transform_action_sequence=mlprogram.functools.Sequence(
+                funcs=collections.OrderedDict(
+                    items=[
+                        [
+                            "set_train",
+                            Apply(
+                                module=Constant(value=False),
+                                in_keys=[],
+                                out_key="train",
+                            ),
+                        ],
+                        ["transform", transform_action_sequence],
+                    ]
+                )
+            ),
             collate=collate,
             module=model,
         ),

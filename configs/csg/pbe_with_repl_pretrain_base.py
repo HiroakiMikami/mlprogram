@@ -14,8 +14,17 @@ loss_fn = torch.nn.Sequential(
         items=[
             [
                 "loss",
-                mlprogram.nn.action_sequence.Loss(
-                    reduction="sum",
+                Apply(
+                    module=mlprogram.nn.action_sequence.Loss(
+                        reduction="sum",
+                    ),
+                    in_keys=[
+                        "rule_probs",
+                        "token_probs",
+                        "reference_probs",
+                        "ground_truth_actions",
+                    ],
+                    out_key="action_sequence_loss",
                 ),
             ],
             [

@@ -20,8 +20,17 @@ loss_fn = torch.nn.Sequential(
                         items=[
                             [
                                 "loss",
-                                mlprogram.nn.action_sequence.Loss(
-                                    reduction="none",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.Loss(
+                                        reduction="none",
+                                    ),
+                                    in_keys=[
+                                        "rule_probs",
+                                        "token_probs",
+                                        "reference_probs",
+                                        "ground_truth_actions",
+                                    ],
+                                    out_key="action_sequence_loss",
                                 ),
                             ],
                             [
@@ -120,15 +129,18 @@ main = mlprogram.entrypoint.train_REINFORCE(
     ),
     metric="generation_rate",
     threshold=1.0,
-    reward=mlprogram.metrics.transform(
+    reward=mlprogram.metrics.use_environment(
         metric=mlprogram.metrics.TestCaseResult(
             interpreter=interpreter,
-            metric=mlprogram.metrics.Iou(),
+            metric=mlprogram.metrics.use_environment(
+                metric=mlprogram.metrics.Iou(),
+                in_keys=["expected", "actual"],
+                value_key="actual",
+            ),
         ),
-        transform=Threshold(
-            threshold=0.9,
-            dtype="float",
-        ),
+        in_keys=["test_cases", "actual"],
+        value_key="actual",
+        transform=Threshold(threshold=0.9, dtype="float"),
     ),
     collate=collate_fn,
     batch_size=batch_size,

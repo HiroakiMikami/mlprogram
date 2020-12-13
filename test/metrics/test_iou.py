@@ -1,6 +1,5 @@
 import numpy as np
 
-from mlprogram.builtins import Environment
 from mlprogram.metrics import Iou
 
 
@@ -10,8 +9,8 @@ class TestIou(object):
         gt = np.array([False, True, False], dtype=np.bool)
         assert np.allclose(
             0.5,
-            iou(Environment({"ground_truth": gt}),
-                np.array([True, True, False], dtype=np.bool)
+            iou(expected=gt,
+                actual=np.array([True, True, False], dtype=np.bool)
                 ))
 
     def test_gt_is_empty(self):
@@ -19,11 +18,11 @@ class TestIou(object):
         gt = np.array([False, False, False], dtype=np.bool)
         assert np.allclose(
             1.0 / 3,
-            iou(Environment({"ground_truth": gt}),
-                np.array([True, True, False], dtype=np.bool)
+            iou(expected=gt,
+                actual=np.array([True, True, False], dtype=np.bool)
                 ))
         assert np.allclose(
             1.0,
-            iou(Environment({"ground_truth": gt}),
-                np.array([False, False, False], dtype=np.bool)
+            iou(expected=gt,
+                actual=np.array([False, False, False], dtype=np.bool)
                 ))

@@ -11,7 +11,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from mlprogram import distributed, logging
-from mlprogram.metrics import Metric
+from mlprogram.builtins import Environment
 from mlprogram.pytorch_pfn_extras import SaveTopKModel, StopByThreshold
 from mlprogram.synthesizers import Synthesizer
 
@@ -278,7 +278,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     loss: Callable[[Any], torch.Tensor],
                     evaluate: Optional[Callable[[], None]],
                     metric: str,
-                    reward: Metric,
+                    reward: Callable[[Environment, Any], float],
                     collate: Callable[[List[Any]], Any],
                     batch_size: int,
                     n_rollout: int,
@@ -358,8 +358,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                                 output["ground_truth"] = rollout.output
                                 output.mark_as_supervision("ground_truth")
                                 output["reward"] = \
-                                    torch.tensor(reward(sample,
-                                                        rollout.output))
+                                    torch.tensor(reward(sample.clone(), rollout.output))
                                 rollouts.append(output)
                 if len(rollouts) == 0:
                     logger.warning("No rollout")

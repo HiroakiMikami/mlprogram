@@ -12,7 +12,7 @@ import torch.nn as nn
 from torchnlp.encoders import LabelEncoder
 
 import mlprogram.nn
-from mlprogram.builtins import Pick
+from mlprogram.builtins import Apply, Pick
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint import evaluate as eval
@@ -20,7 +20,7 @@ from mlprogram.entrypoint import train_supervised
 from mlprogram.entrypoint.modules.torch import Optimizer
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.functools import Compose, Map, Sequence
-from mlprogram.metrics import Accuracy
+from mlprogram.metrics import Accuracy, use_environment
 from mlprogram.nn import treegen
 from mlprogram.nn.action_sequence import Loss, Predictor
 from mlprogram.samplers import ActionSequenceSampler
@@ -33,11 +33,7 @@ from mlprogram.transforms.action_sequence import (
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
-from mlprogram.transforms.text import (
-    EncodeCharacterQuery,
-    EncodeWordQuery,
-    ExtractReference,
-)
+from mlprogram.transforms.text import EncodeCharacterQuery, EncodeWordQuery
 from mlprogram.utils.data import (
     Collate,
     CollateOptions,
@@ -73,21 +69,43 @@ class TestTreeGen(object):
         node_type_num = aencoder._node_type_encoder.vocab_size
         token_num = aencoder._token_encoder. vocab_size
         return torch.nn.Sequential(OrderedDict([
-            ("encoder", treegen.NLReader(
-                qencoder.vocab_size, cencoder.vocab_size,
-                10, 256, 256, 1, 0.0, 5
+            ("encoder", Apply(
+                module=treegen.NLReader(
+                    qencoder.vocab_size, cencoder.vocab_size,
+                    10, 256, 256, 1, 0.0, 5
+                ),
+                in_keys=["word_nl_query", "char_nl_query"],
+                out_key="reference_features"
             )),
             ("decoder", torch.nn.Sequential(OrderedDict([
-                ("action_sequence_reader", treegen.ActionSequenceReader(
-                    rule_num, token_num, node_type_num, 4, 256,
-                    256, 3, 1, 0.0, 5
-                )),
-                ("decoder", treegen.Decoder(
-                    rule_num, 4, 256, 1024, 256, 1, 0.0, 5
-                )),
-                ("predictor", Predictor(
-                    256, 256, rule_num, token_num, 256
-                ))
+                ("action_sequence_reader",
+                 Apply(
+                     module=treegen.ActionSequenceReader(
+                         rule_num, token_num, node_type_num, 4, 256,
+                         256, 3, 1, 0.0, 5
+                     ),
+                     in_keys=[
+                         "previous_actions",
+                         "previous_action_rules",
+                         "depthes",
+                         "adjacency_matrix"
+                     ],
+                     out_key="action_features")),
+                ("decoder",
+                 Apply(
+                     module=treegen.Decoder(
+                         rule_num, 4, 256, 1024, 256, 1, 0.0, 5
+                     ),
+                     in_keys=[["reference_features", "nl_query_features"],
+                              "action_queries",
+                              "action_features"],
+                     out_key="action_features")),
+                ("predictor",
+                 Apply(
+                     module=Predictor(256, 256, rule_num, token_num, 256),
+                     in_keys=["reference_features", "action_features"],
+                     out_key=["rule_probs", "token_probs", "reference_probs"]
+                 ))
             ])))
         ]))
 
@@ -97,16 +115,47 @@ class TestTreeGen(object):
 
     def prepare_synthesizer(self, model, qencoder, cencoder, aencoder):
         transform_input = Compose(OrderedDict([
-            ("extract_reference", ExtractReference(tokenize)),
-            ("encode_word", EncodeWordQuery(qencoder)),
-            ("encode_char", EncodeCharacterQuery(cencoder, 10))
+            ("extract_reference", Apply(
+                module=mlprogram.nn.Function(tokenize),
+                in_keys=[["text_query", "str"]], out_key="reference")),
+            ("encode_word_query", Apply(
+                module=EncodeWordQuery(qencoder),
+                in_keys=["reference"],
+                out_key="word_nl_query")),
+            ("encode_char", Apply(
+                module=EncodeCharacterQuery(cencoder, 10),
+                in_keys=["reference"],
+                out_key="char_nl_query"))
         ]))
         transform_action_sequence = Compose(OrderedDict([
-            ("add_previous_action", AddPreviousActions(aencoder)),
+            ("add_previous_action",
+             Apply(
+                 module=AddPreviousActions(aencoder),
+                 in_keys=["action_sequence", "reference"],
+                 constants={"train": False},
+                 out_key="previous_actions",
+             )),
             ("add_previous_action_rule",
-             AddPreviousActionRules(aencoder, 4,)),
-            ("add_tree", AddActionSequenceAsTree(aencoder)),
-            ("add_query", AddQueryForTreeGenDecoder(aencoder, 4))
+             Apply(
+                 module=AddPreviousActionRules(aencoder, 4,),
+                 in_keys=["action_sequence", "reference"],
+                 constants={"train": False},
+                 out_key="previous_action_rules",
+             )),
+            ("add_tree",
+             Apply(
+                 module=AddActionSequenceAsTree(aencoder),
+                 in_keys=["action_sequence", "reference"],
+                 constants={"train": False},
+                 out_key=["adjacency_matrix", "depthes"],
+             )),
+            ("add_query",
+             Apply(
+                 module=AddQueryForTreeGenDecoder(aencoder, 4),
+                 in_keys=["action_sequence", "reference"],
+                 constants={"train": False},
+                 out_key="action_queries",
+             ))
         ]))
 
         collate = Collate(
@@ -129,22 +178,59 @@ class TestTreeGen(object):
                 transform_action_sequence, collate, model))
 
     def transform_cls(self, qencoder, cencoder, aencoder, parser):
-        tcode = GroundTruthToActionSequence(parser)
-        tgt = EncodeActionSequence(aencoder)
         return Sequence(
             OrderedDict([
-                ("extract_reference", ExtractReference(tokenize)),
-                ("encode_word", EncodeWordQuery(qencoder)),
-                ("encode_char", EncodeCharacterQuery(cencoder, 10)),
-                ("f2", tcode),
+                ("extract_reference", Apply(
+                    module=mlprogram.nn.Function(tokenize),
+                    in_keys=[["text_query", "str"]], out_key="reference")),
+                ("encode_word_query", Apply(
+                    module=EncodeWordQuery(qencoder),
+                    in_keys=["reference"],
+                    out_key="word_nl_query")),
+                ("encode_char", Apply(
+                    module=EncodeCharacterQuery(cencoder, 10),
+                    in_keys=["reference"],
+                    out_key="char_nl_query")),
+                ("f2",
+                 Apply(
+                     module=GroundTruthToActionSequence(parser),
+                     in_keys=["ground_truth"],
+                     out_key="action_sequence",
+                 )),
                 ("add_previous_action",
-                 AddPreviousActions(aencoder)),
+                 Apply(
+                     module=AddPreviousActions(aencoder),
+                     in_keys=["action_sequence", "reference"],
+                     constants={"train": True},
+                     out_key="previous_actions",
+                 )),
                 ("add_previous_action_rule",
-                 AddPreviousActionRules(aencoder, 4)),
-                ("add_tree", AddActionSequenceAsTree(aencoder)),
+                 Apply(
+                     module=AddPreviousActionRules(aencoder, 4),
+                     in_keys=["action_sequence", "reference"],
+                     constants={"train": True},
+                     out_key="previous_action_rules",
+                 )),
+                ("add_tree",
+                 Apply(
+                     module=AddActionSequenceAsTree(aencoder),
+                     in_keys=["action_sequence", "reference"],
+                     constants={"train": True},
+                     out_key=["adjacency_matrix", "depthes"],
+                 )),
                 ("add_query",
-                 AddQueryForTreeGenDecoder(aencoder, 4)),
-                ("f4", tgt)
+                 Apply(
+                     module=AddQueryForTreeGenDecoder(aencoder, 4),
+                     in_keys=["action_sequence", "reference"],
+                     constants={"train": True},
+                     out_key="action_queries",
+                 )),
+                ("f4",
+                 Apply(
+                     module=EncodeActionSequence(aencoder),
+                     in_keys=["action_sequence", "reference"],
+                     out_key="ground_truth_actions",
+                 ))
             ])
         )
 
@@ -157,7 +243,11 @@ class TestTreeGen(object):
                 model,
                 self.prepare_synthesizer(
                     model, qencoder, cencoder, aencoder),
-                {"accuracy": Accuracy()},
+                {"accuracy": use_environment(
+                    metric=Accuracy(),
+                    in_keys=["actual", ["ground_truth", "expected"]],
+                    value_key="actual"
+                )},
                 top_n=[5],
             )
         return torch.load(os.path.join(dir, "result.pt"))
@@ -165,7 +255,17 @@ class TestTreeGen(object):
     def train(self, output_dir):
         with tempfile.TemporaryDirectory() as tmpdir:
             loss_fn = nn.Sequential(OrderedDict([
-                ("loss", Loss()),
+                ("loss",
+                 Apply(
+                     module=Loss(),
+                     in_keys=[
+                         "rule_probs",
+                         "token_probs",
+                         "reference_probs",
+                         "ground_truth_actions",
+                     ],
+                     out_key="action_sequence_loss",
+                 )),
                 ("pick",
                  mlprogram.nn.Function(
                      Pick("action_sequence_loss")))

@@ -24,6 +24,10 @@ def add1(x):
     return x + 1
 
 
+def raise_exception(x):
+    raise NotImplementedError()
+
+
 class TestMap(object):
     def test_happy_path(self):
         f = Map(lambda x: x + 1)
@@ -32,6 +36,10 @@ class TestMap(object):
     def test_multiprocessing(self):
         f = Map(add1, 1)
         assert [3] == f([2])
+
+    def test_exception(self):
+        f = Map(raise_exception)
+        assert f([2]) == [None]
 
 
 class TestSequence(object):

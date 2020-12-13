@@ -1,8 +1,11 @@
-from typing import Generic, TypeVar
+from typing import Callable, Generic, List, Optional, Tuple, TypeVar
+
+from torch import nn
 
 from mlprogram.builtins import Environment
 from mlprogram.languages import Interpreter
-from mlprogram.metrics import Accuracy, Metric
+from mlprogram.metrics.accuracy import Accuracy
+from mlprogram.metrics.metric import use_environment
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")
@@ -10,22 +13,26 @@ Result = TypeVar("Result")
 Kind = TypeVar("Kind")
 
 
-class TestCaseResult(Metric[Code], Generic[Code, Input, Result, Kind]):
+class TestCaseResult(nn.Module, Generic[Code, Input, Result, Kind]):
     def __init__(self,
                  interpreter: Interpreter[Code, Input, Result, Kind],
-                 metric: Metric[Result] = Accuracy()):
+                 metric: Optional[Callable[[Environment, Result], float]] = None):
+        super().__init__()
         self.interpreter = interpreter
-        self.metric = metric
+        if metric is not None:
+            self.metric = metric
+        else:
+            self.metric = use_environment(
+                Accuracy(), in_keys=["actual", "expected"], value_key="actual"
+            )
 
-    def __call__(self, input: Environment, value: Code) -> float:
-        test_cases = input["test_cases"]
+    def forward(self, test_cases: List[Tuple[Input, Kind]], actual: Code) -> float:
         inputs = [input for input, _ in test_cases]
         outputs = [output for _, output in test_cases]
 
         # calc. metric
         m = 0.0  # TODO reduction function is required
-        for actual, expected in zip(self.interpreter.eval(value, inputs),
+        for actual, expected in zip(self.interpreter.eval(actual, inputs),
                                     outputs):
-            minput = Environment({"ground_truth": expected}, set(["ground_truth"]))
-            m += self.metric(minput, actual)
+            m += self.metric(Environment({"expected": expected}), actual)
         return m / len(outputs)

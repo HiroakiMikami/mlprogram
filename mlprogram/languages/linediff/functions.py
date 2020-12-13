@@ -1,5 +1,7 @@
 from typing import List, Union
 
+from torch import nn
+
 from mlprogram.builtins import Environment
 from mlprogram.encoders import Samples
 from mlprogram.languages import BatchedState, Kinds, Parser, Root
@@ -34,12 +36,13 @@ def get_samples(parser: Parser[linediffAST]) -> Samples:
     return samples
 
 
-class ToEpisode:
+class ToEpisode(nn.Module):
     def __init__(self, interpreter: Interpreter, expander: Expander):
+        super().__init__()
         self.interpreter = interpreter
         self.expander = expander
 
-    def __call__(self, entry: Environment) -> List[Environment]:
+    def forward(self, entry: Environment) -> List[Environment]:
         ground_truth = entry["ground_truth"]
         inputs = [input for input, _ in entry["test_cases"]]
 
@@ -57,8 +60,8 @@ class ToEpisode:
 
 
 # TODO remove this class
-class AddTestCases:
-    def __call__(self, entry: Environment) -> Environment:
+class AddTestCases(nn.Module):
+    def forward(self, entry: Environment) -> Environment:
         if "test_cases" in entry:
             return entry
         query = entry["code"]
@@ -67,8 +70,8 @@ class AddTestCases:
 
 
 # TODO remove this class
-class UpdateInput:
-    def __call__(self, entry: Environment) -> Environment:
+class UpdateInput(nn.Module):
+    def forward(self, entry: Environment) -> Environment:
         if "interpreter_state" in entry \
                 and len(entry["interpreter_state"].history) > 0:
             state = entry["interpreter_state"]

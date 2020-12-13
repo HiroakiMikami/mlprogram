@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-from mlprogram.builtins import Environment
 from mlprogram.nn.treegen import ActionSequenceReader, ActionSequenceReaderBlock
 from mlprogram.nn.utils.rnn import pad_sequence
 
@@ -74,12 +73,12 @@ class TestActionSequenceReader(object):
         in1 = torch.zeros(5, 4, 3).long()
         in1 = pad_sequence([in1], 0)
         adj = torch.Tensor(1, 5, 5)
-        out = reader(Environment({
-            "previous_actions": in0,
-            "previous_action_rules": in1,
-            "depthes": depth,
-            "adjacency_matrix": adj
-        }))["action_features"]
+        out = reader(
+            previous_actions=in0,
+            previous_action_rules=in1,
+            depthes=depth,
+            adjacency_matrix=adj,
+        )
         assert (5, 1, 3) == out.data.shape
         assert (5, 1) == out.mask.shape
 
@@ -92,18 +91,18 @@ class TestActionSequenceReader(object):
         in10 = torch.zeros(5, 4, 3).long()
         in11 = torch.zeros(7, 4, 3).long()
         adj = torch.randint(1, [2, 7, 7]).bool().long()
-        out0 = reader(Environment({
-            "previous_actions": pad_sequence([in00, in01], 0),
-            "previous_action_rules": pad_sequence([in10, in11], 0),
-            "depthes": depth,
-            "adjacency_matrix": adj
-        }))["action_features"]
-        out1 = reader(Environment({
-            "previous_actions": pad_sequence([in00], 0),
-            "previous_action_rules": pad_sequence([in10], 0),
-            "depthes": depth[:5, :1],
-            "adjacency_matrix": adj[:1, :5, :5]
-        }))["action_features"]
+        out0 = reader(
+            previous_actions=pad_sequence([in00, in01], 0),
+            previous_action_rules=pad_sequence([in10, in11], 0),
+            depthes=depth,
+            adjacency_matrix=adj
+        )
+        out1 = reader(
+            previous_actions=pad_sequence([in00], 0),
+            previous_action_rules=pad_sequence([in10], 0),
+            depthes=depth[:5, :1],
+            adjacency_matrix=adj[:1, :5, :5]
+        )
         out0 = out0.data[:5, :1, :]
         out1 = out1.data
         assert np.allclose(out0.detach().numpy(),

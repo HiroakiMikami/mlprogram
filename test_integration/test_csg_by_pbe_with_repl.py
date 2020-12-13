@@ -13,7 +13,7 @@ import mlprogram.nn
 import mlprogram.nn.action_sequence as a_s
 import mlprogram.samplers
 from mlprogram import metrics
-from mlprogram.builtins import Div, Flatten, Mul, Pick, Threshold
+from mlprogram.builtins import Apply, Div, Flatten, Mul, Pick, Threshold
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint import evaluate as eval
@@ -29,8 +29,11 @@ from mlprogram.languages.csg import (
     Parser,
     get_samples,
 )
-from mlprogram.languages.csg.transforms import AddTestCases, TransformCanvas
-from mlprogram.builtins import Apply
+from mlprogram.languages.csg.transforms import (
+    AddTestCases,
+    TransformInputs,
+    TransformVariables,
+)
 from mlprogram.nn import MLP, AggregatedLoss, CNN2d
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn.pbe_with_repl import Encoder
@@ -43,7 +46,7 @@ from mlprogram.samplers import (
 from mlprogram.synthesizers import SMC, FilteredSynthesizer, SynthesizerWithTimeout
 from mlprogram.transforms.action_sequence import (
     AddPreviousActions,
-    AddStateForRnnDecoder,
+    AddState,
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
@@ -66,20 +69,39 @@ class TestCsgByPbeWithREPL(object):
                    "test_case_feature",
                    CNN2d(1, 16, 32, 2, 2, 2))),
             ("encoder",
-             Encoder(CNN2d(2, 16, 32, 2, 2, 2))),
+             Apply(
+                 module=Encoder(CNN2d(2, 16, 32, 2, 2, 2)),
+                 in_keys=["test_case_tensor",
+                          "variables_tensor", "test_case_feature"],
+                 out_key=["reference_features", "input_feature"]
+             )),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
                  ("action_sequence_reader",
-                  a_s.ActionSequenceReader(encoder._rule_encoder.vocab_size,
-                                           encoder._token_encoder.vocab_size,
-                                           256)),
+                  Apply(
+                      module=a_s.ActionSequenceReader(
+                          n_rule=encoder._rule_encoder.vocab_size,
+                          n_token=encoder._token_encoder.vocab_size,
+                          hidden_size=256,
+                      ),
+                      in_keys=["previous_actions"],
+                      out_key="action_features"
+                  )),
                  ("decoder",
-                  a_s.RnnDecoder(2 * 16 * 8 * 8, 256, 512, 0.0)),
+                  Apply(
+                      module=a_s.RnnDecoder(2 * 16 * 8 * 8, 256, 512, 0.0),
+                      in_keys=["input_feature", "action_features", "hidden_state",
+                               "state"],
+                      out_key=["action_features", "hidden_state", "state"]
+                  )),
                  ("predictor",
-                  a_s.Predictor(512, 16 * 8 * 8,
-                                encoder._rule_encoder.vocab_size,
-                                encoder._token_encoder.vocab_size,
-                                512))
+                  Apply(
+                      module=a_s.Predictor(512, 16 * 8 * 8,
+                                           encoder._rule_encoder.vocab_size,
+                                           encoder._token_encoder.vocab_size,
+                                           512),
+                      in_keys=["action_features", "reference_features"],
+                      out_key=["rule_probs", "token_probs", "reference_probs"]))
              ]))),
             ("value",
              Apply([("input_feature", "x")], "value",
@@ -106,14 +128,30 @@ class TestCsgByPbeWithREPL(object):
         )
         subsampler = ActionSequenceSampler(
             encoder, IsSubtype(),
-            Compose(OrderedDict([
-                ("tcanvas", TransformCanvas())
+            Sequence(OrderedDict([
+                ("tinput",
+                 Apply(
+                     module=TransformInputs(),
+                     in_keys=["test_cases"],
+                     out_key="test_case_tensor",
+                 )),
+                ("tvariable",
+                 Apply(
+                     module=TransformVariables(),
+                     in_keys=["variables", "test_case_tensor"],
+                     out_key="variables_tensor"
+                 )),
             ])),
             Compose(OrderedDict([
                 ("add_previous_actions",
-                 AddPreviousActions(encoder, n_dependent=1)),
-                ("add_state",
-                 AddStateForRnnDecoder())
+                 Apply(
+                    module=AddPreviousActions(encoder, n_dependent=1),
+                    in_keys=["action_sequence", "reference"],
+                    out_key="previous_actions",
+                    constants={"train": False},
+                    )),
+                ("add_state", AddState("state")),
+                ("add_hidden_state", AddState("hidden_state"))
             ])),
             collate, model,
             rng=np.random.RandomState(0))
@@ -131,7 +169,11 @@ class TestCsgByPbeWithREPL(object):
 
         sampler = SequentialProgramSampler(
             subsynthesizer,
-            TransformCanvas(),
+            Apply(
+                module=TransformInputs(),
+                in_keys=["test_cases"],
+                out_key="test_case_tensor",
+            ),
             collate,
             model.encode_input,
             interpreter=interpreter,
@@ -140,7 +182,18 @@ class TestCsgByPbeWithREPL(object):
         if rollout:
             sampler = FilteredSampler(
                 sampler,
-                metrics.TestCaseResult(interpreter, metric=metrics.Iou()),
+                metrics.use_environment(
+                    metric=metrics.TestCaseResult(
+                        interpreter,
+                        metric=metrics.use_environment(
+                            metric=metrics.Iou(),
+                            in_keys=["actual", "expected"],
+                            value_key="actual",
+                        )
+                    ),
+                    in_keys=["test_cases", "actual"],
+                    value_key="actual"
+                ),
                 0.9
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
@@ -148,8 +201,19 @@ class TestCsgByPbeWithREPL(object):
         else:
             sampler = SamplerWithValueNetwork(
                 sampler,
-                Compose(OrderedDict([
-                    ("tcanvas", TransformCanvas())
+                Sequence(OrderedDict([
+                    ("tinput",
+                     Apply(
+                         module=TransformInputs(),
+                         in_keys=["test_cases"],
+                         out_key="test_case_tensor",
+                     )),
+                    ("tvariable",
+                     Apply(
+                         module=TransformVariables(),
+                         in_keys=["variables", "test_case_tensor"],
+                         out_key="variables_tensor"
+                     )),
                 ])),
                 collate,
                 torch.nn.Sequential(OrderedDict([
@@ -167,7 +231,18 @@ class TestCsgByPbeWithREPL(object):
             )
             return FilteredSynthesizer(
                 synthesizer,
-                metrics.TestCaseResult(interpreter, metric=metrics.Iou()),
+                metrics.use_environment(
+                    metric=metrics.TestCaseResult(
+                        interpreter,
+                        metric=metrics.use_environment(
+                            metric=metrics.Iou(),
+                            in_keys=["actual", "expected"],
+                            value_key="actual",
+                        )
+                    ),
+                    in_keys=["test_cases", "actual"],
+                    value_key="actual"
+                ),
                 0.9
             )
 
@@ -178,17 +253,40 @@ class TestCsgByPbeWithREPL(object):
         return ToEpisode(interpreter, Expander())
 
     def transform(self, encoder, interpreter, parser):
-        tcanvas = TransformCanvas()
-        tcode = GroundTruthToActionSequence(parser)
-        aaction = AddPreviousActions(encoder, n_dependent=1)
-        astate = AddStateForRnnDecoder()
-        tgt = EncodeActionSequence(encoder)
+        tcode = Apply(
+            module=GroundTruthToActionSequence(parser),
+            in_keys=["ground_truth"],
+            out_key="action_sequence"
+        )
+        aaction = Apply(
+            module=AddPreviousActions(encoder, n_dependent=1),
+            in_keys=["action_sequence", "reference"],
+            constants={"train": True},
+            out_key="previous_actions",
+        )
+        tgt = Apply(
+            module=EncodeActionSequence(encoder),
+            in_keys=["action_sequence", "reference"],
+            out_key="ground_truth_actions",
+        )
         return Sequence(
             OrderedDict([
-                ("tcanvas", tcanvas),
+                ("tinput",
+                 Apply(
+                     module=TransformInputs(),
+                     in_keys=["test_cases"],
+                     out_key="test_case_tensor",
+                 )),
+                ("tvariable",
+                 Apply(
+                     module=TransformVariables(),
+                     in_keys=["variables", "test_case_tensor"],
+                     out_key="variables_tensor"
+                 )),
                 ("tcode", tcode),
                 ("aaction", aaction),
-                ("astate", astate),
+                ("add_state", AddState("state")),
+                ("add_hidden_state", AddState("hidden_state")),
                 ("tgt", tgt)
             ])
         )
@@ -215,7 +313,12 @@ class TestCsgByPbeWithREPL(object):
             interpreter = self.interpreter()
             train_dataset = data_transform(
                 train_dataset,
-                AddTestCases(interpreter))
+                Apply(
+                    module=AddTestCases(interpreter),
+                    in_keys=["ground_truth"],
+                    out_key="test_cases",
+                    is_out_supervision=False,
+                ))
             encoder = self.prepare_encoder(dataset, Parser())
 
             collate = Collate(
@@ -242,7 +345,19 @@ class TestCsgByPbeWithREPL(object):
                 tmpdir, output_dir,
                 train_dataset, model, optimizer,
                 torch.nn.Sequential(OrderedDict([
-                    ("loss", Loss(reduction="sum")),
+                    ("loss",
+                     Apply(
+                         module=Loss(
+                             reduction="sum",
+                         ),
+                         in_keys=[
+                             "rule_probs",
+                             "token_probs",
+                             "reference_probs",
+                             "ground_truth_actions",
+                         ],
+                         out_key="action_sequence_loss",
+                     )),
                     ("normalize",  # divided by batch_size
                      Apply(
                          [("action_sequence_loss", "lhs")],
@@ -293,7 +408,18 @@ class TestCsgByPbeWithREPL(object):
                 torch.nn.Sequential(OrderedDict([
                     ("policy",
                      torch.nn.Sequential(OrderedDict([
-                         ("loss", Loss(reduction="none")),
+                         ("loss",
+                          Apply(
+                              module=mlprogram.nn.action_sequence.Loss(
+                                  reduction="none"),
+                              in_keys=[
+                                  "rule_probs",
+                                  "token_probs",
+                                  "reference_probs",
+                                  "ground_truth_actions",
+                              ],
+                              out_key="action_sequence_loss",
+                          )),
                          ("weight_by_reward",
                              Apply(
                                  [("reward", "lhs"),
@@ -342,9 +468,19 @@ class TestCsgByPbeWithREPL(object):
                                              rollout=False),
                     {}, top_n=[]),
                 "generation_rate",
-                metrics.transform(
-                    metrics.TestCaseResult(interpreter, metric=metrics.Iou()),
-                    Threshold(0.9, dtype="float")),
+                metrics.use_environment(
+                    metric=metrics.TestCaseResult(
+                        interpreter=interpreter,
+                        metric=metrics.use_environment(
+                            metric=metrics.Iou(),
+                            in_keys=["actual", "expected"],
+                            value_key="actual",
+                        )
+                    ),
+                    in_keys=["test_cases", "actual"],
+                    value_key="actual",
+                    transform=Threshold(threshold=0.9, dtype="float"),
+                ),
                 collate_fn,
                 1, 1,
                 Epoch(10), evaluation_interval=Epoch(10),

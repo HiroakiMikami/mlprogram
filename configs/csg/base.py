@@ -29,8 +29,13 @@ encoder = with_file_cache(
 )
 train_dataset = mlprogram.utils.data.transform(
     dataset=dataset,
-    transform=mlprogram.languages.csg.transforms.AddTestCases(
-        interpreter=interpreter,
+    transform=Apply(
+        module=mlprogram.languages.csg.transforms.AddTestCases(
+            interpreter=interpreter,
+        ),
+        in_keys=["ground_truth"],
+        out_key="test_cases",
+        is_out_supervision=False,
     ),
 )
 test_dataset = mlprogram.utils.data.transform(
@@ -46,8 +51,13 @@ test_dataset = mlprogram.utils.data.transform(
         ),
         n=option.n_evaluate_dataset,
     ),
-    transform=mlprogram.languages.csg.transforms.AddTestCases(
-        interpreter=interpreter,
+    transform=Apply(
+        module=mlprogram.languages.csg.transforms.AddTestCases(
+            interpreter=interpreter,
+        ),
+        in_keys=["ground_truth"],
+        out_key="test_cases",
+        is_out_supervision=False,
     ),
 )
 valid_dataset = mlprogram.utils.data.transform(
@@ -63,8 +73,13 @@ valid_dataset = mlprogram.utils.data.transform(
         ),
         n=option.n_evaluate_dataset,
     ),
-    transform=mlprogram.languages.csg.transforms.AddTestCases(
-        interpreter=interpreter,
+    transform=Apply(
+        module=mlprogram.languages.csg.transforms.AddTestCases(
+            interpreter=interpreter,
+        ),
+        in_keys=["ground_truth"],
+        out_key="test_cases",
+        is_out_supervision=False,
     ),
 )
 interpreter = mlprogram.languages.csg.Interpreter(

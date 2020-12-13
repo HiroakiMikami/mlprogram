@@ -1,9 +1,8 @@
-from typing import cast
+from typing import Tuple
 
 import torch
 import torch.nn as nn
 
-from mlprogram.builtins import Environment
 from mlprogram.nn import PointerNet
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -18,7 +17,11 @@ class Predictor(nn.Module):
         self.reference = PointerNet(feature_size, reference_feature_size,
                                     hidden_size)
 
-    def forward(self, inputs: Environment) -> Environment:
+    def forward(self,
+                reference_features: PaddedSequenceWithMask,
+                action_features: PaddedSequenceWithMask
+                ) -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask,
+                           PaddedSequenceWithMask]:
         """
         Parameters
         ----------
@@ -41,10 +44,6 @@ class Predictor(nn.Module):
             (L_ast, N, L_nl) where L_ast is the sequence length,
             N is the batch_size.
         """
-        reference_features = cast(PaddedSequenceWithMask,
-                                  inputs["reference_features"])
-        action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
         rule_pred = self.rule(action_features.data)
         rule_prob = torch.softmax(rule_pred, dim=2)
 
@@ -58,20 +57,17 @@ class Predictor(nn.Module):
             self.reference(action_features.data, reference_features)
         reference_prob = torch.exp(reference_log_prob)
 
-        rule_log_prob = select_prob[:, :, 0:1] * rule_prob
-        token_log_prob = select_prob[:, :, 1:2] * token_prob
-        reference_log_prob = select_prob[:, :, 2:3] * reference_prob
+        rule_prob = select_prob[:, :, 0:1] * rule_prob
+        token_prob = select_prob[:, :, 1:2] * token_prob
+        reference_prob = select_prob[:, :, 2:3] * reference_prob
         if self.training:
-            inputs["rule_probs"] = \
-                PaddedSequenceWithMask(rule_log_prob, action_features.mask)
-            inputs["token_probs"] = \
-                PaddedSequenceWithMask(token_log_prob, action_features.mask)
-            inputs["reference_probs"] = \
-                PaddedSequenceWithMask(reference_log_prob,
-                                       action_features.mask)
+            rule_probs = PaddedSequenceWithMask(rule_prob, action_features.mask)
+            token_probs = PaddedSequenceWithMask(token_prob, action_features.mask)
+            reference_probs = PaddedSequenceWithMask(reference_prob,
+                                                     action_features.mask)
         else:
-            inputs["rule_probs"] = rule_log_prob[-1, :, :]
-            inputs["token_probs"] = token_log_prob[-1, :, :]
-            inputs["reference_probs"] = reference_log_prob[-1, :, :]
+            rule_probs = rule_prob[-1, :, :]
+            token_probs = token_prob[-1, :, :]
+            reference_probs = reference_prob[-1, :, :]
 
-        return inputs
+        return rule_probs, token_probs, reference_probs

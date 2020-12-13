@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from mlprogram.builtins import Environment
 from mlprogram.encoders import ActionSequenceEncoder
@@ -6,11 +7,10 @@ from mlprogram.languages import Field, Leaf, Node, Parser, Token
 from mlprogram.transforms.action_sequence import (
     AddActions,
     AddActionSequenceAsTree,
-    AddHistoryState,
     AddPreviousActionRules,
     AddPreviousActions,
     AddQueryForTreeGenDecoder,
-    AddStateForRnnDecoder,
+    AddState,
     EncodeActionSequence,
     GroundTruthToActionSequence,
 )
@@ -61,12 +61,7 @@ class MockParserWithoutVariadicArgs(Parser[str]):
 class TestGroundTruthToActionSequence(object):
     def test_simple_case(self):
         transform = GroundTruthToActionSequence(MockParser())
-        out = transform(Environment(
-            {"ground_truth": "y = x + 1"},
-            set(["ground_truth"])
-        ))
-        action_sequence = out["action_sequence"]
-        assert out.is_supervision("action_sequence")
+        action_sequence = transform(ground_truth="y = x + 1")
         assert action_sequence.head is None
 
 
@@ -79,16 +74,14 @@ class TestEncodeActionSequence(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
-        input = GroundTruthToActionSequence(MockParser())(Environment(
-            {"ground_truth": "y = x + 1"},
-            set(["ground_truth"])
-        ))
+        action_sequence = GroundTruthToActionSequence(MockParser())(
+            ground_truth="y = x + 1"
+        )
         transform = EncodeActionSequence(aencoder)
-        input["reference"] = [Token(None, "foo", "foo"),
-                              Token(None, "bar", "bar")]
-        out = transform(input)
-        ground_truth = out["ground_truth_actions"]
-        assert out.is_supervision("ground_truth_actions")
+        ground_truth = transform(
+            action_sequence=action_sequence,
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+        )
         assert np.array_equal(
             [
                 [3, -1, -1], [4, -1, -1], [-1, 1, -1], [1, -1, -1],
@@ -108,22 +101,15 @@ class TestEncodeActionSequence(object):
         d = get_samples(dataset, MockParser())
         d.tokens = [("", "y"), ("", "1")]
         aencoder = ActionSequenceEncoder(d, 0)
-        out = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
+        action_sequence = GroundTruthToActionSequence(MockParser())(
+            ground_truth="y = x + 1"
         )
-        action_sequence = out["action_sequence"]
-        assert out.is_supervision("action_sequence")
         transform = EncodeActionSequence(aencoder)
-        ground_truth = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        assert ground_truth is None
+        with pytest.raises(RuntimeError):
+            transform(
+                reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+                action_sequence=action_sequence,
+            )
 
 
 class TestAddPreviousActions(object):
@@ -136,20 +122,14 @@ class TestAddPreviousActions(object):
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         transform = AddPreviousActions(aencoder)
-        out = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
+        action_sequence = GroundTruthToActionSequence(MockParser())(
+            "y=x+1"
         )
-        action_sequence = out["action_sequence"]
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        prev_action_tensor = result["previous_actions"]
+        prev_action_tensor = transform(
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+            action_sequence=action_sequence,
+            train=True
+        )
         assert np.array_equal(
             [
                 [2, -1, -1], [3, -1, -1], [4, -1, -1], [-1, 1, -1],
@@ -168,20 +148,15 @@ class TestAddPreviousActions(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
-        out = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
+        action_sequence = GroundTruthToActionSequence(MockParser())(
+            "y = x + 1"
         )
-        action_sequence = out["action_sequence"]
         transform = AddPreviousActions(aencoder)
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence}
-        ))
-        prev_action_tensor = result["previous_actions"]
+        prev_action_tensor = transform(
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+            action_sequence=action_sequence,
+            train=False
+        )
 
         assert np.array_equal(
             [
@@ -202,18 +177,14 @@ class TestAddPreviousActions(object):
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
+            "y = x + 1"
+        )
         transform = AddPreviousActions(aencoder, n_dependent=2)
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence}
-        ))
-        prev_action_tensor = result["previous_actions"]
+        prev_action_tensor = transform(
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+            action_sequence=action_sequence,
+            train=False
+        )
 
         assert np.array_equal(
             [[-1, 4, -1], [1, -1, -1]],
@@ -231,18 +202,14 @@ class TestAddPreviousActions(object):
         aencoder = ActionSequenceEncoder(d, 0)
         transform = AddPreviousActions(aencoder)
         action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
+            "y = x + 1"
+        )
+        with pytest.raises(RuntimeError):
+            transform(
+                reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+                action_sequence=action_sequence,
+                train=True
             )
-        )["action_sequence"]
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        assert result is None
 
 
 class TestAddActions(object):
@@ -256,18 +223,13 @@ class TestAddActions(object):
         aencoder = ActionSequenceEncoder(d, 0)
         transform = AddActions(aencoder)
         action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        action_tensor = result["actions"]
+            "y = x + 1"
+        )
+        action_tensor = transform(
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+            action_sequence=action_sequence,
+            train=True
+        )
         assert np.array_equal(
             [
                 [2, 2, 0], [4, 3, 1], [6, 4, 2], [6, 4, 2], [5, 3, 1],
@@ -286,18 +248,14 @@ class TestAddActions(object):
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
+            "y = x + 1"
+        )
         transform = AddActions(aencoder)
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence}
-        ))
-        action_tensor = result["actions"]
+        action_tensor = transform(
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+            action_sequence=action_sequence,
+            train=False
+        )
 
         assert np.array_equal(
             [
@@ -317,18 +275,14 @@ class TestAddActions(object):
         d = get_samples(dataset, MockParser())
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
+            "y = x + 1"
+        )
         transform = AddActions(aencoder, n_dependent=2)
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence}
-        ))
-        action_tensor = result["actions"]
+        action_tensor = transform(
+            reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+            action_sequence=action_sequence,
+            train=False
+        )
 
         assert np.array_equal(
             [[9, 6, 11], [-1, -1, -1]],
@@ -346,18 +300,14 @@ class TestAddActions(object):
         aencoder = ActionSequenceEncoder(d, 0)
         transform = AddActions(aencoder)
         action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
+            "y = x + 1"
+        )
+        with pytest.raises(RuntimeError):
+            transform(
+                reference=[Token(None, "foo", "foo"), Token(None, "bar", "bar")],
+                action_sequence=action_sequence,
+                train=True
             )
-        )["action_sequence"]
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        assert result is None
 
 
 class TestAddPreviousActionRules(object):
@@ -371,19 +321,14 @@ class TestAddPreviousActionRules(object):
         aencoder = ActionSequenceEncoder(d, 0)
         action_sequence = GroundTruthToActionSequence(
             MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+                "y = x + 1"
+        )
         transform = AddPreviousActionRules(aencoder, 2)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        prev_rule_action = result["previous_action_rules"]
+        prev_rule_action = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=True
+        )
         assert np.array_equal(
             [
                 # None -> Root
@@ -416,20 +361,15 @@ class TestAddPreviousActionRules(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddPreviousActionRules(aencoder, 2)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence}
-        ))
-        prev_rule_action = result["previous_action_rules"]
+        prev_rule_action = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=False
+        )
         assert np.array_equal(
             [
                 # None -> Root
@@ -463,20 +403,15 @@ class TestAddPreviousActionRules(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddPreviousActionRules(aencoder, 2, n_dependent=3)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence}
-        ))
-        prev_rule_action = result["previous_action_rules"]
+        prev_rule_action = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=False,
+        )
         assert np.array_equal(
             [
                 # str -> "y"
@@ -498,22 +433,15 @@ class TestAddActionSequenceAsTree(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddActionSequenceAsTree(aencoder)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        depth = result["depthes"]
-        matrix = result["adjacency_matrix"]
+        matrix, depth = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=True
+        )
         assert np.array_equal(
             [0, 1, 2, 3, 2, 3, 3, 4, 3],
             depth.numpy()
@@ -539,21 +467,15 @@ class TestAddActionSequenceAsTree(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddActionSequenceAsTree(aencoder,)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence}
-        ))
-        depth = result["depthes"]
-        matrix = result["adjacency_matrix"]
+        matrix, depth = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=False
+        )
         assert np.array_equal(
             [0, 1, 2, 3, 2, 3, 3, 4, 3, 4],
             depth.numpy()
@@ -582,21 +504,15 @@ class TestAddQueryForTreeGenDecoder(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddQueryForTreeGenDecoder(aencoder, 3)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        query = result["action_queries"]
+        query = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=True
+        )
         assert np.array_equal(
             [
                 [-1, -1, -1], [2, -1, -1], [3, 2, -1], [4, 3, 2],
@@ -614,20 +530,15 @@ class TestAddQueryForTreeGenDecoder(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddQueryForTreeGenDecoder(aencoder, 3,)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence}
-        ))
-        query = result["action_queries"]
+        query = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=False
+        )
         assert np.array_equal(
             [
                 [-1, -1, -1], [2, -1, -1], [3, 2, -1], [4, 3, 2],
@@ -645,76 +556,33 @@ class TestAddQueryForTreeGenDecoder(object):
         dataset = ListDataset(entries)
         d = get_samples(dataset, MockParserWithoutVariadicArgs())
         aencoder = ActionSequenceEncoder(d, 0)
-        action_sequence = GroundTruthToActionSequence(
-            MockParserWithoutVariadicArgs())(
-                Environment(
-                    {"ground_truth": "y = x + 1"},
-                    set(["ground_truth"])
-                )
-        )["action_sequence"]
+        action_sequence = GroundTruthToActionSequence(MockParserWithoutVariadicArgs())(
+            "y = x + 1"
+        )
         transform = AddQueryForTreeGenDecoder(aencoder, 3, n_dependent=2)
-        result = transform(Environment(
-            {"reference": [Token(None, "ab", "ab"),
-                           Token(None, "test", "test")],
-             "action_sequence": action_sequence}
-        ))
-        query = result["action_queries"]
+        query = transform(
+            reference=[Token(None, "ab", "ab"), Token(None, "test", "test")],
+            action_sequence=action_sequence,
+            train=False
+        )
         assert np.array_equal(
             [[5, 3, 2], [6, 5, 3]],
             query.numpy()
         )
 
 
-class TestAddStateForRnnDecoder(object):
+class TestAddState(object):
     def test_simple_case(self):
-        transform = AddStateForRnnDecoder()
-        action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        assert result["state"] is None
-        assert result["hidden_state"] is None
+        transform = AddState("key", None)
+        result = transform(Environment({"train": True}))
+        assert result["key"] is None
 
     def test_eval(self):
-        action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
-        transform = AddStateForRnnDecoder()
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
+        transform = AddState("key", None)
+        result = transform(Environment({"train": False}))
+        assert result["key"] is None
 
-        assert result["state"] is None
-        assert result["hidden_state"] is None
-
-
-class TestAddHistoryState(object):
-    def test_simple_case(self):
-        transform = AddHistoryState()
-        action_sequence = GroundTruthToActionSequence(MockParser())(
-            Environment(
-                {"ground_truth": "y = x + 1"},
-                set(["ground_truth"])
-            )
-        )["action_sequence"]
-        result = transform(Environment(
-            {"reference": [Token(None, "foo", "foo"),
-                           Token(None, "bar", "bar")],
-             "action_sequence": action_sequence},
-            set(["action_sequence"])
-        ))
-        assert result["history"] is None
+    def test_eval2(self):
+        transform = AddState("key", None)
+        result = transform(Environment({"train": False, "key": 2}))
+        assert result["key"] == 2

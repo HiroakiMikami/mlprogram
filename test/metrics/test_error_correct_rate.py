@@ -1,6 +1,5 @@
 import numpy as np
 
-from mlprogram.builtins import Environment
 from mlprogram.languages import Analyzer, Interpreter
 from mlprogram.metrics import ErrorCorrectRate
 
@@ -20,22 +19,22 @@ class TestErrorCorrectRate(object):
         acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
         assert np.allclose(
             1.0,
-            acc(Environment({"test_cases": [("foo", None)]}), ""))
+            acc(test_cases=[("foo", None)], actual=""))
         assert np.allclose(
             0.0,
-            acc(Environment({"test_cases": [("foo", None)]}), "foo"))
+            acc(test_cases=[("foo", None)], actual="foo"))
 
     def test_increasing_errors(self):
         acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
         assert np.allclose(
             0.0,
-            acc(Environment({"test_cases": [("foo", None)]}), "foobar"))
+            acc(test_cases=[("foo", None)], actual="foobar"))
 
     def test_original_has_no_error(self):
         acc = ErrorCorrectRate(MockAnalyzer(), MockInterpreter())
         assert np.allclose(
             1.0,
-            acc(Environment({"test_cases": [("", None)]}), ""))
+            acc(test_cases=[("", None)], actual=""))
         assert np.allclose(
             0.0,
-            acc(Environment({"test_cases": [("", None)]}), "foobar"))
+            acc(test_cases=[("", None)], actual="foobar"))

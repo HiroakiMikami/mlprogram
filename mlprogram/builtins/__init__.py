@@ -1,4 +1,5 @@
 from mlprogram.builtins.apply import Apply  # noqa
+from mlprogram.builtins.constant import Constant  # noqa
 from mlprogram.builtins.datatypes import Environment  # noqa
 from mlprogram.builtins.functions import Flatten  # noqa
 from mlprogram.builtins.functions import Identity  # noqa
