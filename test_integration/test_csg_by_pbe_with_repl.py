@@ -30,7 +30,8 @@ from mlprogram.languages.csg import (
     get_samples,
 )
 from mlprogram.languages.csg.transforms import AddTestCases, TransformCanvas
-from mlprogram.nn import MLP, AggregatedLoss, Apply, CNN2d
+from mlprogram.builtins import Apply
+from mlprogram.nn import MLP, AggregatedLoss, CNN2d
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn.pbe_with_repl import Encoder
 from mlprogram.samplers import (
