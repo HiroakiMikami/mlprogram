@@ -45,6 +45,7 @@ types = {
     "Flatten": mlprogram.builtins.Flatten,
     "Threshold": mlprogram.builtins.Threshold,
     "Apply": mlprogram.builtins.Apply,
+    "Pack": mlprogram.builtins.Pack,
     "Pick": mlprogram.builtins.Pick,
     "Add": mlprogram.builtins.Add,
     "add": lambda **kwargs: mlprogram.builtins.Add()(**kwargs),
