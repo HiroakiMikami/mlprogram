@@ -35,7 +35,7 @@ splitted = mlprogram.utils.data.random_split(
     dataset=dataset.no_error, ratio={"train": 0.8, "test": 0.2}, seed=params.seed
 )
 # TODO mutator is not nn.Module
-mutator = mlprogram.nn.Apply(
+mutator = Apply(
     in_keys=[["code", "code"]],
     out_key=["text_query", "test_cases", "ground_truth"],
     module=typo_mutator.mutate,

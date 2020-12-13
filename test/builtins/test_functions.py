@@ -1,5 +1,4 @@
-from mlprogram import Environment
-from mlprogram.builtins import Flatten, Pick, Threshold
+from mlprogram.builtins import Environment, Flatten, Pick, Threshold
 
 
 class TestFlatten(object):

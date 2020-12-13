@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn.pbe_with_repl import Encoder
 from mlprogram.nn.utils.rnn import pad_sequence
 

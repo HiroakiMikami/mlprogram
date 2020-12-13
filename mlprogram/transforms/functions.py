@@ -1,6 +1,6 @@
 from typing import Callable, Generic, Optional, TypeVar
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 
 Code = TypeVar("Code")
 

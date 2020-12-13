@@ -7,7 +7,8 @@ import zipfile
 from shutil import copyfileobj
 from typing import Callable
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.datasets import DEFAULT_CACHE_DIR
 from mlprogram.functools import file_cache
 from mlprogram.utils.data import ListDataset

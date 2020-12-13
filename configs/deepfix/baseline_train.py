@@ -40,7 +40,7 @@ loss_fn = torch.nn.Sequential(
             ],
             [
                 "normalize",
-                mlprogram.nn.Apply(
+                Apply(
                     in_keys=[["action_sequence_loss", "lhs"]],
                     out_key="action_sequence_loss",
                     module=mlprogram.nn.Function(

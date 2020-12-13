@@ -44,6 +44,7 @@ types = {
     "Identity": mlprogram.builtins.Identity,
     "Flatten": mlprogram.builtins.Flatten,
     "Threshold": mlprogram.builtins.Threshold,
+    "Apply": mlprogram.builtins.Apply,
     "Pick": mlprogram.builtins.Pick,
     "Add": mlprogram.builtins.Add,
     "add": lambda **kwargs: mlprogram.builtins.Add()(**kwargs),
@@ -188,7 +189,6 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
-    "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,

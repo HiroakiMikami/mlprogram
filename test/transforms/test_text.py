@@ -1,7 +1,7 @@
 import numpy as np
 from torchnlp.encoders import LabelEncoder
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import Token
 from mlprogram.transforms.text import (
     EncodeCharacterQuery,

@@ -4,7 +4,8 @@ import numpy as np
 from torch.utils import data
 from torch.utils.data import IterableDataset
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.languages.csg import (
     AST,
     Circle,

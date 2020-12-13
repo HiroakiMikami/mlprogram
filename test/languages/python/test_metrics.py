@@ -1,4 +1,4 @@
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages.python.metrics import Bleu
 
 

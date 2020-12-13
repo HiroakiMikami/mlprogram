@@ -1,6 +1,6 @@
 from typing import Generic, List, TypeVar
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import BatchedState, Expander, Interpreter, Token
 
 Code = TypeVar("Code")

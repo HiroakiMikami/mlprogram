@@ -3,7 +3,7 @@ from typing import List
 
 from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.metrics import Metric
 
 

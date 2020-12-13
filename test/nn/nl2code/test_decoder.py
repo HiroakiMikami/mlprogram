@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn.nl2code import Decoder, DecoderCell
 from mlprogram.nn.nl2code.decoder import query_history
 from mlprogram.nn.utils import rnn

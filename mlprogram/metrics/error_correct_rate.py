@@ -1,6 +1,6 @@
 from typing import Generic, TypeVar
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import Analyzer, Interpreter
 from mlprogram.metrics.metric import Metric
 

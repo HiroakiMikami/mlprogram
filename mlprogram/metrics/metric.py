@@ -1,6 +1,6 @@
 from typing import Callable, Generic, TypeVar
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 
 Value = TypeVar("Value")
 

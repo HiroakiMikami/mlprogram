@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn.action_sequence import ActionSequenceReader
 from mlprogram.nn.utils import rnn
 

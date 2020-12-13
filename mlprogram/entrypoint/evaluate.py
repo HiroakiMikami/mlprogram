@@ -11,7 +11,8 @@ from pytorch_pfn_extras.reporting import report
 from torch import nn
 from tqdm import tqdm
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.metrics import Metric
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset

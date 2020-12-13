@@ -1,6 +1,6 @@
 from typing import List, Optional, Union
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import AST, Field, Leaf, Node
 from mlprogram.languages import Parser as BaseParser
 from mlprogram.languages import Root, Token

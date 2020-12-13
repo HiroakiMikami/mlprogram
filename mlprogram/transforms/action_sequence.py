@@ -3,8 +3,8 @@ from typing import Generic, List, Optional, TypeVar, cast
 import numpy as np
 import torch
 
-from mlprogram import Environment
 from mlprogram.actions import ActionSequence
+from mlprogram.builtins import Environment
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Parser, Token
 

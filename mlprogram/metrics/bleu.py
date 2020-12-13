@@ -1,6 +1,6 @@
 from nltk.translate.bleu_score import sentence_bleu
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.metrics.metric import Metric
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages.csg import Interpreter, show
 from mlprogram.languages.csg.ast import Rectangle
 from mlprogram.languages.csg.transforms import AddTestCases, TransformCanvas

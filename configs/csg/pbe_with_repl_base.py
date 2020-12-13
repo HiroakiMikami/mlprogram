@@ -31,7 +31,7 @@ model = torch.share_memory_(
             items=[
                 [
                     "encode_input",
-                    mlprogram.nn.Apply(
+                    Apply(
                         in_keys=[["test_case_tensor", "x"]],
                         out_key="test_case_feature",
                         module=mlprogram.nn.CNN2d(
@@ -107,7 +107,7 @@ model = torch.share_memory_(
                 ],
                 [
                     "value",
-                    mlprogram.nn.Apply(
+                    Apply(
                         in_keys=[["input_feature", "x"]],
                         out_key="value",
                         module=mlprogram.nn.MLP(

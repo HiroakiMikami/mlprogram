@@ -1,6 +1,6 @@
 import numpy as np
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.metrics.metric import Metric
 
 

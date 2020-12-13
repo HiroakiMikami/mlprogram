@@ -2,7 +2,8 @@ import os
 
 import torch
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.datasets import DEFAULT_CACHE_DIR
 
 logger = logging.Logger(__name__)

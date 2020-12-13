@@ -3,7 +3,7 @@ from typing import Tuple, cast
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 

@@ -3,7 +3,8 @@ from typing import Callable, Dict, Tuple
 
 import requests
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.datasets import DEFAULT_CACHE_DIR
 from mlprogram.datasets.django.format_annotations import format_annotations
 from mlprogram.functools import file_cache

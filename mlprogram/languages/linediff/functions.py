@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.encoders import Samples
 from mlprogram.languages import BatchedState, Kinds, Parser, Root
 from mlprogram.languages.linediff.ast import AST as linediffAST

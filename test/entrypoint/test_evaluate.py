@@ -3,7 +3,7 @@ import tempfile
 
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.entrypoint import evaluate
 from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
 from mlprogram.metrics import Accuracy, Bleu

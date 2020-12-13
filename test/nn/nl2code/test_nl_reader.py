@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 import mlprogram.nn.utils.rnn as rnn
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn.nl2code import NLReader
 
 

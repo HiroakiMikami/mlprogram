@@ -4,7 +4,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.languages import BatchedState, Expander, Interpreter, Token
 from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
 from mlprogram.synthesizers.synthesizer import Synthesizer

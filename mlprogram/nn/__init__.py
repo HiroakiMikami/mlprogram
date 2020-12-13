@@ -1,5 +1,4 @@
 from mlprogram.nn.aggregated_loss import AggregatedLoss  # noqa
-from mlprogram.nn.apply import Apply  # noqa
 from mlprogram.nn.cnn import CNN2d  # noqa
 from mlprogram.nn.embedding import EmbeddingWithMask  # noqa
 from mlprogram.nn.function import Function  # noqa

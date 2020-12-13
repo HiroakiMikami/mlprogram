@@ -3,7 +3,7 @@ from typing import Tuple, cast
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.functional import gelu
 from mlprogram.nn.treegen.embedding import ElementEmbedding

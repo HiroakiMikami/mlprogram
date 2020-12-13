@@ -1,6 +1,6 @@
 import numpy as np
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import Field, Leaf, Node, Parser, Token
 from mlprogram.transforms.action_sequence import (

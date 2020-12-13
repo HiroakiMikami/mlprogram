@@ -15,7 +15,7 @@ from typing import (
 import numpy as np
 import torch
 
-from mlprogram import Environment, logging
+from mlprogram import logging
 from mlprogram.actions import (
     Action,
     ActionSequence,
@@ -26,6 +26,7 @@ from mlprogram.actions import (
     NodeConstraint,
     NodeType,
 )
+from mlprogram.builtins import Environment
 from mlprogram.collections import TopKElement
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import AST, Node, Root, Token

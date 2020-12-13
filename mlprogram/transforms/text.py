@@ -3,7 +3,7 @@ from typing import Callable, List, cast
 import torch
 from torchnlp.encoders import LabelEncoder
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import Token
 
 

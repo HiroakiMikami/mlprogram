@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.nn.action_sequence import Loss
 from mlprogram.nn.utils import rnn
 
