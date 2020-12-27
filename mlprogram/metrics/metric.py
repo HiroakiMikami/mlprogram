@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Callable, Generic, TypeVar, Optional
+from typing import Callable, Generic, Optional, TypeVar, cast
 
 from torch import nn
 
@@ -27,7 +27,7 @@ class Metric(nn.Module, Generic[Value]):
 
     def forward(self, env: Environment, value: Value) -> float:
         env[self.value_key] = value
-        out = self.metric(env)
+        out = cast(float, self.metric(env))
         if self.transform is not None:
             out = self.transform(out)
         return out
