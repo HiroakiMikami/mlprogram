@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import Analyzer, Token
 from mlprogram.languages.python import Parser
 from mlprogram.utils.data import (

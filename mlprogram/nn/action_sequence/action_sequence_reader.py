@@ -1,9 +1,6 @@
-from typing import cast
-
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -18,7 +15,8 @@ class ActionSequenceReader(nn.Module):
         self._token_embed = EmbeddingWithMask(
             n_token, hidden_size, n_token)
 
-    def forward(self, inputs: Environment) -> Environment:
+    def forward(self, previous_actions: PaddedSequenceWithMask) \
+            -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
@@ -36,8 +34,6 @@ class ActionSequenceReader(nn.Module):
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        previous_actions = cast(PaddedSequenceWithMask,
-                                inputs["previous_actions"])
         L_a, B, _ = previous_actions.data.shape
         prev_rules, prev_tokens, _ = torch.split(
             previous_actions.data, 1, dim=2)  # (L_a, B, 1)
@@ -59,6 +55,4 @@ class ActionSequenceReader(nn.Module):
         # Embed previous actions
         feature = self._rule_embed(prev_rules) + \
             self._token_embed(prev_tokens)  # (L_a, B, embedding_size)
-        inputs["action_features"] = \
-            PaddedSequenceWithMask(feature, previous_actions.mask)
-        return inputs
+        return PaddedSequenceWithMask(feature, previous_actions.mask)

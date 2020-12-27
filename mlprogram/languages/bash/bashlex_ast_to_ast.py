@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Optional, Union
 
 import bashlex
 
@@ -14,7 +14,7 @@ def bashlex_ast_to_ast(script: str,
     """
     class Visitor(bashlex.ast.nodevisitor):
         def __init__(self):
-            self.value = []
+            self.value: Optional[AST] = None
 
         def to_leaf_value(self, t: str, value: str) -> List[Leaf]:
             return [Leaf(t, token)
@@ -223,6 +223,7 @@ def bashlex_ast_to_ast(script: str,
     if isinstance(bashlex_ast, bashlex.ast.node):
         visitor = Visitor()
         visitor.visit(bashlex_ast)
+        assert visitor.value is not None
         return visitor.value
     else:
         return Leaf("str", str(bashlex_ast))

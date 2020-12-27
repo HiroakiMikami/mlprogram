@@ -2,7 +2,6 @@ import numpy as np
 import torch
 
 import mlprogram.nn.utils.rnn as rnn
-from mlprogram import Environment
 from mlprogram.nn.nl2code import NLReader
 
 
@@ -16,7 +15,7 @@ class TestNLReader(object):
         q0 = torch.LongTensor([1, 2])
         q1 = torch.LongTensor([1, 2, 3])
         query = rnn.pad_sequence([q0, q1])
-        output = encoder(Environment({"word_nl_query": query}))["nl_query_features"]
+        output = encoder(word_nl_query=query)
         assert (3, 2, 14) == output.data.shape
 
     def test_mask(self):
@@ -24,5 +23,5 @@ class TestNLReader(object):
         q0 = torch.LongTensor([1, 2])
         q1 = torch.LongTensor([1, 2, 3])
         query = rnn.pad_sequence([q0, q1])
-        output = encoder(Environment({"word_nl_query": query}))["nl_query_features"]
+        output = encoder(word_nl_query=query)
         assert np.all(output.data[2, 0, :].detach().numpy() == 0)

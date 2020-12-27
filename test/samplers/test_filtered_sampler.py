@@ -4,7 +4,7 @@ from mlprogram.samplers import FilteredSampler, Sampler
 
 
 class MockSampler(Sampler[int, int, str]):
-    def __init__(self, value):
+    def __init__(self, value: Optional[Tuple[int, bool]]):
         self.value = value
 
     def create_output(self, input, state: str) -> Optional[Tuple[int, bool]]:

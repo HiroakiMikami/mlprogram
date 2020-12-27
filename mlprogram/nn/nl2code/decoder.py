@@ -1,9 +1,8 @@
-from typing import Tuple, cast
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -174,7 +173,15 @@ class Decoder(nn.Module):
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
 
-    def forward(self, inputs: Environment) -> Environment:
+    def forward(self,
+                nl_query_features: PaddedSequenceWithMask,
+                action_features: PaddedSequenceWithMask,
+                parent_indexes: PaddedSequenceWithMask,
+                history: Optional[torch.Tensor],
+                hidden_state: Optional[torch.Tensor],
+                state: Optional[torch.Tensor]
+                ) -> Tuple[PaddedSequenceWithMask, PaddedSequenceWithMask, torch.Tensor,
+                           torch.Tensor, torch.Tensor]:
         """
         Parameters
         ----------
@@ -207,15 +214,8 @@ class Decoder(nn.Module):
         state: torch.Tensor
             The tuple of the next state. The shape is (B, hidden_size)
         """
-        action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
-        parent_indexes = cast(PaddedSequenceWithMask,
-                              inputs["parent_indexes"])
-        nl_query_features = cast(PaddedSequenceWithMask,
-                                 inputs["nl_query_features"])
-        history = inputs["history"]
-        h_n = inputs["hidden_state"]
-        c_n = inputs["state"]
+        h_n = hidden_state
+        c_n = state
         B = nl_query_features.data.shape[1]
         if history is None:
             history = torch.zeros(1, B, self.hidden_size,
@@ -226,9 +226,6 @@ class Decoder(nn.Module):
         if c_n is None:
             c_n = torch.zeros(B, self.hidden_size,
                               device=nl_query_features.data.device)
-        history = cast(torch.Tensor, history)
-        h_n = cast(torch.Tensor, h_n)
-        c_n = cast(torch.Tensor, c_n)
         s = (h_n, c_n)
         hs = []
         cs = []
@@ -244,12 +241,8 @@ class Decoder(nn.Module):
         cs = torch.stack(cs)
         h_n, c_n = s
 
-        inputs["action_features"] = \
-            rnn.PaddedSequenceWithMask(hs, action_features.mask)
-        inputs["action_contexts"] = \
-            rnn.PaddedSequenceWithMask(cs, action_features.mask)
-        inputs["history"] = history
-        inputs["hidden_state"] = h_n
-        inputs["state"] = c_n
-
-        return inputs
+        return (rnn.PaddedSequenceWithMask(hs, action_features.mask),
+                rnn.PaddedSequenceWithMask(cs, action_features.mask),
+                history,
+                h_n,
+                c_n)

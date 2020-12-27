@@ -1,6 +1,6 @@
 import pytest
 
-from mlprogram.datatypes import Environment
+from mlprogram.builtins import Environment
 
 
 class TestEnv(object):

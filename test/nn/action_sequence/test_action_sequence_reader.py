@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
 from mlprogram.nn.action_sequence import ActionSequenceReader
 from mlprogram.nn.utils import rnn
 
@@ -22,8 +21,7 @@ class TestActionSequenceReader(object):
         prev_action = rnn.pad_sequence(
             [prev_action0, prev_action1])  # (2, 2, 3)
 
-        data = reader(Environment({"previous_actions": prev_action}))
-        feature = data["action_features"]
+        feature = reader(previous_actions=prev_action)
         assert np.array_equal(
             [[1, 1], [0, 1]], feature.mask.numpy())
         assert (2, 2, 5) == feature.data.shape

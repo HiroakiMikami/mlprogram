@@ -6,18 +6,30 @@ device = torch.device(
 transform = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
+            [
+                "set_train",
+                Apply(module=Constant(value=True), in_keys=[], out_key="train"),
+            ],
             ["transform_input", transform_input],
             [
                 "transform_code",
-                mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
-                    parser=parser,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
+                        parser=parser,
+                    ),
+                    in_keys=["ground_truth"],
+                    out_key="action_sequence",
                 ),
             ],
             ["transform_action_sequence", transform_action_sequence],
             [
                 "transform_ground_truth",
-                mlprogram.transforms.action_sequence.EncodeActionSequence(
-                    action_sequence_encoder=encoder.action_sequence_encoder,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.EncodeActionSequence(
+                        action_sequence_encoder=encoder.action_sequence_encoder,
+                    ),
+                    in_keys=["action_sequence", "reference"],
+                    out_key="ground_truth_actions",
                 ),
             ],
         ],
@@ -36,7 +48,19 @@ main = mlprogram.entrypoint.train_supervised(
     loss=torch.nn.Sequential(
         modules=collections.OrderedDict(
             items=[
-                ["loss", mlprogram.nn.action_sequence.Loss()],
+                [
+                    "loss",
+                    Apply(
+                        module=mlprogram.nn.action_sequence.Loss(),
+                        in_keys=[
+                            "rule_probs",
+                            "token_probs",
+                            "reference_probs",
+                            "ground_truth_actions",
+                        ],
+                        out_key="action_sequence_loss",
+                    ),
+                ],
                 [
                     "pick",
                     mlprogram.nn.Function(

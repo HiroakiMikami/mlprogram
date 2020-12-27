@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 from mlprogram.languages import BatchedState
 from mlprogram.languages import Interpreter as BaseInterpreter
@@ -20,7 +20,7 @@ class Interpreter(BaseInterpreter[AST, str, str, str]):
         if len(state.environment) == 1:
             inputs = state.environment[state.history[-1]]
         outputs = self.eval(code, inputs)
-        next = state.clone()
+        next = cast(BatchedState[AST, str, str], state.clone())
         next.history.append(code)
         next.type_environment[code] = code.get_type_name()
         next.environment = {code: outputs}

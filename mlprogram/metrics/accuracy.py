@@ -1,12 +1,10 @@
 from typing import Generic, TypeVar
 
-from mlprogram import Environment
-from mlprogram.metrics.metric import Metric
+from torch import nn
 
 Value = TypeVar("Value")
 
 
-class Accuracy(Metric[Value], Generic[Value]):
-    def __call__(self, input: Environment, value: Value) -> float:
-        ground_truth = input["ground_truth"]
-        return 1.0 if value == ground_truth else 0.0
+class Accuracy(nn.Module, Generic[Value]):
+    def forward(self, expected: Value, actual: Value) -> float:
+        return 1.0 if actual == expected else 0.0

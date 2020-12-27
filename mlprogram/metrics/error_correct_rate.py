@@ -1,26 +1,26 @@
-from typing import Generic, TypeVar
+from typing import Any, Generic, List, Tuple, TypeVar
 
-from mlprogram import Environment
+from torch import nn
+
 from mlprogram.languages import Analyzer, Interpreter
-from mlprogram.metrics.metric import Metric
 
 Code = TypeVar("Code")
 Error = TypeVar("Error")
 Diff = TypeVar("Diff")
-Input = TypeVar("Input")
 Kind = TypeVar("Kind")
 
 
-class ErrorCorrectRate(Metric[Diff], Generic[Code, Error, Diff, Input, Kind]):
+class ErrorCorrectRate(nn.Module, Generic[Code, Error, Diff, Kind]):
     def __init__(self, analyzer: Analyzer[Code, Error],
-                 interpreter: Interpreter[Diff, Input, Code, Kind]):
+                 interpreter: Interpreter[Diff, Code, Code, Kind]):
+        super().__init__()
         self.analyzer = analyzer
         self.interpreter = interpreter
 
-    def __call__(self, input: Environment, value: Diff) -> float:
-        original = input["test_cases"][0][0]
+    def forward(self, test_cases: List[Tuple[Code, Any]], actual: Diff) -> float:
+        original = test_cases[0][0]
         n_orig_error = len(self.analyzer(original))
-        fixed = self.interpreter.eval(value, [original])[0]
+        fixed = self.interpreter.eval(actual, [original])[0]
 
         n_error = len(self.analyzer(fixed))
 

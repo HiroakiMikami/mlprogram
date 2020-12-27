@@ -1,6 +1,8 @@
 from typing import Generic, List, TypeVar
 
-from mlprogram import Environment
+from torch import nn
+
+from mlprogram.builtins import Environment
 from mlprogram.languages import BatchedState, Expander, Interpreter, Token
 
 Code = TypeVar("Code")
@@ -9,13 +11,14 @@ Value = TypeVar("Value")
 Kind = TypeVar("Kind")
 
 
-class ToEpisode(Generic[Code, Input, Value]):
+class ToEpisode(nn.Module, Generic[Code, Input, Value]):
     def __init__(self, interpreter: Interpreter[Code, Input, Value, Kind],
                  expander: Expander[Code]):
+        super().__init__()
         self.interpreter = interpreter
         self.expander = expander
 
-    def __call__(self, entry: Environment) -> List[Environment]:
+    def forward(self, entry: Environment) -> List[Environment]:
         ground_truth = entry["ground_truth"]
         test_cases = entry["test_cases"]
         inputs = [input for input, _ in test_cases]

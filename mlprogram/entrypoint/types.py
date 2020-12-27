@@ -44,6 +44,9 @@ types = {
     "Identity": mlprogram.builtins.Identity,
     "Flatten": mlprogram.builtins.Flatten,
     "Threshold": mlprogram.builtins.Threshold,
+    "Apply": mlprogram.builtins.Apply,
+    "Constant": mlprogram.builtins.Constant,
+    "Pack": mlprogram.builtins.Pack,
     "Pick": mlprogram.builtins.Pick,
     "Add": mlprogram.builtins.Add,
     "add": lambda **kwargs: mlprogram.builtins.Add()(**kwargs),
@@ -101,7 +104,7 @@ types = {
     "mlprogram.datasets.deepfix.Lexer":
         mlprogram.datasets.deepfix.Lexer,
 
-    "mlprogram.metrics.transform": mlprogram.metrics.transform,
+    "mlprogram.metrics.use_environment": mlprogram.metrics.use_environment,
     "mlprogram.metrics.Accuracy": mlprogram.metrics.Accuracy,
     "mlprogram.metrics.Bleu": mlprogram.metrics.Bleu,
     "mlprogram.metrics.Iou": mlprogram.metrics.Iou,
@@ -166,16 +169,12 @@ types = {
         mlprogram.transforms.action_sequence.AddActionSequenceAsTree,
     "mlprogram.transforms.action_sequence.AddQueryForTreeGenDecoder":
         mlprogram.transforms.action_sequence.AddQueryForTreeGenDecoder,
-    "mlprogram.transforms.action_sequence.AddStateForRnnDecoder":
-        mlprogram.transforms.action_sequence.AddStateForRnnDecoder,
-    "mlprogram.transforms.action_sequence.AddHistoryState":
-        mlprogram.transforms.action_sequence.AddHistoryState,
+    "mlprogram.transforms.action_sequence.AddState":
+        mlprogram.transforms.action_sequence.AddState,
     "mlprogram.transforms.action_sequence.GroundTruthToActionSequence":
         mlprogram.transforms.action_sequence.GroundTruthToActionSequence,
     "mlprogram.transforms.action_sequence.EncodeActionSequence":
         mlprogram.transforms.action_sequence.EncodeActionSequence,
-    "mlprogram.transforms.text.ExtractReference":
-        mlprogram.transforms.text.ExtractReference,
     "mlprogram.transforms.text.EncodeWordQuery":
         mlprogram.transforms.text.EncodeWordQuery,
     "mlprogram.transforms.text.EncodeTokenQuery":
@@ -188,7 +187,6 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
-    "mlprogram.nn.Apply": mlprogram.nn.Apply,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
@@ -219,8 +217,10 @@ types = {
     "mlprogram.languages.csg.Expander": mlprogram.languages.csg.Expander,
     "mlprogram.languages.csg.IsSubtype": mlprogram.languages.csg.IsSubtype,
     "mlprogram.languages.csg.get_samples": mlprogram.languages.csg.get_samples,
-    "mlprogram.languages.csg.transforms.TransformCanvas":
-        mlprogram.languages.csg.transforms.TransformCanvas,
+    "mlprogram.languages.csg.transforms.TransformInputs":
+        mlprogram.languages.csg.transforms.TransformInputs,
+    "mlprogram.languages.csg.transforms.TransformVariables":
+        mlprogram.languages.csg.transforms.TransformVariables,
     "mlprogram.languages.csg.transforms.AddTestCases":
         mlprogram.languages.csg.transforms.AddTestCases,
 

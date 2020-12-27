@@ -3,7 +3,7 @@ import multiprocessing as mp
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, Mapping, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Generic, List, Mapping, Optional, Tuple, TypeVar
 
 import numpy as np
 import torch
@@ -11,8 +11,8 @@ from pytorch_pfn_extras.reporting import report
 from torch import nn
 from tqdm import tqdm
 
-from mlprogram import Environment, logging
-from mlprogram.metrics import Metric
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
 
@@ -46,7 +46,7 @@ class EvaluationResult(Generic[Code, GroundTruth]):
 
 class EvaluateSample(Generic[Code]):
     def __init__(self, synthesizer: Synthesizer[Environment, Code],
-                 metrics: Mapping[str, Metric],
+                 metrics: Mapping[str, Callable[[Environment, Code], float]],
                  top_n: List[int]):
         super().__init__()
         self.synthesizer = synthesizer
@@ -71,7 +71,7 @@ class EvaluateSample(Generic[Code]):
                     m[name] = 0
                 for c in candidates[:n]:
                     for name, f in self.metrics.items():
-                        m[name] = max(m[name], f(sample, c.output))
+                        m[name] = max(m[name], f(sample.clone(), c.output))
                 ms[n] = m
         logger.debug(f"Finish evaluation of {i}-th sample")
         return Result(
@@ -83,7 +83,8 @@ class EvaluateSample(Generic[Code]):
 class EvaluateSynthesizer(Generic[Code, GroundTruth]):
     def __init__(self, dataset: torch.utils.data.Dataset,
                  synthesizer: Synthesizer[Environment, Code],
-                 metrics: Mapping[str, Metric], top_n: List[int] = [1, 3],
+                 metrics: Mapping[str, Callable[[Environment, Code], float]],
+                 top_n: List[int] = [1, 3],
                  n_process: Optional[int] = None,
                  n_samples: Optional[int] = None):
         super().__init__()
@@ -162,7 +163,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              valid_dataset: torch.utils.data.Dataset,
              model: nn.Module,
              synthesizer: Synthesizer,
-             metrics: Mapping[str, Metric],
+             metrics: Mapping[str, Callable[[Environment, Code], float]],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
              n_process: Optional[int] = None,
@@ -187,7 +188,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         score = \
             torch.load(model_path, map_location=torch.device("cpu"))["score"]
         pathes.append((score, model_path))
-    pathes.sort(key=lambda x: -x[0])
+    pathes.sort(key=lambda x: -x[0])  # type: ignore
     model_path = pathes[0][1]
 
     logger.info(f"Start evaluation: {model_path}")

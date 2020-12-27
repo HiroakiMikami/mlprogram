@@ -5,8 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.actions import ExpandTreeRule, NodeConstraint, NodeType
+from mlprogram.builtins import Environment
 from mlprogram.encoders import ActionSequenceEncoder, Samples
 from mlprogram.languages import Root, Token
 from mlprogram.samplers import ActionSequenceSampler, SamplerState

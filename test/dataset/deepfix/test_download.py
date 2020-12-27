@@ -7,7 +7,7 @@ import tempfile
 import zipfile
 from shutil import copyfile, copyfileobj
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.datasets.deepfix import download
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)

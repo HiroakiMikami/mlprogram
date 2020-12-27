@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar, cast
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")
@@ -37,7 +37,7 @@ class Interpreter(Generic[Code, Input, Value, Kind]):
                 state: BatchedState[Code, Value, Kind]) \
             -> BatchedState[Code, Value, Kind]:
         value = self.eval(code, input)
-        next = state.clone()
+        next = cast(BatchedState[Code, Value, Kind], state.clone())
         next.history.append(code)
         next.type_environment[code] = None
         next.environment[code] = value

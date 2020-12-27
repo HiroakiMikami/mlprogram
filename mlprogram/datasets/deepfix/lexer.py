@@ -119,8 +119,6 @@ class Lexer(BaseLexer[str, str]):
         str_to_idx = _Mapping("string")
         chr_to_idx = _Mapping("char")
 
-        if tokens is None:
-            return None
         retval = []
         for offset, token in tokens:
             if token.kind == "name":

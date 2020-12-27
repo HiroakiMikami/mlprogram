@@ -1,6 +1,6 @@
-from typing import Any, Callable, Generic, List, Optional, TypeVar
+from typing import Any, Callable, Generic, List, TypeVar
 
-from mlprogram import Environment, logging
+from mlprogram import logging
 
 logger = logging.Logger(__name__)
 
@@ -31,14 +31,6 @@ class Threshold(object):
         elif dtype == "float":
             self.dtype = float
 
-    def __call__(self, value: float) -> bool:
+    def __call__(self, value: float) -> Any:
         out = value >= self.threshold
         return self.dtype(out)
-
-
-class Pick(object):
-    def __init__(self, key: str):
-        self.key = key
-
-    def __call__(self, entry: Environment) -> Optional[Any]:
-        return entry[self.key] if self.key in entry.to_dict() else None

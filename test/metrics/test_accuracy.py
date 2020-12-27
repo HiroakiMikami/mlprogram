@@ -1,6 +1,5 @@
 import numpy as np
 
-from mlprogram import Environment
 from mlprogram.metrics import Accuracy
 
 
@@ -9,7 +8,7 @@ class TestAccuracy(object):
         acc = Accuracy()
         assert np.allclose(
             1.0,
-            acc(Environment({"ground_truth": "str"}), "str"))
+            acc(expected="str", actual="str"))
         assert np.allclose(
             0.0,
-            acc(Environment({"ground_truth": "int"}), "str"))
+            acc(expected="int", actual="str"))

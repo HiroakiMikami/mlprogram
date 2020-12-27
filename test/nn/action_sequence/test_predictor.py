@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
 from mlprogram.nn.action_sequence import Predictor
 from mlprogram.nn.utils.rnn import pad_sequence
 
@@ -28,12 +27,9 @@ class TestPredictor(object):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
-        inputs = predictor(Environment(
-            {"reference_features": pad_sequence([nl]),
-             "action_features": pad_sequence([f])}))
-        rule = inputs["rule_probs"]
-        token = inputs["token_probs"]
-        reference = inputs["reference_probs"]
+        rule, token, reference = predictor(
+            reference_features=pad_sequence([nl]),
+            action_features=pad_sequence([f]))
         assert (11, 1, 5) == rule.data.shape
         assert (11, 1) == rule.mask.shape
         assert (11, 1, 7) == token.data.shape
@@ -46,12 +42,9 @@ class TestPredictor(object):
         f = torch.Tensor(11, 2)
         nl = torch.Tensor(13, 3)
         predictor.eval()
-        inputs = predictor(Environment(
-            {"reference_features": pad_sequence([nl]),
-             "action_features": pad_sequence([f])}))
-        rule = inputs["rule_probs"]
-        token = inputs["token_probs"]
-        reference = inputs["reference_probs"]
+        rule, token, reference = predictor(
+            reference_features=pad_sequence([nl]),
+            action_features=pad_sequence([f]))
         assert (1, 5) == rule.shape
         assert (1, 7) == token.shape
         assert (1, 13) == reference.shape
@@ -60,12 +53,9 @@ class TestPredictor(object):
         predictor = Predictor(2, 3, 5, 7, 11)
         f = torch.rand(11, 2)
         nl = torch.rand(13, 3)
-        inputs = predictor(Environment(
-            {"reference_features": pad_sequence([nl]),
-             "action_features": pad_sequence([f])}))
-        rule = inputs["rule_probs"]
-        token = inputs["token_probs"]
-        reference = inputs["reference_probs"]
+        rule, token, reference = predictor(
+            reference_features=pad_sequence([nl]),
+            action_features=pad_sequence([f]))
         prob = torch.cat([rule.data, token.data, reference.data], dim=2)
         prob = prob.detach().numpy()
         assert np.all(prob >= 0.0)
@@ -79,18 +69,12 @@ class TestPredictor(object):
         f1 = torch.rand(13, 2)
         nl0 = torch.rand(13, 3)
         nl1 = torch.rand(15, 3)
-        inputs0 = predictor(Environment(
-            {"reference_features": pad_sequence([nl0]),
-             "action_features": pad_sequence([f0])}))
-        rule0 = inputs0["rule_probs"]
-        token0 = inputs0["token_probs"]
-        ref0 = inputs0["reference_probs"]
-        inputs1 = predictor(Environment(
-            {"reference_features": pad_sequence([nl0, nl1]),
-             "action_features": pad_sequence([f0, f1])}))
-        rule1 = inputs1["rule_probs"]
-        token1 = inputs1["token_probs"]
-        ref1 = inputs1["reference_probs"]
+        rule0, token0, ref0 = predictor(
+            reference_features=pad_sequence([nl0]),
+            action_features=pad_sequence([f0]))
+        rule1, token1, ref1 = predictor(
+            reference_features=pad_sequence([nl0, nl1]),
+            action_features=pad_sequence([f0, f1]))
         rule1 = rule1.data[:11, :1, :]
         token1 = token1.data[:11, :1, :]
         ref1 = ref1.data[:11, :1, :13]

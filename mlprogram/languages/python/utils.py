@@ -26,7 +26,6 @@ def is_builtin_type(node: PythonAST) -> bool:
         return True
     elif isinstance(node, object):
         return True
-    return False
 
 
 @lru_cache(maxsize=1000)

@@ -200,7 +200,7 @@ class Parser(BaseParser[str]):
                         assert(False)
                 elif isinstance(ast, Leaf):
                     # Token
-                    return ast.value
+                    return cast(str, ast.value)
                 elif isinstance(ast, list):
                     return "".join(map(lambda x: str(value_to_str(x)), ast))
             except:  # noqa

@@ -1,5 +1,4 @@
-from mlprogram import Environment
-from mlprogram.builtins import Flatten, Pick, Threshold
+from mlprogram.builtins import Flatten, Threshold
 
 
 class TestFlatten(object):
@@ -13,15 +12,3 @@ class TestThreshold(object):
         f = Threshold(0.6)
         assert f(0.7)
         assert not f(0.5)
-
-
-class TestPick(object):
-    def test_happy_path(self):
-        pick = Pick("x")
-        out = pick(Environment({"x": 10}))
-        assert 10 == out
-
-    def test_if_key_not_exist(self):
-        pick = Pick("x")
-        out = pick(Environment())
-        assert out is None

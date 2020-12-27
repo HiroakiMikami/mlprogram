@@ -1,20 +1,17 @@
 from typing import Callable, Generic, Optional, TypeVar
 
-from mlprogram import Environment
+from torch import nn
 
 Code = TypeVar("Code")
 
 
-class NormalizeGroundTruth(Generic[Code]):
+class NormalizeGroundTruth(nn.Module, Generic[Code]):
     def __init__(self, normalize: Callable[[Code], Optional[Code]]):
+        super().__init__()
         self.normalize = normalize
 
-    def __call__(self, entry: Environment) -> Environment:
-        gt = entry["ground_truth"]
-        norm_gt = self.normalize(entry["ground_truth"])
+    def forward(self, ground_truth: Code) -> Code:
+        norm_gt = self.normalize(ground_truth)
         if norm_gt is not None:
-            gt = norm_gt
-
-        entry["ground_truth"] = gt
-        entry.mark_as_supervision("ground_truth")
-        return entry
+            ground_truth = norm_gt
+        return ground_truth

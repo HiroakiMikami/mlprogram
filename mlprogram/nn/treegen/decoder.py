@@ -1,9 +1,8 @@
-from typing import Tuple, cast
+from typing import Tuple
 
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.functional import gelu
 from mlprogram.nn.treegen.embedding import ElementEmbedding
@@ -114,7 +113,10 @@ class Decoder(nn.Module):
             max_depth, feature_size, feature_size
         )
 
-    def forward(self, inputs: Environment) -> Environment:
+    def forward(self,
+                nl_query_features: PaddedSequenceWithMask,
+                action_queries: PaddedSequenceWithMask,
+                action_features: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
@@ -136,17 +138,10 @@ class Decoder(nn.Module):
             (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
         """
-        nl_query_features = cast(PaddedSequenceWithMask,
-                                 inputs["nl_query_features"])
-        action_queries = cast(PaddedSequenceWithMask,
-                              inputs["action_queries"])
-        action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
         q = action_queries.data + \
             (action_queries.data == -1) * (self.rule_num + 1)
         embed = self.query_embed(q)
         input = PaddedSequenceWithMask(embed, action_queries.mask)
         for block in self.blocks:
             input, _, _ = block(input, nl_query_features, action_features)
-        inputs["action_features"] = input
-        return inputs
+        return input

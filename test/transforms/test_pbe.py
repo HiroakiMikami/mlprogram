@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.languages import Interpreter, Token
 from mlprogram.transforms.pbe import ToEpisode
 

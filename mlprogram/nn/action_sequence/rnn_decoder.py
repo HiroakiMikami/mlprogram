@@ -1,9 +1,8 @@
-from typing import cast
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -16,7 +15,12 @@ class RnnDecoder(nn.Module):
         self.lstm = nn.LSTMCell(input_feature_size + action_feature_size,
                                 output_feature_size)
 
-    def forward(self, inputs: Environment) -> Environment:
+    def forward(self,
+                input_feature: torch.Tensor,
+                action_features: PaddedSequenceWithMask,
+                hidden_state: Optional[torch.Tensor],
+                state: Optional[torch.Tensor]
+                ) -> Tuple[PaddedSequenceWithMask, torch.Tensor, torch.Tensor]:
         """
         Parameters
         ----------
@@ -38,11 +42,8 @@ class RnnDecoder(nn.Module):
         state: torch.Tensor
             The tuple of the next state. The shape is (B, hidden_size)
         """
-        action_features = cast(PaddedSequenceWithMask,
-                               inputs["action_features"])
-        input_feature = cast(torch.Tensor, inputs["input_feature"])
-        h_n = inputs["hidden_state"]
-        c_n = inputs["state"]
+        h_n = hidden_state
+        c_n = state
         B = input_feature.data.shape[0]
         if h_n is None:
             h_n = torch.zeros(B, self.output_feature_size,
@@ -50,8 +51,6 @@ class RnnDecoder(nn.Module):
         if c_n is None:
             c_n = torch.zeros(B, self.output_feature_size,
                               device=action_features.data.device)
-        h_n = cast(torch.Tensor, h_n)
-        c_n = cast(torch.Tensor, c_n)
         s = (h_n, c_n)
         hs = []
         cs = []
@@ -64,9 +63,4 @@ class RnnDecoder(nn.Module):
         hs = torch.stack(hs)
         cs = torch.stack(cs)
 
-        inputs["action_features"] = rnn.PaddedSequenceWithMask(
-            hs, action_features.mask)
-        inputs["hidden_state"] = h1
-        inputs["state"] = c1
-
-        return inputs
+        return rnn.PaddedSequenceWithMask(hs, action_features.mask), h1, c1

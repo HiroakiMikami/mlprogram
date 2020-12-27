@@ -34,7 +34,7 @@ model = torch.share_memory_(
                             items=[
                                 [
                                     "encoder",
-                                    mlprogram.nn.Apply(
+                                    Apply(
                                         in_keys=[["test_case_tensor", "x"]],
                                         out_key="input_feature",
                                         module=mlprogram.nn.CNN2d(
@@ -49,7 +49,7 @@ model = torch.share_memory_(
                                 ],
                                 [
                                     "reduction",
-                                    mlprogram.nn.Apply(
+                                    Apply(
                                         in_keys=[["input_feature", "input"]],
                                         out_key="input_feature",
                                         module=torch.Mean(
@@ -68,35 +68,63 @@ model = torch.share_memory_(
                             items=[
                                 [
                                     "action_sequence_reader",
-                                    mlprogram.nn.action_sequence.ActionSequenceReader(
-                                        n_rule=encoder._rule_encoder.vocab_size,
-                                        n_token=encoder._token_encoder.vocab_size,
-                                        hidden_size=256,
+                                    Apply(
+                                        module=mlprogram.nn.action_sequence.ActionSequenceReader(
+                                            n_rule=encoder._rule_encoder.vocab_size,
+                                            n_token=encoder._token_encoder.vocab_size,
+                                            hidden_size=256,
+                                        ),
+                                        in_keys=["previous_actions"],
+                                        out_key="action_features",
                                     ),
                                 ],
                                 [
                                     "decoder",
-                                    mlprogram.nn.action_sequence.RnnDecoder(
-                                        input_feature_size=mul(
-                                            x=16,
-                                            y=mul(
-                                                x=n_feature_pixel,
-                                                y=n_feature_pixel,
+                                    Apply(
+                                        module=mlprogram.nn.action_sequence.RnnDecoder(
+                                            input_feature_size=mul(
+                                                x=16,
+                                                y=mul(
+                                                    x=n_feature_pixel,
+                                                    y=n_feature_pixel,
+                                                ),
                                             ),
+                                            action_feature_size=256,
+                                            output_feature_size=512,
+                                            dropout=0.1,
                                         ),
-                                        action_feature_size=256,
-                                        output_feature_size=512,
-                                        dropout=0.1,
+                                        in_keys=[
+                                            "input_feature",
+                                            "action_features",
+                                            "hidden_state",
+                                            "state",
+                                        ],
+                                        out_key=[
+                                            "action_features",
+                                            "hidden_state",
+                                            "state",
+                                        ],
                                     ),
                                 ],
                                 [
                                     "predictor",
-                                    mlprogram.nn.action_sequence.Predictor(
-                                        feature_size=512,
-                                        reference_feature_size=1,
-                                        rule_size=encoder._rule_encoder.vocab_size,
-                                        token_size=encoder._token_encoder.vocab_size,
-                                        hidden_size=512,
+                                    Apply(
+                                        module=mlprogram.nn.action_sequence.Predictor(
+                                            feature_size=512,
+                                            reference_feature_size=1,
+                                            rule_size=encoder._rule_encoder.vocab_size,
+                                            token_size=encoder._token_encoder.vocab_size,
+                                            hidden_size=512,
+                                        ),
+                                        in_keys=[
+                                            "reference_features",
+                                            "action_features",
+                                        ],
+                                        out_key=[
+                                            "rule_probs",
+                                            "token_probs",
+                                            "reference_probs",
+                                        ],
                                     ),
                                 ],
                             ],
@@ -150,9 +178,20 @@ transform_input = mlprogram.functools.Sequence(
         items=[
             [
                 "add_reference",
-                mlprogram.transforms.action_sequence.AddEmptyReference(),
+                Apply(
+                    module=mlprogram.transforms.action_sequence.AddEmptyReference(),
+                    in_keys=[],
+                    out_key=["reference", "reference_features"],
+                ),
             ],
-            ["transform_canvas", mlprogram.languages.csg.transforms.TransformCanvas()],
+            [
+                "transform_canvas",
+                Apply(
+                    module=mlprogram.languages.csg.transforms.TransformInputs(),
+                    in_keys=["test_cases"],
+                    out_key="test_case_tensor",
+                ),
+            ],
         ],
     ),
 )
@@ -161,14 +200,22 @@ transform_action_sequence = mlprogram.functools.Sequence(
         items=[
             [
                 "add_previous_actions",
-                mlprogram.transforms.action_sequence.AddPreviousActions(
-                    action_sequence_encoder=encoder,
-                    n_dependent=1,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.AddPreviousActions(
+                        action_sequence_encoder=encoder,
+                        n_dependent=1,
+                    ),
+                    in_keys=["action_sequence", "reference", "train"],
+                    out_key="previous_actions",
                 ),
             ],
             [
                 "add_state",
-                mlprogram.transforms.action_sequence.AddStateForRnnDecoder(),
+                mlprogram.transforms.action_sequence.AddState(key="state"),
+            ],
+            [
+                "add_hidden_state",
+                mlprogram.transforms.action_sequence.AddState(key="hidden_state"),
             ],
         ],
     ),
@@ -176,18 +223,30 @@ transform_action_sequence = mlprogram.functools.Sequence(
 transform = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
+            [
+                "set_train",
+                Apply(module=Constant(value=True), in_keys=[], out_key="train"),
+            ],
             ["transform_input", transform_input],
             [
                 "transform_code",
-                mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
-                    parser=parser,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.GroundTruthToActionSequence(
+                        parser=parser,
+                    ),
+                    in_keys=["ground_truth"],
+                    out_key="action_sequence",
                 ),
             ],
             ["transform_action_sequence", transform_action_sequence],
             [
                 "transform_ground_truth",
-                mlprogram.transforms.action_sequence.EncodeActionSequence(
-                    action_sequence_encoder=encoder,
+                Apply(
+                    module=mlprogram.transforms.action_sequence.EncodeActionSequence(
+                        action_sequence_encoder=encoder,
+                    ),
+                    in_keys=["action_sequence", "reference"],
+                    out_key="ground_truth_actions",
                 ),
             ],
         ],
@@ -198,7 +257,19 @@ sampler = mlprogram.samplers.transform(
         encoder=encoder,
         is_subtype=mlprogram.languages.csg.IsSubtype(),
         transform_input=transform_input,
-        transform_action_sequence=transform_action_sequence,
+        transform_action_sequence=mlprogram.functools.Sequence(
+            funcs=collections.OrderedDict(
+                items=[
+                    [
+                        "set_train",
+                        Apply(
+                            module=Constant(value=False), in_keys=[], out_key="train"
+                        ),
+                    ],
+                    ["transform", transform_action_sequence],
+                ]
+            )
+        ),
         collate=collate,
         module=model,
     ),
@@ -223,9 +294,17 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
         ),
         timeout_sec=option.timeout_sec,
     ),
-    score=mlprogram.metrics.TestCaseResult(
-        interpreter=interpreter,
-        metric=mlprogram.metrics.Iou(),
+    score=mlprogram.metrics.use_environment(
+        metric=mlprogram.metrics.TestCaseResult(
+            interpreter=interpreter,
+            metric=mlprogram.metrics.use_environment(
+                metric=mlprogram.metrics.Iou(),
+                in_keys=["expected", "actual"],
+                value_key="actual",
+            ),
+        ),
+        in_keys=["test_cases", "actual"],
+        value_key="actual",
     ),
     threshold=0.9,
 )

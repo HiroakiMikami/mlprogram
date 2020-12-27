@@ -77,7 +77,7 @@ class ActionSequence:
     """
 
     def __init__(self):
-        self._tree = Tree(dict(), dict())
+        self._tree: Tree = Tree(dict(), dict())
         self._action_sequence: List[Action] = []
         self._head_action_index: Optional[int] = None
         self._head_children_index: Dict[int, int] = dict()
@@ -294,9 +294,6 @@ class ActionSequence:
                             Field(name, node_type.type_name,
                                   generate(actions[0], node_type)))
                 return ast
-            else:
-                logger.critical(f"Invalid type of action: {type(action)}")
-                raise InvalidActionException("Action", action)
 
         if len(self.action_sequence) == 0:
             return generate(0)

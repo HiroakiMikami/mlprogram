@@ -80,7 +80,7 @@ class Logger(object):
 
     def iterable_block(self, tag: str, iter: Iterable,
                        monitor_gpu_utils: bool = False) -> Iterable:
-        def wrapped():
+        def wrapped() -> Iterable:
             for i, x in enumerate(iter):
                 with self.block(f"{tag}-{i}", tag, monitor_gpu_utils):
                     yield x

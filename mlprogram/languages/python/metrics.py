@@ -2,14 +2,11 @@ import re
 from typing import List
 
 from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
-
-from mlprogram import Environment
-from mlprogram.metrics import Metric
+from torch import nn
 
 
-class Bleu(Metric[str]):
-    def __call__(self, input: Environment, value: str) -> float:
-        ground_truth = input["ground_truth"]
+class Bleu(nn.Module):
+    def forward(self, expected: str, actual: str) -> float:
         sm = SmoothingFunction()
 
         def tokenize(code: str) -> List[str]:
@@ -20,9 +17,9 @@ class Bleu(Metric[str]):
             tokens = [t for t in code.split(' ') if t]
             return tokens
 
-        ref = [tokenize(ground_truth)]
-        cand = tokenize(value)
-        return sentence_bleu(ref,
-                             cand,
-                             weights=[0.25] * min(4, len(ref)),
-                             smoothing_function=sm.method3)
+        ref = [tokenize(expected)]
+        cand = tokenize(actual)
+        return float(sentence_bleu(ref,
+                                   cand,
+                                   weights=[0.25] * min(4, len(ref)),
+                                   smoothing_function=sm.method3))

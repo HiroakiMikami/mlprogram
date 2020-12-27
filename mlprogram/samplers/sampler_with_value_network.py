@@ -2,7 +2,8 @@ from typing import Callable, Generator, Generic, List, Optional, Tuple, TypeVar
 
 import torch
 
-from mlprogram import Environment, logging
+from mlprogram import logging
+from mlprogram.builtins import Environment
 from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
 from mlprogram.utils.data import Collate
 

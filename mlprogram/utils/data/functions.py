@@ -6,8 +6,9 @@ import torch
 from torch.nn import functional as F
 from tqdm import tqdm
 
-from mlprogram import Environment, logging
+from mlprogram import logging
 from mlprogram.actions import ActionSequence, ApplyRule, CloseVariadicFieldRule, Rule
+from mlprogram.builtins import Environment
 from mlprogram.encoders import Samples
 from mlprogram.languages import Analyzer, Parser, Token
 from mlprogram.nn.utils import rnn

@@ -2,8 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from mlprogram import Environment
-from mlprogram.nn import Apply
+from mlprogram.builtins import Apply, Environment
 
 
 class MockModule(nn.Module):
@@ -31,7 +30,6 @@ class MockModule2(nn.Module):
 
 
 class TestApply(object):
-    # TODO: propagate supervision flag
     def test_parameters(self):
         apply = Apply(["x"], "out", MockModule(1))
         assert set(["module.p"]) == \
@@ -84,3 +82,16 @@ class TestApply(object):
         assert np.array_equal(
             [[1], [2], [3]], output["out"].detach().numpy()
         )
+
+    def test_propagate_supervision(self):
+        apply = Apply(["x", "y"], "out", MockModule(1))
+        output = apply(Environment(
+            {"x": torch.arange(3).reshape(-1, 1), "y": 10}
+        ))
+        assert not output.is_supervision("out")
+
+        output = apply(Environment(
+            {"x": torch.arange(3).reshape(-1, 1), "y": 10},
+            set(["x"])
+        ))
+        assert output.is_supervision("out")

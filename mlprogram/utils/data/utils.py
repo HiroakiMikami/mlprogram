@@ -1,4 +1,4 @@
-from typing import Callable, Generic, List, TypeVar
+from typing import Callable, Generic, List, TypeVar, cast
 
 import torch
 
@@ -9,12 +9,12 @@ V1 = TypeVar("V1")
 
 class ListDataset(torch.utils.data.Dataset, Generic[V]):
     def __init__(self, elems: List[V]):
-        self.elems = elems
+        self.elems: List[V] = elems
 
     def __len__(self) -> int:
         return len(self.elems)
 
-    def __getitem__(self, idx) -> V:
+    def __getitem__(self, idx):
         return self.elems[idx]
 
 
@@ -27,7 +27,7 @@ class TransformedDataset(torch.utils.data.Dataset, Generic[V0, V1]):
     def __len__(self) -> int:
         return len(self.dataset)
 
-    def __getitem__(self, index: int) -> V1:
+    def __getitem__(self, index):
         if isinstance(index, int):
             return self.transform(self.dataset[index])
         else:
@@ -39,16 +39,16 @@ class TransformedIterableDataset(torch.utils.data.IterableDataset,
     def __init__(self, dataset: torch.utils.data.IterableDataset,
                  transform: Callable[[V0], V1]):
         self.dataset = dataset
-        self.transform = transform
+        self.transform: Callable[[V0], V1] = transform
 
     def __iter__(self):
         class InternalIterator:
             def __init__(self, parent):
-                self.transform = parent.transform
+                self.transform: Callable[[V0], V1] = parent.transform
                 self.iter = iter(parent.dataset)
 
             def __next__(self) -> V1:
-                return self.transform(next(self.iter))
+                return self.transform(cast(V0, next(self.iter)))
         return InternalIterator(self)
 
 

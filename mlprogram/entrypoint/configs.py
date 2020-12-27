@@ -40,7 +40,7 @@ def parse_config(configs: Dict[str, Any],
     _types["with_file_cache"] = \
         lambda path, config: with_file_cache(path, config, _types)
 
-    def convert(d, rename: bool) -> Dict[str, Any]:
+    def convert(d: Any, rename: bool) -> Any:
         if not isinstance(d, dict):
             return d
         if rename:

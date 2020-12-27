@@ -7,7 +7,7 @@ import torch
 from pytorch_pfn_extras.reporting import report
 from torch import nn, optim
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.entrypoint import train_REINFORCE, train_supervised
 from mlprogram.entrypoint.train import Epoch, Iteration
 from mlprogram.synthesizers import Result

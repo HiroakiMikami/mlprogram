@@ -3,10 +3,10 @@ import tempfile
 
 import torch
 
-from mlprogram import Environment
+from mlprogram.builtins import Environment
 from mlprogram.entrypoint import evaluate
 from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
-from mlprogram.metrics import Accuracy, Bleu
+from mlprogram.metrics import Accuracy, Bleu, use_environment
 from mlprogram.synthesizers import Result as DecoderResult
 from mlprogram.utils.data import ListDataset
 
@@ -49,7 +49,10 @@ def synthesize(input):
 
 class TestEvaluateSynthesizer(object):
     def test_simple_case(self):
-        accuracy = Accuracy()
+        accuracy = use_environment(
+            Accuracy(), in_keys=["actual", ["ground_truth", "expected"]],
+            value_key="actual"
+        )
         dataset = ListDataset([
             Environment(
                 {"query": "query0", "ground_truth": "c0"},
@@ -90,7 +93,10 @@ class TestEvaluateSynthesizer(object):
                       True, 0.0) == results.results[2]
 
     def test_multiprocess(self):
-        accuracy = Accuracy()
+        accuracy = use_environment(
+            Accuracy(), in_keys=["actual", ["ground_truth", "expected"]],
+            value_key="actual"
+        )
         dataset = ListDataset([
             Environment(
                 {"query": "query0", "ground_truth": "c0"},
@@ -160,8 +166,16 @@ class TestEvaluate(object):
             evaluate(input, ws, output, dataset,
                      model, self.prepare_synthesizer(model),
                      {
-                         "accuracy": Accuracy(),
-                         "bleu": Bleu(),
+                         "accuracy": use_environment(
+                             Accuracy(),
+                             in_keys=["actual", ["ground_truth", "expected"]],
+                             value_key="actual",
+                         ),
+                         "bleu": use_environment(
+                             Bleu(),
+                             in_keys=["actual", ["ground_truth", "expected"]],
+                             value_key="actual",
+                         ),
                      })
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
@@ -183,8 +197,16 @@ class TestEvaluate(object):
             evaluate(input, ws, output, dataset,
                      model, self.prepare_synthesizer(model),
                      {
-                         "accuracy": Accuracy(),
-                         "bleu": Bleu(),
+                         "accuracy": use_environment(
+                             Accuracy(),
+                             in_keys=["actual", ["ground_truth", "expected"]],
+                             value_key="actual",
+                         ),
+                         "bleu": use_environment(
+                             Bleu(),
+                             in_keys=["actual", ["ground_truth", "expected"]],
+                             value_key="actual",
+                         ),
                      })
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
@@ -204,8 +226,16 @@ class TestEvaluate(object):
             evaluate(input, ws, output, dataset,
                      model, self.prepare_synthesizer(model),
                      {
-                         "accuracy": Accuracy(),
-                         "bleu": Bleu(),
+                         "accuracy": use_environment(
+                             Accuracy(),
+                             in_keys=["actual", ["ground_truth", "expected"]],
+                             value_key="actual",
+                         ),
+                         "bleu": use_environment(
+                             Bleu(),
+                             in_keys=["actual", ["ground_truth", "expected"]],
+                             value_key="actual",
+                         ),
                      }, n_process=2)
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(

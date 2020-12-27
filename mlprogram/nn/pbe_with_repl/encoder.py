@@ -1,9 +1,8 @@
-from typing import cast
+from typing import Tuple
 
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
@@ -12,14 +11,17 @@ class Encoder(nn.Module):
         super().__init__()
         self.module = module
 
-    def forward(self, entry: Environment) -> Environment:
+    def forward(self,
+                test_case_tensor: torch.Tensor,
+                variables_tensor: PaddedSequenceWithMask,
+                test_case_feature: torch.Tensor
+                ) -> Tuple[PaddedSequenceWithMask, torch.Tensor]:
         # (B, N, c)
-        processed_input = cast(torch.Tensor, entry["test_case_tensor"])
+        processed_input = test_case_tensor
         # (L, B, N, c)
-        variables = cast(PaddedSequenceWithMask,
-                         entry["variables_tensor"])
+        variables = variables_tensor
         # (B, N, C)
-        in_feature = cast(torch.Tensor, entry["test_case_feature"])
+        in_feature = test_case_feature
 
         B, N = in_feature.shape[:2]
         C = in_feature.shape[2:]
@@ -53,9 +55,5 @@ class Encoder(nn.Module):
             features.data = torch.zeros(0, B, *C, device=in_feature.device,
                                         dtype=in_feature.dtype)
 
-        entry["reference_features"] = features
-
         reduced_feature = features.data.sum(dim=0)  # reduce sequence length
-        entry["input_feature"] = \
-            torch.cat([in_feature, reduced_feature], dim=1)
-        return entry
+        return features, torch.cat([in_feature, reduced_feature], dim=1)

@@ -15,7 +15,7 @@ from typing import (
 import numpy as np
 import torch
 
-from mlprogram import Environment, logging
+from mlprogram import logging
 from mlprogram.actions import (
     Action,
     ActionSequence,
@@ -26,6 +26,7 @@ from mlprogram.actions import (
     NodeConstraint,
     NodeType,
 )
+from mlprogram.builtins import Environment
 from mlprogram.collections import TopKElement
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.languages import AST, Node, Root, Token
@@ -77,7 +78,7 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                                       bool],
                  transform_input: Callable[[Input], Environment],
                  transform_action_sequence: Callable[[Environment],
-                                                     Environment],
+                                                     Optional[Environment]],
                  collate: Collate,
                  module: torch.nn.Module,
                  eps: float = 1e-5,
@@ -362,7 +363,7 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                         samples.append(state)
 
                 with logger.block("sort_among_all_states"):
-                    samples.sort(key=lambda x: -x.state.score)
+                    samples.sort(key=lambda x: -x.state.score)  # type: ignore
                     for state in samples:
                         state.state.state["action_sequence"] = \
                             state.state.state["action_sequence"]()

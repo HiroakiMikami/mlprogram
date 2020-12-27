@@ -1,6 +1,6 @@
 import math
 from functools import lru_cache
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, cast
 
 import numpy as np
 
@@ -67,13 +67,14 @@ class Interpreter(BaseInterpreter[AST, None, Shape, str]):
                 state: BatchedState[AST, Shape, str]) \
             -> BatchedState[AST, Shape, str]:
         value = self._eval(code, state.environment, len(inputs))
-        next = state.clone()
+        next = cast(BatchedState[AST, Shape, str], state.clone())
         next.history.append(code)
         next.type_environment[code] = code.type_name()
         next.environment[code] = value
         return next
 
-    def _eval(self, code: AST, env: Dict[AST, List[Shape]], n_output: int):
+    def _eval(self, code: AST, env: Dict[AST, List[Shape]], n_output: int) \
+            -> List[np.array]:
         return [self._cached_eval(c).render(
             self.width, self.height, self.resolution)
             for c in self._unreference(code, env, n_output)]

@@ -1,41 +1,42 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
+from torch import nn
 
-from mlprogram import Environment
-from mlprogram.languages.csg import Interpreter
-
-
-class TransformCanvas:
-    def per_canvas(self, variable: List[np.array]) -> torch.Tensor:
-        return torch.stack([torch.tensor(canvas).unsqueeze(0).float() - 0.5
-                            for canvas in variable], dim=0)
-
-    def __call__(self, entry: Environment) -> Environment:
-        if "test_cases" in entry:
-            test_cases = entry["test_cases"]
-            outputs = [output for _, output in test_cases]
-            entry["test_case_tensor"] = self.per_canvas(outputs)
-        if "variables" in entry:
-            variables = entry["variables"]
-            s = entry["test_case_tensor"].shape  # (N, C)
-            if len(variables) == 0:
-                entry["variables_tensor"] = torch.zeros((0, *s))
-            else:
-                entry["variables_tensor"] = torch.stack([
-                    self.per_canvas(canvas) for canvas in variables
-                ])
-        return entry
+from mlprogram.languages.csg import AST, Interpreter
 
 
-class AddTestCases:
+def per_canvas(variable: List[np.array]) -> torch.Tensor:
+    return torch.stack([torch.tensor(canvas).unsqueeze(0).float() - 0.5
+                        for canvas in variable], dim=0)
+
+
+class TransformInputs(nn.Module):
+    def forward(self, test_cases: List[Tuple[None, np.array]]) -> torch.Tensor:
+        outputs = [output for _, output in test_cases]
+        out = per_canvas(outputs)
+        return out
+
+
+class TransformVariables(nn.Module):
+    def forward(self, variables: List[np.array],
+                test_case_tensor: torch.Tensor) -> torch.Tensor:
+        s = test_case_tensor.shape  # (N, C)
+        if len(variables) == 0:
+            return torch.zeros((0, *s))
+        else:
+            return torch.stack([
+                per_canvas(canvas) for canvas in variables
+            ])
+
+
+class AddTestCases(nn.Module):
     def __init__(self, interpreter: Interpreter):
-        self.interpreter = interpreter
+        super().__init__()
+        self.interpreter: Interpreter = interpreter
 
-    def __call__(self, entry: Environment) -> Environment:
-        ground_truth = entry["ground_truth"]
-        entry["test_cases"] = [
+    def __call__(self, ground_truth: AST) -> List[Tuple[None, np.array]]:
+        return[
             (None, output)
             for output in self.interpreter.eval(ground_truth, [None])]
-        return entry

@@ -1,9 +1,6 @@
-from typing import cast
-
 import torch
 import torch.nn as nn
 
-from mlprogram import Environment
 from mlprogram.nn.embedding import EmbeddingWithMask
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
@@ -35,7 +32,7 @@ class NLReader(nn.Module):
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
 
-    def forward(self, inputs: Environment) -> Environment:
+    def forward(self, word_nl_query: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
@@ -48,11 +45,11 @@ class NLReader(nn.Module):
         word_nl_query_features: rnn.PaddedSeqeunceWithMask
             The output sequences of the LSTM
         """
-        nl_query = cast(PaddedSequenceWithMask, inputs["word_nl_query"])
         # Embed query
-        q = nl_query.data + (nl_query.data == -1).long() * (self.num_words + 1)
+        q = word_nl_query.data + \
+            (word_nl_query.data == -1).long() * (self.num_words + 1)
         embeddings = self._embedding(q)  # (embedding_dim,)
-        embeddings = rnn.PaddedSequenceWithMask(embeddings, nl_query.mask)
+        embeddings = rnn.PaddedSequenceWithMask(embeddings, word_nl_query.mask)
 
         L, B, _ = embeddings.data.shape
         device = embeddings.data.device
@@ -84,7 +81,5 @@ class NLReader(nn.Module):
                 .view(1, B, -1)  # (1, B, hidden_size)
 
         output = torch.cat(output, dim=0)  # (L, B, hidden_size)
-        features = rnn.PaddedSequenceWithMask(output, nl_query.mask)
-        inputs["nl_query_features"] = features
-        inputs["reference_features"] = features
-        return inputs
+        features = rnn.PaddedSequenceWithMask(output, word_nl_query.mask)
+        return features
