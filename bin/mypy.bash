@@ -6,13 +6,13 @@ mypy \
     --follow-imports normal \
     --allow-redefinition \
     --warn-redundant-casts \
-    --warn-unused-ignores \
     --warn-return-any \
     --no-implicit-optional \
     --show-column-numbers \
     mlprogram/**/*.py test/**/*.py || exit 1
 
 
+#    --warn-unused-ignores \
 # --disallow-any-expr
 # --disallow-any-decorated
 # --disallow-any-explicit
