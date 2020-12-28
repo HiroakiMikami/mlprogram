@@ -6,50 +6,51 @@ from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
-class NLReader(nn.Module):
-    def __init__(self, num_words: int, embedding_dim: int, hidden_size: int,
+class BidirectionalLSTM(nn.Module):
+    def __init__(self, n_elem: int, embedding_size: int, hidden_size: int,
                  dropout: float = 0.0):
         """
         Parameters
         ----------
-        num_words: int
+        n_elem: int
             The number of words including <unknown> label.
-        embedding_dim: int
+        embedding_size: int
             The dimention of each embedding
         hidden_size: int
             The number of features in LSTM
         dropout: float
             The probability of dropout
         """
-        super(NLReader, self).__init__()
+        super().__init__()
         assert(hidden_size % 2 == 0)
-        self.num_words = num_words
+        self.n_elem = n_elem
         self.hidden_size = hidden_size
-        self._embedding = EmbeddingWithMask(num_words, embedding_dim,
-                                            num_words)
-        self._forward_lstm = nn.LSTMCell(embedding_dim, hidden_size // 2)
-        self._backward_lstm = nn.LSTMCell(embedding_dim, hidden_size // 2)
+        self._embedding = EmbeddingWithMask(n_elem, embedding_size,
+                                            n_elem)
+        self._forward_lstm = nn.LSTMCell(embedding_size, hidden_size // 2)
+        self._backward_lstm = nn.LSTMCell(embedding_size, hidden_size // 2)
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
 
-    def forward(self, word_nl_query: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
+    def forward(self, x: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
-        word_nl_query: rnn.PaddedSequenceWithMask
+        x: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
             The padding value should be -1.
 
         Returns
         -------
-        word_nl_query_features: rnn.PaddedSeqeunceWithMask
+        y: rnn.PaddedSeqeunceWithMask
             The output sequences of the LSTM
         """
         # Embed query
-        q = word_nl_query.data + \
-            (word_nl_query.data == -1).long() * (self.num_words + 1)
+        q = torch.where(
+            x.data != -1, x.data, torch.full_like(x.data, self.n_elem)
+        )
         embeddings = self._embedding(q)  # (embedding_dim,)
-        embeddings = rnn.PaddedSequenceWithMask(embeddings, word_nl_query.mask)
+        embeddings = rnn.PaddedSequenceWithMask(embeddings, x.mask)
 
         L, B, _ = embeddings.data.shape
         device = embeddings.data.device
@@ -59,8 +60,8 @@ class NLReader(nn.Module):
         h = torch.zeros(B, self.hidden_size // 2, device=device)
         c = torch.zeros(B, self.hidden_size // 2, device=device)
         for i in range(L):
-            x = embeddings.data[i, :, :].view(B, -1)
-            x = self._dropout_in(x)
+            tmp = embeddings.data[i, :, :].view(B, -1)
+            tmp = self._dropout_in(tmp)
             h = self._dropout_h(h)
             h, c = self._forward_lstm(x, (h, c))
             h = h * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
@@ -71,8 +72,8 @@ class NLReader(nn.Module):
         h = torch.zeros(B, self.hidden_size // 2, device=device)
         c = torch.zeros(B, self.hidden_size // 2, device=device)
         for i in range(L - 1, -1, -1):
-            x = embeddings.data[i, :, :].view(B, -1)
-            x = self._dropout_in(x)
+            tmp = embeddings.data[i, :, :].view(B, -1)
+            tmp = self._dropout_in(tmp)
             h = self._dropout_h(h)
             h, c = self._backward_lstm(x, (h, c))
             h = h * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
@@ -81,5 +82,5 @@ class NLReader(nn.Module):
                 .view(1, B, -1)  # (1, B, hidden_size)
 
         output = torch.cat(output, dim=0)  # (L, B, hidden_size)
-        features = rnn.PaddedSequenceWithMask(output, word_nl_query.mask)
+        features = rnn.PaddedSequenceWithMask(output, x.mask)
         return features

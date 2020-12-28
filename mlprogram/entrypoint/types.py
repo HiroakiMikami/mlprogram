@@ -187,6 +187,7 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
+    "mlprogram.nn.BidirectionalLSTM": mlprogram.nn.BidirectionalLSTM,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
@@ -200,7 +201,6 @@ types = {
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
     "mlprogram.nn.action_sequence.Accuracy":
         mlprogram.nn.action_sequence.Accuracy,
-    "mlprogram.nn.nl2code.NLReader": mlprogram.nn.nl2code.NLReader,
     "mlprogram.nn.nl2code.ActionSequenceReader":
         mlprogram.nn.nl2code.ActionSequenceReader,
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,

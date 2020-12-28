@@ -62,8 +62,9 @@ class TestNL2Code(object):
         return torch.nn.Sequential(OrderedDict([
             ("encoder",
              Apply(
-                 module=nl2code.NLReader(qencoder.vocab_size, 256, 256, 0.0),
-                 in_keys=["word_nl_query"],
+                 module=mlprogram.nn.BidirectionalLSTM(
+                     qencoder.vocab_size, 256, 256, 0.0),
+                 in_keys=[["word_nl_query", "x"]],
                  out_key="reference_features"
              )),
             ("decoder",

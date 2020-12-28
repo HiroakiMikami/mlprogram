@@ -90,13 +90,13 @@ model = torch.share_memory_(
                 [
                     "encoder",
                     Apply(
-                        module=mlprogram.nn.nl2code.NLReader(
-                            num_words=encoder.word_encoder.vocab_size,
-                            embedding_dim=params.embedding_size,
+                        module=mlprogram.nn.BidirectionalLSTM(
+                            n_elem=encoder.word_encoder.vocab_size,
+                            embedding_size=params.embedding_size,
                             hidden_size=params.hidden_size,
                             dropout=params.dropout,
                         ),
-                        in_keys=["word_nl_query"],
+                        in_keys=[["word_nl_query", "x"]],
                         out_key="reference_features",
                     ),
                 ],
