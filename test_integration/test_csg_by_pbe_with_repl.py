@@ -77,20 +77,17 @@ class TestCsgByPbeWithREPL(object):
              )),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
-                 ("action_sequence_reader",
-                  Apply(
-                      module=a_s.ActionSequenceReader(
-                          n_rule=encoder._rule_encoder.vocab_size,
-                          n_token=encoder._token_encoder.vocab_size,
-                          hidden_size=256,
-                      ),
-                      in_keys=["previous_actions"],
-                      out_key="action_features"
-                  )),
                  ("decoder",
                   Apply(
-                      module=a_s.RnnDecoder(2 * 16 * 8 * 8, 256, 512, 0.0),
-                      in_keys=["input_feature", "action_features", "hidden_state",
+                      module=a_s.LSTMDecoder(
+                          n_rule=encoder._rule_encoder.vocab_size,
+                          n_token=encoder._token_encoder.vocab_size,
+                          input_feature_size=2 * 16 * 8 * 8,
+                          action_feature_size=256,
+                          output_feature_size=512,
+                          dropout=0.0
+                      ),
+                      in_keys=["input_feature", "previous_actions", "hidden_state",
                                "state"],
                       out_key=["action_features", "hidden_state", "state"]
                   )),

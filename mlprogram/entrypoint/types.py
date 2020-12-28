@@ -192,10 +192,8 @@ types = {
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
     "mlprogram.nn.MLP": mlprogram.nn.MLP,
-    "mlprogram.nn.action_sequence.ActionSequenceReader":
-        mlprogram.nn.action_sequence.ActionSequenceReader,
-    "mlprogram.nn.action_sequence.RnnDecoder":
-        mlprogram.nn.action_sequence.RnnDecoder,
+    "mlprogram.nn.action_sequence.LSTMDecoder":
+        mlprogram.nn.action_sequence.LSTMDecoder,
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
