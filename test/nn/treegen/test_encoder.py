@@ -1,20 +1,20 @@
 import numpy as np
 import torch
 
-from mlprogram.nn.treegen import NLReader, NLReaderBlock
+from mlprogram.nn.treegen import Encoder, EncoderBlock
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
-class TestNLReaderBlock(object):
+class TestEncoderBlock(object):
     def setup(self):
         torch.manual_seed(0)
 
     def test_parameters(self):
-        block = NLReaderBlock(2, 3, 1, 0.0, 0)
+        block = EncoderBlock(2, 3, 1, 0.0, 0)
         assert 21 == len(list(block.parameters()))
 
     def test_shape(self):
-        block = NLReaderBlock(2, 3, 1, 0.0, 0)
+        block = EncoderBlock(2, 3, 1, 0.0, 0)
         in0 = torch.Tensor(5, 3)
         in0 = pad_sequence([in0], 0)
         in1 = torch.Tensor(5, 1, 2)
@@ -24,7 +24,7 @@ class TestNLReaderBlock(object):
         assert (1, 5, 5) == weight.shape
 
     def test_mask(self):
-        block = NLReaderBlock(2, 3, 1, 0.0, 0)
+        block = EncoderBlock(2, 3, 1, 0.0, 0)
         in00 = torch.rand(5, 3)
         in01 = torch.rand(7, 3)
         in1 = torch.rand(7, 2, 2)
@@ -39,13 +39,13 @@ class TestNLReaderBlock(object):
                            weight1.detach().numpy())
 
 
-class TestNLReader(object):
+class TestEncoder(object):
     def test_parameters(self):
-        reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
+        reader = Encoder(1, 1, 7, 2, 3, 1, 0.0, 5)
         assert 3 + 21 * 5 == len(list(reader.parameters()))
 
     def test_shape(self):
-        reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
+        reader = Encoder(1, 1, 7, 2, 3, 1, 0.0, 5)
         in0 = torch.zeros(5).long()
         in0 = pad_sequence([in0], 0)
         in1 = torch.zeros(5, 7).long()
@@ -58,7 +58,7 @@ class TestNLReader(object):
         assert (5, 1) == out.mask.shape
 
     def test_mask(self):
-        reader = NLReader(1, 1, 7, 2, 3, 1, 0.0, 5)
+        reader = Encoder(1, 1, 7, 2, 3, 1, 0.0, 5)
         in00 = torch.zeros(5).long()
         in01 = torch.zeros(7).long()
         in10 = torch.zeros(5, 7).long()

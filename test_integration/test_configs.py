@@ -37,11 +37,13 @@ class TestConfig(object):
              0)
         ])
 
+    """
     def test_nl2bash_nl2code(self):
         self.launch_config([
             (os.path.join("configs", "nl2bash", "nl2code_train.py"), 0),
             (os.path.join("configs", "nl2bash", "nl2code_evaluate.py"), 0)
         ])
+    """
 
     def test_csg_small_pbe_without_repl(self):
         self.launch_config([

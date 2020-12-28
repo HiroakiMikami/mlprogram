@@ -10,13 +10,13 @@ from mlprogram.nn.treegen.gating import Gating
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
-class NLReaderBlock(nn.Module):
+class EncoderBlock(nn.Module):
     def __init__(self,
                  char_embed_size: int, hidden_size: int,
-                 n_heads: int, dropout: float, block_idx: int):
-        super(NLReaderBlock, self).__init__()
+                 n_head: int, dropout: float, block_idx: int):
+        super().__init__()
         self.block_idx = block_idx
-        self.attention = nn.MultiheadAttention(hidden_size, n_heads, dropout)
+        self.attention = nn.MultiheadAttention(hidden_size, n_head, dropout)
         self.norm1 = nn.LayerNorm(hidden_size)
         self.gating = Gating(hidden_size, char_embed_size, hidden_size,
                              hidden_size)
@@ -79,22 +79,22 @@ class NLReaderBlock(nn.Module):
         return PaddedSequenceWithMask(h, input.mask), attn
 
 
-class NLReader(nn.Module):
+class Encoder(nn.Module):
     def __init__(self,
-                 token_num: int, char_num: int, max_token_len: int,
+                 n_token: int, n_char: int, max_token_length: int,
                  char_embed_size: int, hidden_size: int,
-                 n_heads: int, dropout: float, n_blocks: int):
-        super(NLReader, self).__init__()
-        self.char_num = char_num
-        self.query_embed = nn.Embedding(token_num, hidden_size)
+                 n_head: int, dropout: float, n_block: int):
+        super().__init__()
+        self.n_char = n_char
+        self.query_embed = nn.Embedding(n_token, hidden_size)
         self.query_elem_embed = ElementEmbedding(
-            EmbeddingWithMask(char_num, hidden_size,
-                              char_num),
-            max_token_len, hidden_size, char_embed_size)
+            EmbeddingWithMask(n_char, hidden_size,
+                              n_char),
+            max_token_length, hidden_size, char_embed_size)
 
-        self.blocks = [NLReaderBlock(
-            char_embed_size, hidden_size, n_heads, dropout, i
-        ) for i in range(n_blocks)]
+        self.blocks = [EncoderBlock(
+            char_embed_size, hidden_size, n_head, dropout, i
+        ) for i in range(n_block)]
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
@@ -120,9 +120,11 @@ class NLReader(nn.Module):
         """
         token_nl_query = word_nl_query
         e_token_query = self.query_embed(token_nl_query.data)
-        char_nl_query = \
-            char_nl_query.data + \
-            (char_nl_query.data == -1) * (self.char_num + 1)
+        char_nl_query = torch.where(
+            char_nl_query.data != -1,
+            char_nl_query.data,
+            torch.full_like(char_nl_query.data, self.n_char)
+        )
         e_char_query = self.query_elem_embed(char_nl_query)
         block_input = PaddedSequenceWithMask(e_token_query,
                                              token_nl_query.mask)

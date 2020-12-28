@@ -63,7 +63,7 @@ class BidirectionalLSTM(nn.Module):
             tmp = embeddings.data[i, :, :].view(B, -1)
             tmp = self._dropout_in(tmp)
             h = self._dropout_h(h)
-            h, c = self._forward_lstm(x, (h, c))
+            h, c = self._forward_lstm(tmp, (h, c))
             h = h * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
             c = c * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
             output.append(h)
@@ -75,7 +75,7 @@ class BidirectionalLSTM(nn.Module):
             tmp = embeddings.data[i, :, :].view(B, -1)
             tmp = self._dropout_in(tmp)
             h = self._dropout_h(h)
-            h, c = self._backward_lstm(x, (h, c))
+            h, c = self._backward_lstm(tmp, (h, c))
             h = h * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
             c = c * embeddings.mask[i, :].view(B, -1)  # (B, hidden_size // 2)
             output[i] = torch.cat([output[i], h], dim=1) \

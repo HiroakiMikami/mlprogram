@@ -8,5 +8,5 @@ from mlprogram.nn.treegen.embedding import (  # noqa
     ActionSignatureEmbedding,
     ElementEmbedding,
 )
+from mlprogram.nn.treegen.encoder import Encoder, EncoderBlock  # noqa
 from mlprogram.nn.treegen.gating import Gating  # noqa
-from mlprogram.nn.treegen.nl_reader import NLReader, NLReaderBlock  # noqa

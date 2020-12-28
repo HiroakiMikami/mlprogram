@@ -63,15 +63,15 @@ model = torch.share_memory_(
                 [
                     "encoder",
                     Apply(
-                        module=mlprogram.nn.treegen.NLReader(
-                            token_num=encoder.word_encoder.vocab_size,
-                            char_num=encoder.char_encoder.vocab_size,
-                            max_token_len=params.max_word_length,
+                        module=mlprogram.nn.treegen.Encoder(
+                            n_token=encoder.word_encoder.vocab_size,
+                            n_char=encoder.char_encoder.vocab_size,
+                            max_token_length=params.max_word_length,
                             char_embed_size=params.char_embedding_size,
                             hidden_size=params.hidden_size,
-                            n_heads=params.n_head,
+                            n_head=params.n_head,
                             dropout=params.dropout,
-                            n_blocks=params.n_block,
+                            n_block=params.n_block,
                         ),
                         in_keys=["word_nl_query", "char_nl_query"],
                         out_key="reference_features",

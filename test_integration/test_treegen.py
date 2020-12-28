@@ -70,7 +70,7 @@ class TestTreeGen(object):
         token_num = aencoder._token_encoder. vocab_size
         return torch.nn.Sequential(OrderedDict([
             ("encoder", Apply(
-                module=treegen.NLReader(
+                module=treegen.Encoder(
                     qencoder.vocab_size, cencoder.vocab_size,
                     10, 256, 256, 1, 0.0, 5
                 ),
