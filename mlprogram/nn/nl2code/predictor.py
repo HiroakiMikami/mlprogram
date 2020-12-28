@@ -5,12 +5,12 @@ import torch.nn as nn
 
 from mlprogram.nn import PointerNet
 from mlprogram.nn.embedding import EmbeddingInverse
-from mlprogram.nn.nl2code import ActionSequenceReader
+from mlprogram.nn.nl2code import Decoder
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class Predictor(nn.Module):
-    def __init__(self, reader: ActionSequenceReader, embedding_size: int,
+    def __init__(self, decoder: Decoder, embedding_size: int,
                  query_size: int, hidden_size: int, att_hidden_size: int):
         """
         Constructor
@@ -29,11 +29,11 @@ class Predictor(nn.Module):
         """
         super(Predictor, self).__init__()
         self.hidden_size = hidden_size
-        self._reader = reader
+        self.decoder = decoder
         self._rule_embed_inv = \
-            EmbeddingInverse(self._reader._rule_embed.num_embeddings)
+            EmbeddingInverse(self.decoder.rule_embed.num_embeddings)
         self._token_embed_inv = \
-            EmbeddingInverse(self._reader._token_embed.num_embeddings)
+            EmbeddingInverse(self.decoder.token_embed.num_embeddings)
         self._l_rule = nn.Linear(hidden_size, embedding_size)
         self._l_token = nn.Linear(hidden_size + query_size, embedding_size)
         self._l_generate = nn.Linear(hidden_size, 3)
@@ -86,14 +86,14 @@ class Predictor(nn.Module):
         rule_pred = torch.tanh(self._l_rule(action_features.data))
         rule_pred = self._rule_embed_inv(
             rule_pred,
-            self._reader._rule_embed)  # (L_a, B, num_rules + 1)
+            self.decoder.rule_embed)  # (L_a, B, num_rules + 1)
         rule_pred = torch.softmax(
             rule_pred[:, :, :-1], dim=2)  # (L_a, B, num_rules)
 
         token_pred = torch.tanh(self._l_token(dc))  # (L_a, B, embedding_size)
         token_pred = self._token_embed_inv(
             token_pred,
-            self._reader._token_embed)  # (L_a, B, num_tokens + 1)
+            self.decoder.token_embed)  # (L_a, B, num_tokens + 1)
         token_pred = torch.softmax(
             token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 

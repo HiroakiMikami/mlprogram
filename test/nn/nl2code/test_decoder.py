@@ -40,28 +40,29 @@ class TestDecoderCell(object):
 
 class TestDecoder(object):
     def test_parameters(self):
-        decoder = Decoder(2, 3, 5, 7, 0.0)
-        assert 8 == len(dict(decoder.named_parameters()))
+        decoder = Decoder(2, 3, 5, 2, 3, 5, 7, 11, 0.0)
+        assert 11 == len(dict(decoder.named_parameters()))
 
     def test_shape(self):
-        decoder = Decoder(2, 3, 5, 7, 0.0)
+        decoder = Decoder(2, 3, 5, 2, 3, 2, 5, 7, 0.0)
         query0 = torch.rand(3, 2)
         query1 = torch.rand(1, 2)
         query = rnn.pad_sequence([query0, query1])
-        input0 = torch.rand(3, 3)  # length = 3
-        input1 = torch.rand(1, 3)  # length = 1
-        input = rnn.pad_sequence([input0, input1])
-        parent_index0 = torch.randint(10, size=(3,))
-        parent_index1 = torch.randint(10, size=(1,))
-        parent_index = rnn.pad_sequence([parent_index0, parent_index1])
+        action0 = torch.LongTensor([[0, 0, 0], [1, 1, 1], [1, 1, 1]])
+        action1 = torch.LongTensor([[0, 0, 0]])
+        actions = rnn.pad_sequence([action0, action1])  # (2, 2, 3)
+        prev_action0 = torch.LongTensor([[0, 0, 0], [1, 1, 1], [1, 1, 1]])
+        prev_action1 = torch.LongTensor([[0, 0, 0]])
+        prev_actions = rnn.pad_sequence(
+            [prev_action0, prev_action1])  # (2, 2, 3)
         history = torch.rand(10, 2, 5)
         h_0 = torch.rand(2, 5)
         c_0 = torch.rand(2, 5)
 
         output, contexts, history, h_n, c_n = decoder(
             nl_query_features=query,
-            action_features=input,
-            parent_indexes=parent_index,
+            actions=actions,
+            previous_actions=prev_actions,
             history=history,
             hidden_state=h_0,
             state=c_0,

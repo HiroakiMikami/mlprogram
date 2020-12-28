@@ -44,12 +44,16 @@ encoder = {
         ),
     ),
 }
-action_sequence_reader = mlprogram.nn.nl2code.ActionSequenceReader(
-    num_rules=encoder.action_sequence_encoder._rule_encoder.vocab_size,
-    num_tokens=encoder.action_sequence_encoder._token_encoder.vocab_size,
-    num_node_types=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
+decoder = mlprogram.nn.nl2code.Decoder(
+    n_rule=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+    n_token=encoder.action_sequence_encoder._token_encoder.vocab_size,
+    n_node_type=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
     node_type_embedding_size=params.node_type_embedding_size,
     embedding_size=params.embedding_size,
+    query_size=params.hidden_size,
+    hidden_size=params.hidden_size,
+    att_hidden_size=params.attr_hidden_size,
+    dropout=params.dropout,
 )
 model = torch.share_memory_(
     model=torch.nn.Sequential(
@@ -74,33 +78,13 @@ model = torch.share_memory_(
                         modules=collections.OrderedDict(
                             items=[
                                 [
-                                    "action_sequence_reader",
-                                    Apply(
-                                        module=action_sequence_reader,
-                                        in_keys=["actions", "previous_actions"],
-                                        out_key=["action_features", "parent_indexes"],
-                                    ),
-                                ],
-                                [
                                     "decoder",
                                     Apply(
-                                        module=mlprogram.nn.nl2code.Decoder(
-                                            query_size=params.hidden_size,
-                                            input_size=add(
-                                                x=mul(
-                                                    x=2,
-                                                    y=params.embedding_size,
-                                                ),
-                                                y=params.node_type_embedding_size,
-                                            ),
-                                            hidden_size=params.hidden_size,
-                                            att_hidden_size=params.attr_hidden_size,
-                                            dropout=params.dropout,
-                                        ),
+                                        module=decoder,
                                         in_keys=[
                                             ["reference_features", "nl_query_features"],
-                                            "action_features",
-                                            "parent_indexes",
+                                            "actions",
+                                            "previous_actions",
                                             "history",
                                             "hidden_state",
                                             "state",

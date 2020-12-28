@@ -199,8 +199,6 @@ types = {
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
     "mlprogram.nn.action_sequence.Accuracy":
         mlprogram.nn.action_sequence.Accuracy,
-    "mlprogram.nn.nl2code.ActionSequenceReader":
-        mlprogram.nn.nl2code.ActionSequenceReader,
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,
     "mlprogram.nn.nl2code.Predictor": mlprogram.nn.nl2code.Predictor,
     "mlprogram.nn.treegen.Encoder": mlprogram.nn.treegen.Encoder,

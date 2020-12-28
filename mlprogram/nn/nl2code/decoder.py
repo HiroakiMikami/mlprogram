@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
+from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -149,17 +150,28 @@ class DecoderCell(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, query_size: int, input_size: int, hidden_size: int,
+    def __init__(self,
+                 n_rule: int, n_token: int, n_node_type: int,
+                 node_type_embedding_size: int, embedding_size: int,
+                 query_size: int, hidden_size: int,
                  att_hidden_size: int, dropout: float = 0.0):
         """
         Constructor
 
         Parameters
         ----------
+        n_rule: int
+            The number of rules
+        n_token: int
+            The number of tokens
+        n_node_type: int
+            The number of node types
+        node_type_embedding_size: int
+            Size of each node-type embedding vector
+        embedding_size: int
+            Size of each embedding vector
         query_size: int
             Size of each query vector
-        input_size: int
-            Size of each input vector
         hidden_size: int
             The number of features in the hidden state
         att_hidden_size: int
@@ -168,15 +180,26 @@ class Decoder(nn.Module):
             The probability of dropout
         """
         super(Decoder, self).__init__()
+        input_size = embedding_size * 2 + node_type_embedding_size
         self.hidden_size = hidden_size
+        self.n_rule = n_rule
+        self.n_token = n_token
+        self.n_node_type = n_node_type
+        self.rule_embed = EmbeddingWithMask(n_rule, embedding_size, n_rule)
+        self.token_embed = EmbeddingWithMask(n_token, embedding_size, n_token)
+        self.node_type_embed = EmbeddingWithMask(n_node_type, node_type_embedding_size,
+                                                 n_node_type)
         self._cell = DecoderCell(
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
+        nn.init.normal_(self.rule_embed.weight, std=0.01)
+        nn.init.normal_(self.token_embed.weight, std=0.01)
+        nn.init.normal_(self.node_type_embed.weight, std=0.01)
 
     def forward(self,
                 nl_query_features: PaddedSequenceWithMask,
-                action_features: PaddedSequenceWithMask,
-                parent_indexes: PaddedSequenceWithMask,
+                actions: PaddedSequenceWithMask,
+                previous_actions: PaddedSequenceWithMask,
                 history: Optional[torch.Tensor],
                 hidden_state: Optional[torch.Tensor],
                 state: Optional[torch.Tensor]
@@ -188,12 +211,18 @@ class Decoder(nn.Module):
         nl_query_features: rnn.PackedSequenceWithMask
             The query embedding vector
             The shape of the query embedding vector is (L_q, B, query_size).
-        action_features: rnn.PackedSequenceWithMask
-            The input sequence of feature vectors.
-            The shape of input is (L_a, B, input_size)
-        parent_indexes: rnn.PackedSequenceWithMask
-            The sequence of parent action indexes.
-            If index is 0, it means that the action is root action.
+
+        actions: rnn.PackedSequenceWithMask
+            The input sequence of action. Each action is represented by
+            the tuple of (ID of the node types, ID of the parent-action's
+            rule, the index of the parent action).
+            The padding value should be -1.
+        previous_actions: rnn.PackedSequenceWithMask
+            The input sequence of previous action. Each action is
+            represented by the tuple of (ID of the applied rule, ID of
+            the inserted token, the index of the word copied from
+            the reference).
+            The padding value should be -1.
         history: torch.FloatTensor
             The list of LSTM states. The shape is (B, L_h, hidden_size)
         hidden_state: torch.Tensor
@@ -214,9 +243,43 @@ class Decoder(nn.Module):
         state: torch.Tensor
             The tuple of the next state. The shape is (B, hidden_size)
         """
+        L_a, B, _ = actions.data.shape
         h_n = hidden_state
         c_n = state
-        B = nl_query_features.data.shape[1]
+
+        node_types, parent_rule, parent_index = torch.split(
+            actions.data, 1, dim=2)  # (L_a, B, 1)
+        prev_rules, prev_tokens, _ = torch.split(
+            previous_actions.data, 1, dim=2)  # (L_a, B, 1)
+
+        # Change the padding value
+        node_types = torch.where(
+            node_types != -1, node_types, torch.full_like(node_types, self.n_node_type)
+        ).reshape([L_a, B])
+        parent_rule = torch.where(
+            parent_rule != -1, parent_rule, torch.full_like(parent_rule, self.n_rule)
+        ).reshape([L_a, B])
+        prev_rules = torch.where(
+            prev_rules != -1, prev_rules, torch.full_like(prev_rules, self.n_rule)
+        ).reshape([L_a, B])
+        prev_tokens = torch.where(
+            prev_tokens != -1, prev_tokens, torch.full_like(prev_tokens, self.n_token)
+        ).reshape([L_a, B])
+
+        # Embed previous actions
+        prev_action_embed = self.rule_embed(prev_rules) + self.token_embed(prev_tokens)
+        # Embed action
+        node_type_embed = self.node_type_embed(node_types)
+        parent_rule_embed = self.rule_embed(parent_rule)
+
+        # Decode embeddings
+        feature = torch.cat(
+            [prev_action_embed, node_type_embed, parent_rule_embed],
+            dim=2
+        )  # (L_a, B, input_size)
+        action_features = PaddedSequenceWithMask(feature, actions.mask)
+        parent_indexes = PaddedSequenceWithMask(parent_index, actions.mask)
+
         if history is None:
             history = torch.zeros(1, B, self.hidden_size,
                                   device=nl_query_features.data.device)
