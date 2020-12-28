@@ -17,7 +17,7 @@ class Predictor(nn.Module):
 
         Parameters
         ----------
-        reader:
+        decoder:
         embedding_size: int
             Size of each embedding vector
         query_size: int

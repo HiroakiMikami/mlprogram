@@ -202,8 +202,6 @@ types = {
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,
     "mlprogram.nn.nl2code.Predictor": mlprogram.nn.nl2code.Predictor,
     "mlprogram.nn.treegen.Encoder": mlprogram.nn.treegen.Encoder,
-    "mlprogram.nn.treegen.ActionSequenceReader":
-        mlprogram.nn.treegen.ActionSequenceReader,
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
     "mlprogram.nn.pbe_with_repl.Encoder": mlprogram.nn.pbe_with_repl.Encoder,
 

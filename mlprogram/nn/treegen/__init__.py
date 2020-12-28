@@ -1,8 +1,8 @@
-from mlprogram.nn.treegen.action_sequence_reader import (  # noqa
-    ActionSequenceReader,
+from mlprogram.nn.treegen.decoder import (  # noqa
     ActionSequenceReaderBlock,
+    Decoder,
+    DecoderBlock,
 )
-from mlprogram.nn.treegen.decoder import Decoder, DecoderBlock  # noqa
 from mlprogram.nn.treegen.embedding import (  # noqa
     ActionEmbedding,
     ActionSignatureEmbedding,

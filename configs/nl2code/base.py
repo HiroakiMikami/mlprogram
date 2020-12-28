@@ -102,7 +102,7 @@ model = torch.share_memory_(
                                     "predictor",
                                     Apply(
                                         module=mlprogram.nn.nl2code.Predictor(
-                                            reader=action_sequence_reader,
+                                            decoder=decoder,
                                             embedding_size=params.embedding_size,
                                             query_size=params.hidden_size,
                                             hidden_size=params.hidden_size,
