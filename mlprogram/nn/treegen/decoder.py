@@ -201,14 +201,13 @@ class Decoder(nn.Module):
                  n_encoder_block: int,
                  n_decoder_block: int):
         super().__init__()
-        self.n_rule = n_rule
         self.action_embed = ActionEmbedding(n_rule, n_token, encoder_hidden_size)
         self.elem_embed = ElementEmbedding(
             ActionSignatureEmbedding(n_token, n_node_type,
                                      encoder_hidden_size),
             max_arity + 1, encoder_hidden_size, rule_embedding_size)
         self.query_embed = ElementEmbedding(
-            EmbeddingWithMask(n_rule, encoder_hidden_size, n_rule),
+            EmbeddingWithMask(n_rule, encoder_hidden_size, -1),
             max_depth, encoder_hidden_size, encoder_hidden_size
         )
         self.encoder_blocks = [ActionSequenceReaderBlock(
@@ -276,9 +275,7 @@ class Decoder(nn.Module):
             action_features, _ = block(action_features, depthes, e_rule_action,
                                        adjacency_matrix)
 
-        q = action_queries.data + \
-            (action_queries.data == -1) * (self.n_rule + 1)
-        embed = self.query_embed(q)
+        embed = self.query_embed(action_queries.data)
         input = PaddedSequenceWithMask(embed, action_queries.mask)
         for block in self.decoder_blocks:
             input, _, _ = block(input, nl_query_features, action_features)

@@ -182,13 +182,10 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         input_size = embedding_size * 2 + node_type_embedding_size
         self.hidden_size = hidden_size
-        self.n_rule = n_rule
-        self.n_token = n_token
-        self.n_node_type = n_node_type
-        self.rule_embed = EmbeddingWithMask(n_rule, embedding_size, n_rule)
-        self.token_embed = EmbeddingWithMask(n_token, embedding_size, n_token)
+        self.rule_embed = EmbeddingWithMask(n_rule, embedding_size, -1)
+        self.token_embed = EmbeddingWithMask(n_token, embedding_size, -1)
         self.node_type_embed = EmbeddingWithMask(n_node_type, node_type_embedding_size,
-                                                 n_node_type)
+                                                 -1)
         self._cell = DecoderCell(
             query_size, input_size, hidden_size, att_hidden_size,
             dropout=dropout)
@@ -253,18 +250,10 @@ class Decoder(nn.Module):
             previous_actions.data, 1, dim=2)  # (L_a, B, 1)
 
         # Change the padding value
-        node_types = torch.where(
-            node_types != -1, node_types, torch.full_like(node_types, self.n_node_type)
-        ).reshape([L_a, B])
-        parent_rule = torch.where(
-            parent_rule != -1, parent_rule, torch.full_like(parent_rule, self.n_rule)
-        ).reshape([L_a, B])
-        prev_rules = torch.where(
-            prev_rules != -1, prev_rules, torch.full_like(prev_rules, self.n_rule)
-        ).reshape([L_a, B])
-        prev_tokens = torch.where(
-            prev_tokens != -1, prev_tokens, torch.full_like(prev_tokens, self.n_token)
-        ).reshape([L_a, B])
+        node_types = node_types.reshape([L_a, B])
+        parent_rule = parent_rule.reshape([L_a, B])
+        prev_rules = prev_rules.reshape([L_a, B])
+        prev_tokens = prev_tokens.reshape([L_a, B])
 
         # Embed previous actions
         prev_action_embed = self.rule_embed(prev_rules) + self.token_embed(prev_tokens)

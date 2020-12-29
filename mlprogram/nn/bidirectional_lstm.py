@@ -23,10 +23,8 @@ class BidirectionalLSTM(nn.Module):
         """
         super().__init__()
         assert(hidden_size % 2 == 0)
-        self.n_elem = n_elem
         self.hidden_size = hidden_size
-        self._embedding = EmbeddingWithMask(n_elem, embedding_size,
-                                            n_elem)
+        self._embedding = EmbeddingWithMask(n_elem, embedding_size, -1)
         self._forward_lstm = nn.LSTMCell(embedding_size, hidden_size // 2)
         self._backward_lstm = nn.LSTMCell(embedding_size, hidden_size // 2)
         self._dropout_in = nn.Dropout(dropout)
@@ -46,10 +44,7 @@ class BidirectionalLSTM(nn.Module):
             The output sequences of the LSTM
         """
         # Embed query
-        q = torch.where(
-            x.data != -1, x.data, torch.full_like(x.data, self.n_elem)
-        )
-        embeddings = self._embedding(q)  # (embedding_dim,)
+        embeddings = self._embedding(x.data)  # (embedding_dim,)
         embeddings = rnn.PaddedSequenceWithMask(embeddings, x.mask)
 
         L, B, _ = embeddings.data.shape

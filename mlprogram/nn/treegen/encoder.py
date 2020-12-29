@@ -85,11 +85,9 @@ class Encoder(nn.Module):
                  char_embed_size: int, hidden_size: int,
                  n_head: int, dropout: float, n_block: int):
         super().__init__()
-        self.n_char = n_char
         self.query_embed = nn.Embedding(n_token, hidden_size)
         self.query_elem_embed = ElementEmbedding(
-            EmbeddingWithMask(n_char, hidden_size,
-                              n_char),
+            EmbeddingWithMask(n_char, hidden_size, -1),
             max_token_length, hidden_size, char_embed_size)
 
         self.blocks = [EncoderBlock(
@@ -120,12 +118,7 @@ class Encoder(nn.Module):
         """
         token_nl_query = word_nl_query
         e_token_query = self.query_embed(token_nl_query.data)
-        char_nl_query = torch.where(
-            char_nl_query.data != -1,
-            char_nl_query.data,
-            torch.full_like(char_nl_query.data, self.n_char)
-        )
-        e_char_query = self.query_elem_embed(char_nl_query)
+        e_char_query = self.query_elem_embed(char_nl_query.data)
         block_input = PaddedSequenceWithMask(e_token_query,
                                              token_nl_query.mask)
         for block in self.blocks:

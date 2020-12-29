@@ -86,16 +86,14 @@ class Predictor(nn.Module):
         rule_pred = torch.tanh(self._l_rule(action_features.data))
         rule_pred = self._rule_embed_inv(
             rule_pred,
-            self.decoder.rule_embed)  # (L_a, B, num_rules + 1)
-        rule_pred = torch.softmax(
-            rule_pred[:, :, :-1], dim=2)  # (L_a, B, num_rules)
+            self.decoder.rule_embed)  # (L_a, B, num_rules)
+        rule_pred = torch.softmax(rule_pred, dim=2)  # (L_a, B, num_rules)
 
         token_pred = torch.tanh(self._l_token(dc))  # (L_a, B, embedding_size)
         token_pred = self._token_embed_inv(
             token_pred,
-            self.decoder.token_embed)  # (L_a, B, num_tokens + 1)
-        token_pred = torch.softmax(
-            token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
+            self.decoder.token_embed)  # (L_a, B, num_tokens)
+        token_pred = torch.softmax(token_pred, dim=2)  # (L_a, B, num_tokens)
 
         # (L_a, B, query_length)
         reference_pred = self._pointer_net(dc, reference_features)

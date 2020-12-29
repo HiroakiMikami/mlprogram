@@ -25,11 +25,9 @@ class ElementEmbedding(nn.Module):
 class ActionEmbedding(nn.Module):
     def __init__(self, rule_num: int, token_num: int, embedding_dim: int):
         super(ActionEmbedding, self).__init__()
-        self.rule_num = rule_num
         self.token_num = token_num
-        self.rule_embed = EmbeddingWithMask(rule_num, embedding_dim, rule_num)
-        self.token_embed = EmbeddingWithMask(token_num + 1, embedding_dim,
-                                             token_num + 1)
+        self.rule_embed = EmbeddingWithMask(rule_num, embedding_dim, -1)
+        self.token_embed = EmbeddingWithMask(token_num + 1, embedding_dim, -1)
 
     def forward(self, sequence: torch.Tensor) -> torch.Tensor:
         """
@@ -50,13 +48,11 @@ class ActionEmbedding(nn.Module):
         L, N = sequence.shape[:2]
 
         rule_seq = sequence[:, :, 0]
-        rule_seq = rule_seq + (rule_seq == -1) * (self.rule_num + 1)
 
         token_seq = sequence[:, :, 1]
         reference_seq = (token_seq == -1) * (sequence[:, :, 2] != -1)
         # reference_seq => self.token_num
         token_seq = token_seq + reference_seq * (self.token_num + 1)
-        token_seq = token_seq + (token_seq == -1) * (self.token_num + 2)
 
         return self.rule_embed(rule_seq) + self.token_embed(token_seq)
 
@@ -66,11 +62,8 @@ class ActionSignatureEmbedding(nn.Module):
                  embedding_dim: int):
         super(ActionSignatureEmbedding, self).__init__()
         self.token_num = token_num
-        self.node_type_num = node_type_num
-        self.node_type_embed = EmbeddingWithMask(
-            node_type_num, embedding_dim, node_type_num)
-        self.token_embed = EmbeddingWithMask(
-            token_num + 1, embedding_dim, token_num + 1)
+        self.node_type_embed = EmbeddingWithMask(node_type_num, embedding_dim, -1)
+        self.token_embed = EmbeddingWithMask(token_num + 1, embedding_dim, -1)
 
     def forward(self, signature: torch.Tensor) -> torch.Tensor:
         """
@@ -92,14 +85,9 @@ class ActionSignatureEmbedding(nn.Module):
         signature = signature.reshape(-1, dims[-1])
 
         node_type_seq = signature[:, 0]
-        node_type_seq = node_type_seq + \
-            (node_type_seq == -1) * (self.node_type_num + 1)
         token_seq = signature[:, 1]
         reference_seq = (token_seq == -1) * (signature[:, 2] != -1)
-        token_seq = token_seq + reference_seq * (self.token_num + 2)
-        token_seq = token_seq + \
-            (token_seq == -1) * (self.token_num + 2)
+        token_seq = token_seq + reference_seq * (self.token_num + 1)
 
-        embed = self.node_type_embed(node_type_seq) + \
-            self.token_embed(token_seq)
+        embed = self.node_type_embed(node_type_seq) + self.token_embed(token_seq)
         return embed.reshape(*dims[:-1], -1)

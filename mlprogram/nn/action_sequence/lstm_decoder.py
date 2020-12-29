@@ -15,10 +15,8 @@ class LSTMDecoder(nn.Module):
                  input_feature_size: int, action_feature_size: int,
                  output_feature_size: int, dropout: float = 0.0):
         super().__init__()
-        self.n_rule = n_rule
-        self.n_token = n_token
-        self._rule_embed = EmbeddingWithMask(n_rule, action_feature_size, n_rule)
-        self._token_embed = EmbeddingWithMask(n_token, action_feature_size, n_token)
+        self._rule_embed = EmbeddingWithMask(n_rule, action_feature_size, -1)
+        self._token_embed = EmbeddingWithMask(n_token, action_feature_size, -1)
         self.output_feature_size = output_feature_size
         self.lstm = nn.LSTMCell(input_feature_size + action_feature_size,
                                 output_feature_size)
@@ -62,17 +60,7 @@ class LSTMDecoder(nn.Module):
             previous_actions.data, 1, dim=2)  # (L_a, B, 1)
 
         # Change the padding value
-        prev_rules = torch.where(
-            prev_rules == -1,
-            torch.full_like(prev_rules, self.n_rule),
-            prev_rules
-        )
         prev_rules = prev_rules.reshape([L_a, B])
-        prev_tokens = torch.where(
-            prev_tokens == -1,
-            torch.full_like(prev_tokens, self.n_token),
-            prev_tokens
-        )
         prev_tokens = prev_tokens.reshape([L_a, B])
 
         # Embed previous actions

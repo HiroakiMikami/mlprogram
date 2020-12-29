@@ -24,14 +24,14 @@ class TestElementEmbedding(object):
         assert (13, 1, 5) == output.shape
 
     def test_mask(self):
-        e0 = ElementEmbedding(EmbeddingWithMask(4, 2, 4), 3, 2, 5)
-        e1 = ElementEmbedding(EmbeddingWithMask(4, 2, 4), 4, 2, 5)
+        e0 = ElementEmbedding(EmbeddingWithMask(4, 2, -1), 3, 2, 5)
+        e1 = ElementEmbedding(EmbeddingWithMask(4, 2, -1), 4, 2, 5)
         e1.embed.weight.data = e0.embed.weight.data
         e1.elem_to_seq.weight.data[:, :, :3] = \
             e0.elem_to_seq.weight.data[:, :, :]
 
         input = torch.randint(3, [11, 1, 4])
-        input[:, :, 3] = 4
+        input[:, :, 3] = -1
         with torch.no_grad():
             output0 = e0(input[:, :, :3])
             output1 = e1(input)
@@ -43,8 +43,8 @@ class TestActionEmbedding(object):
         e = ActionEmbedding(1, 2, 3)
         pshape = {k: v.shape for k, v in e.named_parameters()}
         assert 2 == len(list(e.parameters()))
-        assert (2, 3) == pshape["rule_embed.weight"]
-        assert (4, 3) == pshape["token_embed.weight"]
+        assert (1, 3) == pshape["rule_embed.weight"]
+        assert (3, 3) == pshape["token_embed.weight"]
 
     def test_shape(self):
         e = ActionEmbedding(1, 2, 3)
@@ -86,8 +86,8 @@ class TestActionSignatureEmbedding(object):
         e = ActionSignatureEmbedding(2, 3, 11)
         pshape = {k: v.shape for k, v in e.named_parameters()}
         assert 2 == len(list(e.parameters()))
-        assert (4, 11) == pshape["node_type_embed.weight"]
-        assert (4, 11) == pshape["token_embed.weight"]
+        assert (3, 11) == pshape["node_type_embed.weight"]
+        assert (3, 11) == pshape["token_embed.weight"]
 
     def test_shape(self):
         e = ActionSignatureEmbedding(2, 3, 11)
@@ -115,7 +115,7 @@ class TestActionSignatureEmbedding(object):
 
     def test_reference_embed(self):
         e = ActionSignatureEmbedding(2, 3, 11)
-        input = torch.ones(2, 1, 6, 3, dtype=torch.long) * -1
+        input = torch.full(size=(2, 1, 6, 3), fill_value=-1, dtype=torch.long)
         input[0, :, :, 2] = 0
         input[1, :, :, 2] = 1
         with torch.no_grad():
