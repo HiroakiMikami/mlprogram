@@ -150,24 +150,24 @@ class TestActionSequenceReaderBlock(object):
 
 class TestDecoder(object):
     def test_parameters(self):
-        decoder = Decoder(1, 1, 1, 3, 3, 1, 3, 5, 1, 3, 1, 0.0, 5, 5)
-        assert 192 == len(list(decoder.parameters()))
+        decoder = Decoder(1, 3, 5, 1, 3, 1, 0.0, 5, 5)
+        assert 185 == len(list(decoder.parameters()))
 
     def test_shape(self):
-        decoder = Decoder(1, 1, 1, 3, 3, 1, 1, 5, 3, 3, 1, 0.0, 5, 5)
-        in0 = torch.zeros(5, 3).long()
+        decoder = Decoder(1, 1, 5, 3, 3, 1, 0.0, 5, 5)
+        in0 = torch.rand(5, 1)
         in0 = pad_sequence([in0], 0)
         depth = torch.Tensor(5, 1)
-        in1 = torch.zeros(5, 4, 3).long()
+        in1 = torch.rand(5, 1)
         in1 = pad_sequence([in1], 0)
         adj = torch.Tensor(1, 5, 5)
-        query0 = torch.zeros(5, 3).long()
+        query0 = torch.rand(5, 1)
         nl0 = torch.Tensor(11, 1)
         out = decoder(
-            action_queries=pad_sequence([query0], 0),
+            action_query_features=pad_sequence([query0], 0),
             nl_query_features=pad_sequence([nl0], 0),
-            previous_actions=in0,
-            previous_action_rules=in1,
+            action_features=in0,
+            action_rule_features=in1,
             depthes=depth,
             adjacency_matrix=adj,
         )
@@ -176,29 +176,29 @@ class TestDecoder(object):
 
     def test_mask(self):
         torch.manual_seed(0)
-        decoder = Decoder(1, 1, 1, 3, 3, 1, 1, 5, 3, 3, 1, 0.0, 5, 5)
-        in00 = torch.zeros(5, 3).long()
-        in01 = torch.zeros(7, 3).long()
+        decoder = Decoder(1, 1, 5, 3, 3, 1, 0.0, 5, 5)
+        in00 = torch.rand(5, 1)
+        in01 = torch.rand(7, 1)
         depth = torch.randint(1, [7, 2])
-        in10 = torch.zeros(5, 4, 3).long()
-        in11 = torch.zeros(7, 4, 3).long()
+        in10 = torch.rand(5, 1)
+        in11 = torch.rand(7, 1)
         adj = torch.randint(1, [2, 7, 7]).bool().float()
-        query00 = torch.zeros(5, 3).long()
-        query01 = torch.zeros(7, 3).long()
+        query00 = torch.zeros(5, 1)
+        query01 = torch.zeros(7, 1)
         nl0 = torch.rand(11, 1)
         out0 = decoder(
             nl_query_features=pad_sequence([nl0, nl0], 0),
-            action_queries=pad_sequence([query00, query01], 0),
-            previous_actions=pad_sequence([in00, in01], 0),
-            previous_action_rules=pad_sequence([in10, in11], 0),
+            action_query_features=pad_sequence([query00, query01], 0),
+            action_features=pad_sequence([in00, in01], 0),
+            action_rule_features=pad_sequence([in10, in11], 0),
             depthes=depth,
             adjacency_matrix=adj
         )
         out1 = decoder(
             nl_query_features=pad_sequence([nl0], 0),
-            action_queries=pad_sequence([query00], 0),
-            previous_actions=pad_sequence([in00], 0),
-            previous_action_rules=pad_sequence([in10], 0),
+            action_query_features=pad_sequence([query00], 0),
+            action_features=pad_sequence([in00], 0),
+            action_rule_features=pad_sequence([in10], 0),
             depthes=depth[:5, :1],
             adjacency_matrix=adj[:1, :5, :5]
         )

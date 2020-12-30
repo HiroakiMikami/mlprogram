@@ -2,11 +2,12 @@ import numpy as np
 import torch
 
 from mlprogram.nn import EmbeddingWithMask
-from mlprogram.nn.treegen import (
-    ActionEmbedding,
+from mlprogram.nn.treegen.embedding import (
     ActionSignatureEmbedding,
     ElementEmbedding,
+    NlEmbedding,
 )
+from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class TestElementEmbedding(object):
@@ -36,49 +37,6 @@ class TestElementEmbedding(object):
             output0 = e0(input[:, :, :3])
             output1 = e1(input)
         assert np.allclose(output0.numpy(), output1.numpy())
-
-
-class TestActionEmbedding(object):
-    def test_parameters(self):
-        e = ActionEmbedding(1, 2, 3)
-        pshape = {k: v.shape for k, v in e.named_parameters()}
-        assert 2 == len(list(e.parameters()))
-        assert (1, 3) == pshape["rule_embed.weight"]
-        assert (3, 3) == pshape["token_embed.weight"]
-
-    def test_shape(self):
-        e = ActionEmbedding(1, 2, 3)
-        out = e(torch.zeros(13, 1, 3, dtype=torch.long))
-        assert (13, 1, 3) == out.shape
-
-    def test_rule_mask(self):
-        e = ActionEmbedding(1, 2, 3)
-        input = torch.zeros(13, 1, 3, dtype=torch.long)
-        input[:, :, 0] = -1
-        e(input)
-
-    def test_token_mask(self):
-        e = ActionEmbedding(1, 2, 3)
-        input = torch.zeros(13, 1, 3, dtype=torch.long)
-        input[:, :, 1] = -1
-        e(input)
-
-    def test_reference_mask(self):
-        e = ActionEmbedding(1, 2, 3)
-        input = torch.zeros(13, 1, 3, dtype=torch.long)
-        input[:, :, 2] = -1
-        e(input)
-
-    def test_reference_embed(self):
-        e = ActionEmbedding(1, 2, 3)
-        input = torch.zeros(13, 1, 3, dtype=torch.long)
-        input[0, :, 2] = 0
-        input[1, :, 2] = 1
-        out = e(input)
-        with torch.no_grad():
-            out = e(input)
-
-        assert np.allclose(out[0].numpy(), out[1].numpy())
 
 
 class TestActionSignatureEmbedding(object):
@@ -122,3 +80,21 @@ class TestActionSignatureEmbedding(object):
             output = e(input)
 
         assert np.allclose(output[0].numpy(), output[1].numpy())
+
+
+class TestNlEmbedding(object):
+    def test_parameters(self):
+        e = NlEmbedding(2, 3, 5, 7, 11)
+        assert 3 == len(list(e.parameters()))
+
+    def test_shape(self):
+        e = NlEmbedding(2, 3, 5, 7, 11)
+        w0 = torch.zeros(13).long()
+        w1 = torch.zeros(11).long()
+        w = pad_sequence([w0, w1], padding_value=-1)
+        c0 = torch.zeros(13, 5).long()
+        c1 = torch.zeros(11, 5).long()
+        c = pad_sequence([c0, c1], padding_value=-1)
+        e_w, e_c = e(w, c)
+        assert (13, 2, 11) == e_w.data.shape
+        assert (13, 2, 7) == e_c.data.shape

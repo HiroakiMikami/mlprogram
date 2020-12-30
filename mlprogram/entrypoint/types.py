@@ -193,6 +193,8 @@ types = {
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
     "mlprogram.nn.MLP": mlprogram.nn.MLP,
+    "mlprogram.nn.action_sequence.PreviousActionsEmbedding":
+        mlprogram.nn.action_sequence.PreviousActionsEmbedding,
     "mlprogram.nn.action_sequence.LSTMDecoder":
         mlprogram.nn.action_sequence.LSTMDecoder,
     "mlprogram.nn.action_sequence.Predictor":
@@ -202,6 +204,9 @@ types = {
         mlprogram.nn.action_sequence.Accuracy,
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,
     "mlprogram.nn.nl2code.Predictor": mlprogram.nn.nl2code.Predictor,
+    "mlprogram.nn.treegen.NlEmbedding": mlprogram.nn.treegen.NlEmbedding,
+    "mlprogram.nn.treegen.ActionEmbedding": mlprogram.nn.treegen.ActionEmbedding,
+    "mlprogram.nn.treegen.QueryEmbedding": mlprogram.nn.treegen.QueryEmbedding,
     "mlprogram.nn.treegen.Encoder": mlprogram.nn.treegen.Encoder,
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
     "mlprogram.nn.pbe_with_repl.Encoder": mlprogram.nn.pbe_with_repl.Encoder,

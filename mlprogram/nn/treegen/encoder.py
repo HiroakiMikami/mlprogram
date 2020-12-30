@@ -3,9 +3,8 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from mlprogram.nn import EmbeddingWithMask, SeparableConv1d
+from mlprogram.nn import SeparableConv1d
 from mlprogram.nn.functional import gelu, index_embeddings, lne_to_nel, nel_to_lne
-from mlprogram.nn.treegen.embedding import ElementEmbedding
 from mlprogram.nn.treegen.gating import Gating
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -81,33 +80,28 @@ class EncoderBlock(nn.Module):
 
 class Encoder(nn.Module):
     def __init__(self,
-                 n_token: int, n_char: int, max_token_length: int,
-                 char_embed_size: int, hidden_size: int,
+                 char_embedding_size: int, hidden_size: int,
                  n_head: int, dropout: float, n_block: int):
         super().__init__()
-        self.query_embed = nn.Embedding(n_token, hidden_size)
-        self.query_elem_embed = ElementEmbedding(
-            EmbeddingWithMask(n_char, hidden_size, -1),
-            max_token_length, hidden_size, char_embed_size)
-
         self.blocks = [EncoderBlock(
-            char_embed_size, hidden_size, n_head, dropout, i
+            char_embedding_size, hidden_size, n_head, dropout, i
         ) for i in range(n_block)]
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
     def forward(self,
-                word_nl_query: PaddedSequenceWithMask,
-                char_nl_query: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
+                word_nl_feature: PaddedSequenceWithMask,
+                char_nl_feature: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
-        word_nl_query: rnn.PaddedSequenceWithMask
+        word_nl_feature: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
-            The shape of each sequence is (sequence_length).
-        char_nl_query: rnn.PaddedSequenceWithMask
+            The shape of each sequence is (sequence_length, hidden_size).
+            The padding value should be -1.
+        char_nl_feature: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
-            The shape of each sequence is (sequence_length, max_token_len).
+            The shape of each sequence is (sequence_length, char_embedding_size).
             The padding value should be -1.
 
         Returns
@@ -116,11 +110,7 @@ class Encoder(nn.Module):
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        token_nl_query = word_nl_query
-        e_token_query = self.query_embed(token_nl_query.data)
-        e_char_query = self.query_elem_embed(char_nl_query.data)
-        block_input = PaddedSequenceWithMask(e_token_query,
-                                             token_nl_query.mask)
+        block_input = word_nl_feature
         for block in self.blocks:
-            block_input, _ = block(block_input, e_char_query)
+            block_input, _ = block(block_input, char_nl_feature.data)
         return block_input

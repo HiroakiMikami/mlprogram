@@ -3,18 +3,13 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from mlprogram.nn import EmbeddingWithMask, TreeConvolution
+from mlprogram.nn import TreeConvolution
 from mlprogram.nn.functional import (
     gelu,
     index_embeddings,
     lne_to_nel,
     nel_to_lne,
     position_embeddings,
-)
-from mlprogram.nn.treegen.embedding import (
-    ActionEmbedding,
-    ActionSignatureEmbedding,
-    ElementEmbedding,
 )
 from mlprogram.nn.treegen.gating import Gating
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
@@ -190,8 +185,6 @@ class DecoderBlock(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self,
-                 n_rule: int, n_token: int, n_node_type: int,
-                 max_depth: int, max_arity: int,
                  rule_embedding_size: int,
                  encoder_hidden_size: int, decoder_hidden_size: int,
                  out_size: int,
@@ -201,15 +194,6 @@ class Decoder(nn.Module):
                  n_encoder_block: int,
                  n_decoder_block: int):
         super().__init__()
-        self.action_embed = ActionEmbedding(n_rule, n_token, encoder_hidden_size)
-        self.elem_embed = ElementEmbedding(
-            ActionSignatureEmbedding(n_token, n_node_type,
-                                     encoder_hidden_size),
-            max_arity + 1, encoder_hidden_size, rule_embedding_size)
-        self.query_embed = ElementEmbedding(
-            EmbeddingWithMask(n_rule, encoder_hidden_size, -1),
-            max_depth, encoder_hidden_size, encoder_hidden_size
-        )
         self.encoder_blocks = [ActionSequenceReaderBlock(
             rule_embedding_size, encoder_hidden_size, tree_conv_kernel_size,
             n_head, dropout, i
@@ -228,33 +212,29 @@ class Decoder(nn.Module):
 
     def forward(self,
                 nl_query_features: PaddedSequenceWithMask,
-                action_queries: PaddedSequenceWithMask,
-                previous_actions: PaddedSequenceWithMask,
-                previous_action_rules: PaddedSequenceWithMask,
+                action_query_features: PaddedSequenceWithMask,
+                action_features: PaddedSequenceWithMask,
+                action_rule_features: PaddedSequenceWithMask,
                 depthes: torch.Tensor,
-                adjacency_matrix: torch.Tensor) -> PaddedSequenceWithMask:
+                adjacency_matrix: torch.Tensor
+                ) -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
         nl_query_features: torch.Tensor
             (L_nl, N, nl_feature_size) where L_nl is the sequence length,
             N is the batch size.
-        action_queries: PaddedSequenceWithMask
-            (L_ast, N, max_depth) where L_ast is the sequence length,
+        action_query_features: PaddedSequenceWithMask
+            (L_ast, N, encoder_hidden_size) where L_ast is the sequence length,
             N is the batch size.
-            This tensor encodes the path from the root node to the target node.
-            The padding value should be -1.
-        previous_acitons: rnn.PaddedSequenceWithMask
+        aciton_features: rnn.PaddedSequenceWithMask
             The previous action sequence.
-            The encoded tensor with the shape of
-            (len(action_sequence) + 1, 3). Each action will be encoded by
-            the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the reference).
-            The padding value should be -1.
-        previous_action_rules: rnn.PaddedSequenceWithMask
-            The rule of previous action sequence.
-            The shape of each sequence is
-            (action_length, max_arity + 1, 3).
+            The shape is (L_ast, N, encoder_hidden_size)
+            where L_ast is the sequence length, N is the batch size.
+        action_rule_features: rnn.PaddedSequenceWithMask
+            The previous action sequence.
+            The shape is (L_ast, N, rule_embedding_size)
+            where L_ast is the sequence length, N is the batch size.
         depthes: torch.Tensor
             The depth of actions. The shape is (L, B) where L is the
             sequence length, B is the batch size.
@@ -268,15 +248,12 @@ class Decoder(nn.Module):
             (L_ast, N, out_size) where L_ast is the sequence length,
             N is the batch_size.
         """
-        e_action = self.action_embed(previous_actions.data)
-        e_rule_action = self.elem_embed(previous_action_rules.data)
-        action_features = PaddedSequenceWithMask(e_action, previous_actions.mask)
         for block in self.encoder_blocks:
-            action_features, _ = block(action_features, depthes, e_rule_action,
+            action_features, _ = block(action_features, depthes,
+                                       action_rule_features.data,
                                        adjacency_matrix)
 
-        embed = self.query_embed(action_queries.data)
-        input = PaddedSequenceWithMask(embed, action_queries.mask)
+        input = action_query_features
         for block in self.decoder_blocks:
             input, _, _ = block(input, nl_query_features, action_features)
         return input

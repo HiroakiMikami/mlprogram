@@ -41,35 +41,35 @@ class TestEncoderBlock(object):
 
 class TestEncoder(object):
     def test_parameters(self):
-        reader = Encoder(1, 1, 7, 2, 3, 1, 0.0, 5)
-        assert 3 + 21 * 5 == len(list(reader.parameters()))
+        reader = Encoder(2, 3, 1, 0.0, 5)
+        assert 105 == len(list(reader.parameters()))
 
     def test_shape(self):
-        reader = Encoder(1, 1, 7, 2, 3, 1, 0.0, 5)
-        in0 = torch.zeros(5).long()
+        reader = Encoder(2, 3, 1, 0.0, 5)
+        in0 = torch.rand(5, 3)
         in0 = pad_sequence([in0], 0)
-        in1 = torch.zeros(5, 7).long()
+        in1 = torch.rand(5, 2)
         in1 = pad_sequence([in1], 0)
         out = reader(
-            word_nl_query=in0,
-            char_nl_query=in1
+            word_nl_feature=in0,
+            char_nl_feature=in1
         )
         assert (5, 1, 3) == out.data.shape
         assert (5, 1) == out.mask.shape
 
     def test_mask(self):
-        reader = Encoder(1, 1, 7, 2, 3, 1, 0.0, 5)
-        in00 = torch.zeros(5).long()
-        in01 = torch.zeros(7).long()
-        in10 = torch.zeros(5, 7).long()
-        in11 = torch.zeros(7, 7).long()
+        reader = Encoder(2, 3, 1, 0.0, 5)
+        in00 = torch.rand(5, 3)
+        in01 = torch.rand(7, 3)
+        in10 = torch.rand(5, 2)
+        in11 = torch.rand(7, 2)
         out0 = reader(
-            word_nl_query=pad_sequence([in00, in01], 0),
-            char_nl_query=pad_sequence([in10, in11])
+            word_nl_feature=pad_sequence([in00, in01], 0),
+            char_nl_feature=pad_sequence([in10, in11])
         )
         out1 = reader(
-            word_nl_query=pad_sequence([in00], 0),
-            char_nl_query=pad_sequence([in10])
+            word_nl_feature=pad_sequence([in00], 0),
+            char_nl_feature=pad_sequence([in10])
         )
         out0 = out0.data[:5, :1, :]
         out1 = out1.data

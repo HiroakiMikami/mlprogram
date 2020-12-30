@@ -5,8 +5,8 @@ from mlprogram.nn.treegen.decoder import (  # noqa
 )
 from mlprogram.nn.treegen.embedding import (  # noqa
     ActionEmbedding,
-    ActionSignatureEmbedding,
-    ElementEmbedding,
+    NlEmbedding,
+    QueryEmbedding,
 )
 from mlprogram.nn.treegen.encoder import Encoder, EncoderBlock  # noqa
 from mlprogram.nn.treegen.gating import Gating  # noqa

@@ -69,29 +69,52 @@ class TestTreeGen(object):
         node_type_num = aencoder._node_type_encoder.vocab_size
         token_num = aencoder._token_encoder. vocab_size
         return torch.nn.Sequential(OrderedDict([
-            ("encoder", Apply(
-                module=treegen.Encoder(
-                    qencoder.vocab_size, cencoder.vocab_size,
-                    10, 256, 256, 1, 0.0, 5
-                ),
-                in_keys=["word_nl_query", "char_nl_query"],
-                out_key="reference_features"
-            )),
+            ("encoder", torch.nn.Sequential(OrderedDict([
+                ("embedding", Apply(
+                    module=treegen.NlEmbedding(
+                        qencoder.vocab_size, cencoder.vocab_size,
+                        10, 256, 256
+                    ),
+                    in_keys=["word_nl_query", "char_nl_query"],
+                    out_key=["word_nl_feature", "char_nl_feature"]
+                )),
+                ("encoder", Apply(
+                    module=treegen.Encoder(256, 256, 1, 0.0, 5),
+                    in_keys=["word_nl_feature", "char_nl_feature"],
+                    out_key="reference_features"
+                ))
+            ]))),
             ("decoder", torch.nn.Sequential(OrderedDict([
+                ("query_embedding",
+                 Apply(
+                     module=treegen.QueryEmbedding(
+                         n_rule=rule_num, max_depth=4, embedding_size=256,
+                     ),
+                     in_keys=["action_queries"],
+                     out_key="action_query_features"
+                 )),
+                ("action_embedding",
+                 Apply(
+                     module=treegen.ActionEmbedding(
+                         n_rule=rule_num, n_token=token_num, n_node_type=node_type_num,
+                         max_arity=4,
+                         rule_embedding_size=256, embedding_size=256,
+                     ),
+                     in_keys=["previous_actions",
+                              "previous_action_rules"],
+                     out_key=["action_features", "action_rule_features"])),
                 ("decoder",
                  Apply(
                      module=treegen.Decoder(
-                         n_rule=rule_num, n_token=token_num, n_node_type=node_type_num,
-                         max_depth=4, max_arity=4,
                          rule_embedding_size=256, encoder_hidden_size=256,
                          decoder_hidden_size=1024, out_size=256,
                          tree_conv_kernel_size=3, n_head=1, dropout=0.0,
                          n_encoder_block=5, n_decoder_block=5,
                      ),
                      in_keys=[["reference_features", "nl_query_features"],
-                              "action_queries",
-                              "previous_actions",
-                              "previous_action_rules",
+                              "action_query_features",
+                              "action_features",
+                              "action_rule_features",
                               "depthes",
                               "adjacency_matrix"],
                      out_key="action_features")),
