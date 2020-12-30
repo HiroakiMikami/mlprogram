@@ -93,15 +93,35 @@ model = torch.share_memory_(
             items=[
                 [
                     "encoder",
-                    Apply(
-                        module=mlprogram.nn.BidirectionalLSTM(
-                            n_elem=encoder.word_encoder.vocab_size,
-                            embedding_size=params.embedding_size,
-                            hidden_size=params.hidden_size,
-                            dropout=params.dropout,
-                        ),
-                        in_keys=[["word_nl_query", "x"]],
-                        out_key="reference_features",
+                    torch.nn.Sequential(
+                        modules=collections.OrderedDict(
+                            items=[
+                                [
+                                    "embedding",
+                                    Apply(
+                                        module=mlprogram.nn.EmbeddingWithMask(
+                                            n_id=encoder.word_encoder.vocab_size,
+                                            embedding_size=params.embedding_size,
+                                            ignore_id=-1,
+                                        ),
+                                        in_keys=[["word_nl_query", "x"]],
+                                        out_key="word_nl_feature",
+                                    ),
+                                ],
+                                [
+                                    "lstm",
+                                    Apply(
+                                        module=mlprogram.nn.BidirectionalLSTM(
+                                            input_size=params.embedding_size,
+                                            hidden_size=params.hidden_size,
+                                            dropout=params.dropout,
+                                        ),
+                                        in_keys=[["word_nl_feature", "x"]],
+                                        out_key="reference_features",
+                                    ),
+                                ],
+                            ]
+                        )
                     ),
                 ],
                 [

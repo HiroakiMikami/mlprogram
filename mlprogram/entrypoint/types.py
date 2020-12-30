@@ -187,6 +187,7 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
+    "mlprogram.nn.EmbeddingWithMask": mlprogram.nn.EmbeddingWithMask,
     "mlprogram.nn.BidirectionalLSTM": mlprogram.nn.BidirectionalLSTM,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.Function": mlprogram.nn.Function,

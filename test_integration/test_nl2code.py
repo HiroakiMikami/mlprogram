@@ -61,12 +61,23 @@ class TestNL2Code(object):
         )
         return torch.nn.Sequential(OrderedDict([
             ("encoder",
-             Apply(
-                 module=mlprogram.nn.BidirectionalLSTM(
-                     qencoder.vocab_size, 256, 256, 0.0),
-                 in_keys=[["word_nl_query", "x"]],
-                 out_key="reference_features"
-             )),
+             torch.nn.Sequential(OrderedDict([
+                 ("embedding",
+                  Apply(
+                      module=mlprogram.nn.EmbeddingWithMask(
+                          qencoder.vocab_size, 256, -1
+                      ),
+                      in_keys=[["word_nl_query", "x"]],
+                      out_key="nl_features"
+                  )),
+                 ("lstm",
+                  Apply(
+                      module=mlprogram.nn.BidirectionalLSTM(
+                          256, 256, 0.0),
+                      in_keys=[["nl_features", "x"]],
+                      out_key="reference_features"
+                  )),
+             ]))),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
                  ("decoder",

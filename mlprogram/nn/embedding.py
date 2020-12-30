@@ -1,6 +1,10 @@
+from typing import Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class EmbeddingWithMask(nn.Embedding):
@@ -31,12 +35,22 @@ class EmbeddingWithMask(nn.Embedding):
         nn.init.uniform_(self.weight, -0.1, 0.1)
         self.ignore_id = ignore_id
 
-    def forward(self, x: torch.LongTensor) -> torch.FloatTensor:
-        y = torch.where(x == self.ignore_id, torch.zeros_like(x), x)
+    def forward(self,
+                x: Union[torch.LongTensor, PaddedSequenceWithMask]
+                ) -> Union[torch.Tensor, PaddedSequenceWithMask]:
+        if isinstance(x, PaddedSequenceWithMask):
+            data = x.data
+        else:
+            data = x
+        y = torch.where(data == self.ignore_id, torch.zeros_like(data), data)
         embedding = super().forward(y)
-        return torch.where((x == self.ignore_id).unsqueeze(-1),
-                           torch.zeros_like(embedding),
-                           embedding)
+        out = torch.where((data == self.ignore_id).unsqueeze(-1),
+                          torch.zeros_like(embedding),
+                          embedding)
+        if isinstance(x, PaddedSequenceWithMask):
+            return PaddedSequenceWithMask(out, x.mask)
+        else:
+            return out
 
 
 class EmbeddingInverse(nn.Module):
