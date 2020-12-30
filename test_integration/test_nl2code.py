@@ -53,11 +53,14 @@ class TestNL2Code(object):
         return qencoder, aencoder
 
     def prepare_model(self, qencoder, aencoder):
-        decoder = nl2code.Decoder(
+        embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
             aencoder._rule_encoder.vocab_size,
             aencoder._token_encoder.vocab_size,
             aencoder._node_type_encoder.vocab_size,
-            64, 256, 256, 256, 64, 0.0
+            64, 256
+        )
+        decoder = nl2code.Decoder(
+            embedding.output_size, 256, 256, 64, 0.0
         )
         return torch.nn.Sequential(OrderedDict([
             ("encoder",
@@ -80,13 +83,22 @@ class TestNL2Code(object):
              ]))),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
+                 ("embedding",
+                  Apply(
+                      module=embedding,
+                      in_keys=[
+                          "actions",
+                          "previous_actions",
+                      ],
+                      out_key="action_features"
+                  )),
                  ("decoder",
                   Apply(
                       module=decoder,
                       in_keys=[
                           ["reference_features", "nl_query_features"],
                           "actions",
-                          "previous_actions",
+                          "action_features",
                           "history",
                           "hidden_state",
                           "state",
@@ -101,7 +113,7 @@ class TestNL2Code(object):
                   )),
                  ("predictor",
                   Apply(
-                      module=nl2code.Predictor(decoder, 256, 256, 256, 64),
+                      module=nl2code.Predictor(embedding, 256, 256, 256, 64),
                       in_keys=["reference_features",
                                "action_features", "action_contexts"],
                       out_key=["rule_probs", "token_probs", "reference_probs"],

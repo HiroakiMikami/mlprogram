@@ -76,12 +76,15 @@ encoder = {
         ),
     ),
 }
-decoder = mlprogram.nn.nl2code.Decoder(
+embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
     n_rule=encoder.action_sequence_encoder._rule_encoder.vocab_size,
     n_token=encoder.action_sequence_encoder._token_encoder.vocab_size,
     n_node_type=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
     node_type_embedding_size=params.node_type_embedding_size,
     embedding_size=params.embedding_size,
+)
+decoder = mlprogram.nn.nl2code.Decoder(
+    input_size=embedding.output_size,
     query_size=params.hidden_size,
     hidden_size=params.hidden_size,
     att_hidden_size=params.attr_hidden_size,
@@ -130,13 +133,24 @@ model = torch.share_memory_(
                         modules=collections.OrderedDict(
                             items=[
                                 [
+                                    "embedding",
+                                    Apply(
+                                        module=embedding,
+                                        in_keys=[
+                                            "actions",
+                                            "previous_actions",
+                                        ],
+                                        out_key="action_features",
+                                    ),
+                                ],
+                                [
                                     "decoder",
                                     Apply(
                                         module=decoder,
                                         in_keys=[
                                             ["reference_features", "nl_query_features"],
                                             "actions",
-                                            "previous_actions",
+                                            "action_features",
                                             "history",
                                             "hidden_state",
                                             "state",

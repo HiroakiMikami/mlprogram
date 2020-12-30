@@ -193,6 +193,8 @@ types = {
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
     "mlprogram.nn.MLP": mlprogram.nn.MLP,
+    "mlprogram.nn.action_sequence.ActionsEmbedding":
+        mlprogram.nn.action_sequence.ActionsEmbedding,
     "mlprogram.nn.action_sequence.PreviousActionsEmbedding":
         mlprogram.nn.action_sequence.PreviousActionsEmbedding,
     "mlprogram.nn.action_sequence.LSTMDecoder":

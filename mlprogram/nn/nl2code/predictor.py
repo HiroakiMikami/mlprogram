@@ -4,20 +4,20 @@ import torch
 import torch.nn as nn
 
 from mlprogram.nn import PointerNet
+from mlprogram.nn.action_sequence.embedding import ActionsEmbedding
 from mlprogram.nn.embedding import EmbeddingInverse
-from mlprogram.nn.nl2code import Decoder
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class Predictor(nn.Module):
-    def __init__(self, decoder: Decoder, embedding_size: int,
+    def __init__(self, embedding: ActionsEmbedding, embedding_size: int,
                  query_size: int, hidden_size: int, att_hidden_size: int):
         """
         Constructor
 
         Parameters
         ----------
-        decoder:
+        embedding:
         embedding_size: int
             Size of each embedding vector
         query_size: int
@@ -29,11 +29,13 @@ class Predictor(nn.Module):
         """
         super(Predictor, self).__init__()
         self.hidden_size = hidden_size
-        self.decoder = decoder
-        self._rule_embed_inv = \
-            EmbeddingInverse(self.decoder.rule_embed.num_embeddings)
-        self._token_embed_inv = \
-            EmbeddingInverse(self.decoder.token_embed.num_embeddings)
+        self.embedding = embedding
+        self._rule_embed_inv = EmbeddingInverse(
+            self.embedding.previous_actions_embed.rule_embed.num_embeddings
+        )
+        self._token_embed_inv = EmbeddingInverse(
+            self.embedding.previous_actions_embed.token_embed.num_embeddings
+        )
         self._l_rule = nn.Linear(hidden_size, embedding_size)
         self._l_token = nn.Linear(hidden_size + query_size, embedding_size)
         self._l_generate = nn.Linear(hidden_size, 3)
@@ -86,14 +88,15 @@ class Predictor(nn.Module):
         rule_pred = torch.tanh(self._l_rule(action_features.data))
         rule_pred = self._rule_embed_inv(
             rule_pred,
-            self.decoder.rule_embed)  # (L_a, B, num_rules)
+            self.embedding.previous_actions_embed.rule_embed)  # (L_a, B, num_rules)
         rule_pred = torch.softmax(rule_pred, dim=2)  # (L_a, B, num_rules)
 
         token_pred = torch.tanh(self._l_token(dc))  # (L_a, B, embedding_size)
         token_pred = self._token_embed_inv(
             token_pred,
-            self.decoder.token_embed)  # (L_a, B, num_tokens)
-        token_pred = torch.softmax(token_pred, dim=2)  # (L_a, B, num_tokens)
+            self.embedding.previous_actions_embed.token_embed)  # (L_a, B, num_tokens)
+        # last index represents reference (copy)
+        token_pred = torch.softmax(token_pred[:, :, :-1], dim=2)  # (L_a, B, num_tokens)
 
         # (L_a, B, query_length)
         reference_pred = self._pointer_net(dc, reference_features)

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram.nn.action_sequence import PreviousActionsEmbedding
+from mlprogram.nn.action_sequence import ActionsEmbedding, PreviousActionsEmbedding
 from mlprogram.nn.utils.rnn import pad_sequence
 
 
@@ -45,3 +45,17 @@ class TestPreviousActionsEmbedding(object):
             out = e(pad_sequence([input])).data
 
         assert np.allclose(out[0].numpy(), out[1].numpy())
+
+
+class TestActionsEmbedding(object):
+    def test_parameters(self):
+        e = ActionsEmbedding(1, 2, 3, 4, 5)
+        assert 3 == len(list(e.parameters()))
+
+    def test_shape(self):
+        e = ActionsEmbedding(1, 2, 3, 4, 5)
+        out = e(
+            pad_sequence([torch.zeros(13, 3, dtype=torch.long)]),
+            pad_sequence([torch.zeros(13, 3, dtype=torch.long)]),
+        )
+        assert (13, 1, 14) == out.data.shape
