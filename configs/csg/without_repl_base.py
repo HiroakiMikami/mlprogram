@@ -67,11 +67,21 @@ model = torch.share_memory_(
                         modules=collections.OrderedDict(
                             items=[
                                 [
+                                    "action_embedding",
+                                    Apply(
+                                        module=mlprogram.nn.action_sequence.PreviousActionsEmbedding(
+                                            n_rule=encoder._rule_encoder.vocab_size,
+                                            n_token=encoder._token_encoder.vocab_size,
+                                            embedding_size=256,
+                                        ),
+                                        in_keys=["previous_actions"],
+                                        out_key="action_features",
+                                    ),
+                                ],
+                                [
                                     "decoder",
                                     Apply(
                                         module=mlprogram.nn.action_sequence.LSTMDecoder(
-                                            n_rule=encoder._rule_encoder.vocab_size,
-                                            n_token=encoder._token_encoder.vocab_size,
                                             input_feature_size=mul(
                                                 x=16,
                                                 y=mul(
@@ -85,7 +95,7 @@ model = torch.share_memory_(
                                         ),
                                         in_keys=[
                                             "input_feature",
-                                            "previous_actions",
+                                            "action_features",
                                             "hidden_state",
                                             "state",
                                         ],

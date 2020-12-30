@@ -3,27 +3,22 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
-from mlprogram.nn import EmbeddingWithMask
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class LSTMDecoder(nn.Module):
     def __init__(self,
-                 n_rule: int,
-                 n_token: int,
                  input_feature_size: int, action_feature_size: int,
                  output_feature_size: int, dropout: float = 0.0):
         super().__init__()
-        self._rule_embed = EmbeddingWithMask(n_rule, action_feature_size, -1)
-        self._token_embed = EmbeddingWithMask(n_token, action_feature_size, -1)
         self.output_feature_size = output_feature_size
         self.lstm = nn.LSTMCell(input_feature_size + action_feature_size,
                                 output_feature_size)
 
     def forward(self,
                 input_feature: torch.Tensor,
-                previous_actions: PaddedSequenceWithMask,
+                action_features: PaddedSequenceWithMask,
                 hidden_state: Optional[torch.Tensor],
                 state: Optional[torch.Tensor]
                 ) -> Tuple[PaddedSequenceWithMask, torch.Tensor, torch.Tensor]:
@@ -31,13 +26,9 @@ class LSTMDecoder(nn.Module):
         Parameters
         ----------
         input_feature: torch.Tensor
-        previous_acitons: rnn.PaddedSequenceWithMask
-            The previous action sequence.
-            The encoded tensor with the shape of
-            (len(action_sequence) + 1, 3). Each action will be encoded by
-            the tuple of (ID of the applied rule, ID of the inserted token,
-            the index of the word copied from the reference).
-            The padding value should be -1.
+        aciton_features: rnn.PaddedSequenceWithMask
+            The feature tensor of ActionSequence
+            The shape is (len(action_sequence) + 1, batch_size, action_feature_size)
         hidden_state: torch.Tensor
             The LSTM initial hidden state. The shape is (B, hidden_size)
         state: torch.Tensor
@@ -55,17 +46,7 @@ class LSTMDecoder(nn.Module):
         h_n = hidden_state
         c_n = state
 
-        L_a, B, _ = previous_actions.data.shape
-        prev_rules, prev_tokens, _ = torch.split(
-            previous_actions.data, 1, dim=2)  # (L_a, B, 1)
-
-        # Change the padding value
-        prev_rules = prev_rules.reshape([L_a, B])
-        prev_tokens = prev_tokens.reshape([L_a, B])
-
-        # Embed previous actions
-        action_features = self._rule_embed(prev_rules) + self._token_embed(prev_tokens)
-        action_features = PaddedSequenceWithMask(action_features, previous_actions.mask)
+        L_a, B, _ = action_features.data.shape
 
         if h_n is None:
             h_n = torch.zeros(B, self.output_feature_size,
