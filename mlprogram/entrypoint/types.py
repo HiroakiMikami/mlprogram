@@ -201,6 +201,8 @@ types = {
         mlprogram.nn.action_sequence.AttentionInput,
     "mlprogram.nn.action_sequence.CatInput":
         mlprogram.nn.action_sequence.CatInput,
+    "mlprogram.nn.action_sequence.LSTMTreeDecoder":
+        mlprogram.nn.action_sequence.LSTMTreeDecoder,
     "mlprogram.nn.action_sequence.LSTMDecoder":
         mlprogram.nn.action_sequence.LSTMDecoder,
     "mlprogram.nn.action_sequence.Predictor":

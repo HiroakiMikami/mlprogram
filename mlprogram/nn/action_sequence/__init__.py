@@ -10,4 +10,5 @@ from mlprogram.nn.action_sequence.lstm_decoder import (  # noqa
     InjectInput,
     LSTMDecoder,
 )
+from mlprogram.nn.action_sequence.lstm_tree_decoder import LSTMTreeDecoder  # noqa
 from mlprogram.nn.action_sequence.predictor import Predictor  # noqa

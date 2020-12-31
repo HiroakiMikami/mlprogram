@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -91,6 +91,7 @@ class LSTMDecoder(nn.Module):
                  input_feature_size: int, action_feature_size: int,
                  output_feature_size: int, dropout: float = 0.0):
         super().__init__()
+        self.dropout = dropout
         self.output_feature_size = output_feature_size
         output_size, self.inject_input = inject_input(
             input_feature_size,
@@ -100,7 +101,7 @@ class LSTMDecoder(nn.Module):
         self.lstm = nn.LSTMCell(output_size, output_feature_size)
 
     def forward(self,
-                input_feature: torch.Tensor,
+                input_feature: Any,
                 action_features: PaddedSequenceWithMask,
                 hidden_state: Optional[torch.Tensor],
                 state: Optional[torch.Tensor]
@@ -108,7 +109,7 @@ class LSTMDecoder(nn.Module):
         """
         Parameters
         ----------
-        input_feature: torch.Tensor
+        input_feature: Any
         aciton_features: rnn.PaddedSequenceWithMask
             The feature tensor of ActionSequence
             The shape is (len(action_sequence) + 1, batch_size, action_feature_size)
@@ -141,8 +142,10 @@ class LSTMDecoder(nn.Module):
         hs = []
         cs = []
         for d in torch.split(action_features.data, 1, dim=0):
-            input = self.inject_input(input_feature, d.squeeze(0), s[0], s[1])
-            h1, c1 = self.lstm(input, s)
+            x = nn.functional.dropout(d.squeeze(0), p=self.dropout)
+            h = nn.functional.dropout(s[0], p=self.dropout)
+            input = self.inject_input(input_feature, x, s[0], s[1])
+            h1, c1 = self.lstm(input, (h, s[1]))
             hs.append(h1)
             cs.append(c1)
             s = (h1, c1)
