@@ -4,136 +4,9 @@ import torch
 import torch.nn as nn
 
 from mlprogram.nn.action_sequence import AttentionInput
+from mlprogram.nn.action_sequence.lstm_tree_decoder import query_history
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
-
-
-def query_history(history: torch.FloatTensor, index: torch.LongTensor) \
-        -> torch.FloatTensor:
-    """
-    Return the hidden states of the specified indexes
-
-    Parameters
-    ----------
-    history : torch.FloatTensor
-        The sequence of history. The shape is (L, B, F)
-    index : torch.LongTensor
-        The indexes of history to query. The shape is (B,)
-
-    Returns
-    -------
-    torch.FloatTensor
-        The hidden states of the specified indexes. The shape is (B, F)
-    """
-
-    device = history.device
-    L = history.shape[0]
-    B = history.shape[1]
-    index_onehot = torch.eye(L, device=device)[index]  # (B, L)
-    index_onehot = index_onehot.reshape((B, 1, L))  # (B, 1, L)
-    h = torch.matmul(index_onehot, history.permute([1, 0, 2]))  # (B, 1, *)
-    h = h.reshape((B, *history.shape[2:]))  # (B, *)
-    return h
-
-
-class DecoderCell(nn.Module):
-    """
-    One cell of the decoder
-
-    Notes
-    -----
-    The LSTM cell initialization and dropout are slightly different from
-    the original implementation.
-    """
-
-    def __init__(self, query_size: int, input_size: int, hidden_size: int,
-                 att_hidden_size: int, dropout: float = 0.0):
-        """
-        Constructor
-
-        Parameters
-        ----------
-        query_size: int
-            Size of each query vector
-        input_size: int
-            Size of each input vector
-        hidden_size: int
-            The number of features in the hidden state
-        att_hidden_size: int
-            The number of features in the hidden state for attention
-        dropout: float
-            The probability of dropout
-        """
-        super(DecoderCell, self).__init__()
-        self._dropout_in = nn.Dropout(dropout)
-        self._dropout_h = nn.Dropout(dropout)
-        inject_input = AttentionInput(att_hidden_size)
-        output_size, self.attention_input = inject_input(
-            query_size, input_size + hidden_size, hidden_size, hidden_size
-        )
-        self._lstm_cell = nn.LSTMCell(output_size, hidden_size)
-
-        nn.init.xavier_uniform_(self._lstm_cell.weight_hh)
-        nn.init.xavier_uniform_(self._lstm_cell.weight_ih)
-        nn.init.zeros_(self._lstm_cell.bias_hh)
-        nn.init.zeros_(self._lstm_cell.bias_ih)
-        nn.init.xavier_uniform_(self.attention_input.attn[0].weight)
-        nn.init.zeros_(self.attention_input.attn[0].bias)
-        nn.init.xavier_uniform_(self.attention_input.attn[-1].weight)
-        nn.init.zeros_(self.attention_input.attn[-1].bias)
-
-    def forward(self,
-                query: rnn.PaddedSequenceWithMask,
-                input: torch.FloatTensor,
-                parent_index: torch.LongTensor, history: torch.FloatTensor,
-                state: Tuple[torch.FloatTensor, torch.FloatTensor]
-                ) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
-        """
-        Parameters
-        ----------
-        query: rnn.PackedSequenceWithMask
-            The query embedding vector
-            The shape of the query embedding vector is (L_q, B, query_size).
-        input: torch.FloatTensor
-            The input feature vector. The shape is (B, input_size)
-        parent_index: torch.LongTensor
-            The indexes of the parent actions. The shape is (B).
-            If index is -1, it means that the action is root action.
-        history: torch.FloatTensor
-            The list of LSTM states. The shape is (L_h, B, hidden_size)
-        (h_0, c_0): Tuple[torch.FloatTensor, torch.FloatTensor]
-            The tuple of the LSTM initial states. The shape of each tensor is
-            (B, hidden_size)
-
-        Returns
-        -------
-        ctx_vec : torch.FloatTensor
-            The context vector of this cell. The shape is (B, query_size)
-        (h_1, c_1) : Tuple[torch.FloatTensor, torch.FloatTensor]
-            The tuple of the next states. The shape of each tensor is
-            (B, hidden_size)
-        """
-        h_0, c_0 = state
-        L_q, B, query_size = query.data.shape
-        _, hidden_size = h_0.shape
-        L_h, _, _ = history.shape
-        # Parent_history
-        h_parent = query_history(history, parent_index)
-
-        # dropout for input
-        x = self._dropout_in(input)  # (B, input_size)
-
-        # (B, input_size+input_size)
-        x = torch.cat([x, h_parent], dim=1)
-
-        # attention
-        x = self.attention_input(query, x, h_0, c_0)
-        ctx_vec = x[:, :query_size]
-
-        # dropout for h_0
-        h_0 = self._dropout_h(h_0)  # (B, hidden_size)
-
-        return ctx_vec, self._lstm_cell(x, (h_0, c_0))
 
 
 class Decoder(nn.Module):
@@ -159,9 +32,21 @@ class Decoder(nn.Module):
         """
         super(Decoder, self).__init__()
         self.hidden_size = hidden_size
-        self._cell = DecoderCell(
-            query_size, input_size, hidden_size, att_hidden_size,
-            dropout=dropout)
+        self.dropout = dropout
+        inject_input = AttentionInput(att_hidden_size)
+        output_size, self.inject_input = inject_input(
+            query_size, input_size + hidden_size, hidden_size, hidden_size
+        )
+        self.lstm = nn.LSTMCell(output_size, hidden_size)
+
+        nn.init.xavier_uniform_(self.lstm.weight_hh)
+        nn.init.xavier_uniform_(self.lstm.weight_ih)
+        nn.init.zeros_(self.lstm.bias_hh)
+        nn.init.zeros_(self.lstm.bias_ih)
+        nn.init.xavier_uniform_(self.inject_input.attn[0].weight)
+        nn.init.zeros_(self.inject_input.attn[0].bias)
+        nn.init.xavier_uniform_(self.inject_input.attn[-1].weight)
+        nn.init.zeros_(self.inject_input.attn[-1].bias)
 
     def forward(self,
                 nl_query_features: PaddedSequenceWithMask,
@@ -206,13 +91,12 @@ class Decoder(nn.Module):
         state: torch.Tensor
             The tuple of the next state. The shape is (B, hidden_size)
         """
+        _, _, query_size = nl_query_features.data.shape
         L_a, B, _ = actions.data.shape
         h_n = hidden_state
         c_n = state
 
-        _, _, parent_index = torch.split(actions.data, 1, dim=2)  # (L_a, B, 1)
-
-        parent_indexes = PaddedSequenceWithMask(parent_index, actions.mask)
+        _, _, parent_indexes = torch.split(actions.data, 1, dim=2)  # (L_a, B, 1)
 
         if history is None:
             history = torch.zeros(1, B, self.hidden_size,
@@ -226,12 +110,20 @@ class Decoder(nn.Module):
         s = (h_n, c_n)
         hs = []
         cs = []
-        for d, i in zip(torch.split(action_features.data, 1, dim=0),
-                        torch.split(parent_indexes.data, 1, dim=0)):
-            ctx, s = self._cell(nl_query_features, d.reshape(
-                d.shape[1:]), i, history, s)
-            hs.append(s[0])
+        for d, parent_index in zip(action_features.data, parent_indexes):
+            x = nn.functional.dropout(d, p=self.dropout)
+            h = nn.functional.dropout(s[0], p=self.dropout)
+
+            # Parent_history
+            h_parent = query_history(history, parent_index)
+            x = torch.cat([x, h_parent], dim=1)
+
+            input = self.inject_input(nl_query_features, x, s[0], s[1])
+            ctx = input[:, :query_size]
+            h1, c1 = self.lstm(input, (h, s[1]))
+            hs.append(h1)
             cs.append(ctx)
+            s = (h1, c1)
             history = torch.cat([history,
                                  s[0].reshape(1, *s[0].shape)], dim=0)
         hs = torch.stack(hs)

@@ -140,16 +140,13 @@ class LSTMDecoder(nn.Module):
                               device=action_features.data.device)
         s = (h_n, c_n)
         hs = []
-        cs = []
-        for d in torch.split(action_features.data, 1, dim=0):
-            x = nn.functional.dropout(d.squeeze(0), p=self.dropout)
+        for d in action_features.data:
+            x = nn.functional.dropout(d, p=self.dropout)
             h = nn.functional.dropout(s[0], p=self.dropout)
             input = self.inject_input(input_feature, x, s[0], s[1])
             h1, c1 = self.lstm(input, (h, s[1]))
             hs.append(h1)
-            cs.append(c1)
             s = (h1, c1)
         hs = torch.stack(hs)
-        cs = torch.stack(cs)
 
         return rnn.PaddedSequenceWithMask(hs, action_features.mask), h1, c1

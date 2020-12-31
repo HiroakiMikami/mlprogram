@@ -107,7 +107,7 @@ class LSTMTreeDecoder(nn.Module):
         c_n = state
 
         L_a, B, _ = action_features.data.shape
-        _, _, parent_index = torch.split(actions.data, 1, dim=2)  # (L_a, B, 1)
+        _, _, parent_indexes = torch.split(actions.data, 1, dim=2)  # (L_a, B, 1)
 
         if h_n is None:
             h_n = torch.zeros(B, self.output_feature_size,
@@ -117,9 +117,8 @@ class LSTMTreeDecoder(nn.Module):
                               device=action_features.data.device)
         s = (h_n, c_n)
         hs = []
-        cs = []
-        for d, parent_index in zip(action_features.data, parent_index):
-            x = nn.functional.dropout(d.squeeze(0), p=self.dropout)
+        for d, parent_index in zip(action_features.data, parent_indexes):
+            x = nn.functional.dropout(d, p=self.dropout)
             h = nn.functional.dropout(s[0], p=self.dropout)
 
             # Parent_history
@@ -129,11 +128,9 @@ class LSTMTreeDecoder(nn.Module):
             input = self.inject_input(input_feature, x, s[0], s[1])
             h1, c1 = self.lstm(input, (h, s[1]))
             hs.append(h1)
-            cs.append(c1)
             s = (h1, c1)
             history = torch.cat([history,
                                  s[0].reshape(1, *s[0].shape)], dim=0)
         hs = torch.stack(hs)
-        cs = torch.stack(cs)
 
         return rnn.PaddedSequenceWithMask(hs, action_features.mask), history, h1, c1
