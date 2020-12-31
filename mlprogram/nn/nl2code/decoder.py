@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
+from mlprogram.nn.action_sequence import AttentionInput
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
@@ -70,18 +71,18 @@ class DecoderCell(nn.Module):
         )
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
-        self._attention_layer1 = nn.Linear(
-            query_size + hidden_size, att_hidden_size)
-        self._attention_layer2 = nn.Linear(att_hidden_size, 1)
+        self.attention_input = AttentionInput(
+            query_size, hidden_size, att_hidden_size
+        )
 
         nn.init.xavier_uniform_(self._lstm_cell.weight_hh)
         nn.init.xavier_uniform_(self._lstm_cell.weight_ih)
         nn.init.zeros_(self._lstm_cell.bias_hh)
         nn.init.zeros_(self._lstm_cell.bias_ih)
-        nn.init.xavier_uniform_(self._attention_layer1.weight)
-        nn.init.zeros_(self._attention_layer1.bias)
-        nn.init.xavier_uniform_(self._attention_layer2.weight)
-        nn.init.zeros_(self._attention_layer2.bias)
+        nn.init.xavier_uniform_(self.attention_input.attn[0].weight)
+        nn.init.zeros_(self.attention_input.attn[0].bias)
+        nn.init.xavier_uniform_(self.attention_input.attn[-1].weight)
+        nn.init.zeros_(self.attention_input.attn[-1].bias)
 
     def forward(self,
                 query: rnn.PaddedSequenceWithMask,
@@ -118,33 +119,22 @@ class DecoderCell(nn.Module):
         L_q, B, query_size = query.data.shape
         _, hidden_size = h_0.shape
         L_h, _, _ = history.shape
-
-        # Context
-        h_context = h_0.reshape([1, B, hidden_size])
-        h_context = h_context.expand(L_q, B, hidden_size)
-        # (L_q, B, query_size + hidden_size)
-        att = torch.cat([h_context, query.data], dim=2)
-        # (L_q, B, att_hidden_size)
-        att_hidden = torch.tanh(self._attention_layer1(att))
-        att_raw = self._attention_layer2(att_hidden)  # (L_q, B, 1)
-        att_raw = att_raw.reshape([L_q, B])  # (L_q, B)
-        ctx_att = torch.exp(att_raw -
-                            torch.max(att_raw, dim=0, keepdim=True).values
-                            )  # (L_q, B)
-        ctx_att = ctx_att * query.mask.to(input.dtype)  # (L_q, B)
-        ctx_att = ctx_att / torch.sum(ctx_att, dim=0, keepdim=True)  # (L_q, B)
-        ctx_att = ctx_att.reshape([L_q, B, 1])  # (L_q, B, 1)
-        ctx_vec = torch.sum(query.data * ctx_att, dim=0)  # (B, query_size)
-
         # Parent_history
         h_parent = query_history(history, parent_index)
 
-        # dropout
+        # dropout for input
         x = self._dropout_in(input)  # (B, input_size)
+
+        # (B, input_size+input_size)
+        x = torch.cat([x, h_parent], dim=1)
+
+        # attention
+        x = self.attention_input(query, x, h_0, c_0)
+        ctx_vec = x[:, :query_size]
+
+        # dropout for h_0
         h_0 = self._dropout_h(h_0)  # (B, hidden_size)
 
-        # (B, input_size+query_size+input_size)
-        x = torch.cat([x, ctx_vec, h_parent], dim=1)
         return ctx_vec, self._lstm_cell(x, (h_0, c_0))
 
 
