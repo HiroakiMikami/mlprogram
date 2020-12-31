@@ -19,8 +19,7 @@ def decoder():
 @pytest.fixture
 def decoder_with_attention_input():
     return LSTMDecoder(
-        inject_input=AttentionInput(input_size=2, hidden_state_size=5,
-                                    attn_hidden_size=7),
+        inject_input=AttentionInput(attn_hidden_size=7),
         input_feature_size=2,
         action_feature_size=3,
         output_feature_size=5,

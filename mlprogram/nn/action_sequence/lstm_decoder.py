@@ -1,4 +1,4 @@
-from typing import Any, Generic, Optional, Tuple, TypeVar
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -6,30 +6,16 @@ import torch.nn as nn
 from mlprogram.nn.utils import rnn
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
-V = TypeVar("V")
 
-
-class InjectInput(nn.Module, Generic[V]):
-    def output_size(self, input_size: int,
-                    action_size: int,
-                    hidden_state_size: int,
-                    state_size: int) -> int:
-        raise NotImplementedError
-
-    def forward(self, input_feature: V,
-                action_feature: torch.Tensor,
-                hidden_state: torch.Tensor,
-                state: torch.Tensor) -> torch.Tensor:
+class InjectInput(nn.Module):
+    def forward(self, input_size: int,
+                action_size: int,
+                hidden_state_size: int,
+                state_size: int) -> Tuple[int, nn.Module]:
         raise NotImplementedError
 
 
-class CatInput(InjectInput[torch.Tensor]):
-    def output_size(self, input_size: int,
-                    action_size: int,
-                    hidden_state_size: int,
-                    state_size: int) -> int:
-        return input_size + action_size
-
+class _CatInput(nn.Module):
     def forward(self, input_feature: torch.Tensor,
                 action_feature: torch.Tensor,
                 hidden_state: torch.Tensor,
@@ -44,20 +30,22 @@ class CatInput(InjectInput[torch.Tensor]):
         return torch.cat([input_feature, action_feature], dim=1)
 
 
-class AttentionInput(InjectInput[PaddedSequenceWithMask]):
-    def __init__(self, input_size: int, hidden_state_size: int, attn_hidden_size: int):
+class CatInput(InjectInput):
+    def forward(self, input_size: int,
+                action_size: int,
+                hidden_state_size: int,
+                state_size: int) -> Tuple[int, nn.Module]:
+        return (input_size + action_size, _CatInput())
+
+
+class _AttentionInput(nn.Module):
+    def __init__(self, input_size: int, attn_hidden_size: int):
         super().__init__()
         self.attn = nn.Sequential(
-            nn.Linear(input_size + hidden_state_size, attn_hidden_size),
+            nn.Linear(input_size, attn_hidden_size),
             nn.Tanh(),
             nn.Linear(attn_hidden_size, 1)
         )
-
-    def output_size(self, input_size: int,
-                    action_size: int,
-                    hidden_state_size: int,
-                    state_size: int) -> int:
-        return input_size + action_size
 
     def forward(self, input_feature: PaddedSequenceWithMask,
                 action_feature: torch.Tensor,
@@ -84,20 +72,32 @@ class AttentionInput(InjectInput[PaddedSequenceWithMask]):
         return torch.cat([ctx, action_feature], dim=1)
 
 
+class AttentionInput(InjectInput):
+    def __init__(self, attn_hidden_size: int):
+        super().__init__()
+        self.attn_hidden_size = attn_hidden_size
+
+    def forward(self, input_size: int,
+                action_size: int,
+                hidden_state_size: int,
+                state_size: int) -> Tuple[int, nn.Module]:
+        return (input_size + action_size,
+                _AttentionInput(input_size + hidden_state_size, self.attn_hidden_size))
+
+
 class LSTMDecoder(nn.Module):
     def __init__(self,
-                 inject_input: InjectInput[Any],
+                 inject_input: InjectInput,
                  input_feature_size: int, action_feature_size: int,
                  output_feature_size: int, dropout: float = 0.0):
         super().__init__()
         self.output_feature_size = output_feature_size
-        self.inject_input = inject_input
-        self.lstm = nn.LSTMCell(
-            inject_input.output_size(input_feature_size,
-                                     action_feature_size,
-                                     output_feature_size,
-                                     output_feature_size),
+        output_size, self.inject_input = inject_input(
+            input_feature_size,
+            action_feature_size,
+            output_feature_size,
             output_feature_size)
+        self.lstm = nn.LSTMCell(output_size, output_feature_size)
 
     def forward(self,
                 input_feature: torch.Tensor,

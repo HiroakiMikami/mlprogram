@@ -65,15 +65,13 @@ class DecoderCell(nn.Module):
             The probability of dropout
         """
         super(DecoderCell, self).__init__()
-        self._lstm_cell = nn.LSTMCell(
-            input_size + query_size + hidden_size,
-            hidden_size
-        )
         self._dropout_in = nn.Dropout(dropout)
         self._dropout_h = nn.Dropout(dropout)
-        self.attention_input = AttentionInput(
-            query_size, hidden_size, att_hidden_size
+        inject_input = AttentionInput(att_hidden_size)
+        output_size, self.attention_input = inject_input(
+            query_size, input_size + hidden_size, hidden_size, hidden_size
         )
+        self._lstm_cell = nn.LSTMCell(output_size, hidden_size)
 
         nn.init.xavier_uniform_(self._lstm_cell.weight_hh)
         nn.init.xavier_uniform_(self._lstm_cell.weight_ih)
