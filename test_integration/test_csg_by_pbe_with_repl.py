@@ -90,6 +90,7 @@ class TestCsgByPbeWithREPL(object):
                  ("decoder",
                   Apply(
                       module=a_s.LSTMDecoder(
+                          inject_input=a_s.CatInput(),
                           input_feature_size=2 * 16 * 8 * 8,
                           action_feature_size=256,
                           output_feature_size=512,

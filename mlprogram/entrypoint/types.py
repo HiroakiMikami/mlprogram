@@ -197,6 +197,10 @@ types = {
         mlprogram.nn.action_sequence.ActionsEmbedding,
     "mlprogram.nn.action_sequence.PreviousActionsEmbedding":
         mlprogram.nn.action_sequence.PreviousActionsEmbedding,
+    "mlprogram.nn.action_sequence.AttentionInput":
+        mlprogram.nn.action_sequence.AttentionInput,
+    "mlprogram.nn.action_sequence.CatInput":
+        mlprogram.nn.action_sequence.CatInput,
     "mlprogram.nn.action_sequence.LSTMDecoder":
         mlprogram.nn.action_sequence.LSTMDecoder,
     "mlprogram.nn.action_sequence.Predictor":

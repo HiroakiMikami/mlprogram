@@ -82,6 +82,7 @@ model = torch.share_memory_(
                                     "decoder",
                                     Apply(
                                         module=mlprogram.nn.action_sequence.LSTMDecoder(
+                                            inject_input=mlprogram.nn.action_sequence.CatInput(),
                                             input_feature_size=mul(
                                                 x=16,
                                                 y=mul(
