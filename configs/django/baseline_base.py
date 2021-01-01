@@ -1,4 +1,4 @@
-imports = ["../nl2code/base.py", "base.py"]
+imports = ["../nl2prog_baseline/base.py", "base.py"]
 params = {
     "word_threshold": 5,
     "token_threshold": 5,

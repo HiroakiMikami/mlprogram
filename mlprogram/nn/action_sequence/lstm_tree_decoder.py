@@ -109,6 +109,9 @@ class LSTMTreeDecoder(nn.Module):
         L_a, B, _ = action_features.data.shape
         _, _, parent_indexes = torch.split(actions.data, 1, dim=2)  # (L_a, B, 1)
 
+        if history is None:
+            history = torch.zeros(1, B, self.output_feature_size,
+                                  device=action_features.data.device)
         if h_n is None:
             h_n = torch.zeros(B, self.output_feature_size,
                               device=action_features.data.device)

@@ -1,6 +1,7 @@
-imports = ["base.py"]
+imports = ["baseline_base.py"]
+output_dir = "output/output"
 device = torch.device(
-    type_str="cuda",
+    type_str="cpu",
     index=0,
 )
 main = mlprogram.entrypoint.evaluate(
@@ -10,8 +11,8 @@ main = mlprogram.entrypoint.evaluate(
     valid_dataset=valid_dataset,
     model=model,
     synthesizer=synthesizer,
-    metrics=metrics,
-    top_n=params.metric_top_n,
+    metrics={},
+    top_n=[],
     device=device,
-    n_process=params.n_evaluate_process,
+    n_process=2,
 )

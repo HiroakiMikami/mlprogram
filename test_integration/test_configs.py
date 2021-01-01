@@ -17,10 +17,17 @@ class TestConfig(object):
             for config, n_process in configs:
                 launch_multiprocess(config, "test", tmpdir, n_process)
 
-    def test_django_nl2code(self):
+    def test_django_baseline(self):
         self.launch_config([
-            (os.path.join("configs", "django", "nl2code_train.py"), 0),
-            (os.path.join("configs", "django", "nl2code_evaluate.py"), 0),
+            (os.path.join("configs", "django", "baseline_train.py"), 0),
+            (os.path.join("configs", "django", "baseline_evaluate.py"), 0),
+        ])
+
+    def test_hearthstone_baseline(self):
+        self.launch_config([
+            (os.path.join("configs", "hearthstone", "baseline_train.py"), 0),
+            (os.path.join("configs", "hearthstone", "baseline_evaluate.py"),
+             0),
         ])
 
     def test_hearthstone_nl2code(self):
@@ -38,27 +45,27 @@ class TestConfig(object):
         ])
 
     """
-    def test_nl2bash_nl2code(self):
+    def test_nl2bash_baseline(self):
         self.launch_config([
-            (os.path.join("configs", "nl2bash", "nl2code_train.py"), 0),
-            (os.path.join("configs", "nl2bash", "nl2code_evaluate.py"), 0)
+            (os.path.join("configs", "nl2bash", "baseline_train.py"), 0),
+            (os.path.join("configs", "nl2bash", "baseline_evaluate.py"), 0)
         ])
     """
 
-    def test_csg_small_pbe_without_repl(self):
+    def test_csg_small_pbe_baseline(self):
         self.launch_config([
             (os.path.join("configs", "csg",
-                          "without_repl_train_small.py"), 0),
+                          "baseline_train_small.py"), 0),
             (os.path.join("configs", "csg",
-                          "without_repl_evaluate_small.py"), 0)
+                          "baseline_evaluate_small.py"), 0)
         ])
 
-    def test_csg_large_pbe_without_repl(self):
+    def test_csg_large_pbe_baseline(self):
         self.launch_config([
             (os.path.join("configs", "csg",
-                          "without_repl_train_large.py"), 0),
+                          "baseline_train_large.py"), 0),
             (os.path.join("configs", "csg",
-                          "without_repl_evaluate_large.py"), 0),
+                          "baseline_evaluate_large.py"), 0),
         ])
 
     def test_csg_small_pbe_with_repl(self):

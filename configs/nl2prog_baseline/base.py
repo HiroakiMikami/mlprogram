@@ -51,13 +51,6 @@ embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
     node_type_embedding_size=params.node_type_embedding_size,
     embedding_size=params.embedding_size,
 )
-decoder = mlprogram.nn.nl2code.Decoder(
-    input_size=embedding.output_size,
-    query_size=params.hidden_size,
-    hidden_size=params.hidden_size,
-    att_hidden_size=params.attr_hidden_size,
-    dropout=params.dropout,
-)
 model = torch.share_memory_(
     model=torch.nn.Sequential(
         modules=collections.OrderedDict(
@@ -114,9 +107,17 @@ model = torch.share_memory_(
                                 [
                                     "decoder",
                                     Apply(
-                                        module=decoder,
+                                        module=mlprogram.nn.action_sequence.LSTMTreeDecoder(
+                                            inject_input=mlprogram.nn.action_sequence.AttentionInput(
+                                                attn_hidden_size=params.attr_hidden_size
+                                            ),
+                                            input_feature_size=params.hidden_size,
+                                            action_feature_size=embedding.output_size,
+                                            output_feature_size=params.hidden_size,
+                                            dropout=params.dropout,
+                                        ),
                                         in_keys=[
-                                            ["reference_features", "nl_query_features"],
+                                            ["reference_features", "input_feature"],
                                             "actions",
                                             "action_features",
                                             "history",
@@ -125,7 +126,6 @@ model = torch.share_memory_(
                                         ],
                                         out_key=[
                                             "action_features",
-                                            "action_contexts",
                                             "history",
                                             "hidden_state",
                                             "state",
@@ -135,17 +135,16 @@ model = torch.share_memory_(
                                 [
                                     "predictor",
                                     Apply(
-                                        module=mlprogram.nn.nl2code.Predictor(
-                                            embedding=embedding,
-                                            embedding_size=params.embedding_size,
-                                            query_size=params.hidden_size,
-                                            hidden_size=params.hidden_size,
-                                            att_hidden_size=params.attr_hidden_size,
+                                        module=mlprogram.nn.action_sequence.Predictor(
+                                            feature_size=params.hidden_size,
+                                            reference_feature_size=params.hidden_size,
+                                            hidden_size=params.attr_hidden_size,
+                                            rule_size=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+                                            token_size=encoder.action_sequence_encoder._token_encoder.vocab_size,
                                         ),
                                         in_keys=[
                                             "reference_features",
                                             "action_features",
-                                            "action_contexts",
                                         ],
                                         out_key=[
                                             "rule_probs",
