@@ -1,9 +1,10 @@
 import math
 from functools import lru_cache
-from typing import Callable, Dict, List, cast
+from typing import Callable, List, cast
 
 import numpy as np
 
+from mlprogram import logging
 from mlprogram.languages import BatchedState
 from mlprogram.languages import Interpreter as BaseInterpreter
 from mlprogram.languages.csg import (
@@ -16,6 +17,9 @@ from mlprogram.languages.csg import (
     Translation,
     Union,
 )
+from mlprogram.languages.csg.expander import Expander
+
+logger = logging.Logger(__name__)
 
 
 def show(canvas: np.array) -> str:
@@ -34,7 +38,7 @@ class Shape:
     def __call__(self, x: float, y: float) -> bool:
         return self.is_filled(x, y)
 
-    def render(self, width: int, height: int, resolution: int = 1) -> np.array:
+    def render(self, width: int, height: int, resolution: int = 1) -> np.ndarray:
         canvas = np.zeros((height * resolution, width * resolution),
                           dtype=np.bool)
         for y in range(height * resolution):
@@ -52,62 +56,51 @@ class InvalidNodeTypeException(BaseException):
         super().__init__(f"Invalid node type: {type_name}")
 
 
-class Interpreter(BaseInterpreter[AST, None, Shape, str]):
+class Interpreter(BaseInterpreter[AST, None, np.ndarray, str]):
     def __init__(self, width: int, height: int, resolution: int,
                  delete_used_reference: bool):
         self.width = width
         self.height = height
         self.resolution = resolution
         self.delete_used_reference = delete_used_reference
+        self._expander = Expander()
 
-    def eval(self, code: AST, inputs: List[None]) -> List[np.array]:
-        return self._eval(code, {}, len(inputs))
+    def _render(self, shape: Shape) -> np.ndarray:
+        return shape.render(self.width, self.height, self.resolution)
+
+    def eval(self, code: AST, inputs: List[None]) -> List[np.ndarray]:
+        return [self._render(self._cached_eval(code)) for _ in inputs]
 
     def execute(self, code: AST, inputs: List[None],
-                state: BatchedState[AST, Shape, str]) \
-            -> BatchedState[AST, Shape, str]:
-        value = self._eval(code, state.environment, len(inputs))
-        next = cast(BatchedState[AST, Shape, str], state.clone())
+                state: BatchedState[AST, np.ndarray, str]) \
+            -> BatchedState[AST, np.ndarray, str]:
+        next = cast(BatchedState[AST, np.ndarray, str], state.clone())
         next.history.append(code)
-        next.type_environment[code] = code.type_name()
-        next.environment[code] = value
+        ref = Reference(len(next.history) - 1)
+        next.type_environment[ref] = code.type_name()
+        v = self._render(self._cached_eval(self._expander.unexpand(next.history)))
+        value = [v for _ in inputs]
+        next.environment[ref] = value
+
+        if self.delete_used_reference:
+            def _visit(code: AST):
+                if isinstance(code, Circle) or isinstance(code, Rectangle):
+                    return
+                if isinstance(code, Rotation) or isinstance(code, Translation):
+                    _visit(code.child)
+                    return
+                if isinstance(code, Union) or isinstance(code, Difference):
+                    _visit(code.a)
+                    _visit(code.b)
+                    return
+                if isinstance(code, Reference):
+                    if code not in next.environment:
+                        logger.warning(f"reference {code} is not found in environment")
+                    else:
+                        del next.environment[code]
+                        del next.type_environment[code]
+            _visit(code)
         return next
-
-    def _eval(self, code: AST, env: Dict[AST, List[Shape]], n_output: int) \
-            -> List[np.array]:
-        return [self._cached_eval(c).render(
-            self.width, self.height, self.resolution)
-            for c in self._unreference(code, env, n_output)]
-
-    def _unreference(self, code: AST, refs: Dict[AST, List[Shape]],
-                     n_output: int) \
-            -> List[AST]:
-        if isinstance(code, Circle):
-            return [code for _ in range(n_output)]
-        elif isinstance(code, Rectangle):
-            return [code for _ in range(n_output)]
-        elif isinstance(code, Translation):
-            return [Translation(code.x, code.y, child)
-                    for child in self._unreference(code.child, refs, n_output)]
-        elif isinstance(code, Rotation):
-            return [Rotation(code.theta_degree, child)
-                    for child in self._unreference(code.child, refs, n_output)]
-        elif isinstance(code, Union):
-            return [Union(a, b)
-                    for a, b in zip(self._unreference(code.a, refs, n_output),
-                                    self._unreference(code.b, refs, n_output))
-                    ]
-        elif isinstance(code, Difference):
-            return [Difference(a, b)
-                    for a, b in zip(self._unreference(code.a, refs, n_output),
-                                    self._unreference(code.b, refs, n_output))
-                    ]
-        elif isinstance(code, Reference):
-            if self.delete_used_reference and code.ref in refs:
-                del refs[code.ref]
-            return self._unreference(code.ref, refs, n_output)
-        # TODO assertion error?
-        raise InvalidNodeTypeException(code.type_name())
 
     @lru_cache(maxsize=100)
     def _cached_eval(self, code: AST) -> Shape:

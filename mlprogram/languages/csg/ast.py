@@ -115,14 +115,14 @@ class Difference(AST):
 
 
 class Reference(AST):
-    def __init__(self, ref: AST):
-        self.ref = ref
+    def __init__(self, id: int):
+        self.id = id
 
     def type_name(self) -> str:
         return "Reference"
 
     def state_dict(self) -> Dict[str, Any]:
-        return {"ref": self.ref}
+        return {"id": self.id}
 
     def __str__(self) -> str:
-        return f"Reference(ref={self.ref})"
+        return f"Reference(id={self.id})"

@@ -15,49 +15,60 @@ from mlprogram.languages.csg import (
 
 class Expander(BaseExpander[AST]):
     def expand(self, code: AST) -> List[AST]:
-        retval = []
+        retval: List[AST] = []
 
-        def _visit(code: AST):
+        def _visit(code: AST) -> Reference:
             if isinstance(code, Circle):
-                pass
+                retval.append(code)
             elif isinstance(code, Rectangle):
-                pass
+                retval.append(code)
             elif isinstance(code, Translation):
-                _visit(code.child)
+                retval.append(Translation(
+                    x=code.x, y=code.y,
+                    child=_visit(code.child)
+                ))
             elif isinstance(code, Rotation):
-                _visit(code.child)
+                retval.append(Rotation(
+                    theta_degree=code.theta_degree,
+                    child=_visit(code.child)
+                ))
             elif isinstance(code, Union):
-                _visit(code.a)
-                _visit(code.b)
+                a = _visit(code.a)
+                b = _visit(code.b)
+                retval.append(Union(a=a, b=b))
             elif isinstance(code, Difference):
-                _visit(code.a)
-                _visit(code.b)
+                a = _visit(code.a)
+                b = _visit(code.b)
+                retval.append(Difference(a=a, b=b))
             elif isinstance(code, Reference):
-                _visit(code.ref)
-                retval.append(code.ref)
+                retval.append(code)
+                return code
+            else:
+                raise AssertionError(f"Invalid type: {code}")
+            id = len(retval) - 1
+            return Reference(id)
         _visit(code)
-        retval.append(code)
         return retval
 
     def unexpand(self, code: List[AST]) -> AST:
+        ref_to_code = {
+            Reference(i): c for i, c in enumerate(code)
+        }
+
         def _visit(code: AST) -> AST:
             if isinstance(code, Circle):
                 return code
             elif isinstance(code, Rectangle):
                 return code
             elif isinstance(code, Translation):
-                return Translation(code.x, code.y,
-                                   _visit(code.child))
+                return Translation(code.x, code.y, _visit(code.child))
             elif isinstance(code, Rotation):
-                return Rotation(code.theta_degree,
-                                _visit(code.child))
+                return Rotation(code.theta_degree, _visit(code.child))
             elif isinstance(code, Union):
-                return Union(_visit(code.a),
-                             _visit(code.b))
+                return Union(_visit(code.a), _visit(code.b))
             elif isinstance(code, Difference):
-                return Difference(_visit(code.a),
-                                  _visit(code.b))
+                return Difference(_visit(code.a), _visit(code.b))
             elif isinstance(code, Reference):
-                return Reference(_visit(code.ref))
-            raise AssertionError()
+                return _visit(ref_to_code[code])
+            raise AssertionError(f"Invalid type: {code}")
         return _visit(code[-1])

@@ -77,51 +77,69 @@ class TestInterpreter(object):
     def test_execute(self):
         ref0 = Rectangle(1, 1)
         ref1 = Rectangle(3, 1)
-        ref2 = Difference(Reference(ref0), Reference(ref1))
-        ref3 = Union(Rectangle(1, 1), Reference(ref2))
+        ref2 = Difference(Reference(0), Reference(1))
+        ref3 = Union(Rectangle(1, 1), Reference(2))
         state = BatchedState({}, {}, [])
         interpreter = Interpreter(3, 3, 1, False)
 
         state = interpreter.execute(ref0, [None], state)
         assert state.history == [ref0]
-        assert set(state.environment.keys()) == set([ref0])
-        assert state.type_environment[ref0] == "Rectangle"
-        assert show(state.environment[ref0][0]) == "   \n # \n   \n"
+        assert set(state.environment.keys()) == set([Reference(0)])
+        assert state.type_environment[Reference(0)] == "Rectangle"
+        assert show(state.environment[Reference(0)][0]) == "   \n # \n   \n"
 
         state = interpreter.execute(ref1, [None], state)
         assert state.history == [ref0, ref1]
-        assert set(state.environment.keys()) == set([ref0, ref1])
-        assert show(state.environment[ref1][0]) == "   \n###\n   \n"
+        assert set(state.environment.keys()) == set([Reference(0), Reference(1)])
+        assert show(state.environment[Reference(1)][0]) == "   \n###\n   \n"
 
         state = interpreter.execute(ref2, [None], state)
         assert state.history == [ref0, ref1, ref2]
-        assert set(state.environment.keys()) == set([ref0, ref1, ref2])
-        assert show(state.environment[ref2][0]) == "   \n# #\n   \n"
+        assert set(state.environment.keys()) == \
+            set([Reference(0), Reference(1), Reference(2)])
+        assert show(state.environment[Reference(2)][0]) == "   \n# #\n   \n"
 
         state = interpreter.execute(ref3, [None], state)
         assert state.history == [ref0, ref1, ref2, ref3]
-        assert set(state.environment.keys()) == set([ref0, ref1, ref2, ref3])
-        assert show(state.environment[ref3][0]) == "   \n###\n   \n"
+        assert set(state.environment.keys()) == \
+            set([Reference(0), Reference(1), Reference(2), Reference(3)])
+        assert show(state.environment[Reference(3)][0]) == "   \n###\n   \n"
 
     def test_delete_used_variable(self):
         ref0 = Rectangle(1, 1)
         ref1 = Rectangle(3, 1)
-        ref2 = Difference(Reference(ref0), Reference(ref1))
-        ref3 = Union(Rectangle(1, 1), Reference(ref2))
+        ref2 = Difference(Reference(0), Reference(1))
+        ref3 = Union(Rectangle(1, 1), Reference(2))
         state = BatchedState({}, {}, [])
         interpreter = Interpreter(3, 3, 1, True)
 
         state = interpreter.execute(ref0, [None], state)
-        assert set(state.environment.keys()) == set([ref0])
+        assert set(state.environment.keys()) == set([Reference(0)])
 
         state = interpreter.execute(ref1, [None], state)
-        assert set(state.environment.keys()) == set([ref0, ref1])
+        assert set(state.environment.keys()) == set([Reference(0), Reference(1)])
 
         state = interpreter.execute(ref2, [None], state)
-        assert set(state.environment.keys()) == set([ref2])
+        assert set(state.environment.keys()) == set([Reference(2)])
 
         state = interpreter.execute(ref3, [None], state)
-        assert set(state.environment.keys()) == set([ref3])
+        assert set(state.environment.keys()) == set([Reference(3)])
+
+    def test_draw_same_objects(self):
+        ref0 = Rectangle(1, 1)
+        ref1 = Rectangle(1, 1)
+        ref2 = Rotation(180, Reference(0))
+        state = BatchedState({}, {}, [])
+        interpreter = Interpreter(3, 3, 1, True)
+
+        state = interpreter.execute(ref0, [None], state)
+        assert set(state.environment.keys()) == set([Reference(0)])
+
+        state = interpreter.execute(ref1, [None], state)
+        assert set(state.environment.keys()) == set([Reference(0), Reference(1)])
+
+        state = interpreter.execute(ref2, [None], state)
+        assert set(state.environment.keys()) == set([Reference(1), Reference(2)])
 
     def test_execute_with_multiple_inputs(self):
         ref0 = Rectangle(1, 1)
@@ -129,4 +147,4 @@ class TestInterpreter(object):
         interpreter = Interpreter(3, 3, 1, False)
 
         state = interpreter.execute(ref0, [None, None], state)
-        assert len(state.environment[ref0]) == 2
+        assert len(state.environment[Reference(0)]) == 2

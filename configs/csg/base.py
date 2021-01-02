@@ -13,7 +13,6 @@ dataset = mlprogram.languages.csg.Dataset(
     max_object=option.train_max_object,
     length_stride=1,
     degree_stride=15,
-    reference=reference,
 )
 encoder = with_file_cache(
     path=os.path.join(
@@ -21,8 +20,7 @@ encoder = with_file_cache(
     ),
     config=mlprogram.encoders.ActionSequenceEncoder(
         samples=mlprogram.languages.csg.get_samples(
-            dataset=dataset,
-            parser=parser,
+            dataset=dataset, parser=parser, reference=reference
         ),
         token_threshold=0,
     ),
@@ -46,7 +44,6 @@ test_dataset = mlprogram.utils.data.transform(
             max_object=option.evaluate_max_object,
             length_stride=1,
             degree_stride=15,
-            reference=reference,
             seed=10000,
         ),
         n=option.n_evaluate_dataset,
@@ -68,7 +65,6 @@ valid_dataset = mlprogram.utils.data.transform(
             max_object=option.evaluate_max_object,
             length_stride=1,
             degree_stride=15,
-            reference=reference,
             seed=20000,
         ),
         n=option.n_evaluate_dataset,

@@ -30,7 +30,8 @@ class IsSubtype:
         return subtype == basetype
 
 
-def get_samples(dataset: Dataset, parser: Parser[csgAST]) -> Samples:
+def get_samples(dataset: Dataset, parser: Parser[csgAST],
+                reference: bool = False) -> Samples:
     rules: List[Rule] = []
     node_types = []
     srule = set()
@@ -39,13 +40,15 @@ def get_samples(dataset: Dataset, parser: Parser[csgAST]) -> Samples:
     tokens.extend([("length", x) for x in dataset.length_candidates])
     tokens.extend([("degree", x) for x in dataset.degree_candidates])
 
-    if dataset.reference:
+    if reference:
+        # TODO use expander
         xs = [
-            Circle(1), Rectangle(1, 2),
-            Translation(1, 1, Reference(Circle(1))),
-            Rotation(45, Reference(Circle(1))),
-            Union(Reference(Circle(1)), Reference(Rectangle(1, 2))),
-            Difference(Reference(Circle(1)), Reference(Rectangle(1, 2)))
+            Circle(1),
+            Rectangle(1, 2),
+            Translation(1, 1, Reference(0)),
+            Rotation(45, Reference(1)),
+            Union(Reference(0), Reference(1)),
+            Difference(Reference(0), Reference(1))
         ]
     else:
         xs = [
