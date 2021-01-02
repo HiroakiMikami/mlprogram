@@ -59,7 +59,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 class TestCsgByPbeWithREPL(object):
     def prepare_encoder(self, dataset, parser):
-        return ActionSequenceEncoder(get_samples(dataset, parser),
+        return ActionSequenceEncoder(get_samples(dataset, parser, reference=True),
                                      0)
 
     def prepare_model(self, encoder: ActionSequenceEncoder):
@@ -312,7 +312,7 @@ class TestCsgByPbeWithREPL(object):
         return torch.load(os.path.join(dir, "result.pt"))
 
     def pretrain(self, output_dir):
-        dataset = Dataset(2, 1, 2, 1, 45, reference=True, seed=1)
+        dataset = Dataset(2, 1, 2, 1, 45, seed=1)
         train_dataset = to_map_style_dataset(dataset, 10)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -503,4 +503,4 @@ class TestCsgByPbeWithREPL(object):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             result = self.evaluate(dataset, encoder, tmpdir)
-        assert 0.9 <= result.generation_rate
+        assert 1.0 <= result.generation_rate

@@ -11,7 +11,6 @@ from mlprogram.languages.csg import (
     Circle,
     Difference,
     Rectangle,
-    Reference,
     Rotation,
     Translation,
     Union,
@@ -25,13 +24,11 @@ class Dataset(IterableDataset):
             self, canvas_size: int,
             min_object: int, max_object: int, length_stride: int,
             degree_stride: int,
-            reference: bool = False,
             seed: Optional[int] = None):
         self.canvas_size = canvas_size
         self.min_object = min_object
         self.max_object = max_object
         s = self.canvas_size // 2
-        self.reference = reference
         self.size_candidates = \
             list(range(1, s + 1))[::length_stride]
         self.length_candidates = list(range(-s, s + 1))[::length_stride]
@@ -85,27 +82,6 @@ class Dataset(IterableDataset):
                     raise Exception(f"Invalid type: {t}")
         return list(objects.values())[0]
 
-    def to_reference(self, code: AST) -> AST:
-        if isinstance(code, Circle):
-            return code
-        elif isinstance(code, Rectangle):
-            return code
-        elif isinstance(code, Translation):
-            child = self.to_reference(code.child)
-            return Translation(code.x, code.y, Reference(child))
-        elif isinstance(code, Rotation):
-            child = self.to_reference(code.child)
-            return Rotation(code.theta_degree, Reference(child))
-        elif isinstance(code, Union):
-            retval0 = self.to_reference(code.a)
-            retval1 = self.to_reference(code.b)
-            return Union(Reference(retval0), Reference(retval1))
-        elif isinstance(code, Difference):
-            retval0 = self.to_reference(code.a)
-            retval1 = self.to_reference(code.b)
-            return Difference(Reference(retval0), Reference(retval1))
-        raise AssertionError(f"Invalid node type {code.type_name()}")
-
     def __iter__(self):
         worker_info = data.get_worker_info()
         if worker_info is None:
@@ -126,8 +102,6 @@ class Dataset(IterableDataset):
             def __next__(self) -> Any:
                 n_object = rng.multinomial(1, self.obj_prob).nonzero()[0] + 1
                 ast = self.parent.sample_ast(rng, n_object)
-                if self.parent.reference:
-                    ast = self.parent.to_reference(ast)
                 retval = Environment({"ground_truth": ast}, set(["ground_truth"]))
                 return retval
 

@@ -29,4 +29,4 @@ class TestAST(object):
         assert "Difference" == Difference(Circle(2), Circle(3)).type_name()
 
     def test_reference(self):
-        assert "Reference" == Reference(Circle(2)).type_name()
+        assert "Reference" == Reference(0).type_name()

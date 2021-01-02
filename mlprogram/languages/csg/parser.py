@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 from mlprogram import logging
 from mlprogram.languages import AST, Field, Leaf, Node
@@ -67,7 +67,7 @@ class Parser(BaseParser[csgAST]):
                     Field("b", "CSG", b)
                 ])
         elif isinstance(code, Reference):
-            return Leaf("CSG", code.ref)
+            return Leaf("CSG", code)
         logger.warning(f"Invalid node type {code.type_name()}")
         # TODO throw exception
         return None
@@ -120,22 +120,26 @@ class Parser(BaseParser[csgAST]):
                     return None
                 if not isinstance(fields["b"], AST):
                     return None
-                a, b = self.unparse(fields["a"]), self.unparse(fields["b"])
-                if a is None or b is None:
+                a = self.unparse(fields["a"])
+                if a is None:
                     return None
-                else:
-                    return Union(a, b)
+                b = self.unparse(fields["b"])
+                if b is None:
+                    return None
+                return Union(a, b)
             elif code.get_type_name() == "Difference":
                 if not isinstance(fields["a"], AST):
                     return None
                 if not isinstance(fields["b"], AST):
                     return None
-                a, b = self.unparse(fields["a"]), self.unparse(fields["b"])
-                if a is None or b is None:
+                a = self.unparse(fields["a"])
+                if a is None:
                     return None
-                else:
-                    return Difference(a, b)
+                b = self.unparse(fields["b"])
+                if b is None:
+                    return None
+                return Difference(a, b)
             return None
         elif isinstance(code, Leaf):
-            return Reference(code.value)
+            return cast(csgAST, code.value)
         return None
