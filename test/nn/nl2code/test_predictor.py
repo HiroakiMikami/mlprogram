@@ -1,19 +1,20 @@
 import numpy as np
 import torch
 
-from mlprogram.nn.nl2code import ActionSequenceReader, Predictor
+from mlprogram.nn.action_sequence import ActionsEmbedding
+from mlprogram.nn.nl2code import Predictor
 from mlprogram.nn.utils import rnn
 
 
 class TestPredictor(object):
     def test_parameters(self):
-        reader = ActionSequenceReader(1, 1, 1, 2, 3)
-        predictor = Predictor(reader, 1, 2, 3, 5)
+        embedding = ActionsEmbedding(1, 1, 1, 2, 3)
+        predictor = Predictor(embedding, 1, 2, 3, 5)
         assert 17 == len(dict(predictor.named_parameters()))
 
     def test_shape(self):
-        reader = ActionSequenceReader(1, 1, 1, 1, 1)
-        predictor = Predictor(reader, 1, 2, 3, 5)
+        embedding = ActionsEmbedding(1, 1, 1, 1, 1)
+        predictor = Predictor(embedding, 1, 2, 3, 5)
         feature0 = torch.rand(2, 3)
         feature1 = torch.rand(1, 3)
         feature = rnn.pad_sequence([feature0, feature1])
@@ -40,8 +41,8 @@ class TestPredictor(object):
             [[1, 1], [1, 0]], reference_pred.mask.numpy())
 
     def test_shape_eval(self):
-        reader = ActionSequenceReader(1, 1, 1, 1, 1)
-        predictor = Predictor(reader, 1, 2, 3, 5)
+        embedding = ActionsEmbedding(1, 1, 1, 1, 1)
+        predictor = Predictor(embedding, 1, 2, 3, 5)
         feature0 = torch.rand(2, 3)
         feature1 = torch.rand(1, 3)
         feature = rnn.pad_sequence([feature0, feature1])
@@ -63,8 +64,8 @@ class TestPredictor(object):
         assert (2, 3) == reference_pred.shape
 
     def test_probs(self):
-        reader = ActionSequenceReader(1, 1, 1, 1, 1)
-        predictor = Predictor(reader, 1, 2, 3, 5)
+        embedding = ActionsEmbedding(1, 1, 1, 1, 1)
+        predictor = Predictor(embedding, 1, 2, 3, 5)
         feature0 = torch.rand(2, 3)
         feature1 = torch.rand(1, 3)
         feature = rnn.pad_sequence([feature0, feature1])

@@ -53,34 +53,52 @@ class TestNL2Code(object):
         return qencoder, aencoder
 
     def prepare_model(self, qencoder, aencoder):
-        reader = nl2code.ActionSequenceReader(
+        embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
             aencoder._rule_encoder.vocab_size,
             aencoder._token_encoder.vocab_size,
             aencoder._node_type_encoder.vocab_size,
             64, 256
         )
+        decoder = nl2code.Decoder(
+            embedding.output_size, 256, 256, 64, 0.0
+        )
         return torch.nn.Sequential(OrderedDict([
             ("encoder",
-             Apply(
-                 module=nl2code.NLReader(qencoder.vocab_size, 256, 256, 0.0),
-                 in_keys=["word_nl_query"],
-                 out_key="reference_features"
-             )),
+             torch.nn.Sequential(OrderedDict([
+                 ("embedding",
+                  Apply(
+                      module=mlprogram.nn.EmbeddingWithMask(
+                          qencoder.vocab_size, 256, -1
+                      ),
+                      in_keys=[["word_nl_query", "x"]],
+                      out_key="nl_features"
+                  )),
+                 ("lstm",
+                  Apply(
+                      module=mlprogram.nn.BidirectionalLSTM(
+                          256, 256, 0.0),
+                      in_keys=[["nl_features", "x"]],
+                      out_key="reference_features"
+                  )),
+             ]))),
             ("decoder",
              torch.nn.Sequential(OrderedDict([
-                 ("action_sequence_reader",
+                 ("embedding",
                   Apply(
-                      module=reader,
-                      in_keys=["actions", "previous_actions"],
-                      out_key=["action_features", "parent_indexes"]
+                      module=embedding,
+                      in_keys=[
+                          "actions",
+                          "previous_actions",
+                      ],
+                      out_key="action_features"
                   )),
                  ("decoder",
                   Apply(
-                      module=nl2code.Decoder(256, 2 * 256 + 64, 256, 64, 0.0),
+                      module=decoder,
                       in_keys=[
                           ["reference_features", "nl_query_features"],
+                          "actions",
                           "action_features",
-                          "parent_indexes",
                           "history",
                           "hidden_state",
                           "state",
@@ -95,7 +113,7 @@ class TestNL2Code(object):
                   )),
                  ("predictor",
                   Apply(
-                      module=nl2code.Predictor(reader, 256, 256, 256, 64),
+                      module=nl2code.Predictor(embedding, 256, 256, 256, 64),
                       in_keys=["reference_features",
                                "action_features", "action_contexts"],
                       out_key=["rule_probs", "token_probs", "reference_probs"],

@@ -3,27 +3,40 @@ import torch
 import torch.nn as nn
 
 from mlprogram.nn.embedding import EmbeddingInverse, EmbeddingWithMask
+from mlprogram.nn.utils.rnn import pad_sequence
 
 
 class TestEmbeddingWithMask(object):
     def test_parameters(self):
-        embedding = EmbeddingWithMask(2, 3, 0)
+        embedding = EmbeddingWithMask(2, 3, -1)
         params = dict(embedding.named_parameters())
         assert ["weight"] == list(params.keys())
-        assert [(3, 3)] == list(
+        assert [(2, 3)] == list(
             map(lambda x: x.shape, params.values()))
 
+    def test_embedding_sequence(self):
+        x0 = torch.LongTensor([0, 1])
+        x1 = torch.LongTensor([0, 1, 1])
+        x = pad_sequence([x0, x1], padding_value=-1)
+        embedding = EmbeddingWithMask(2, 2, -1)
+        torch.nn.init.eye_(embedding.weight)
+        output = embedding(x)
+        assert np.allclose([[1, 0], [0, 1], [0, 0]],
+                           output.data[:, 0, :].detach().numpy())
+        assert np.array_equal([[1, 1], [1, 1], [0, 1]],
+                              output.mask.detach().numpy())
+
     def test_embedding(self):
-        x = torch.LongTensor([1, 2])
-        embedding = EmbeddingWithMask(2, 3, 0)
+        x = torch.LongTensor([0, 1, -1])
+        embedding = EmbeddingWithMask(2, 2, -1)
         torch.nn.init.eye_(embedding.weight)
         output = embedding(x)
         assert np.allclose(
-            [[0, 1, 0], [0, 0, 1]], output.detach().numpy())
+            [[1, 0], [0, 1], [0, 0]], output.detach().numpy())
 
     def test_mask(self):
-        x = torch.LongTensor([1])
-        embedding = EmbeddingWithMask(2, 3, 1)
+        x = torch.LongTensor([-1])
+        embedding = EmbeddingWithMask(2, 3, -1)
         torch.nn.init.eye_(embedding.weight)
         output = embedding(x)
         assert np.allclose([[0, 0, 0]], output.detach().numpy())

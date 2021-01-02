@@ -1,4 +1,5 @@
-imports = ["../nl2code/base.py", "base.py"]
+imports = ["../nl2prog_baseline/base.py", "base.py"]
+
 params = {
     "word_threshold": 3,
     "token_threshold": 0,
@@ -13,8 +14,8 @@ params = {
     "snapshot_interval": 1,
     "beam_size": 15,
     "max_step_size": 350,
-    "metric_top_n": [1, 3],
+    "metric_top_n": [1],
     "metric_threshold": 1.0,
-    "metric": "bleu@3",
+    "metric": "bleu@1",
     "n_evaluate_process": 2,
 }

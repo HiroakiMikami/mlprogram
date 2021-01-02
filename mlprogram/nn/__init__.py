@@ -1,4 +1,5 @@
 from mlprogram.nn.aggregated_loss import AggregatedLoss  # noqa
+from mlprogram.nn.bidirectional_lstm import BidirectionalLSTM  # noqa
 from mlprogram.nn.cnn import CNN2d  # noqa
 from mlprogram.nn.embedding import EmbeddingWithMask  # noqa
 from mlprogram.nn.function import Function  # noqa

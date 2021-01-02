@@ -1,6 +1,10 @@
+from typing import Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class EmbeddingWithMask(nn.Embedding):
@@ -8,18 +12,18 @@ class EmbeddingWithMask(nn.Embedding):
     The embedding layer masking invalid values as 0
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int,
-                 value_to_mask: int):
+    def __init__(self, n_id: int, embedding_size: int,
+                 ignore_id: int):
         """
         Constructor
 
         Parameters
         ----------
-        num_embeddings : int
+        n_id : int
             Size of the dictionary of embeddings
-        embedding_dim : int
+        embedding_size : int
             Size of each embedding vector
-        value_to_mask : int
+        ignore_id : int
             The ID that should be masked
 
         Returns
@@ -27,16 +31,26 @@ class EmbeddingWithMask(nn.Embedding):
         nn.Module
             The emebedding layer
         """
-        super(EmbeddingWithMask, self).__init__(
-            num_embeddings + 1, embedding_dim)
+        super().__init__(n_id, embedding_size)
         nn.init.uniform_(self.weight, -0.1, 0.1)
-        self._value_to_mask = value_to_mask
+        self.ignore_id = ignore_id
 
-    def forward(self, input: torch.LongTensor) -> torch.FloatTensor:
-        embedding = super(EmbeddingWithMask, self).forward(input)
-        mask = 1 - (input == self._value_to_mask).to(embedding.dtype)
-
-        return embedding * mask.reshape([*mask.shape, 1])
+    def forward(self,
+                x: Union[torch.LongTensor, PaddedSequenceWithMask]
+                ) -> Union[torch.Tensor, PaddedSequenceWithMask]:
+        if isinstance(x, PaddedSequenceWithMask):
+            data = x.data
+        else:
+            data = x
+        y = torch.where(data == self.ignore_id, torch.zeros_like(data), data)
+        embedding = super().forward(y)
+        out = torch.where((data == self.ignore_id).unsqueeze(-1),
+                          torch.zeros_like(embedding),
+                          embedding)
+        if isinstance(x, PaddedSequenceWithMask):
+            return PaddedSequenceWithMask(out, x.mask)
+        else:
+            return out
 
 
 class EmbeddingInverse(nn.Module):

@@ -3,20 +3,19 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from mlprogram.nn import EmbeddingWithMask, SeparableConv1d
+from mlprogram.nn import SeparableConv1d
 from mlprogram.nn.functional import gelu, index_embeddings, lne_to_nel, nel_to_lne
-from mlprogram.nn.treegen.embedding import ElementEmbedding
 from mlprogram.nn.treegen.gating import Gating
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
-class NLReaderBlock(nn.Module):
+class EncoderBlock(nn.Module):
     def __init__(self,
                  char_embed_size: int, hidden_size: int,
-                 n_heads: int, dropout: float, block_idx: int):
-        super(NLReaderBlock, self).__init__()
+                 n_head: int, dropout: float, block_idx: int):
+        super().__init__()
         self.block_idx = block_idx
-        self.attention = nn.MultiheadAttention(hidden_size, n_heads, dropout)
+        self.attention = nn.MultiheadAttention(hidden_size, n_head, dropout)
         self.norm1 = nn.LayerNorm(hidden_size)
         self.gating = Gating(hidden_size, char_embed_size, hidden_size,
                              hidden_size)
@@ -79,37 +78,30 @@ class NLReaderBlock(nn.Module):
         return PaddedSequenceWithMask(h, input.mask), attn
 
 
-class NLReader(nn.Module):
+class Encoder(nn.Module):
     def __init__(self,
-                 token_num: int, char_num: int, max_token_len: int,
-                 char_embed_size: int, hidden_size: int,
-                 n_heads: int, dropout: float, n_blocks: int):
-        super(NLReader, self).__init__()
-        self.char_num = char_num
-        self.query_embed = nn.Embedding(token_num, hidden_size)
-        self.query_elem_embed = ElementEmbedding(
-            EmbeddingWithMask(char_num, hidden_size,
-                              char_num),
-            max_token_len, hidden_size, char_embed_size)
-
-        self.blocks = [NLReaderBlock(
-            char_embed_size, hidden_size, n_heads, dropout, i
-        ) for i in range(n_blocks)]
+                 char_embedding_size: int, hidden_size: int,
+                 n_head: int, dropout: float, n_block: int):
+        super().__init__()
+        self.blocks = [EncoderBlock(
+            char_embedding_size, hidden_size, n_head, dropout, i
+        ) for i in range(n_block)]
         for i, block in enumerate(self.blocks):
             self.add_module(f"block_{i}", block)
 
     def forward(self,
-                word_nl_query: PaddedSequenceWithMask,
-                char_nl_query: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
+                word_nl_feature: PaddedSequenceWithMask,
+                char_nl_feature: PaddedSequenceWithMask) -> PaddedSequenceWithMask:
         """
         Parameters
         ----------
-        word_nl_query: rnn.PaddedSequenceWithMask
+        word_nl_feature: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
-            The shape of each sequence is (sequence_length).
-        char_nl_query: rnn.PaddedSequenceWithMask
+            The shape of each sequence is (sequence_length, hidden_size).
+            The padding value should be -1.
+        char_nl_feature: rnn.PaddedSequenceWithMask
             The minibatch of sequences.
-            The shape of each sequence is (sequence_length, max_token_len).
+            The shape of each sequence is (sequence_length, char_embedding_size).
             The padding value should be -1.
 
         Returns
@@ -118,14 +110,7 @@ class NLReader(nn.Module):
             (L, N, hidden_size) where L is the sequence length,
             N is the batch size.
         """
-        token_nl_query = word_nl_query
-        e_token_query = self.query_embed(token_nl_query.data)
-        char_nl_query = \
-            char_nl_query.data + \
-            (char_nl_query.data == -1) * (self.char_num + 1)
-        e_char_query = self.query_elem_embed(char_nl_query)
-        block_input = PaddedSequenceWithMask(e_token_query,
-                                             token_nl_query.mask)
+        block_input = word_nl_feature
         for block in self.blocks:
-            block_input, _ = block(block_input, e_char_query)
+            block_input, _ = block(block_input, char_nl_feature.data)
         return block_input

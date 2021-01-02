@@ -44,10 +44,10 @@ encoder = {
         ),
     ),
 }
-action_sequence_reader = mlprogram.nn.nl2code.ActionSequenceReader(
-    num_rules=encoder.action_sequence_encoder._rule_encoder.vocab_size,
-    num_tokens=encoder.action_sequence_encoder._token_encoder.vocab_size,
-    num_node_types=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
+embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
+    n_rule=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+    n_token=encoder.action_sequence_encoder._token_encoder.vocab_size,
+    n_node_type=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
     node_type_embedding_size=params.node_type_embedding_size,
     embedding_size=params.embedding_size,
 )
@@ -57,15 +57,35 @@ model = torch.share_memory_(
             items=[
                 [
                     "encoder",
-                    Apply(
-                        module=mlprogram.nn.nl2code.NLReader(
-                            num_words=encoder.word_encoder.vocab_size,
-                            embedding_dim=params.embedding_size,
-                            hidden_size=params.hidden_size,
-                            dropout=params.dropout,
-                        ),
-                        in_keys=["word_nl_query"],
-                        out_key="reference_features",
+                    torch.nn.Sequential(
+                        modules=collections.OrderedDict(
+                            items=[
+                                [
+                                    "embedding",
+                                    Apply(
+                                        module=mlprogram.nn.EmbeddingWithMask(
+                                            n_id=encoder.word_encoder.vocab_size,
+                                            embedding_size=params.embedding_size,
+                                            ignore_id=-1,
+                                        ),
+                                        in_keys=[["word_nl_query", "x"]],
+                                        out_key="word_nl_feature",
+                                    ),
+                                ],
+                                [
+                                    "lstm",
+                                    Apply(
+                                        module=mlprogram.nn.BidirectionalLSTM(
+                                            input_size=params.embedding_size,
+                                            hidden_size=params.hidden_size,
+                                            dropout=params.dropout,
+                                        ),
+                                        in_keys=[["word_nl_feature", "x"]],
+                                        out_key="reference_features",
+                                    ),
+                                ],
+                            ]
+                        )
                     ),
                 ],
                 [
@@ -74,40 +94,38 @@ model = torch.share_memory_(
                         modules=collections.OrderedDict(
                             items=[
                                 [
-                                    "action_sequence_reader",
+                                    "embedding",
                                     Apply(
-                                        module=action_sequence_reader,
-                                        in_keys=["actions", "previous_actions"],
-                                        out_key=["action_features", "parent_indexes"],
+                                        module=embedding,
+                                        in_keys=[
+                                            "actions",
+                                            "previous_actions",
+                                        ],
+                                        out_key="action_features",
                                     ),
                                 ],
                                 [
                                     "decoder",
                                     Apply(
-                                        module=mlprogram.nn.nl2code.Decoder(
-                                            query_size=params.hidden_size,
-                                            input_size=add(
-                                                x=mul(
-                                                    x=2,
-                                                    y=params.embedding_size,
-                                                ),
-                                                y=params.node_type_embedding_size,
+                                        module=mlprogram.nn.action_sequence.LSTMTreeDecoder(
+                                            inject_input=mlprogram.nn.action_sequence.AttentionInput(
+                                                attn_hidden_size=params.attr_hidden_size
                                             ),
-                                            hidden_size=params.hidden_size,
-                                            att_hidden_size=params.attr_hidden_size,
+                                            input_feature_size=params.hidden_size,
+                                            action_feature_size=embedding.output_size,
+                                            output_feature_size=params.hidden_size,
                                             dropout=params.dropout,
                                         ),
                                         in_keys=[
-                                            ["reference_features", "nl_query_features"],
+                                            ["reference_features", "input_feature"],
+                                            "actions",
                                             "action_features",
-                                            "parent_indexes",
                                             "history",
                                             "hidden_state",
                                             "state",
                                         ],
                                         out_key=[
                                             "action_features",
-                                            "action_contexts",
                                             "history",
                                             "hidden_state",
                                             "state",
@@ -117,17 +135,16 @@ model = torch.share_memory_(
                                 [
                                     "predictor",
                                     Apply(
-                                        module=mlprogram.nn.nl2code.Predictor(
-                                            reader=action_sequence_reader,
-                                            embedding_size=params.embedding_size,
-                                            query_size=params.hidden_size,
-                                            hidden_size=params.hidden_size,
-                                            att_hidden_size=params.attr_hidden_size,
+                                        module=mlprogram.nn.action_sequence.Predictor(
+                                            feature_size=params.hidden_size,
+                                            reference_feature_size=params.hidden_size,
+                                            hidden_size=params.attr_hidden_size,
+                                            rule_size=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+                                            token_size=encoder.action_sequence_encoder._token_encoder.vocab_size,
                                         ),
                                         in_keys=[
                                             "reference_features",
                                             "action_features",
-                                            "action_contexts",
                                         ],
                                         out_key=[
                                             "rule_probs",

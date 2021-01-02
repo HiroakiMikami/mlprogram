@@ -187,27 +187,35 @@ types = {
     "mlprogram.encoders.ActionSequenceEncoder":
         mlprogram.encoders.ActionSequenceEncoder,
 
+    "mlprogram.nn.EmbeddingWithMask": mlprogram.nn.EmbeddingWithMask,
+    "mlprogram.nn.BidirectionalLSTM": mlprogram.nn.BidirectionalLSTM,
     "mlprogram.nn.AggregatedLoss": mlprogram.nn.AggregatedLoss,
     "mlprogram.nn.Function": mlprogram.nn.Function,
     "mlprogram.nn.CNN2d": mlprogram.nn.CNN2d,
     "mlprogram.nn.MLP": mlprogram.nn.MLP,
-    "mlprogram.nn.action_sequence.ActionSequenceReader":
-        mlprogram.nn.action_sequence.ActionSequenceReader,
-    "mlprogram.nn.action_sequence.RnnDecoder":
-        mlprogram.nn.action_sequence.RnnDecoder,
+    "mlprogram.nn.action_sequence.ActionsEmbedding":
+        mlprogram.nn.action_sequence.ActionsEmbedding,
+    "mlprogram.nn.action_sequence.PreviousActionsEmbedding":
+        mlprogram.nn.action_sequence.PreviousActionsEmbedding,
+    "mlprogram.nn.action_sequence.AttentionInput":
+        mlprogram.nn.action_sequence.AttentionInput,
+    "mlprogram.nn.action_sequence.CatInput":
+        mlprogram.nn.action_sequence.CatInput,
+    "mlprogram.nn.action_sequence.LSTMTreeDecoder":
+        mlprogram.nn.action_sequence.LSTMTreeDecoder,
+    "mlprogram.nn.action_sequence.LSTMDecoder":
+        mlprogram.nn.action_sequence.LSTMDecoder,
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
     "mlprogram.nn.action_sequence.Accuracy":
         mlprogram.nn.action_sequence.Accuracy,
-    "mlprogram.nn.nl2code.NLReader": mlprogram.nn.nl2code.NLReader,
-    "mlprogram.nn.nl2code.ActionSequenceReader":
-        mlprogram.nn.nl2code.ActionSequenceReader,
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,
     "mlprogram.nn.nl2code.Predictor": mlprogram.nn.nl2code.Predictor,
-    "mlprogram.nn.treegen.NLReader": mlprogram.nn.treegen.NLReader,
-    "mlprogram.nn.treegen.ActionSequenceReader":
-        mlprogram.nn.treegen.ActionSequenceReader,
+    "mlprogram.nn.treegen.NlEmbedding": mlprogram.nn.treegen.NlEmbedding,
+    "mlprogram.nn.treegen.ActionEmbedding": mlprogram.nn.treegen.ActionEmbedding,
+    "mlprogram.nn.treegen.QueryEmbedding": mlprogram.nn.treegen.QueryEmbedding,
+    "mlprogram.nn.treegen.Encoder": mlprogram.nn.treegen.Encoder,
     "mlprogram.nn.treegen.Decoder": mlprogram.nn.treegen.Decoder,
     "mlprogram.nn.pbe_with_repl.Encoder": mlprogram.nn.pbe_with_repl.Encoder,
 
