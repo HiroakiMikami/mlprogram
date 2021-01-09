@@ -8,7 +8,7 @@ import torch
 @dataclass
 class PaddedSequenceWithMask:
     data: torch.FloatTensor
-    mask: torch.LongTensor
+    mask: torch.BoolTensor
 
     def to(self, *args, **kwargs):
         return PaddedSequenceWithMask(self.data.to(*args, **kwargs),
@@ -37,9 +37,9 @@ def pad_sequence(sequences: List[torch.FloatTensor],
     data = torch.nn.utils.rnn.pad_sequence(sequences,
                                            padding_value=padding_value)
     L, B = data.shape[:2]
-    mask = torch.zeros(L, B, device=data.device)
+    mask = torch.zeros(L, B, device=data.device, dtype=torch.bool)
     for i in range(B):
-        mask[:len(sequences[i]), i] = 1
+        mask[:len(sequences[i]), i] = True
     return PaddedSequenceWithMask(data, mask)
 
 
@@ -71,5 +71,5 @@ def pad_packed_sequence(sequence: torch.nn.utils.rnn.PackedSequence,
         [max_length, 1]).expand([max_length, B])
     mask = lengths.unsqueeze(1).expand(
         [B, max_length]).permute([1, 0])  # [B, max_length]
-    mask = (indexes < mask).long()
+    mask = indexes < mask
     return PaddedSequenceWithMask(data, mask)

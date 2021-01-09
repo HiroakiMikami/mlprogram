@@ -1,5 +1,7 @@
 import pytest
+import torch
 
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.builtins import Environment
 
 
@@ -37,3 +39,17 @@ class TestEnv(object):
         e = Environment()
         e["key"] = 0
         assert e["key"] == 0
+
+    def test_to(self) -> None:
+        class X:
+            def to(self, *args, **kwargs):
+                self.args = (args, kwargs)
+                return self
+
+        e = Environment()
+        e["key"] = X()
+        e["x"] = torch.tensor(0)
+        e["y"] = PaddedSequenceWithMask(torch.tensor(0.0), torch.tensor(True))
+        e["z"] = 10
+        e.to(device=torch.device("cpu"))
+        assert e["key"].args == ((), {"device": torch.device("cpu")})

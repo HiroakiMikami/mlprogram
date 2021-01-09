@@ -28,8 +28,7 @@ def reward(sample, output):
     return sample["value"] == output
 
 
-collate = Collate(device=torch.device("cpu"),
-                  output=CollateOptions(False, 0, 0),
+collate = Collate(output=CollateOptions(False, 0, 0),
                   value=CollateOptions(False, 0, 0),
                   reward=CollateOptions(False, 0, 0),
                   ground_truth=CollateOptions(False, 0, 0))

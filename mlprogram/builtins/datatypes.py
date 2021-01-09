@@ -62,3 +62,11 @@ class Environment(object):
         if not isinstance(other, Environment):
             return False
         return self.to_dict() == other.to_dict()
+
+    def to(self, *args, **kwargs) -> None:
+        def _to(x: Any):
+            if hasattr(x, "to"):
+                return x.to(*args, **kwargs)
+            else:
+                return x
+        self._values = {key: _to(x) for key, x in self._values.items()}

@@ -34,8 +34,7 @@ class TestSamplerWithValueNetwork(object):
         def transform(state: str) -> Environment:
             return Environment({"x": torch.tensor([int(state)])})
 
-        collate = Collate(device=torch.device("cpu"),
-                          x=CollateOptions(False, 0, 0))
+        collate = Collate(x=CollateOptions(False, 0, 0))
         sampler = SamplerWithValueNetwork(MockSampler(), transform, collate,
                                           MockValueNetwork())
         zero = SamplerState(0, sampler.initialize(0))

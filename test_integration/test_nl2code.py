@@ -154,7 +154,6 @@ class TestNL2Code(object):
             ("add_history", AddState("history"))
         ]))
         collate = Collate(
-            torch.device("cpu"),
             word_nl_query=CollateOptions(True, 0, -1),
             nl_query_features=CollateOptions(True, 0, -1),
             reference_features=CollateOptions(True, 0, -1),
@@ -249,7 +248,6 @@ class TestNL2Code(object):
                      Pick("action_sequence_loss")))
             ]))
             collate = Collate(
-                torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),
                 nl_query_features=CollateOptions(True, 0, -1),
                 reference_features=CollateOptions(True, 0, -1),

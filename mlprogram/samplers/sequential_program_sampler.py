@@ -38,11 +38,18 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
         self.rng = \
             rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
 
+    def _to(self, x: Environment) -> Environment:
+        params = list(self.encoder.parameters())
+        if len(params) != 0:
+            x.to(params[0].device)
+        return x
+
     @logger.function_block("initialize")
     def initialize(self, input: Input) -> Environment:
         self.encoder.eval()
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
+        state_tensor = self._to(state_tensor)
         with torch.no_grad(), logger.block("encode_state"):
             state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]

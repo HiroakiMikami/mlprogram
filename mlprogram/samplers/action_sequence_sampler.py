@@ -113,11 +113,18 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                     self.encoder._rule_encoder.encode(rule).item()
                 )
 
+    def _to(self, x: Environment) -> Environment:
+        params = list(self.module.parameters())
+        if len(params) != 0:
+            x.to(params[0].device)
+        return x
+
     @logger.function_block("initialize")
     def initialize(self, input: Input) -> Environment:
         self.module.encoder.eval()
         state_list = self.transform_input(input)
         state_tensor = self.collate.collate([state_list])
+        state_tensor = self._to(state_tensor)
         with torch.no_grad(), logger.block("encode_state"):
             state_tensor = self.module.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
@@ -155,6 +162,7 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                     "Invalid action_sequence is in the set of hypothesis" +
                     str(s.state["action_sequence"]))
         states_tensor = self.collate.collate(state_list)
+        states_tensor = self._to(states_tensor)
 
         with torch.no_grad(), logger.block("decode_state"):
             next_states = self.module.decoder(states_tensor)

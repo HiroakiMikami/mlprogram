@@ -202,6 +202,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      snapshot_interval: Optional[Length] = None,
                      maximize: bool = True,
                      threshold: Optional[float] = None,
+                     n_dataloader_worker: int = 2,
                      device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -234,8 +235,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
     logger.info("Start training")
     try:
         while manager.iteration < n_iter:
-            # TODO num_workers > 0 causes the RuntimeError
-            loader = create_dataloader(dataset, batch_size, 0, collate)
+            loader = create_dataloader(dataset, batch_size, n_dataloader_worker,
+                                       collate)
 
             for batch in logger.iterable_block("iteration", loader, True):
                 if manager.iteration >= n_iter:
@@ -245,6 +246,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     continue
                 with manager.run_iteration():
                     model.train()
+                    with logger.block("to"):
+                        batch.to(device=device)
                     with logger.block("forward"):
                         output = model(batch)
                         bloss = loss(output)
@@ -289,6 +292,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     threshold: Optional[float] = None,
                     use_pretrained_model: bool = False,
                     use_pretrained_optimizer: bool = False,
+                    n_dataloader_worker: int = 2,
                     device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -335,8 +339,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     logger.info("Start training")
     try:
         while manager.iteration < n_iter:
-            # TODO num_workers > 0 causes the RuntimeError
-            loader = create_dataloader(dataset, batch_size, 0, lambda x: x)
+            loader = create_dataloader(dataset, batch_size, n_dataloader_worker,
+                                       lambda x: x)
 
             for samples in logger.iterable_block("iteration", loader, True):
                 if manager.iteration >= n_iter:
@@ -347,6 +351,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
                         sample_inputs = sample.clone_without_supervision()
+                        sample_inputs.to(device)
                         for rollout in logger.iterable_block(
                                 "sample",
                                 synthesizer(sample_inputs,
@@ -372,6 +377,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     model.train()
                     with logger.block("collate"):
                         batch2 = collate(rollouts)
+                    with logger.block("to"):
+                        batch2.to(device)
                     with logger.block("forward"):
                         model.train()
                         output = model(batch2)

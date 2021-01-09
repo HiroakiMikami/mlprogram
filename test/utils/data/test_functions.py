@@ -80,8 +80,7 @@ class TestCollate(object):
                 "stack1": torch.ones(1, 3) + 1
             })
         ]
-        collate = Collate(device=torch.device("cpu"),
-                          pad0=CollateOptions(True, 0, -1),
+        collate = Collate(pad0=CollateOptions(True, 0, -1),
                           pad1=CollateOptions(True, 0, -1),
                           stack0=CollateOptions(False, 0, -1),
                           stack1=CollateOptions(False, 1, -1))
@@ -111,8 +110,7 @@ class TestCollate(object):
             }),
             None
         ]
-        collate = Collate(device=torch.device("cpu"),
-                          pad0=CollateOptions(True, 0, -1))
+        collate = Collate(pad0=CollateOptions(True, 0, -1))
         retval = collate.collate(data)
         assert set(["pad0"]) == set(retval.to_dict().keys())
         assert np.array_equal([[0]], retval["pad0"].data.numpy())
@@ -122,15 +120,14 @@ class TestCollate(object):
             Environment({"pad0": 1}),
             Environment({"pad0": 2})
         ]
-        collate = Collate(device=torch.device("cpu"))
+        collate = Collate()
         retval = collate.collate(data)
         assert set(["pad0"]) == set(retval.to_dict().keys())
         assert [1, 2] == retval["pad0"]
 
     def test_collate_with_all_none_batch(self):
         data = [None]
-        collate = Collate(device=torch.device("cpu"),
-                          pad0=CollateOptions(True, 0, -1))
+        collate = Collate(pad0=CollateOptions(True, 0, -1))
         retval = collate.collate(data)
         assert {} == retval.to_dict()
 
@@ -139,8 +136,7 @@ class TestCollate(object):
             Environment({"x": torch.zeros(2, 1)}),
             Environment({"x": torch.zeros(1, 2)})
         ]
-        collate = Collate(device=torch.device("cpu"),
-                          x=CollateOptions(False, 0, -1))
+        collate = Collate(x=CollateOptions(False, 0, -1))
         retval = collate.collate(data)
         assert set(["x"]) == set(retval.to_dict().keys())
         assert np.array_equal((2, 2, 2), retval["x"].shape)
@@ -163,8 +159,7 @@ class TestCollate(object):
                 "stack1": torch.ones(1, 3) + 1
             })
         ]
-        collate = Collate(device=torch.device("cpu"),
-                          pad0=CollateOptions(True, 0, -1),
+        collate = Collate(pad0=CollateOptions(True, 0, -1),
                           pad1=CollateOptions(True, 0, -1),
                           stack0=CollateOptions(False, 0, -1),
                           stack1=CollateOptions(False, 1, -1))
@@ -183,7 +178,7 @@ class TestCollate(object):
             Environment({"pad0": 1}),
             Environment({"pad0": 2})
         ]
-        collate = Collate(device=torch.device("cpu"))
+        collate = Collate()
         retval = collate.split(collate.collate(data))
         assert 1 == retval[0]["pad0"]
         assert 2 == retval[1]["pad0"]

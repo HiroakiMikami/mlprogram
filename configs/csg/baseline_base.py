@@ -137,7 +137,6 @@ model = torch.share_memory_(
     ),
 )
 collate = mlprogram.utils.data.Collate(
-    device=device,
     test_case_tensor=mlprogram.utils.data.CollateOptions(
         use_pad_sequence=False,
         dim=0,

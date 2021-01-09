@@ -222,7 +222,6 @@ collate_as_sequence = mlprogram.utils.data.CollateOptions(
     padding_value=-1,
 )
 collate = mlprogram.utils.data.Collate(
-    device=device,
     word_nl_query=collate_as_sequence,
     char_nl_query=collate_as_sequence,
     nl_query_features=collate_as_sequence,
