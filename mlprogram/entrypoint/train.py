@@ -159,8 +159,9 @@ def all_reduce(model: nn.Module, group: torch.distributed.group):
     nparams.sort(key=lambda x: x[0])  # type: ignore
     params = [p.grad if p.grad is not None else torch.zeros_like(p.data)
               for _, p in nparams]
-    size = torch.distributed.get_world_size(group)
-    torch.distributed.all_reduce_coalesced(
+    size = distributed.size(group)
+    distributed.call(
+        torch.distributed.all_reduce_coalesced,
         params, group=group
     )
     for p in params:
@@ -254,9 +255,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     with logger.block("backward"):
                         model.zero_grad()
                         bloss.backward()
-                    if group is not None:
-                        with logger.block("all-reduce"):
-                            all_reduce(model, group)
+                    with logger.block("all-reduce"):
+                        all_reduce(model, group)
                     with logger.block("optimizer.step"):
                         optimizer.step()
 
@@ -386,9 +386,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     with logger.block("backward"):
                         model.zero_grad()
                         bloss.backward()
-                    if group is not None:
-                        with logger.block("all-reduce"):
-                            all_reduce(model, group)
+                    with logger.block("all-reduce"):
+                        all_reduce(model, group)
                     with logger.block("optimizer.step"):
                         optimizer.step()
 
