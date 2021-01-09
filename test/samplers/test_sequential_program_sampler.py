@@ -1,6 +1,5 @@
 from typing import List
 
-import torch
 import torch.nn as nn
 
 from mlprogram.builtins import Environment
@@ -50,7 +49,7 @@ class TestSequentialProgramSampler(object):
         sampler = SequentialProgramSampler(
             MockSynthesizer([]),
             transform_input,
-            Collate(torch.device("cpu")),
+            Collate(),
             MockEncoder(),
             MockExpander(),
             MockInterpreter())
@@ -70,7 +69,7 @@ class TestSequentialProgramSampler(object):
         sampler = SequentialProgramSampler(
             MockSynthesizer(asts),
             transform_input,
-            Collate(torch.device("cpu")),
+            Collate(),
             MockEncoder(),
             MockExpander(),
             MockInterpreter())

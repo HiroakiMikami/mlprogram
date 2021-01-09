@@ -121,7 +121,6 @@ class TestCsgByPbeWithREPL(object):
 
     def prepare_synthesizer(self, model, encoder, interpreter, rollout=True):
         collate = Collate(
-            torch.device("cpu"),
             test_case_tensor=CollateOptions(False, 0, 0),
             input_feature=CollateOptions(False, 0, 0),
             test_case_feature=CollateOptions(False, 0, 0),
@@ -328,7 +327,6 @@ class TestCsgByPbeWithREPL(object):
             encoder = self.prepare_encoder(dataset, Parser())
 
             collate = Collate(
-                torch.device("cpu"),
                 test_case_tensor=CollateOptions(False, 0, 0),
                 variables_tensor=CollateOptions(True, 0, 0),
                 previous_actions=CollateOptions(True, 0, -1),
@@ -386,7 +384,6 @@ class TestCsgByPbeWithREPL(object):
             interpreter = self.interpreter()
 
             collate = Collate(
-                torch.device("cpu"),
                 test_case_tensor=CollateOptions(False, 0, 0),
                 variables_tensor=CollateOptions(True, 0, 0),
                 previous_actions=CollateOptions(True, 0, -1),

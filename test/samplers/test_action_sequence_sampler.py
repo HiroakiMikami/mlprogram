@@ -41,8 +41,7 @@ def create_encoder():
          ("Int", "1")]), 0)
 
 
-collate = Collate(torch.device("cpu"),
-                  input=CollateOptions(False, 0, -1),
+collate = Collate(input=CollateOptions(False, 0, -1),
                   length=CollateOptions(False, 0, -1))
 
 

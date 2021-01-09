@@ -194,7 +194,6 @@ model = torch.share_memory_(
     ),
 )
 collate = mlprogram.utils.data.Collate(
-    device=device,
     word_nl_query=mlprogram.utils.data.CollateOptions(
         use_pad_sequence=True,
         dim=0,

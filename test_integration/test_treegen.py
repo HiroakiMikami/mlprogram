@@ -177,7 +177,6 @@ class TestTreeGen(object):
         ]))
 
         collate = Collate(
-            torch.device("cpu"),
             word_nl_query=CollateOptions(True, 0, -1),
             char_nl_query=CollateOptions(True, 0, -1),
             nl_query_features=CollateOptions(True, 0, -1),
@@ -290,7 +289,6 @@ class TestTreeGen(object):
             ]))
 
             collate = Collate(
-                torch.device("cpu"),
                 word_nl_query=CollateOptions(True, 0, -1),
                 char_nl_query=CollateOptions(True, 0, -1),
                 nl_query_features=CollateOptions(True, 0, -1),

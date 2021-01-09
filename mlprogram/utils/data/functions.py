@@ -77,9 +77,7 @@ class CollateOptions:
 
 
 class Collate:
-    def __init__(self, device: torch.device,
-                 **kwargs: CollateOptions):
-        self.device = device
+    def __init__(self, **kwargs: CollateOptions):
         self.options: Dict[str, CollateOptions] = kwargs
 
     def collate(self, tensors: Sequence[Optional[Environment]]) -> Environment:
@@ -105,8 +103,7 @@ class Collate:
             if option.use_pad_sequence:
                 retval[key] = \
                     rnn.pad_sequence(values,
-                                     padding_value=option.padding_value) \
-                    .to(self.device)
+                                     padding_value=option.padding_value)
             else:
                 # pad tensors
                 shape: List[int] = []
@@ -127,8 +124,7 @@ class Collate:
                     padded_ts.append(F.pad(item, p,
                                            value=option.padding_value))
 
-                retval[key] = \
-                    torch.stack(padded_ts, dim=option.dim).to(self.device)
+                retval[key] = torch.stack(padded_ts, dim=option.dim)
         return retval
 
     def split(self, values: Environment) -> Sequence[Environment]:
