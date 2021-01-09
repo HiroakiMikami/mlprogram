@@ -1,5 +1,5 @@
 import os
-from typing import Optional, cast
+from typing import Callable, Optional, cast
 
 import torch
 
@@ -62,15 +62,20 @@ def is_main_process() -> bool:
         return True
 
 
-def rank() -> int:
+def rank(group: Optional[torch.distributed.group] = None) -> int:
     if torch.distributed.is_initialized():
-        return cast(int, torch.distributed.get_rank())
+        return cast(int, torch.distributed.get_rank(group=group))
     else:
         return 0
 
 
-def size() -> int:
+def size(group: Optional[torch.distributed.group] = None) -> int:
     if torch.distributed.is_initialized():
-        return cast(int, torch.distributed.get_world_size())
+        return cast(int, torch.distributed.get_world_size(group=group))
     else:
         return 1
+
+
+def call(f: Callable, *args, **kwargs):
+    if torch.distributed.is_initialized():
+        return f(*args, **kwargs)

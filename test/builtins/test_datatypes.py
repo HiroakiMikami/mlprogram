@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 from mlprogram.builtins import Environment
+from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 
 class TestEnv(object):

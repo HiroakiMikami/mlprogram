@@ -1,9 +1,10 @@
 import os
+import uuid
 from typing import Callable, Generic, TypeVar, cast
 
 import torch
 
-from mlprogram import logging
+from mlprogram import distributed, logging
 
 V = TypeVar("V")
 logger = logging.Logger(__name__)
@@ -15,15 +16,17 @@ class FileCache(Generic[V]):
         self.f = f
 
     def __call__(self) -> V:
-        if os.path.exists(self.path):
-            logger.info(f"Cached file found in {self.path}")
-            return cast(V, torch.load(self.path))
-        else:
-            logger.info(f"Cached file not found in {self.path}")
-            val = self.f()
-            os.makedirs(os.path.dirname(self.path), exist_ok=True)
-            torch.save(val, self.path)
-            return val
+        if distributed.is_main_process():
+            if not os.path.exists(self.path):
+                logger.info(f"Cached file not found in {self.path}")
+                tmpfile = os.path.join(os.path.dirname(self.path), str(uuid.uuid4()))
+                val = self.f()
+                os.makedirs(os.path.dirname(self.path), exist_ok=True)
+                torch.save(val, tmpfile)
+                os.rename(tmpfile, self.path)
+        distributed.call(torch.distributed.barrier)
+        logger.info(f"Cached file found in {self.path}")
+        return cast(V, torch.load(self.path))
 
 
 def file_cache(path: str) -> Callable[[Callable[[], V]], FileCache[V]]:
