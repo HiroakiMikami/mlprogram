@@ -500,4 +500,4 @@ class TestCsgByPbeWithREPL(object):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             result = self.evaluate(dataset, encoder, tmpdir)
-        assert 1.0 <= result.generation_rate
+        assert 0.9 <= result.generation_rate
