@@ -26,9 +26,21 @@ class MockSynthesizer(Synthesizer[Environment, str]):
             yield Result(ast, 1.0 / (i + 1), True, 1)
 
 
-class MockInterpreter(Interpreter[str, str, str, str]):
+class MockInterpreter(Interpreter[str, str, str, str, str]):
     def eval(self, code, inputs):
         return ["#" + code for _ in inputs]
+
+    def create_state(self, inputs):
+        return BatchedState({}, {}, [], inputs)
+
+    def execute(self, code, state):
+        output = self.eval(code, state.context)
+        state = state.clone()
+        state.environment[code] = output
+        state.type_environment[code] = None
+        state.history.append(code)
+        state.context = output
+        return state
 
 
 class MockEncoder(nn.Module):
@@ -55,13 +67,13 @@ class TestSequentialProgramSampler(object):
             MockInterpreter())
         assert sampler.create_output(
             None,
-            Environment({"interpreter_state": BatchedState({}, {}, [])})
+            Environment({"interpreter_state": BatchedState({}, {}, [], [None])})
         ) is None
         assert sampler.create_output(None, Environment({
-            "interpreter_state": BatchedState({}, {}, ["tmp"])
+            "interpreter_state": BatchedState({}, {}, ["tmp"], [None])
         })) == ("tmp", False)
         assert sampler.create_output(None, Environment({
-            "interpreter_state": BatchedState({}, {}, ["line0", "line1"])
+            "interpreter_state": BatchedState({}, {}, ["line0", "line1"], [None])
         })) == ("line0\nline1", False)
 
     def test_ast_set_sample(self):
@@ -86,7 +98,9 @@ class TestSequentialProgramSampler(object):
                     "interpreter_state": BatchedState(
                         {str(asts[0]): None},
                         {str(asts[0]): ["#" + str(asts[0])]},
-                        [str(asts[0])])
+                        [str(asts[0])],
+                        ["#" + str(asts[0])]
+                    )
                 })),
             1)
         assert DuplicatedSamplerState(
@@ -98,7 +112,9 @@ class TestSequentialProgramSampler(object):
                     "interpreter_state": BatchedState(
                         {str(asts[1]): None},
                         {str(asts[1]): ["#" + str(asts[1])]},
-                        [str(asts[1])])
+                        [str(asts[1])],
+                        ["#" + str(asts[1])]
+                    )
                 })),
             1) == samples[1]
         assert DuplicatedSamplerState(
@@ -110,6 +126,8 @@ class TestSequentialProgramSampler(object):
                     "interpreter_state": BatchedState(
                         {str(asts[2]): None},
                         {str(asts[2]): ["#" + str(asts[2])]},
-                        [str(asts[2])])
+                        [str(asts[2])],
+                        ["#" + str(asts[2])]
+                    )
                 })),
             1) == samples[2]

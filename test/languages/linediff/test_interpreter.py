@@ -21,17 +21,19 @@ class TestInterpreter(object):
     def test_execute(self):
         ref0 = Insert(0, "foo")
         ref1 = Replace(1, "test")
-        state = BatchedState({}, {}, [])
+        state = BatchedState({}, {}, [], ["bar\nhoge"])
         interpreter = Interpreter()
 
-        state = interpreter.execute(ref0, ["bar\nhoge"], state)
+        state = interpreter.execute(ref0, state)
         assert state.history == [ref0]
         assert set(state.environment.keys()) == set([ref0])
         assert state.type_environment[ref0] == "Insert"
         assert state.environment[ref0][0] == "foo\nbar\nhoge"
+        assert state.context[0] == "foo\nbar\nhoge"
 
-        state = interpreter.execute(ref1, ["bar\nhoge"], state)
+        state = interpreter.execute(ref1, state)
         assert state.history == [ref0, ref1]
         assert set(state.environment.keys()) == set([ref1])
         assert state.type_environment[ref1] == "Replace"
         assert state.environment[ref1][0] == "foo\ntest\nhoge"
+        assert state.context[0] == "foo\ntest\nhoge"

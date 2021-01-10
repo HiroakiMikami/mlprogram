@@ -8,11 +8,12 @@ Code = TypeVar("Code")
 Error = TypeVar("Error")
 Diff = TypeVar("Diff")
 Kind = TypeVar("Kind")
+Context = TypeVar("Context")
 
 
-class ErrorCorrectRate(nn.Module, Generic[Code, Error, Diff, Kind]):
+class ErrorCorrectRate(nn.Module, Generic[Code, Error, Diff, Kind, Context]):
     def __init__(self, analyzer: Analyzer[Code, Error],
-                 interpreter: Interpreter[Diff, Code, Code, Kind]):
+                 interpreter: Interpreter[Diff, Code, Code, Kind, Context]):
         super().__init__()
         self.analyzer = analyzer
         self.interpreter = interpreter

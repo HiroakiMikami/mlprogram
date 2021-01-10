@@ -1,18 +1,19 @@
-from typing import Generic, List, TypeVar
+from typing import Generic, List, TypeVar, cast
 
 from torch import nn
 
 from mlprogram.builtins import Environment
-from mlprogram.languages import BatchedState, Expander, Interpreter, Token
+from mlprogram.languages import Expander, Interpreter, Token
 
 Code = TypeVar("Code")
 Input = TypeVar("Input")
 Value = TypeVar("Value")
 Kind = TypeVar("Kind")
+Context = TypeVar("Context")
 
 
-class ToEpisode(nn.Module, Generic[Code, Input, Value]):
-    def __init__(self, interpreter: Interpreter[Code, Input, Value, Kind],
+class ToEpisode(nn.Module, Generic[Code, Input, Value, Context]):
+    def __init__(self, interpreter: Interpreter[Code, Input, Value, Kind, Context],
                  expander: Expander[Code]):
         super().__init__()
         self.interpreter = interpreter
@@ -24,9 +25,9 @@ class ToEpisode(nn.Module, Generic[Code, Input, Value]):
         inputs = [input for input, _ in test_cases]
 
         retval: List[Environment] = []
-        state = BatchedState[Code, Value, Kind]({}, {}, [])
+        state = self.interpreter.create_state(inputs)
         for code in self.expander.expand(ground_truth):
-            xs = entry.clone()
+            xs = cast(Environment, entry.clone())
             xs["reference"] = [
                 Token(state.type_environment[v], v, v)
                 for v in state.environment.keys()
@@ -37,7 +38,7 @@ class ToEpisode(nn.Module, Generic[Code, Input, Value]):
             ]
             xs["ground_truth"] = code
             xs.mark_as_supervision("ground_truth")
-            state = self.interpreter.execute(code, inputs, state)
+            state = self.interpreter.execute(code, state)
             retval.append(xs)
 
         return retval

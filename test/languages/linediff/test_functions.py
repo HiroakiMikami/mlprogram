@@ -45,8 +45,8 @@ class TestToEpisode(object):
             set(["ground_truth"])
         ))
         assert len(episode) == 2
-        assert episode[0]["test_cases"] == [("xxx\nyyy", "zzz\nyyy")]
-        assert episode[1]["test_cases"] == [("zzz\nyyy", "zzz")]
+        assert episode[0]["interpreter_state"].context == ["xxx\nyyy"]
+        assert episode[1]["interpreter_state"].context == ["zzz\nyyy"]
 
 
 class TestAddTestCases(object):
@@ -59,10 +59,10 @@ class TestAddTestCases(object):
 class TestUpdateInput(object):
     def test_happy_path(self):
         f = UpdateInput()
-        entry = f(Environment({"test_cases": [("xxx\nyyy", None)]}))
+        entry = f(Environment({
+            "interpreter_state": BatchedState({}, {}, [], ["xxx\nyyy"])
+        }))
         assert entry["code"] == "xxx\nyyy"
-        assert entry["text_query"] == "xxx\nyyy"
-        state = BatchedState({}, {Diff([]): ["foo"]}, [Diff([])])
+        state = BatchedState({}, {Diff([]): ["foo"]}, [Diff([])], ["foo"])
         entry = f(Environment({"interpreter_state": state}))
         assert entry["code"] == "foo"
-        assert entry["text_query"] == "foo"

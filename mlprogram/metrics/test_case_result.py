@@ -11,11 +11,12 @@ Code = TypeVar("Code")
 Input = TypeVar("Input")
 Result = TypeVar("Result")
 Kind = TypeVar("Kind")
+Context = TypeVar("Context")
 
 
-class TestCaseResult(nn.Module, Generic[Code, Input, Result, Kind]):
+class TestCaseResult(nn.Module, Generic[Code, Input, Result, Kind, Context]):
     def __init__(self,
-                 interpreter: Interpreter[Code, Input, Result, Kind],
+                 interpreter: Interpreter[Code, Input, Result, Kind, Context],
                  metric: Optional[Callable[[Environment, Result], float]] = None):
         super().__init__()
         self.interpreter = interpreter

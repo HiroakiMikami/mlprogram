@@ -19,11 +19,12 @@ logger = logging.Logger(__name__)
 
 def get_words(dataset: torch.utils.data.Dataset,
               extract_reference: Callable[[Any], List[Token]],
+              query_key: str = "text_query",
               ) -> Sequence[str]:
     words = []
 
     for sample in dataset:
-        reference = extract_reference(sample["text_query"])
+        reference = extract_reference(sample[query_key])
         words.extend([token.value for token in reference])
 
     return words

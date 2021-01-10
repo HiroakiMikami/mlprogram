@@ -36,8 +36,8 @@ splitted = mlprogram.utils.data.random_split(
 )
 # TODO mutator is not nn.Module
 mutator = Apply(
-    in_keys=[["code", "code"]],
-    out_key=["text_query", "test_cases", "ground_truth"],
+    in_keys=["code"],
+    out_key=["code", "test_cases", "ground_truth"],
     module=typo_mutator.mutate,
 )
 train_dataset = mlprogram.utils.data.transform(
@@ -60,6 +60,7 @@ encoder = {
             sample=mlprogram.utils.data.get_words(
                 dataset=train_dataset,
                 extract_reference=lexer.tokenize,
+                query_key="code",
             ),
             min_occurrences=params.word_threshold,
         ),
@@ -260,7 +261,7 @@ transform_input = mlprogram.functools.Compose(
                 "extract_reference",
                 Apply(
                     module=mlprogram.nn.Function(f=lexer.tokenize),
-                    in_keys=[["text_query", "text"]],
+                    in_keys=[["code", "text"]],
                     out_key="reference",
                 ),
             ],
