@@ -39,4 +39,4 @@ jobs:
         ./bin/lint.bash true
     - name: Test
       run: |
-        ./bin/run_test.bash all
+        timeout 20m ./bin/run_test.bash all
