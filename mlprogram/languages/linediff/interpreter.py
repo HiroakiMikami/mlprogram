@@ -6,24 +6,30 @@ from mlprogram.languages import Interpreter as BaseInterpreter
 from mlprogram.languages.linediff import AST, Delta, Diff, Insert, Remove, Replace
 
 
-class Interpreter(BaseInterpreter[AST, str, str, str]):
+class Interpreter(BaseInterpreter[AST, str, str, str, str]):
     def eval(self, code: AST, inputs: List[str]) -> List[str]:
         if isinstance(code, Delta):
             code = Diff([code])
         assert isinstance(code, Diff)
         return self._eval(code, inputs)
 
-    def execute(self, code: AST, inputs: List[str],
-                state: BatchedState[AST, str, str]) \
-            -> BatchedState[AST, str, str]:
-        assert len(state.environment) <= 1
-        if len(state.environment) == 1:
-            inputs = state.environment[state.history[-1]]
+    def create_state(self, inputs: List[str]) -> BatchedState[AST, str, str, str]:
+        return BatchedState(
+            type_environment={},
+            environment={},
+            history=[],
+            context=inputs,
+        )
+
+    def execute(self, code: AST, state: BatchedState[AST, str, str, str]) \
+            -> BatchedState[AST, str, str, str]:
+        inputs = state.context
         outputs = self.eval(code, inputs)
-        next = cast(BatchedState[AST, str, str], state.clone())
+        next = cast(BatchedState[AST, str, str, str], state.clone())
         next.history.append(code)
         next.type_environment[code] = code.get_type_name()
         next.environment = {code: outputs}
+        next.context = outputs
         return next
 
     def _eval(self, diff: Diff, inputs: List[str]) -> List[str]:

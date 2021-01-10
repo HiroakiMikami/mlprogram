@@ -1,6 +1,5 @@
 import numpy as np
 
-from mlprogram.languages import BatchedState
 from mlprogram.languages.csg import (
     Circle,
     Difference,
@@ -79,72 +78,76 @@ class TestInterpreter(object):
         ref1 = Rectangle(3, 1)
         ref2 = Difference(Reference(0), Reference(1))
         ref3 = Union(Rectangle(1, 1), Reference(2))
-        state = BatchedState({}, {}, [])
         interpreter = Interpreter(3, 3, 1, False)
+        state = interpreter.create_state([None])
 
-        state = interpreter.execute(ref0, [None], state)
+        state = interpreter.execute(ref0, state)
         assert state.history == [ref0]
         assert set(state.environment.keys()) == set([Reference(0)])
         assert state.type_environment[Reference(0)] == "Rectangle"
         assert show(state.environment[Reference(0)][0]) == "   \n # \n   \n"
+        assert state.context == [None]
 
-        state = interpreter.execute(ref1, [None], state)
+        state = interpreter.execute(ref1, state)
         assert state.history == [ref0, ref1]
         assert set(state.environment.keys()) == set([Reference(0), Reference(1)])
         assert show(state.environment[Reference(1)][0]) == "   \n###\n   \n"
+        assert state.context == [None]
 
-        state = interpreter.execute(ref2, [None], state)
+        state = interpreter.execute(ref2, state)
         assert state.history == [ref0, ref1, ref2]
         assert set(state.environment.keys()) == \
             set([Reference(0), Reference(1), Reference(2)])
         assert show(state.environment[Reference(2)][0]) == "   \n# #\n   \n"
+        assert state.context == [None]
 
-        state = interpreter.execute(ref3, [None], state)
+        state = interpreter.execute(ref3, state)
         assert state.history == [ref0, ref1, ref2, ref3]
         assert set(state.environment.keys()) == \
             set([Reference(0), Reference(1), Reference(2), Reference(3)])
         assert show(state.environment[Reference(3)][0]) == "   \n###\n   \n"
+        assert state.context == [None]
 
     def test_delete_used_variable(self):
         ref0 = Rectangle(1, 1)
         ref1 = Rectangle(3, 1)
         ref2 = Difference(Reference(0), Reference(1))
         ref3 = Union(Rectangle(1, 1), Reference(2))
-        state = BatchedState({}, {}, [])
         interpreter = Interpreter(3, 3, 1, True)
+        state = interpreter.create_state([None])
 
-        state = interpreter.execute(ref0, [None], state)
+        state = interpreter.execute(ref0, state)
         assert set(state.environment.keys()) == set([Reference(0)])
 
-        state = interpreter.execute(ref1, [None], state)
+        state = interpreter.execute(ref1, state)
         assert set(state.environment.keys()) == set([Reference(0), Reference(1)])
 
-        state = interpreter.execute(ref2, [None], state)
+        state = interpreter.execute(ref2, state)
         assert set(state.environment.keys()) == set([Reference(2)])
 
-        state = interpreter.execute(ref3, [None], state)
+        state = interpreter.execute(ref3, state)
         assert set(state.environment.keys()) == set([Reference(3)])
 
     def test_draw_same_objects(self):
         ref0 = Rectangle(1, 1)
         ref1 = Rectangle(1, 1)
         ref2 = Rotation(180, Reference(0))
-        state = BatchedState({}, {}, [])
         interpreter = Interpreter(3, 3, 1, True)
+        state = interpreter.create_state([None])
 
-        state = interpreter.execute(ref0, [None], state)
+        state = interpreter.execute(ref0, state)
         assert set(state.environment.keys()) == set([Reference(0)])
 
-        state = interpreter.execute(ref1, [None], state)
+        state = interpreter.execute(ref1, state)
         assert set(state.environment.keys()) == set([Reference(0), Reference(1)])
 
-        state = interpreter.execute(ref2, [None], state)
+        state = interpreter.execute(ref2, state)
         assert set(state.environment.keys()) == set([Reference(1), Reference(2)])
 
     def test_execute_with_multiple_inputs(self):
         ref0 = Rectangle(1, 1)
-        state = BatchedState({}, {}, [])
         interpreter = Interpreter(3, 3, 1, False)
+        state = interpreter.create_state([None, None])
 
-        state = interpreter.execute(ref0, [None, None], state)
+        state = interpreter.execute(ref0, state)
         assert len(state.environment[Reference(0)]) == 2

@@ -70,3 +70,10 @@ class Environment(object):
             else:
                 return x
         self._values = {key: _to(x) for key, x in self._values.items()}
+
+    def __str__(self) -> str:
+        return f"Environment(${str(self.to_dict())})"
+
+    def __repr__(self) -> str:
+        return f"Environment(values=${str(self._values)}, "
+        f"supervisions=${str(self._supervisions)})"

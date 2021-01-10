@@ -56,7 +56,7 @@ class InvalidNodeTypeException(BaseException):
         super().__init__(f"Invalid node type: {type_name}")
 
 
-class Interpreter(BaseInterpreter[AST, None, np.ndarray, str]):
+class Interpreter(BaseInterpreter[AST, None, np.ndarray, str, None]):
     def __init__(self, width: int, height: int, resolution: int,
                  delete_used_reference: bool):
         self.width = width
@@ -71,15 +71,23 @@ class Interpreter(BaseInterpreter[AST, None, np.ndarray, str]):
     def eval(self, code: AST, inputs: List[None]) -> List[np.ndarray]:
         return [self._render(self._cached_eval(code)) for _ in inputs]
 
-    def execute(self, code: AST, inputs: List[None],
-                state: BatchedState[AST, np.ndarray, str]) \
-            -> BatchedState[AST, np.ndarray, str]:
-        next = cast(BatchedState[AST, np.ndarray, str], state.clone())
+    def create_state(self, inputs: List[None]) \
+            -> BatchedState[AST, np.ndarray, str, None]:
+        return BatchedState(
+            type_environment={},
+            environment={},
+            history=[],
+            context=inputs,
+        )
+
+    def execute(self, code: AST, state: BatchedState[AST, np.ndarray, str, None]) \
+            -> BatchedState[AST, np.ndarray, str, None]:
+        next = cast(BatchedState[AST, np.ndarray, str, None], state.clone())
         next.history.append(code)
         ref = Reference(len(next.history) - 1)
         next.type_environment[ref] = code.type_name()
         v = self._render(self._cached_eval(self._expander.unexpand(next.history)))
-        value = [v for _ in inputs]
+        value = [v for _ in state.context]
         next.environment[ref] = value
 
         if self.delete_used_reference:

@@ -2,13 +2,24 @@ import numpy as np
 import torch
 
 from mlprogram.builtins import Environment
-from mlprogram.languages import Interpreter, Token
+from mlprogram.languages import BatchedState, Interpreter, Token
 from mlprogram.transforms.pbe import ToEpisode
 
 
 class MockInterpreter(Interpreter):
     def eval(self, code, inputs):
         return [int(code) + input for input in inputs]
+
+    def create_state(self, inputs):
+        return BatchedState({}, {}, [], inputs)
+
+    def execute(self, code, state):
+        output = self.eval(code, state.context)
+        state = state.clone()
+        state.environment[code] = output
+        state.type_environment[code] = None
+        state.context = output
+        return state
 
 
 class MockExpander():

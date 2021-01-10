@@ -6,7 +6,7 @@ from torch import nn
 
 from mlprogram import logging
 from mlprogram.builtins import Environment
-from mlprogram.languages import BatchedState, Expander, Interpreter, Token
+from mlprogram.languages import Expander, Interpreter, Token
 from mlprogram.samplers import DuplicatedSamplerState, Sampler, SamplerState
 from mlprogram.synthesizers.synthesizer import Synthesizer
 from mlprogram.utils.data import Collate
@@ -17,17 +17,18 @@ Input = TypeVar("Input")
 Code = TypeVar("Code")
 Value = TypeVar("Value")
 Kind = TypeVar("Kind")
+Context = TypeVar("Context")
 
 
 class SequentialProgramSampler(Sampler[Input, Code, Environment],
-                               Generic[Input, Code, Value, Kind]):
+                               Generic[Input, Code, Value, Kind, Context]):
     def __init__(self,
                  synthesizer: Synthesizer[Environment, Code],
                  transform_input: Callable[[Input], Environment],
                  collate: Collate,
                  encoder: nn.Module,
                  expander: Expander[Code],
-                 interpreter: Interpreter[Code, Input, Value, Kind],
+                 interpreter: Interpreter[Code, Input, Value, Kind, Context],
                  rng: Optional[np.random.RandomState] = None):
         self.synthesizer = synthesizer
         self.transform_input = transform_input
@@ -53,10 +54,11 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
         with torch.no_grad(), logger.block("encode_state"):
             state_tensor = self.encoder(state_tensor)
         state = self.collate.split(state_tensor)[0]
+        test_cases = state["test_cases"]
+        inputs = [input for input, _ in test_cases]
         state["reference"] = []
         state["variables"] = []
-        state["interpreter_state"] = \
-            BatchedState[Code, Value, Kind]({}, {}, [])
+        state["interpreter_state"] = self.interpreter.create_state(inputs)
         return state
 
     def create_output(self, input: Input, state: Environment) \
@@ -81,8 +83,6 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
                 if k == 0:
                     continue
 
-                test_cases = state.state["test_cases"]
-                inputs = [input for input, _ in test_cases]
                 cnt = 0
                 for result in self.synthesizer(state.state,
                                                n_required_output=k):
@@ -92,7 +92,7 @@ class SequentialProgramSampler(Sampler[Input, Code, Environment],
                     new_state["variables"] = []
                     new_state["interpreter_state"] = \
                         self.interpreter.execute(
-                            result.output, inputs,
+                            result.output,
                             state.state["interpreter_state"]
                     )
                     for code in \

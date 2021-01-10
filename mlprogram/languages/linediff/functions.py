@@ -4,7 +4,7 @@ from torch import nn
 
 from mlprogram.builtins import Environment
 from mlprogram.encoders import Samples
-from mlprogram.languages import BatchedState, Kinds, Parser, Root
+from mlprogram.languages import Kinds, Parser, Root
 from mlprogram.languages.linediff.ast import AST as linediffAST
 from mlprogram.languages.linediff.ast import Diff, Insert, Remove, Replace
 from mlprogram.languages.linediff.expander import Expander
@@ -47,19 +47,18 @@ class ToEpisode(nn.Module):
         inputs = [input for input, _ in entry["test_cases"]]
 
         retval: List[Environment] = []
-        state = BatchedState[linediffAST, str, str]({}, {}, [])
+        state = self.interpreter.create_state(inputs)
         for code in self.expander.expand(ground_truth):
             xs = entry.clone()
             xs["ground_truth"] = code
-            state = self.interpreter.execute(code, inputs, state)
-            next_inputs = list(state.environment.values())[0]
-            xs["test_cases"] = list(zip(inputs, next_inputs))
-            inputs = next_inputs
+            xs["reference"] = []
+            xs["variables"] = []
+            xs["interpreter_state"] = state
+            state = self.interpreter.execute(code, state)
             retval.append(xs)
         return retval
 
 
-# TODO remove this class
 class AddTestCases(nn.Module):
     def forward(self, entry: Environment) -> Environment:
         if "test_cases" in entry:
@@ -69,17 +68,11 @@ class AddTestCases(nn.Module):
         return entry
 
 
-# TODO remove this class
 class UpdateInput(nn.Module):
     def forward(self, entry: Environment) -> Environment:
-        if "interpreter_state" in entry \
-                and len(entry["interpreter_state"].history) > 0:
-            state = entry["interpreter_state"]
-            inputs = state.environment[state.history[-1]]
-        else:
-            inputs = [input for input, _ in entry["test_cases"]]
+        state = entry["interpreter_state"]
+        inputs = state.context
         code = inputs[0]
         entry["code"] = code
-        entry["text_query"] = code
 
         return entry
