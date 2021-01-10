@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, cast
 
 from torch import nn
 
@@ -49,7 +49,7 @@ class ToEpisode(nn.Module):
         retval: List[Environment] = []
         state = self.interpreter.create_state(inputs)
         for code in self.expander.expand(ground_truth):
-            xs = entry.clone()
+            xs = cast(Environment, entry.clone())
             xs["ground_truth"] = code
             xs["reference"] = []
             xs["variables"] = []
@@ -61,6 +61,7 @@ class ToEpisode(nn.Module):
 
 class AddTestCases(nn.Module):
     def forward(self, entry: Environment) -> Environment:
+        entry = cast(Environment, entry.clone())
         if "test_cases" in entry:
             return entry
         query = entry["code"]
@@ -70,6 +71,7 @@ class AddTestCases(nn.Module):
 
 class UpdateInput(nn.Module):
     def forward(self, entry: Environment) -> Environment:
+        entry = cast(Environment, entry.clone())
         state = entry["interpreter_state"]
         inputs = state.context
         code = inputs[0]

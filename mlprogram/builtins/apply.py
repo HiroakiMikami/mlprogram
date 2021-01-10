@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from torch import nn
 
@@ -20,6 +20,7 @@ class Apply(nn.Module):
         self._is_out_supervision = is_out_supervision
 
     def forward(self, entry: Environment) -> Environment:
+        entry = cast(Environment, entry.clone())
         kwargs = {key: value for key, value in self.constants.items()}
         is_supervision = False
         for i, in_key in enumerate(self.in_keys):

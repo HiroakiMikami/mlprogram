@@ -1,4 +1,4 @@
-from typing import Generic, List, TypeVar
+from typing import Generic, List, TypeVar, cast
 
 from torch import nn
 
@@ -27,7 +27,7 @@ class ToEpisode(nn.Module, Generic[Code, Input, Value, Context]):
         retval: List[Environment] = []
         state = self.interpreter.create_state(inputs)
         for code in self.expander.expand(ground_truth):
-            xs = entry.clone()
+            xs = cast(Environment, entry.clone())
             xs["reference"] = [
                 Token(state.type_environment[v], v, v)
                 for v in state.environment.keys()

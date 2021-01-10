@@ -189,6 +189,7 @@ class AddState(nn.Module):
         self.initial = initial
 
     def __call__(self, entry: Environment) -> Environment:
+        entry = cast(Environment, entry.clone())
         train = True
         if "train" in entry:
             train = entry["train"]
