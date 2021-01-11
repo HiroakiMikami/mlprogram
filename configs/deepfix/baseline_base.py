@@ -1,5 +1,6 @@
 params = {
     "word_threshold": 3,
+    "token_threshold": 100,
     "node_type_embedding_size": 64,
     "embedding_size": 128,
     "hidden_size": 256,
@@ -34,11 +35,10 @@ typo_mutator = mlprogram.languages.c.TypoMutator(
 splitted = mlprogram.utils.data.random_split(
     dataset=dataset.no_error, ratio={"train": 0.8, "test": 0.2}, seed=params.seed
 )
-# TODO mutator is not nn.Module
 mutator = Apply(
     in_keys=["code"],
     out_key=["code", "test_cases", "ground_truth"],
-    module=typo_mutator.mutate,
+    module=mlprogram.nn.Function(f=typo_mutator.mutate),  # convert to nn.Module
 )
 train_dataset = mlprogram.utils.data.transform(
     dataset=splitted.train,
@@ -58,7 +58,7 @@ encoder = {
         config=torchnlp.encoders.LabelEncoder(
             # TODO use not seeded dataset
             sample=mlprogram.utils.data.get_words(
-                dataset=train_dataset,
+                dataset=splitted.train,
                 extract_reference=lexer.tokenize,
                 query_key="code",
             ),
@@ -70,10 +70,11 @@ encoder = {
             args=[output_dir, "action_sequence_encoder.pt"],
         ),
         config=mlprogram.encoders.ActionSequenceEncoder(
-            samples=mlprogram.languages.linediff.get_samples(
+            samples=mlprogram.utils.data.get_samples(
+                dataset=train_dataset,
                 parser=parser,
             ),
-            token_threshold=0,
+            token_threshold=params.token_threshold,
         ),
     ),
 }

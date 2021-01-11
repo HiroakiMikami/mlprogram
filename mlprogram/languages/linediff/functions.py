@@ -25,17 +25,6 @@ class IsSubtype:
         return subtype == basetype
 
 
-def get_samples(parser: Parser[linediffAST]) -> Samples:
-    dataset = ListDataset([Environment(
-        {"ground_truth": Diff([Insert(0, "x"), Remove(1), Replace(2, "y")])},
-        set(["ground_truth"])
-    )])
-    samples = data.get_samples(dataset, parser)
-    samples.tokens.clear()
-
-    return samples
-
-
 class ToEpisode(nn.Module):
     def __init__(self, interpreter: Interpreter, expander: Expander):
         super().__init__()

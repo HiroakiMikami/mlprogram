@@ -241,8 +241,6 @@ types = {
     "mlprogram.languages.linediff.Expander": mlprogram.languages.linediff.Expander,
     "mlprogram.languages.linediff.Parser": mlprogram.languages.linediff.Parser,
     "mlprogram.languages.linediff.IsSubtype": mlprogram.languages.linediff.IsSubtype,
-    "mlprogram.languages.linediff.get_samples":
-    mlprogram.languages.linediff.get_samples,
     "mlprogram.languages.linediff.ToEpisode":
     mlprogram.languages.linediff.ToEpisode,
     "mlprogram.languages.linediff.AddTestCases":
