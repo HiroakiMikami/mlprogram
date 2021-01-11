@@ -3,7 +3,7 @@ from mlprogram.languages import Kinds, Lexer, LexerWithLineNumber, Token
 
 class MockLexer(Lexer):
     def tokenize_with_offset(self, value):
-        if value == "":
+        if value == "\n":
             return None
         retval = []
         offset = 0
@@ -33,13 +33,25 @@ class TestLexerWithLineNumber(object):
         assert lexer.tokenize_with_offset("foo bar") == [
             (0, Token(Kinds.LineNumber(), 0, 0)),
             (0, Token(None, "foo", "foo")),
-            (4, Token(None, "bar", "bar"))
+            (4, Token(None, "bar", "bar")),
+            (8, Token(Kinds.LineNumber(), 1, 1)),
+            (8, Token(None, "", "")),
         ]
         assert lexer.tokenize_with_offset("foo\nbar") == [
             (0, Token(Kinds.LineNumber(), 0, 0)),
             (0, Token(None, "foo", "foo")),
             (4, Token(Kinds.LineNumber(), 1, 1)),
-            (4, Token(None, "bar", "bar"))
+            (4, Token(None, "bar", "bar")),
+            (8, Token(Kinds.LineNumber(), 2, 2)),
+            (8, Token(None, "", "")),
+        ]
+        assert lexer.tokenize_with_offset("foo\nbar\n") == [
+            (0, Token(Kinds.LineNumber(), 0, 0)),
+            (0, Token(None, "foo", "foo")),
+            (4, Token(Kinds.LineNumber(), 1, 1)),
+            (4, Token(None, "bar", "bar")),
+            (8, Token(Kinds.LineNumber(), 2, 2)),
+            (8, Token(None, "", "")),
         ]
         assert lexer.tokenize("") is None
 
