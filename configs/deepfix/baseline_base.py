@@ -48,7 +48,10 @@ test_dataset = mlprogram.utils.data.transform(
     dataset=splitted.test,
     transform=mutator,
 )
-valid_dataset = dataset.with_error
+valid_dataset = mlprogram.utils.data.transform(
+    dataset=dataset.with_error,
+    transform=mlprogram.languages.linediff.AddTestCases(),
+)
 
 encoder = {
     "word_encoder": with_file_cache(
@@ -385,7 +388,7 @@ subsynthesizer = mlprogram.synthesizers.SMC(
 )
 sampler = mlprogram.samplers.SequentialProgramSampler(
     synthesizer=subsynthesizer,
-    transform_input=mlprogram.languages.linediff.AddTestCases(),
+    transform_input=mlprogram.nn.Function(f=mlprogram.functools.Identity()),
     collate=collate,
     encoder=mlprogram.nn.Function(f=mlprogram.functools.Identity()),
     interpreter=interpreter,
