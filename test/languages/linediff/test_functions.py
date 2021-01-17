@@ -6,7 +6,6 @@ from mlprogram.languages.linediff import (
     Expander,
     Interpreter,
     IsSubtype,
-    Parser,
     Remove,
     Replace,
     ToEpisode,

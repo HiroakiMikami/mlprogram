@@ -3,14 +3,9 @@ from typing import List, Union, cast
 from torch import nn
 
 from mlprogram.builtins import Environment
-from mlprogram.encoders import Samples
-from mlprogram.languages import Kinds, Parser, Root
-from mlprogram.languages.linediff.ast import AST as linediffAST
-from mlprogram.languages.linediff.ast import Diff, Insert, Remove, Replace
+from mlprogram.languages import Kinds, Root
 from mlprogram.languages.linediff.expander import Expander
 from mlprogram.languages.linediff.interpreter import Interpreter
-from mlprogram.utils import data
-from mlprogram.utils.data import ListDataset
 
 
 class IsSubtype:
