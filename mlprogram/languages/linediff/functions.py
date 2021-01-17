@@ -3,14 +3,9 @@ from typing import List, Union, cast
 from torch import nn
 
 from mlprogram.builtins import Environment
-from mlprogram.encoders import Samples
-from mlprogram.languages import Kinds, Parser, Root
-from mlprogram.languages.linediff.ast import AST as linediffAST
-from mlprogram.languages.linediff.ast import Diff, Insert, Remove, Replace
+from mlprogram.languages import Kinds, Root
 from mlprogram.languages.linediff.expander import Expander
 from mlprogram.languages.linediff.interpreter import Interpreter
-from mlprogram.utils import data
-from mlprogram.utils.data import ListDataset
 
 
 class IsSubtype:
@@ -23,17 +18,6 @@ class IsSubtype:
         if basetype == "value" and not isinstance(subtype, Kinds.LineNumber):
             return True
         return subtype == basetype
-
-
-def get_samples(parser: Parser[linediffAST]) -> Samples:
-    dataset = ListDataset([Environment(
-        {"ground_truth": Diff([Insert(0, "x"), Remove(1), Replace(2, "y")])},
-        set(["ground_truth"])
-    )])
-    samples = data.get_samples(dataset, parser)
-    samples.tokens.clear()
-
-    return samples
 
 
 class ToEpisode(nn.Module):

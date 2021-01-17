@@ -16,6 +16,8 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
     def tokenize_with_offset(self, text: str) \
             -> Optional[List[Tuple[int, Token[Union[Kinds.LineNumber, Kind],
                                               Union[int, Value]]]]]:
+        if not text.endswith("\n"):
+            text = text + "\n"
         lines = text.split("\n")
         offsets = [0]
         for line in lines:
@@ -56,6 +58,5 @@ class LexerWithLineNumber(Lexer[Union[Kinds.LineNumber, Kind], Union[int, Value]
             if linestr is None:
                 return None
             text += linestr
-            text += "\n"
 
         return text

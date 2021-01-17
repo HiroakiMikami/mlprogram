@@ -6,12 +6,10 @@ from mlprogram.languages.linediff import (
     Expander,
     Interpreter,
     IsSubtype,
-    Parser,
     Remove,
     Replace,
     ToEpisode,
     UpdateInput,
-    get_samples,
 )
 
 
@@ -27,13 +25,6 @@ class TestIsSubType(object):
         assert IsSubtype()("Delta", "Delta")
         assert IsSubtype()("str", "value")
         assert not IsSubtype()(Kinds.LineNumber(), "value")
-
-
-class TestGetSamples(object):
-    def test_happy_path(self):
-        samples = get_samples(Parser(MockLexer()))
-        assert len(samples.rules) == 5
-        assert len(samples.tokens) == 0
 
 
 class TestToEpisode(object):

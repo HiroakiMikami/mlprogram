@@ -1,9 +1,12 @@
 from functools import lru_cache
 from typing import List, Tuple, cast
 
+from mlprogram import logging
 from mlprogram.languages import BatchedState
 from mlprogram.languages import Interpreter as BaseInterpreter
 from mlprogram.languages.linediff import AST, Delta, Diff, Insert, Remove, Replace
+
+logger = logging.Logger(__name__)
 
 
 class Interpreter(BaseInterpreter[AST, str, str, str, str]):
@@ -48,7 +51,11 @@ class Interpreter(BaseInterpreter[AST, str, str, str, str]):
                 del line_input[delta.line_number]
         elif isinstance(delta, Replace):
             for line_input in line_inputs:
-                line_input[delta.line_number] = delta.value
+                if delta.line_number < len(line_input):
+                    line_input[delta.line_number] = delta.value
+                else:
+                    logger.warning(f"Input has only {len(line_input)} lines, "
+                                   f"{delta} cannot be applied")
         else:
             raise AssertionError(f"invalid type: {type(delta)}")
         return ["\n".join(line_input) for line_input in line_inputs]
