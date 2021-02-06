@@ -133,6 +133,8 @@ types = {
         mlprogram.synthesizers.FilteredSynthesizer,
     "mlprogram.synthesizers.SynthesizerWithTimeout":
         mlprogram.synthesizers.SynthesizerWithTimeout,
+    "mlprogram.synthesizers.REINFORCESynthesizer":
+        mlprogram.synthesizers.REINFORCESynthesizer,
     "mlprogram.samplers.transform": mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,

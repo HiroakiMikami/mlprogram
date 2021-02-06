@@ -5,3 +5,4 @@ from mlprogram.synthesizers.smc import SMC  # noqa
 from mlprogram.synthesizers.synthesizer import Result, Synthesizer  # noqa
 from mlprogram.synthesizers.synthesizer_with_timeout import \
     SynthesizerWithTimeout  # noqa
+from mlprogram.synthesizers.reinforce_synthesizer import REINFORCESynthesizer  # noqa
