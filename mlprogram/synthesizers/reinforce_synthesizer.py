@@ -29,10 +29,19 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         self.collate = collate
         self.n_rollout = n_rollout
         self.device = device
+        self.model_state_dict = {
+            key: value.clone() for key, value in self.model.state_dict().items()
+        }
+        # TODO clone state dict
+        self.optimizer_state_dict = self.optimizer.state_dict()
 
     def __call__(self, input: Environment, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
         assert n_required_output is None
+
+        # Reset model and optimizer
+        self.model.load_state_dict(self.model_state_dict)
+        self.optimizer.load_state_dict(self.optimizer_state_dict)
 
         with logger.block("__call__"):
             to_rollout = input.clone_without_supervision()
