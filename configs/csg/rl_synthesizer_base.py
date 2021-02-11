@@ -8,9 +8,9 @@ options = {
         "size": 4,
         "resolution": 4,
         "n_evaluate_dataset": 30,
-        "timeout_sec": 60,  # 1minute
+        "timeout_sec": 180,  # 1minute
         "interval_iter": 1000,
-        "n_rollout": 10,
+        "n_rollout": 100,
     },
 }
 reference = False
