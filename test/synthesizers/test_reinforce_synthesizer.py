@@ -55,7 +55,8 @@ def test_REINFORCESynthesizer():
         reward=Reward(),
         collate=Collate(x=CollateOptions(False, 0, 0)).collate,
         n_rollout=1,
-        device=torch.device("cpu")
+        device=torch.device("cpu"),
+        baseline_momentum=0.9,
     )
     input = Environment({"x": torch.tensor(1.0)})
     for i, x in enumerate(synthesizer(input)):

@@ -346,9 +346,7 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
                 initial_particle_size=100,
                 max_try_num=50,
                 sampler=sampler,
-                to_key=Pick(
-                    key="action_sequence",
-                ),
+                to_key=Pick(key="action_sequence"),
             ),
             model=model,
             optimizer=rl_optimizer,
@@ -357,6 +355,7 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
             collate=collate.collate,
             n_rollout=option.n_rollout,
             device=device,
+            baseline_momentum=0.9,  # disable baseline
         ),
         timeout_sec=option.timeout_sec,
     ),

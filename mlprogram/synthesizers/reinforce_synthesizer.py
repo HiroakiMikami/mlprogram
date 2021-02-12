@@ -20,7 +20,9 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
                  loss_fn: nn.Module, reward: nn.Module,
                  collate: Callable[[List[Environment]], Environment],
                  n_rollout: int,
-                 device: torch.device):
+                 device: torch.device,
+                 baseline_momentum: float,
+                 ):
         self.synthesizer = synthesizer
         self.model = model
         self.loss_fn = loss_fn
@@ -29,6 +31,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         self.collate = collate
         self.n_rollout = n_rollout
         self.device = device
+        self.baseline_momentum = baseline_momentum
         self.model_state_dict = {
             key: value.clone() for key, value in self.model.state_dict().items()
         }
@@ -39,9 +42,13 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
             -> Generator[Result[Output], None, None]:
         assert n_required_output is None
 
+        baseline = 0
+
         # Reset model and optimizer
         self.model.load_state_dict(self.model_state_dict)
         self.optimizer.load_state_dict(self.optimizer_state_dict)
+
+        idx = 0
 
         with logger.block("__call__"):
             to_rollout = input.clone_without_supervision()
@@ -49,6 +56,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
             while True:
                 rollouts = []
+                reward = 0.0
                 with logger.block("rollout"):
                     with torch.no_grad():
                         self.model.eval()
@@ -64,11 +72,18 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
                                 output = input.clone()
                                 output["ground_truth"] = rollout.output
                                 output.mark_as_supervision("ground_truth")
-                                output["reward"] = \
-                                    torch.tensor(self.reward(
-                                        input.clone(),
-                                        rollout.output))
+                                r = self.reward(input.clone(), rollout.output)
+                                reward += r
+                                output["reward"] = torch.tensor(r - baseline)
                                 rollouts.append(output)
+
+                with logger.block("calculate_baseline"):
+                    reward = reward / len(rollouts)
+                    m = self.baseline_momentum
+                    baseline = (1 - m) * reward + m * baseline
+
+                if idx % 1000 == 0:
+                    logger.info(f"idx={idx} reward={baseline}")
 
                 if len(rollouts) == 0:
                     logger.warning("No rollout")
@@ -93,3 +108,5 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
                         loss.backward()
                     with logger.block("optimizer.step"):
                         self.optimizer.step()
+
+                idx += 1
