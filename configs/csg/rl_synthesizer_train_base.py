@@ -37,6 +37,25 @@ loss_fn = torch.nn.Sequential(
                     ),
                 ),
             ],
+            [
+                "aggregate",
+                Apply(
+                    in_keys=["loss"],
+                    out_key="loss",
+                    module=mlprogram.nn.AggregatedLoss(),
+                ),
+            ],
+            [
+                "normalize",
+                Apply(
+                    in_keys=[["loss", "lhs"]],
+                    out_key="loss",
+                    module=mlprogram.nn.Function(
+                        f=Div(),
+                    ),
+                    constants={"rhs": batch_size},
+                ),
+            ],
         ],
     ),
 )

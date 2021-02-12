@@ -132,7 +132,7 @@ rl_optimizer = torch.optim.Optimizer(
     model=model,
 )
 action_sequence_loss_fn = Apply(
-    module=mlprogram.nn.action_sequence.Loss(),
+    module=mlprogram.nn.action_sequence.Loss(reduction="none"),
     in_keys=[
         "rule_probs",
         "token_probs",
@@ -161,23 +161,22 @@ rl_loss_fn = torch.nn.Sequential(
                                         ["loss", "rhs"],
                                     ],
                                     out_key="loss",
-                                    module=mlprogram.nn.Function(
-                                        f=Mul(),
-                                    ),
+                                    module=mlprogram.nn.Function(f=Mul()),
+                                ),
+                            ],
+                            [
+                                "aggregate",
+                                Apply(
+                                    in_keys=["loss"],
+                                    out_key="loss",
+                                    module=mlprogram.nn.AggregatedLoss(),
                                 ),
                             ],
                         ],
                     ),
                 ),
             ],
-            [
-                "pick",
-                mlprogram.nn.Function(
-                    f=Pick(
-                        key="loss",
-                    ),
-                ),
-            ],
+            ["pick", mlprogram.nn.Function(f=Pick(key="loss"))],
         ],
     ),
 )
@@ -228,6 +227,11 @@ collate = mlprogram.utils.data.Collate(
         use_pad_sequence=True,
         dim=0,
         padding_value=-1,
+    ),
+    reward=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=False,
+        dim=0,
+        padding_value=0,
     ),
 )
 transform_input = mlprogram.functools.Sequence(
@@ -309,6 +313,30 @@ transform = mlprogram.functools.Sequence(
         ],
     ),
 )
+collate_fn = mlprogram.functools.Sequence(
+    funcs=collections.OrderedDict(
+        items=[
+            [
+                "add_test_cases",
+                mlprogram.functools.Map(
+                    func=Apply(
+                        module=mlprogram.languages.csg.transforms.AddTestCases(
+                            interpreter=interpreter,
+                        ),
+                        in_keys=["ground_truth"],
+                        out_key="test_cases",
+                        is_out_supervision=False,
+                    ),
+                ),
+            ],
+            [
+                "transform",
+                mlprogram.functools.Map(func=transform),
+            ],
+            ["collate", collate.collate],
+        ],
+    ),
+)
 sampler = mlprogram.samplers.transform(
     sampler=mlprogram.samplers.ActionSequenceSampler(
         encoder=encoder,
@@ -343,16 +371,31 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
                         y=option.evaluate_max_object,
                     ),
                 ),
-                initial_particle_size=100,
-                max_try_num=50,
-                sampler=sampler,
+                initial_particle_size=1,
+                max_try_num=1,
+                sampler=mlprogram.samplers.FilteredSampler(
+                    sampler=sampler,
+                    score=mlprogram.metrics.use_environment(
+                        metric=mlprogram.metrics.TestCaseResult(
+                            interpreter=interpreter,
+                            metric=mlprogram.metrics.use_environment(
+                                metric=mlprogram.metrics.Iou(),
+                                in_keys=["expected", "actual"],
+                                value_key="actual",
+                            ),
+                        ),
+                        in_keys=["test_cases", "actual"],
+                        value_key="actual",
+                    ),
+                    threshold=0.9,
+                ),
                 to_key=Pick(key="action_sequence"),
             ),
             model=model,
             optimizer=rl_optimizer,
             loss_fn=rl_loss_fn,
             reward=rl_reward_fn,
-            collate=collate.collate,
+            collate=collate_fn,
             n_rollout=option.n_rollout,
             device=device,
             baseline_momentum=0.9,  # disable baseline

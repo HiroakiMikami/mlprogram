@@ -32,9 +32,6 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         self.n_rollout = n_rollout
         self.device = device
         self.baseline_momentum = baseline_momentum
-        self.model_state_dict = {
-            key: value.clone() for key, value in self.model.state_dict().items()
-        }
         # TODO clone state dict
         self.optimizer_state_dict = self.optimizer.state_dict()
 
@@ -45,69 +42,74 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
             baseline = 0
 
-            # Reset model and optimizer
-            self.model.load_state_dict(self.model_state_dict)
-            self.optimizer.load_state_dict(self.optimizer_state_dict)
+            # Backup state
+            orig_model_state = {
+                key: value.clone() for key, value in self.model.state_dict().items()
+            }
 
-            idx = 0
+            try:
+                idx = 0
 
-            to_rollout = input.clone_without_supervision()
-            to_rollout.to(self.device)
+                to_rollout = input.clone_without_supervision()
+                to_rollout.to(self.device)
 
-            while True:
-                rollouts = []
-                reward = 0.0
-                with logger.block("rollout"):
-                    with torch.no_grad():
-                        self.model.eval()
-                        for rollout in logger.iterable_block(
-                            "sample",
-                            self.synthesizer(to_rollout,
-                                             n_required_output=self.n_rollout)
-                        ):
-                            yield rollout
-                            if not rollout.is_finished:
-                                continue
-                            for _ in range(rollout.num):
-                                output = input.clone()
-                                output["ground_truth"] = rollout.output
-                                output.mark_as_supervision("ground_truth")
-                                r = self.reward(input.clone(), rollout.output)
-                                reward += r
-                                output["reward"] = torch.tensor(r - baseline)
-                                rollouts.append(output)
+                while True:
+                    rollouts = []
+                    reward = 0.0
+                    with logger.block("rollout"):
+                        with torch.no_grad():
+                            self.model.eval()
+                            for rollout in logger.iterable_block(
+                                "sample",
+                                self.synthesizer(to_rollout,
+                                                 n_required_output=self.n_rollout)
+                            ):
+                                yield rollout
+                                if not rollout.is_finished:
+                                    continue
+                                for _ in range(rollout.num):
+                                    output = input.clone()
+                                    output["ground_truth"] = rollout.output
+                                    output.mark_as_supervision("ground_truth")
+                                    r = self.reward(input.clone(), rollout.output)
+                                    reward += r
+                                    output["reward"] = torch.tensor(r)  # - baseline)
+                                    rollouts.append(output)
 
-                with logger.block("calculate_baseline"):
-                    reward = reward / len(rollouts)
-                    m = self.baseline_momentum
-                    baseline = (1 - m) * reward + m * baseline
+                    if len(rollouts) == 0:
+                        logger.warning("No rollout")
+                        continue
+                    if len(rollouts) != self.n_rollout:
+                        logger.warning(
+                            "#rollout is unexpected: "
+                            f"expected={self.n_rollout} actual={len(rollouts)}")
 
-                if idx % 10 == 0:
-                    logger.info(f"idx={idx} reward(avg)={baseline} reward={reward}")
-                raise NotImplementedError
+                    with logger.block("calculate_baseline"):
+                        reward = reward / len(rollouts)
+                        m = self.baseline_momentum
+                        baseline = (1 - m) * reward + m * baseline
 
-                if len(rollouts) == 0:
-                    logger.warning("No rollout")
-                    continue
-                if len(rollouts) != self.n_rollout:
-                    logger.warning(
-                        "#rollout is unexpected: "
-                        f"expected={self.n_rollout} actual={len(rollouts)}")
-
-                with logger.block("train"):
-                    self.model.train()
-                    with logger.block("collate"):
-                        batch = self.collate(rollouts)
-                    with logger.block("to"):
-                        batch.to(self.device)
-                    with logger.block("forward"):
+                    with logger.block("train"):
                         self.model.train()
-                        output = self.model(batch)
-                        loss = self.loss_fn(output)
-                    with logger.block("backward"):
-                        self.model.zero_grad()
-                        loss.backward()
-                    with logger.block("optimizer.step"):
-                        self.optimizer.step()
+                        with logger.block("collate"):
+                            batch = self.collate(rollouts)
+                        with logger.block("to"):
+                            batch.to(self.device)
+                        with logger.block("forward"):
+                            self.model.train()
+                            output = self.model(batch)
+                            loss = self.loss_fn(output)
+                        with logger.block("backward"):
+                            self.model.zero_grad()
+                            loss.backward()
+                        with logger.block("optimizer.step"):
+                            self.optimizer.step()
 
-                idx += 1
+                    if idx % 10 == 0:
+                        logger.info(
+                            f"idx={idx} reward(avg)={baseline} reward={reward} loss={loss.item()}")
+
+                    idx += 1
+            finally:
+                self.model.load_state_dict(orig_model_state)
+                self.optimizer.load_state_dict(self.optimizer_state_dict)
