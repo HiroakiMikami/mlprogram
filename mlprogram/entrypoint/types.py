@@ -210,6 +210,8 @@ types = {
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
+    "mlprogram.nn.action_sequence.EntropyLoss":
+        mlprogram.nn.action_sequence.EntropyLoss,
     "mlprogram.nn.action_sequence.Accuracy":
         mlprogram.nn.action_sequence.Accuracy,
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,

@@ -73,7 +73,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
                                     output.mark_as_supervision("ground_truth")
                                     r = self.reward(input.clone(), rollout.output)
                                     reward += r
-                                    output["reward"] = torch.tensor(r)  # - baseline)
+                                    output["reward"] = torch.tensor(r - baseline)
                                     rollouts.append(output)
 
                     if len(rollouts) == 0:
@@ -107,7 +107,9 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
                     if idx % 10 == 0:
                         logger.info(
-                            f"idx={idx} reward(avg)={baseline} reward={reward} loss={loss.item()}")
+                            f"idx={idx} reward(avg)={baseline} reward={reward} "
+                            f"loss={loss.item()}"
+                        )
 
                     idx += 1
             finally:

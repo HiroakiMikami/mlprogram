@@ -165,9 +165,34 @@ rl_loss_fn = torch.nn.Sequential(
                                 ),
                             ],
                             [
+                                "entropy_loss",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.EntropyLoss(
+                                        reduction="none"
+                                    ),
+                                    in_keys=[
+                                        "rule_probs",
+                                        "token_probs",
+                                        "reference_probs",
+                                    ],
+                                    out_key="entropy_loss",
+                                ),
+                            ],
+                            [
+                                "neg",
+                                Apply(
+                                    in_keys=[
+                                        ["entropy_loss", "lhs"],
+                                    ],
+                                    out_key="entropy_loss",
+                                    module=mlprogram.nn.Function(f=Mul()),
+                                    constants={"rhs": -1},
+                                ),
+                            ],
+                            [
                                 "aggregate",
                                 Apply(
-                                    in_keys=["loss"],
+                                    in_keys=["loss", "entropy_loss"],
                                     out_key="loss",
                                     module=mlprogram.nn.AggregatedLoss(),
                                 ),
