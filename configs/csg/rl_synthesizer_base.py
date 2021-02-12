@@ -8,7 +8,7 @@ options = {
         "size": 4,
         "resolution": 4,
         "n_evaluate_dataset": 30,
-        "timeout_sec": 180,  # 1minute
+        "timeout_sec": 180,  # 3minute
         "interval_iter": 1000,
         "n_rollout": 100,
     },
@@ -130,6 +130,7 @@ model = torch.share_memory_(
 rl_optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
     model=model,
+    lr=1e-5,
 )
 action_sequence_loss_fn = Apply(
     module=mlprogram.nn.action_sequence.Loss(reduction="none"),
@@ -186,7 +187,7 @@ rl_loss_fn = torch.nn.Sequential(
                                     ],
                                     out_key="entropy_loss",
                                     module=mlprogram.nn.Function(f=Mul()),
-                                    constants={"rhs": -1},
+                                    constants={"rhs": -0.05},
                                 ),
                             ],
                             [
@@ -424,6 +425,7 @@ synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
             n_rollout=option.n_rollout,
             device=device,
             baseline_momentum=0.9,  # disable baseline
+            max_try_num=10,
         ),
         timeout_sec=option.timeout_sec,
     ),

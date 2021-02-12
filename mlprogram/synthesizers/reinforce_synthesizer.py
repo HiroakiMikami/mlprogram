@@ -22,6 +22,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
                  n_rollout: int,
                  device: torch.device,
                  baseline_momentum: float,
+                 max_try_num: int,
                  ):
         self.synthesizer = synthesizer
         self.model = model
@@ -32,6 +33,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         self.n_rollout = n_rollout
         self.device = device
         self.baseline_momentum = baseline_momentum
+        self.max_try_num = max_try_num
         # TODO clone state dict
         self.optimizer_state_dict = self.optimizer.state_dict()
 
@@ -49,6 +51,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
             try:
                 idx = 0
+                n_try = 0
 
                 to_rollout = input.clone_without_supervision()
                 to_rollout.to(self.device)
@@ -78,6 +81,9 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
                     if len(rollouts) == 0:
                         logger.warning("No rollout")
+                        n_try += 1
+                        if n_try >= self.max_try_num:
+                            return
                         continue
                     if len(rollouts) != self.n_rollout:
                         logger.warning(

@@ -1,7 +1,7 @@
 imports = ["rl_synthesizer_base.py"]
 output_dir = "output/output"
 device = torch.device(
-    type_str="cuda",
+    type_str="cpu",
     index=0,
 )
 main = mlprogram.entrypoint.evaluate(
