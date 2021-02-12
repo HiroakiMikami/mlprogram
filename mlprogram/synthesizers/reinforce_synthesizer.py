@@ -48,9 +48,9 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         self.model.load_state_dict(self.model_state_dict)
         self.optimizer.load_state_dict(self.optimizer_state_dict)
 
-        idx = 0
-
         with logger.block("__call__"):
+            idx = 0
+
             to_rollout = input.clone_without_supervision()
             to_rollout.to(self.device)
 
@@ -82,8 +82,8 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
                     m = self.baseline_momentum
                     baseline = (1 - m) * reward + m * baseline
 
-                if idx % 1000 == 0:
-                    logger.info(f"idx={idx} reward={baseline}")
+                if idx % 10 == 0:
+                    logger.info(f"idx={idx} reward(avg)={baseline} reward={reward}")
 
                 if len(rollouts) == 0:
                     logger.warning("No rollout")
