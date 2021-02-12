@@ -84,6 +84,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
                 if idx % 10 == 0:
                     logger.info(f"idx={idx} reward(avg)={baseline} reward={reward}")
+                raise NotImplementedError
 
                 if len(rollouts) == 0:
                     logger.warning("No rollout")
