@@ -376,6 +376,7 @@ train_synthesizer = mlprogram.synthesizers.SMC(
     ),
     initial_particle_size=1,
     max_try_num=1,
+    # FilteredSample stop searching when condition is met
     sampler=mlprogram.samplers.FilteredSampler(
         sampler=sampler,
         score=mlprogram.metrics.use_environment(
