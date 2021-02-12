@@ -38,17 +38,17 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         # TODO clone state dict
         self.optimizer_state_dict = self.optimizer.state_dict()
 
-    def __call__(self, input: Environment, n_required_output: Optional[int] = None) \
+    def _synthesize(self, input: Environment, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        assert n_required_output is None
+        with logger.block("_synthesize"):
+            assert n_required_output is None
 
-        baseline = 0
+            baseline = 0
 
-        # Reset model and optimizer
-        self.model.load_state_dict(self.model_state_dict)
-        self.optimizer.load_state_dict(self.optimizer_state_dict)
+            # Reset model and optimizer
+            self.model.load_state_dict(self.model_state_dict)
+            self.optimizer.load_state_dict(self.optimizer_state_dict)
 
-        with logger.block("__call__"):
             idx = 0
 
             to_rollout = input.clone_without_supervision()

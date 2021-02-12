@@ -19,15 +19,14 @@ class BeamSearch(Synthesizer[Input, Output], Generic[Input, Output, State]):
         self.max_step_size = max_step_size
         self.sampler = sampler
 
-    @logger.function_block("__call__")
-    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+    def _synthesize(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        # Start from empty sequence
-        states = [SamplerState(0.0, self.sampler.initialize(input))]
+        with logger.block("_synthesize"):
+            # Start from empty sequence
+            states = [SamplerState(0.0, self.sampler.initialize(input))]
 
-        k = self.beam_size
-        steps = 0
-        with logger.block("__call__"):
+            k = self.beam_size
+            steps = 0
             while steps < self.max_step_size and k > 0:
                 if len(states) == 0:
                     return
