@@ -1,5 +1,3 @@
-from typing import cast
-
 import torch
 
 from mlprogram.builtins import Environment
@@ -24,7 +22,7 @@ class Module(torch.nn.Module):
         self.model = torch.nn.Linear(1, 1, bias=False)
 
     def forward(self, input: Environment) -> torch.Tensor:
-        x = cast(torch.Tensor, input["x"])
+        x = input["x"]
         if len(x.shape) == 0:
             x = x.reshape(1, 1)
         y = self.model(x)
@@ -34,8 +32,8 @@ class Module(torch.nn.Module):
 
 class Loss(torch.nn.Module):
     def forward(self, input: Environment) -> torch.Tensor:
-        x = cast(torch.Tensor, input["x"])
-        y = cast(torch.Tensor, input["y"])
+        x = input["x"]
+        y = input["y"]
         return torch.nn.MSELoss()(x, y)
 
 
