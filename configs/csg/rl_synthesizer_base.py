@@ -145,61 +145,45 @@ action_sequence_loss_fn = Apply(
 rl_loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
         items=[
+            ["loss", action_sequence_loss_fn],
             [
-                "policy",
-                torch.nn.Sequential(
-                    modules=collections.OrderedDict(
-                        items=[
-                            [
-                                "loss",
-                                action_sequence_loss_fn,
-                            ],
-                            [
-                                "weight_by_reward",
-                                Apply(
-                                    in_keys=[
-                                        ["reward", "lhs"],
-                                        ["loss", "rhs"],
-                                    ],
-                                    out_key="loss",
-                                    module=mlprogram.nn.Function(f=Mul()),
-                                ),
-                            ],
-                            [
-                                "entropy_loss",
-                                Apply(
-                                    module=mlprogram.nn.action_sequence.EntropyLoss(
-                                        reduction="none"
-                                    ),
-                                    in_keys=[
-                                        "rule_probs",
-                                        "token_probs",
-                                        "reference_probs",
-                                    ],
-                                    out_key="entropy_loss",
-                                ),
-                            ],
-                            [
-                                "neg",
-                                Apply(
-                                    in_keys=[
-                                        ["entropy_loss", "lhs"],
-                                    ],
-                                    out_key="entropy_loss",
-                                    module=mlprogram.nn.Function(f=Mul()),
-                                    constants={"rhs": -0.05},
-                                ),
-                            ],
-                            [
-                                "aggregate",
-                                Apply(
-                                    in_keys=["loss", "entropy_loss"],
-                                    out_key="loss",
-                                    module=mlprogram.nn.AggregatedLoss(),
-                                ),
-                            ],
-                        ],
-                    ),
+                "weight_by_reward",
+                Apply(
+                    in_keys=[
+                        ["reward", "lhs"],
+                        ["loss", "rhs"],
+                    ],
+                    out_key="loss",
+                    module=mlprogram.nn.Function(f=Mul()),
+                ),
+            ],
+            [
+                "entropy_loss",
+                Apply(
+                    module=mlprogram.nn.action_sequence.EntropyLoss(reduction="none"),
+                    in_keys=[
+                        "rule_probs",
+                        "token_probs",
+                        "reference_probs",
+                    ],
+                    out_key="entropy_loss",
+                ),
+            ],
+            [
+                "neg",
+                Apply(
+                    in_keys=[["entropy_loss", "lhs"]],
+                    out_key="entropy_loss",
+                    module=mlprogram.nn.Function(f=Mul()),
+                    constants={"rhs": -0.05},
+                ),
+            ],
+            [
+                "aggregate",
+                Apply(
+                    in_keys=["loss", "entropy_loss"],
+                    out_key="loss",
+                    module=mlprogram.nn.AggregatedLoss(),
                 ),
             ],
             ["pick", mlprogram.nn.Function(f=Pick(key="loss"))],

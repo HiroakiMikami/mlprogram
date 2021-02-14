@@ -14,9 +14,7 @@ collate_fn = mlprogram.functools.Sequence(
         items=[
             [
                 "transform",
-                mlprogram.functools.Map(
-                    func=transform,
-                ),
+                mlprogram.functools.Map(func=transform),
             ],
             ["collate", collate.collate],
         ],
@@ -25,18 +23,7 @@ collate_fn = mlprogram.functools.Sequence(
 loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
         items=[
-            [
-                "loss",
-                action_sequence_loss_fn,
-            ],
-            [
-                "pick",
-                mlprogram.nn.Function(
-                    f=Pick(
-                        key="loss",
-                    ),
-                ),
-            ],
+            ["loss", action_sequence_loss_fn],
             [
                 "aggregate",
                 Apply(
@@ -50,11 +37,13 @@ loss_fn = torch.nn.Sequential(
                 Apply(
                     in_keys=[["loss", "lhs"]],
                     out_key="loss",
-                    module=mlprogram.nn.Function(
-                        f=Div(),
-                    ),
+                    module=mlprogram.nn.Function(f=Div()),
                     constants={"rhs": batch_size},
                 ),
+            ],
+            [
+                "pick",
+                mlprogram.nn.Function(f=Pick(key="loss")),
             ],
         ],
     ),
