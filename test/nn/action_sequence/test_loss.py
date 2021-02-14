@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from mlprogram.nn.action_sequence import Loss, EntropyLoss
+from mlprogram.nn.action_sequence import EntropyLoss, Loss
 from mlprogram.nn.utils import rnn
 
 

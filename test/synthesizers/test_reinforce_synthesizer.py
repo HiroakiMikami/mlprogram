@@ -1,9 +1,10 @@
-import torch
 from typing import cast
 
+import torch
+
 from mlprogram.builtins import Environment
+from mlprogram.synthesizers import REINFORCESynthesizer, Result, Synthesizer
 from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.synthesizers import REINFORCESynthesizer, Synthesizer, Result
 
 
 class MockSynthesizer(Synthesizer[Environment, int]):
@@ -57,6 +58,7 @@ def test_REINFORCESynthesizer():
         n_rollout=1,
         device=torch.device("cpu"),
         baseline_momentum=0.9,
+        max_try_num=1,
     )
     input = Environment({"x": torch.tensor(1.0)})
     for i, x in enumerate(synthesizer(input)):

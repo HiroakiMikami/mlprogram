@@ -1,8 +1,7 @@
-import torch
-from torch import nn
-from torch import optim
+from typing import Callable, Generator, Generic, List, Optional, TypeVar
 
-from typing import Generator, Generic, Optional, TypeVar, List, Callable
+import torch
+from torch import nn, optim
 
 from mlprogram import logging
 from mlprogram.builtins import Environment
@@ -42,7 +41,7 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
         with logger.block("_synthesize"):
             assert n_required_output is None
 
-            baseline = 0
+            baseline = 0.0
 
             # TODO handle multi-process evaluation
             # Backup state_dict
