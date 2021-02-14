@@ -49,6 +49,7 @@ types = {
     "torch.nn.Sequential": lambda modules: torch.nn.Sequential(modules),
     "torch.optim.Optimizer": Optimizer,
     "torch.optim.Adam": lambda: torch.optim.Adam,
+    "torch.optim.SGD": lambda: torch.optim.SGD,
     "torch.Reshape": Reshape,
     "torch.nn.BCELoss": torch.nn.BCELoss,
     "torch.share_memory_": share_memory_

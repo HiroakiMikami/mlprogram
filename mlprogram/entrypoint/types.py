@@ -133,6 +133,8 @@ types = {
         mlprogram.synthesizers.FilteredSynthesizer,
     "mlprogram.synthesizers.SynthesizerWithTimeout":
         mlprogram.synthesizers.SynthesizerWithTimeout,
+    "mlprogram.synthesizers.REINFORCESynthesizer":
+        mlprogram.synthesizers.REINFORCESynthesizer,
     "mlprogram.samplers.transform": mlprogram.samplers.transform,
     "mlprogram.samplers.ActionSequenceSampler":
         mlprogram.samplers.ActionSequenceSampler,
@@ -208,6 +210,8 @@ types = {
     "mlprogram.nn.action_sequence.Predictor":
         mlprogram.nn.action_sequence.Predictor,
     "mlprogram.nn.action_sequence.Loss": mlprogram.nn.action_sequence.Loss,
+    "mlprogram.nn.action_sequence.EntropyLoss":
+        mlprogram.nn.action_sequence.EntropyLoss,
     "mlprogram.nn.action_sequence.Accuracy":
         mlprogram.nn.action_sequence.Accuracy,
     "mlprogram.nn.nl2code.Decoder": mlprogram.nn.nl2code.Decoder,

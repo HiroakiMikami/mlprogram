@@ -17,10 +17,10 @@ class SynthesizerWithTimeout(Synthesizer[Input, Output],
         self.synthesizer = synthesizer
         self.timeout_sec = timeout_sec
 
-    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+    def _synthesize(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        begin = time.time()
-        with logger.block("__call__"):
+        with logger.block("_synthesize"):
+            begin = time.time()
             for output in self.synthesizer(
                     input,
                     n_required_output=n_required_output):

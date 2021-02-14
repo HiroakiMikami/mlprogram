@@ -14,7 +14,7 @@ class Environment(object):
         return len(self._values)
 
     def __getitem__(self, key: str) -> Any:
-        assert key in self._values
+        assert key in self._values, f"{key} is not found"
         return self._values[key]
 
     def __setitem__(self, key: str, value: Any):

@@ -17,9 +17,9 @@ class FilteredSynthesizer(Synthesizer[Input, Output], Generic[Input, Output]):
         self.score = score
         self.threshold = threshold
 
-    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+    def _synthesize(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        with logger.block("__call__"):
+        with logger.block("_synthesize"):
             for result in self.synthesizer(input, n_required_output):
                 score = self.score(input, result.output)
                 if score >= self.threshold:

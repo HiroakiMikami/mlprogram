@@ -95,3 +95,11 @@ class TestConfig(object):
             (os.path.join("configs", "deepfix",
                           "baseline_evaluate.py"), 0),
         ])
+
+    def test_csg_small_rl_synthesizer(self):
+        self.launch_config([
+            (os.path.join("configs", "csg",
+                          "rl_synthesizer_train_small.py"), 0),
+            (os.path.join("configs", "csg",
+                          "rl_synthesizer_evaluate_small.py"), 0),
+        ])

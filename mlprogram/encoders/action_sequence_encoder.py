@@ -4,6 +4,7 @@ from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union, ca
 import torch
 from torchnlp.encoders import LabelEncoder
 
+from mlprogram import logging
 from mlprogram.actions import (
     ActionSequence,
     ApplyRule,
@@ -14,6 +15,9 @@ from mlprogram.actions import (
     Rule,
 )
 from mlprogram.languages import Token
+
+logger = logging.Logger(__name__)
+
 
 V = TypeVar("V")
 
@@ -109,10 +113,12 @@ class ActionSequenceEncoder:
                 # GenerateToken (Copy)
                 index = int(tensor[i, 2].numpy())
                 if index >= len(reference):
+                    logger.debug("reference index is out-of-bounds")
                     return None
                 token = reference[index]
                 retval.eval(GenerateToken(token.kind, token.raw_value))
             else:
+                logger.debug("invalid actions")
                 return None
 
         return retval
@@ -173,6 +179,7 @@ class ActionSequenceEncoder:
 
                 if encoded_token == 0 and \
                         a.value not in reference_value:
+                    logger.debug("cannot encode token")
                     return None
 
         head = action_sequence.head

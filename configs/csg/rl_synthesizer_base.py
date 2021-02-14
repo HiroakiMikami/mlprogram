@@ -2,24 +2,15 @@ imports = ["base.py"]
 
 options = {
     "small": {
-        "n_pretrain_iteration": 35000,
+        "n_train_iteration": 1000,
         "train_max_object": 3,
         "evaluate_max_object": 6,
         "size": 4,
         "resolution": 4,
         "n_evaluate_dataset": 30,
-        "timeout_sec": 180,  # 5,
-        "interval_iter": 5000,
-    },
-    "large": {
-        "n_pretrain_iteration": 437500,
-        "train_max_object": 13,
-        "evaluate_max_object": 30,
-        "size": 16,
-        "resolution": 1,
-        "n_evaluate_dataset": 30,
-        "timeout_sec": 120,
-        "interval_iter": 50000,
+        "timeout_sec": 360,  # 6 minute
+        "interval_iter": 1000,
+        "n_rollout": 100,
     },
 }
 reference = False
@@ -136,6 +127,81 @@ model = torch.share_memory_(
         ),
     ),
 )
+rl_optimizer = torch.optim.Optimizer(
+    optimizer_cls=torch.optim.Adam(),
+    model=model,
+    lr=1e-5,
+)
+action_sequence_loss_fn = Apply(
+    module=mlprogram.nn.action_sequence.Loss(reduction="none"),
+    in_keys=[
+        "rule_probs",
+        "token_probs",
+        "reference_probs",
+        "ground_truth_actions",
+    ],
+    out_key="loss",
+)
+rl_loss_fn = torch.nn.Sequential(
+    modules=collections.OrderedDict(
+        items=[
+            ["loss", action_sequence_loss_fn],
+            [
+                "weight_by_reward",
+                Apply(
+                    in_keys=[
+                        ["reward", "lhs"],
+                        ["loss", "rhs"],
+                    ],
+                    out_key="loss",
+                    module=mlprogram.nn.Function(f=Mul()),
+                ),
+            ],
+            [
+                "entropy_loss",
+                Apply(
+                    module=mlprogram.nn.action_sequence.EntropyLoss(reduction="none"),
+                    in_keys=[
+                        "rule_probs",
+                        "token_probs",
+                        "reference_probs",
+                    ],
+                    out_key="entropy_loss",
+                ),
+            ],
+            [
+                "neg",
+                Apply(
+                    in_keys=[["entropy_loss", "lhs"]],
+                    out_key="entropy_loss",
+                    module=mlprogram.nn.Function(f=Mul()),
+                    constants={"rhs": -0.05},
+                ),
+            ],
+            [
+                "aggregate",
+                Apply(
+                    in_keys=["loss", "entropy_loss"],
+                    out_key="loss",
+                    module=mlprogram.nn.AggregatedLoss(),
+                ),
+            ],
+            ["pick", mlprogram.nn.Function(f=Pick(key="loss"))],
+        ],
+    ),
+)
+rl_reward_fn = mlprogram.metrics.use_environment(
+    metric=mlprogram.metrics.TestCaseResult(
+        interpreter=interpreter,
+        metric=mlprogram.metrics.use_environment(
+            metric=mlprogram.metrics.Iou(),
+            in_keys=["expected", "actual"],
+            value_key="actual",
+        ),
+    ),
+    in_keys=["test_cases", "actual"],
+    value_key="actual",
+)
 collate = mlprogram.utils.data.Collate(
     test_case_tensor=mlprogram.utils.data.CollateOptions(
         use_pad_sequence=False,
@@ -171,6 +237,11 @@ collate = mlprogram.utils.data.Collate(
         use_pad_sequence=True,
         dim=0,
         padding_value=-1,
+    ),
+    reward=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=False,
+        dim=0,
+        padding_value=0,
     ),
 )
 transform_input = mlprogram.functools.Sequence(
@@ -252,6 +323,30 @@ transform = mlprogram.functools.Sequence(
         ],
     ),
 )
+collate_fn = mlprogram.functools.Sequence(
+    funcs=collections.OrderedDict(
+        items=[
+            [
+                "add_test_cases",
+                mlprogram.functools.Map(
+                    func=Apply(
+                        module=mlprogram.languages.csg.transforms.AddTestCases(
+                            interpreter=interpreter,
+                        ),
+                        in_keys=["ground_truth"],
+                        out_key="test_cases",
+                        is_out_supervision=False,
+                    ),
+                ),
+            ],
+            [
+                "transform",
+                mlprogram.functools.Map(func=transform),
+            ],
+            ["collate", collate.collate],
+        ],
+    ),
+)
 sampler = mlprogram.samplers.transform(
     sampler=mlprogram.samplers.ActionSequenceSampler(
         encoder=encoder,
@@ -277,20 +372,44 @@ sampler = mlprogram.samplers.transform(
 )
 synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
     synthesizer=mlprogram.synthesizers.SynthesizerWithTimeout(
-        synthesizer=mlprogram.synthesizers.SMC(
-            max_step_size=mul(
-                x=5,
-                y=mul(
+        synthesizer=mlprogram.synthesizers.REINFORCESynthesizer(
+            synthesizer=mlprogram.synthesizers.SMC(
+                max_step_size=mul(
                     x=5,
-                    y=option.evaluate_max_object,
+                    y=mul(
+                        x=5,
+                        y=option.evaluate_max_object,
+                    ),
                 ),
+                initial_particle_size=1,
+                max_try_num=1,
+                sampler=mlprogram.samplers.FilteredSampler(
+                    sampler=sampler,
+                    score=mlprogram.metrics.use_environment(
+                        metric=mlprogram.metrics.TestCaseResult(
+                            interpreter=interpreter,
+                            metric=mlprogram.metrics.use_environment(
+                                metric=mlprogram.metrics.Iou(),
+                                in_keys=["expected", "actual"],
+                                value_key="actual",
+                            ),
+                        ),
+                        in_keys=["test_cases", "actual"],
+                        value_key="actual",
+                    ),
+                    threshold=0.9,
+                ),
+                to_key=Pick(key="action_sequence"),
             ),
-            initial_particle_size=100,
-            max_try_num=50,
-            sampler=sampler,
-            to_key=Pick(
-                key="action_sequence",
-            ),
+            model=model,
+            optimizer=rl_optimizer,
+            loss_fn=rl_loss_fn,
+            reward=rl_reward_fn,
+            collate=collate_fn,
+            n_rollout=option.n_rollout,
+            device=device,
+            baseline_momentum=0.9,  # disable baseline
+            max_try_num=10,
         ),
         timeout_sec=option.timeout_sec,
     ),

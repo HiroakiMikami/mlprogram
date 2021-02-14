@@ -34,9 +34,9 @@ class DFS(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
                 for result in self._search(input, next_state):
                     yield result
 
-    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+    def _synthesize(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        with logger.block("__call__"):
+        with logger.block("_synthesize"):
             initial_state = DuplicatedSamplerState(
                 SamplerState(0.0, self.sampler.initialize(input)), 1
             )

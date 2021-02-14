@@ -3,7 +3,7 @@ from mlprogram.nn.action_sequence.embedding import (  # noqa
     ActionsEmbedding,
     PreviousActionsEmbedding,
 )
-from mlprogram.nn.action_sequence.loss import Loss  # noqa
+from mlprogram.nn.action_sequence.loss import EntropyLoss, Loss  # noqa
 from mlprogram.nn.action_sequence.lstm_decoder import (  # noqa
     AttentionInput,
     CatInput,

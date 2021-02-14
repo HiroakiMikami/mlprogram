@@ -32,14 +32,14 @@ class SMC(Synthesizer[Input, Output], Generic[Input, Output, State, Key]):
         self.rng = \
             rng or np.random.RandomState(np.random.randint(0, 2 << 32 - 1))
 
-    def __call__(self, input: Input, n_required_output: Optional[int] = None) \
+    def _synthesize(self, input: Input, n_required_output: Optional[int] = None) \
             -> Generator[Result[Output], None, None]:
-        if n_required_output is None:
-            n_initial_particle = self.initial_particle_size
-        else:
-            n_initial_particle = n_required_output
-        initial_state = self.sampler.initialize(input)
-        with logger.block("__call__"):
+        with logger.block("_synthesize"):
+            if n_required_output is None:
+                n_initial_particle = self.initial_particle_size
+            else:
+                n_initial_particle = n_required_output
+            initial_state = self.sampler.initialize(input)
             i = 0
             while True:
                 logger.debug(

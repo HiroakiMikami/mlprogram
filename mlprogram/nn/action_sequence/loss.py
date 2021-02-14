@@ -85,3 +85,49 @@ class Loss(nn.Module):
             return torch.sum(loss)
         else:
             return torch.sum(loss, dim=0)
+
+
+class EntropyLoss(nn.Module):
+    def __init__(self, reduction: str = "mean"):
+        super().__init__()
+        self.reduction = reduction
+        assert self.reduction == "mean" or self.reduction == "sum" or \
+            self.reduction == "none"
+
+    def forward(self,
+                rule_probs: PaddedSequenceWithMask,
+                token_probs: PaddedSequenceWithMask,
+                reference_probs: PaddedSequenceWithMask,
+                ) -> torch.Tensor:
+        """
+        Parameters
+        ----------
+        rule_probs: PaddedSequenceWithMask
+            The probabilities of apply-rule. The shape is (L_a, B, num_rules).
+        token_probs: PaddedSequenceWithMask
+            The probabilities of gen-token. The shape is (L_a, B, num_tokens).
+        reference_probs: PaddedSequenceWithMask
+            The probabilities of reference-token. The shape is
+            (L_a, B, reference_length).
+        """
+        def entropy(p: PaddedSequenceWithMask) -> torch.Tensor:
+            log_p = torch.log(
+                torch.where(p.mask[:, :, None], p.data, torch.zeros_like(p.data)) + 1e-7
+            )
+            out = -(p.data * log_p)
+            out = out.sum(dim=2)
+            torch.where(p.mask, out, torch.zeros_like(out))
+            return out.sum(dim=0), p.mask.long().sum(dim=0)
+
+        rule, n1 = entropy(rule_probs)
+        token, n2 = entropy(token_probs)
+        reference, n3 = entropy(reference_probs)
+
+        out = (rule + token + reference) / (n1 + n2 + n3)
+
+        if self.reduction == "mean":
+            return torch.mean(out)
+        elif self.reduction == "sum":
+            return torch.sum(out)
+        else:
+            return out
