@@ -8,7 +8,7 @@ options = {
         "size": 4,
         "resolution": 4,
         "n_evaluate_dataset": 30,
-        "timeout_sec": 180,  # 3minute
+        "timeout_sec": 360,  # 6 minute
         "interval_iter": 1000,
         "n_rollout": 100,
     },

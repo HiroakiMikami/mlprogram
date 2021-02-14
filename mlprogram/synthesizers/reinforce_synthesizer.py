@@ -44,7 +44,8 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
             baseline = 0
 
-            # Backup state
+            # TODO handle multi-process evaluation
+            # Backup state_dict
             orig_model_state = {
                 key: value.clone() for key, value in self.model.state_dict().items()
             }
@@ -119,5 +120,6 @@ class REINFORCESynthesizer(Synthesizer[Environment, Output], Generic[Output]):
 
                     idx += 1
             finally:
+                # Restore state_dict
                 self.model.load_state_dict(orig_model_state)
                 self.optimizer.load_state_dict(self.optimizer_state_dict)
