@@ -22,10 +22,16 @@ logger = logging.Logger(__name__)
 class Epoch:
     n: int
 
+    def n_iter(self, iter_per_epoch: int) -> int:
+        return self.n * iter_per_epoch
+
 
 @dataclass
 class Iteration:
     n: int
+
+    def n_iter(self, iter_per_epoch: int) -> int:
+        return self.n
 
 
 Length = Union[Epoch, Iteration]
@@ -48,25 +54,6 @@ class Call(extension.Extension):
 
     def __call__(self, manager):
         self.f()
-
-
-def calc_n_iter(length: Length, iter_per_epoch: int) -> int:
-    if isinstance(length, Epoch):
-        n_iter = length.n * iter_per_epoch
-    else:
-        n_iter = length.n
-    return n_iter
-
-
-def calc_interval_iter(interval: Optional[Length], iter_per_epoch: int) -> int:
-    if interval is None:
-        interval_iter = iter_per_epoch
-    else:
-        if isinstance(interval, Epoch):
-            interval_iter = interval.n * iter_per_epoch
-        else:
-            interval_iter = interval.n
-    return interval_iter
 
 
 def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
@@ -93,26 +80,32 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
         trigger=Trigger(evaluation_interval_iter, n_iter)
     )
     if distributed.is_main_process():
-        manager.extend(extensions.LogReport(
-            trigger=Trigger(100, n_iter)))
+        manager.extend(
+            extensions.LogReport(trigger=Trigger(100, n_iter))
+        )
         manager.extend(extensions.ProgressBar())
         if evaluate is not None:
-            manager.extend(Call(evaluate),
-                           trigger=Trigger(evaluation_interval_iter, n_iter))
-        manager.extend(SaveTopKModel(model_dir, 1, metric, model,
-                                     maximize=maximize),
-                       trigger=Trigger(evaluation_interval_iter, n_iter))
+            manager.extend(
+                Call(evaluate),
+                trigger=Trigger(evaluation_interval_iter, n_iter),
+            )
+        manager.extend(
+            SaveTopKModel(model_dir, 1, metric, model, maximize=maximize),
+            trigger=Trigger(evaluation_interval_iter, n_iter),
+        )
         metrics = report_metrics or []
-        manager.extend(extensions.PrintReport(entries=[
-            "loss", *metrics,
-            "iteration", "epoch",
-            "time.iteration", "gpu.time.iteration", "elapsed_time"
-        ]),
-            trigger=Trigger(100, n_iter))
+        manager.extend(
+            extensions.PrintReport(entries=[
+                "loss", *metrics,
+                "iteration", "epoch",
+                "time.iteration", "gpu.time.iteration", "elapsed_time"
+            ]),
+            trigger=Trigger(100, n_iter),
+        )
     if threshold is not None:
         manager.extend(
             StopByThreshold(metric, threshold, maximize=maximize),
-            trigger=Trigger(evaluation_interval_iter, n_iter)
+            trigger=Trigger(evaluation_interval_iter, n_iter),
         )
     if distributed.is_initialized():
         snapshot = extensions.snapshot(autoload=True, n_retains=1,
@@ -185,8 +178,7 @@ def save_results(workspace_dir: str, output_dir: str,
 
     logger.info("Dump the last model")
     torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-    torch.save(optimizer.state_dict(),
-               os.path.join(output_dir, "optimizer.pt"))
+    torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
 
 
 def train_supervised(workspace_dir: str, output_dir: str,
@@ -218,11 +210,13 @@ def train_supervised(workspace_dir: str, output_dir: str,
         iter_per_epoch = len(dataset) // batch_size
     else:
         iter_per_epoch = 1
-    n_iter = calc_n_iter(length, iter_per_epoch)
-    evaluation_interval_iter = \
-        calc_interval_iter(evaluation_interval, iter_per_epoch)
-    snapshot_interval_iter = \
-        calc_interval_iter(snapshot_interval, iter_per_epoch)
+
+    evaluation_interval = evaluation_interval or Epoch(1)
+    snapshot_interval = snapshot_interval or Epoch(1)
+
+    n_iter = length.n_iter(iter_per_epoch)
+    evaluation_interval_iter = evaluation_interval.n_iter(iter_per_epoch)
+    snapshot_interval_iter = snapshot_interval.n_iter(iter_per_epoch)
 
     # Initialize extensions manager
     manager = \
@@ -307,11 +301,13 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
         iter_per_epoch = len(dataset) // batch_size
     else:
         iter_per_epoch = 1
-    n_iter = calc_n_iter(length, iter_per_epoch)
-    evaluation_interval_iter = \
-        calc_interval_iter(evaluation_interval, iter_per_epoch)
-    snapshot_interval_iter = \
-        calc_interval_iter(snapshot_interval, iter_per_epoch)
+
+    evaluation_interval = evaluation_interval or Epoch(1)
+    snapshot_interval = snapshot_interval or Epoch(1)
+
+    n_iter = length.n_iter(iter_per_epoch)
+    evaluation_interval_iter = evaluation_interval.n_iter(iter_per_epoch)
+    snapshot_interval_iter = snapshot_interval.n_iter(iter_per_epoch)
 
     if use_pretrained_model:
         logger.info("Load pretrained model")
