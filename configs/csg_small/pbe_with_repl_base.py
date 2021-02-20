@@ -1,64 +1,55 @@
 imports = ["base.py"]
 
-options = {
-    "small": {
-        "n_pretrain_iteration": 35000,
-        "train_max_object": 3,
-        "evaluate_max_object": 6,
-        "size": 4,
-        "resolution": 4,
-        "n_evaluate_dataset": 30,
-        "timeout_sec": 180,  # 5,
-        "interval_iter": 5000,
-    },
-    "large": {
-        "n_pretrain_iteration": 437500,
-        "train_max_object": 13,
-        "evaluate_max_object": 30,
-        "size": 16,
-        "resolution": 1,
-        "n_evaluate_dataset": 30,
-        "timeout_sec": 120,
-        "interval_iter": 50000,
-    },
+option = {
+    "n_pretrain_iteration": 5000,
+    "n_train_iteration": 15000,
+    "train_max_object": 3,
+    "evaluate_max_object": 6,
+    "size": 4,
+    "resolution": 4,
+    "n_evaluate_dataset": 30,
+    "timeout_sec": 5,
+    "interval_iter": 3000,
 }
-reference = False
+reference = True
 model = torch.share_memory_(
     model=torch.nn.Sequential(
         modules=collections.OrderedDict(
             items=[
                 [
-                    "encoder",
-                    torch.nn.Sequential(
-                        modules=collections.OrderedDict(
-                            items=[
-                                [
-                                    "encoder",
-                                    Apply(
-                                        in_keys=[["test_case_tensor", "x"]],
-                                        out_key="input_feature",
-                                        module=mlprogram.nn.CNN2d(
-                                            in_channel=1,
-                                            out_channel=16,
-                                            hidden_channel=32,
-                                            n_conv_per_block=2,
-                                            n_block=2,
-                                            pool=2,
-                                        ),
-                                    ),
-                                ],
-                                [
-                                    "reduction",
-                                    Apply(
-                                        in_keys=[["input_feature", "input"]],
-                                        out_key="input_feature",
-                                        module=torch.Mean(
-                                            dim=1,
-                                        ),
-                                    ),
-                                ],
-                            ],
+                    "encode_input",
+                    Apply(
+                        in_keys=[["test_case_tensor", "x"]],
+                        out_key="test_case_feature",
+                        module=mlprogram.nn.CNN2d(
+                            in_channel=1,
+                            out_channel=16,
+                            hidden_channel=32,
+                            n_conv_per_block=2,
+                            n_block=2,
+                            pool=2,
                         ),
+                    ),
+                ],
+                [
+                    "encoder",
+                    Apply(
+                        module=mlprogram.nn.pbe_with_repl.Encoder(
+                            module=mlprogram.nn.CNN2d(
+                                in_channel=2,
+                                out_channel=16,
+                                hidden_channel=32,
+                                n_conv_per_block=2,
+                                n_block=2,
+                                pool=2,
+                            ),
+                        ),
+                        in_keys=[
+                            "test_case_tensor",
+                            "variables_tensor",
+                            "test_case_feature",
+                        ],
+                        out_key=["reference_features", "input_feature"],
                     ),
                 ],
                 [
@@ -84,7 +75,7 @@ model = torch.share_memory_(
                                         module=mlprogram.nn.action_sequence.LSTMDecoder(
                                             inject_input=mlprogram.nn.action_sequence.CatInput(),
                                             input_feature_size=mul(
-                                                x=16,
+                                                x=32,
                                                 y=mul(
                                                     x=n_feature_pixel,
                                                     y=n_feature_pixel,
@@ -112,7 +103,13 @@ model = torch.share_memory_(
                                     Apply(
                                         module=mlprogram.nn.action_sequence.Predictor(
                                             feature_size=512,
-                                            reference_feature_size=1,
+                                            reference_feature_size=mul(
+                                                x=16,
+                                                y=mul(
+                                                    x=n_feature_pixel,
+                                                    y=n_feature_pixel,
+                                                ),
+                                            ),
                                             rule_size=encoder._rule_encoder.vocab_size,
                                             token_size=encoder._token_encoder.vocab_size,
                                             hidden_size=512,
@@ -132,6 +129,29 @@ model = torch.share_memory_(
                         ),
                     ),
                 ],
+                [
+                    "value",
+                    Apply(
+                        in_keys=[["input_feature", "x"]],
+                        out_key="value",
+                        module=mlprogram.nn.MLP(
+                            in_channel=mul(
+                                x=2,
+                                y=mul(
+                                    x=16,
+                                    y=mul(
+                                        x=n_feature_pixel,
+                                        y=n_feature_pixel,
+                                    ),
+                                ),
+                            ),
+                            out_channel=1,
+                            hidden_channel=512,
+                            n_linear=2,
+                            activation=torch.nn.Sigmoid(),
+                        ),
+                    ),
+                ],
             ],
         ),
     ),
@@ -142,12 +162,22 @@ collate = mlprogram.utils.data.Collate(
         dim=0,
         padding_value=0,
     ),
+    test_case_feature=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=False,
+        dim=0,
+        padding_value=0,
+    ),
     input_feature=mlprogram.utils.data.CollateOptions(
         use_pad_sequence=False,
         dim=0,
         padding_value=0,
     ),
     reference_features=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=True,
+        dim=0,
+        padding_value=0,
+    ),
+    variables_tensor=mlprogram.utils.data.CollateOptions(
         use_pad_sequence=True,
         dim=0,
         padding_value=0,
@@ -172,24 +202,29 @@ collate = mlprogram.utils.data.Collate(
         dim=0,
         padding_value=-1,
     ),
+    reward=mlprogram.utils.data.CollateOptions(
+        use_pad_sequence=False,
+        dim=0,
+        padding_value=0,
+    ),
 )
 transform_input = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
             [
-                "add_reference",
-                Apply(
-                    module=mlprogram.transforms.action_sequence.AddEmptyReference(),
-                    in_keys=[],
-                    out_key=["reference", "reference_features"],
-                ),
-            ],
-            [
-                "transform_canvas",
+                "transform_inputs",
                 Apply(
                     module=mlprogram.languages.csg.transforms.TransformInputs(),
                     in_keys=["test_cases"],
                     out_key="test_case_tensor",
+                ),
+            ],
+            [
+                "transform_variables",
+                Apply(
+                    module=mlprogram.languages.csg.transforms.TransformVariables(),
+                    in_keys=["variables", "test_case_tensor"],
+                    out_key="variables_tensor",
                 ),
             ],
         ],
@@ -252,7 +287,32 @@ transform = mlprogram.functools.Sequence(
         ],
     ),
 )
-sampler = mlprogram.samplers.transform(
+to_episode = mlprogram.transforms.pbe.ToEpisode(
+    interpreter=interpreter,
+    expander=mlprogram.languages.csg.Expander(),
+)
+collate_fn = mlprogram.functools.Sequence(
+    funcs=collections.OrderedDict(
+        items=[
+            [
+                "to_episode",
+                mlprogram.functools.Map(
+                    func=to_episode,
+                ),
+            ],
+            ["flatten", Flatten()],
+            [
+                "transform",
+                mlprogram.functools.Map(
+                    func=transform,
+                ),
+            ],
+            ["collate", collate.collate],
+        ],
+    ),
+)
+
+subsampler = mlprogram.samplers.transform(
     sampler=mlprogram.samplers.ActionSequenceSampler(
         encoder=encoder,
         is_subtype=mlprogram.languages.csg.IsSubtype(),
@@ -275,21 +335,87 @@ sampler = mlprogram.samplers.transform(
     ),
     transform=parser.unparse,
 )
-synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
+subsynthesizer = mlprogram.synthesizers.SMC(
+    max_step_size=5,
+    max_try_num=1,
+    initial_particle_size=1,
+    sampler=subsampler,
+    to_key=Pick(
+        key="action_sequence",
+    ),
+)
+sampler = mlprogram.samplers.SequentialProgramSampler(
+    synthesizer=subsynthesizer,
+    transform_input=Apply(
+        module=mlprogram.languages.csg.transforms.TransformInputs(),
+        in_keys=["test_cases"],
+        out_key="test_case_tensor",
+    ),
+    collate=collate,
+    encoder=model.encode_input,
+    interpreter=interpreter,
+    expander=mlprogram.languages.csg.Expander(),
+)
+train_synthesizer = mlprogram.synthesizers.SMC(
+    max_step_size=mul(
+        x=option.train_max_object,
+        y=3,
+    ),
+    initial_particle_size=1,
+    max_try_num=1,
+    # FilteredSample stop searching when condition is met
+    sampler=mlprogram.samplers.FilteredSampler(
+        sampler=sampler,
+        score=mlprogram.metrics.use_environment(
+            metric=mlprogram.metrics.TestCaseResult(
+                interpreter=interpreter,
+                metric=mlprogram.metrics.use_environment(
+                    metric=mlprogram.metrics.Iou(),
+                    in_keys=["expected", "actual"],
+                    value_key="actual",
+                ),
+            ),
+            in_keys=["test_cases", "actual"],
+            value_key="actual",
+        ),
+        threshold=0.9,
+    ),
+    to_key=Pick(
+        key="interpreter_state",
+    ),
+)
+evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
     synthesizer=mlprogram.synthesizers.SynthesizerWithTimeout(
         synthesizer=mlprogram.synthesizers.SMC(
             max_step_size=mul(
-                x=5,
-                y=mul(
-                    x=5,
-                    y=option.evaluate_max_object,
-                ),
+                x=option.evaluate_max_object,
+                y=5,
             ),
             initial_particle_size=100,
-            max_try_num=50,
-            sampler=sampler,
+            sampler=mlprogram.samplers.SamplerWithValueNetwork(
+                sampler=sampler,
+                transform=transform_input,
+                collate=collate,
+                value_network=torch.nn.Sequential(
+                    modules=collections.OrderedDict(
+                        items=[
+                            ["encoder", model.encoder],
+                            ["value", model.value],
+                            [
+                                "pick",
+                                mlprogram.nn.Function(
+                                    f=Pick(
+                                        key="value",
+                                    ),
+                                ),
+                            ],
+                        ],
+                    ),
+                ),
+                batch_size=1,
+            ),
             to_key=Pick(
-                key="action_sequence",
+                key="interpreter_state",
             ),
         ),
         timeout_sec=option.timeout_sec,

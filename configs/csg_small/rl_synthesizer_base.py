@@ -1,17 +1,15 @@
 imports = ["base.py"]
 
-options = {
-    "small": {
-        "n_train_iteration": 1000,
-        "train_max_object": 3,
-        "evaluate_max_object": 6,
-        "size": 4,
-        "resolution": 4,
-        "n_evaluate_dataset": 30,
-        "timeout_sec": 360,  # 6 minute
-        "interval_iter": 1000,
-        "n_rollout": 100,
-    },
+option = {
+    "n_train_iteration": 1000,
+    "train_max_object": 3,
+    "evaluate_max_object": 6,
+    "size": 4,
+    "resolution": 4,
+    "n_evaluate_dataset": 30,
+    "timeout_sec": 360,  # 6 minute
+    "interval_iter": 1000,
+    "n_rollout": 100,
 }
 reference = False
 model = torch.share_memory_(

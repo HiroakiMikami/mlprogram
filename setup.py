@@ -3,7 +3,7 @@ import sys
 from setuptools import find_packages, setup
 
 requires = [
-    "torch==1.7.0",
+    "torch==1.7.1",
     "pytorch-nlp==0.5.0",
     "requests",
     "transpyle",
@@ -24,14 +24,12 @@ extras = {
         "autopep8",
         "black",
         "isort",
-        "mypy==0.770",
+        "mypy",
         "timeout-decorator",
         "pytest",
         "pytest-parallel",
-        "fairseq",
+        "fairseq @ git+https://github.com/pytorch/fairseq",
     ],
-    "colab": ["jupyter", "jupyter-http-over-ws"],
-    "visualize": ["graphviz"],
 }
 
 setup(
@@ -39,8 +37,6 @@ setup(
     version="0.2.0",
     install_requires=requires,
     test_requires=extras["test"],
-    colab_requires=extras["colab"],
-    visualize_requires=extras["visualize"],
     extras_require=extras,
     packages=find_packages(),
 )
