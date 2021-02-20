@@ -199,7 +199,7 @@ class TestCsgByPbeWithREPL(object):
                     in_keys=["test_cases", "actual"],
                     value_key="actual"
                 ),
-                0.9
+                1.0
             )
             return SMC(4, 20, sampler, rng=np.random.RandomState(0),
                        to_key=Pick("interpreter_state"), max_try_num=1)
@@ -248,7 +248,7 @@ class TestCsgByPbeWithREPL(object):
                     in_keys=["test_cases", "actual"],
                     value_key="actual"
                 ),
-                0.9
+                1.0
             )
 
     def interpreter(self):
@@ -500,4 +500,4 @@ class TestCsgByPbeWithREPL(object):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             result = self.evaluate(dataset, encoder, tmpdir)
-        assert 0.9 <= result.generation_rate
+        assert np.allclose(result.generation_rate, 1.0)
