@@ -9,6 +9,7 @@ mypy \
     --warn-return-any \
     --no-implicit-optional \
     --show-column-numbers \
+    --warn-unreachable \
     mlprogram/**/*.py test/**/*.py || exit 1
 
 
@@ -23,4 +24,4 @@ mypy \
 # --disallow-untyped-decorators
 # --disallow-any-unimported
 # --check-untyped-defs
-# --warn-unreachable
+

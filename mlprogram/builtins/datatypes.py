@@ -75,5 +75,5 @@ class Environment(object):
         return f"Environment(${str(self.to_dict())})"
 
     def __repr__(self) -> str:
-        return f"Environment(values={str(self._values)}, "
-        f"supervisions={str(self._supervisions)})"
+        return f"Environment(values={str(self._values)}, " + \
+            f"supervisions={str(self._supervisions)})"
