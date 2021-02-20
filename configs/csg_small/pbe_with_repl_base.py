@@ -12,17 +12,30 @@ option = {
     "interval_iter": 3000,
 }
 reference = True
-model = torch.share_memory_(
-    model=torch.nn.Sequential(
-        modules=collections.OrderedDict(
-            items=[
-                [
-                    "encode_input",
-                    Apply(
-                        in_keys=[["test_case_tensor", "x"]],
-                        out_key="test_case_feature",
-                        module=mlprogram.nn.CNN2d(
+model = torch.nn.Sequential(
+    modules=collections.OrderedDict(
+        items=[
+            [
+                "encode_input",
+                Apply(
+                    in_keys=[["test_case_tensor", "x"]],
+                    out_key="test_case_feature",
+                    module=mlprogram.nn.CNN2d(
                             in_channel=1,
+                            out_channel=16,
+                            hidden_channel=32,
+                            n_conv_per_block=2,
+                            n_block=2,
+                            pool=2,
+                    ),
+                ),
+            ],
+            [
+                "encoder",
+                Apply(
+                    module=mlprogram.nn.pbe_with_repl.Encoder(
+                        module=mlprogram.nn.CNN2d(
+                            in_channel=2,
                             out_channel=16,
                             hidden_channel=32,
                             n_conv_per_block=2,
@@ -30,111 +43,97 @@ model = torch.share_memory_(
                             pool=2,
                         ),
                     ),
-                ],
-                [
-                    "encoder",
-                    Apply(
-                        module=mlprogram.nn.pbe_with_repl.Encoder(
-                            module=mlprogram.nn.CNN2d(
-                                in_channel=2,
-                                out_channel=16,
-                                hidden_channel=32,
-                                n_conv_per_block=2,
-                                n_block=2,
-                                pool=2,
-                            ),
-                        ),
-                        in_keys=[
-                            "test_case_tensor",
-                            "variables_tensor",
-                            "test_case_feature",
-                        ],
-                        out_key=["reference_features", "input_feature"],
-                    ),
-                ],
-                [
-                    "decoder",
-                    torch.nn.Sequential(
-                        modules=collections.OrderedDict(
-                            items=[
-                                [
-                                    "action_embedding",
-                                    Apply(
-                                        module=mlprogram.nn.action_sequence.PreviousActionsEmbedding(
-                                            n_rule=encoder._rule_encoder.vocab_size,
-                                            n_token=encoder._token_encoder.vocab_size,
-                                            embedding_size=256,
-                                        ),
-                                        in_keys=["previous_actions"],
-                                        out_key="action_features",
+                    in_keys=[
+                        "test_case_tensor",
+                        "variables_tensor",
+                        "test_case_feature",
+                    ],
+                    out_key=["reference_features", "input_feature"],
+                ),
+            ],
+            [
+                "decoder",
+                torch.nn.Sequential(
+                    modules=collections.OrderedDict(
+                        items=[
+                            [
+                                "action_embedding",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.PreviousActionsEmbedding(
+                                        n_rule=encoder._rule_encoder.vocab_size,
+                                        n_token=encoder._token_encoder.vocab_size,
+                                        embedding_size=256,
                                     ),
-                                ],
-                                [
-                                    "decoder",
-                                    Apply(
-                                        module=mlprogram.nn.action_sequence.LSTMDecoder(
-                                            inject_input=mlprogram.nn.action_sequence.CatInput(),
-                                            input_feature_size=mul(
-                                                x=32,
-                                                y=mul(
-                                                    x=n_feature_pixel,
-                                                    y=n_feature_pixel,
-                                                ),
-                                            ),
-                                            action_feature_size=256,
-                                            output_feature_size=512,
-                                            dropout=0.1,
-                                        ),
-                                        in_keys=[
-                                            "input_feature",
-                                            "action_features",
-                                            "hidden_state",
-                                            "state",
-                                        ],
-                                        out_key=[
-                                            "action_features",
-                                            "hidden_state",
-                                            "state",
-                                        ],
-                                    ),
-                                ],
-                                [
-                                    "predictor",
-                                    Apply(
-                                        module=mlprogram.nn.action_sequence.Predictor(
-                                            feature_size=512,
-                                            reference_feature_size=mul(
-                                                x=16,
-                                                y=mul(
-                                                    x=n_feature_pixel,
-                                                    y=n_feature_pixel,
-                                                ),
-                                            ),
-                                            rule_size=encoder._rule_encoder.vocab_size,
-                                            token_size=encoder._token_encoder.vocab_size,
-                                            hidden_size=512,
-                                        ),
-                                        in_keys=[
-                                            "reference_features",
-                                            "action_features",
-                                        ],
-                                        out_key=[
-                                            "rule_probs",
-                                            "token_probs",
-                                            "reference_probs",
-                                        ],
-                                    ),
-                                ],
+                                    in_keys=["previous_actions"],
+                                    out_key="action_features",
+                                ),
                             ],
-                        ),
+                            [
+                                "decoder",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.LSTMDecoder(
+                                        inject_input=mlprogram.nn.action_sequence.CatInput(),
+                                        input_feature_size=mul(
+                                            x=32,
+                                            y=mul(
+                                                x=n_feature_pixel,
+                                                y=n_feature_pixel,
+                                            ),
+                                        ),
+                                        action_feature_size=256,
+                                        output_feature_size=512,
+                                        dropout=0.1,
+                                    ),
+                                    in_keys=[
+                                        "input_feature",
+                                        "action_features",
+                                        "hidden_state",
+                                        "state",
+                                    ],
+                                    out_key=[
+                                        "action_features",
+                                        "hidden_state",
+                                        "state",
+                                    ],
+                                ),
+                            ],
+                            [
+                                "predictor",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.Predictor(
+                                        feature_size=512,
+                                        reference_feature_size=mul(
+                                            x=16,
+                                            y=mul(
+                                                x=n_feature_pixel,
+                                                y=n_feature_pixel,
+                                            ),
+                                        ),
+                                        rule_size=encoder._rule_encoder.vocab_size,
+                                        token_size=encoder._token_encoder.vocab_size,
+                                        hidden_size=512,
+                                    ),
+                                    in_keys=[
+                                        "reference_features",
+                                        "action_features",
+                                    ],
+                                    out_key=[
+                                        "rule_probs",
+                                        "token_probs",
+                                        "reference_probs",
+                                    ],
+                                ),
+                            ],
+                        ],
                     ),
-                ],
-                [
-                    "value",
-                    Apply(
-                        in_keys=[["input_feature", "x"]],
-                        out_key="value",
-                        module=mlprogram.nn.MLP(
+                ),
+            ],
+            [
+                "value",
+                Apply(
+                    in_keys=[["input_feature", "x"]],
+                    out_key="value",
+                    module=mlprogram.nn.MLP(
                             in_channel=mul(
                                 x=2,
                                 y=mul(
@@ -145,15 +144,14 @@ model = torch.share_memory_(
                                     ),
                                 ),
                             ),
-                            out_channel=1,
-                            hidden_channel=512,
-                            n_linear=2,
-                            activation=torch.nn.Sigmoid(),
-                        ),
+                        out_channel=1,
+                        hidden_channel=512,
+                        n_linear=2,
+                        activation=torch.nn.Sigmoid(),
                     ),
-                ],
+                ),
             ],
-        ),
+        ],
     ),
 )
 collate = mlprogram.utils.data.Collate(

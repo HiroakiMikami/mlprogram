@@ -88,8 +88,7 @@ embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
     node_type_embedding_size=params.node_type_embedding_size,
     embedding_size=params.embedding_size,
 )
-model = torch.share_memory_(
-    model=torch.nn.Sequential(
+model = torch.nn.Sequential(
         modules=collections.OrderedDict(
             items=[
                 [
@@ -196,7 +195,6 @@ model = torch.share_memory_(
                 ],
             ],
         ),
-    ),
 )
 collate = mlprogram.utils.data.Collate(
     word_nl_query=mlprogram.utils.data.CollateOptions(
