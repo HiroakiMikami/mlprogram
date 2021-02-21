@@ -173,22 +173,23 @@ def setup_distributed_training(
 
 def save_results(workspace_dir: str, output_dir: str,
                  model: nn.Module, optimizer: torch.optim.Optimizer) -> None:
-    model_dir = os.path.join(workspace_dir, "model")
-    logger.info("Copy log to output_dir")
-    if os.path.exists(os.path.join(workspace_dir, "log")):
-        os.makedirs(output_dir, exist_ok=True)
-        shutil.copyfile(os.path.join(workspace_dir, "log"),
-                        os.path.join(output_dir, "log.json"))
+    if distributed.is_main_process():
+        model_dir = os.path.join(workspace_dir, "model")
+        logger.info("Copy log to output_dir")
+        if os.path.exists(os.path.join(workspace_dir, "log")):
+            os.makedirs(output_dir, exist_ok=True)
+            shutil.copyfile(os.path.join(workspace_dir, "log"),
+                            os.path.join(output_dir, "log.json"))
 
-    logger.info("Copy models to output_dir")
-    out_model_dir = os.path.join(output_dir, "model")
-    if os.path.exists(out_model_dir):
-        shutil.rmtree(out_model_dir)
-    shutil.copytree(model_dir, out_model_dir)
+        logger.info("Copy models to output_dir")
+        out_model_dir = os.path.join(output_dir, "model")
+        if os.path.exists(out_model_dir):
+            shutil.rmtree(out_model_dir)
+        shutil.copytree(model_dir, out_model_dir)
 
-    logger.info("Dump the last model")
-    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-    torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+        logger.info("Dump the last model")
+        torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+        torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
 
 
 def train_supervised(workspace_dir: str, output_dir: str,
