@@ -147,18 +147,28 @@ def get_world_process_group(device: torch.device) \
             return distributed.groups["world_gloo"]
 
 
-def all_reduce(model: nn.Module, group: torch.distributed.group):
-    nparams = list(model.named_parameters())
-    nparams.sort(key=lambda x: x[0])  # type: ignore
-    params = [p.grad if p.grad is not None else torch.zeros_like(p.data)
-              for _, p in nparams]
-    size = distributed.size(group)
-    distributed.call(
-        torch.distributed.all_reduce_coalesced,
-        params, group=group
-    )
-    for p in params:
-        p /= size
+def setup_distributed_training(
+    model: nn.Module,
+    loss: nn.Module,
+    group: torch.distributed.group
+):
+    class TrainModule(nn.Module):
+        def __init__(self, model: nn.Module, loss: nn.Module):
+            super().__init__()
+            self.model = model
+            self.loss = loss
+
+        def forward(self, *args, **kwargs):
+            return self.loss(self.model(*args, **kwargs))
+
+    model = TrainModule(model, loss)
+    if group is None:
+        return model
+    else:
+        return ppe.nn.parallel.distributed.DistributedDataParallel(
+            module=model,
+            process_group=group,
+        )
 
 
 def save_results(workspace_dir: str, output_dir: str,
@@ -228,6 +238,8 @@ def train_supervised(workspace_dir: str, output_dir: str,
             evaluate, metric, maximize, threshold,
             workspace_dir)
 
+    train_model = setup_distributed_training(model, loss, group)
+
     logger.info("Start training")
     try:
         while manager.iteration < n_iter:
@@ -241,17 +253,14 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     logger.warning(f"Skip {manager.iteration} th batch")
                     continue
                 with manager.run_iteration():
-                    model.train()
+                    train_model.train()
                     with logger.block("to"):
                         batch.to(device=device)
                     with logger.block("forward"):
-                        output = model(batch)
-                        bloss = loss(output)
+                        bloss = train_model(batch)
                     with logger.block("backward"):
-                        model.zero_grad()
+                        optimizer.zero_grad()
                         bloss.backward()
-                    with logger.block("all-reduce"):
-                        all_reduce(model, group)
                     with logger.block("optimizer.step"):
                         optimizer.step()
 
@@ -333,6 +342,8 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
             workspace_dir,
             report_metrics=["reward"])
 
+    train_model = setup_distributed_training(model, loss, group)
+
     logger.info("Start training")
     try:
         while manager.iteration < n_iter:
@@ -344,7 +355,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     break
                 # Rollout
                 rollouts = []
-                model.train()
+                train_model.train()
                 with torch.no_grad():
                     for sample in logger.iterable_block("rollout", samples):
                         sample_inputs = sample.clone_without_supervision()
@@ -377,14 +388,11 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     with logger.block("to"):
                         batch2.to(device)
                     with logger.block("forward"):
-                        model.train()
-                        output = model(batch2)
-                        bloss = loss(output)
+                        train_model.train()
+                        bloss = train_model(batch2)
                     with logger.block("backward"):
-                        model.zero_grad()
+                        optimizer.zero_grad()
                         bloss.backward()
-                    with logger.block("all-reduce"):
-                        all_reduce(model, group)
                     with logger.block("optimizer.step"):
                         optimizer.step()
 

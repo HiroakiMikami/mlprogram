@@ -9,7 +9,7 @@ requires = [
     "transpyle",
     "nltk",
     "bashlex",
-    "pytorch-pfn-extras==0.3.1",
+    "pytorch-pfn-extras",
     "tqdm",
     "pycparser",
     "python-config @ git+https://github.com/HiroakiMikami/python-config",
