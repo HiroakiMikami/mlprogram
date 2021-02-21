@@ -21,12 +21,12 @@ model = torch.nn.Sequential(
                     in_keys=[["test_case_tensor", "x"]],
                     out_key="test_case_feature",
                     module=mlprogram.nn.CNN2d(
-                            in_channel=1,
-                            out_channel=16,
-                            hidden_channel=32,
-                            n_conv_per_block=2,
-                            n_block=2,
-                            pool=2,
+                        in_channel=1,
+                        out_channel=16,
+                        hidden_channel=32,
+                        n_conv_per_block=2,
+                        n_block=2,
+                        pool=2,
                     ),
                 ),
             ],
@@ -134,16 +134,16 @@ model = torch.nn.Sequential(
                     in_keys=[["input_feature", "x"]],
                     out_key="value",
                     module=mlprogram.nn.MLP(
-                            in_channel=mul(
-                                x=2,
+                        in_channel=mul(
+                            x=2,
+                            y=mul(
+                                x=16,
                                 y=mul(
-                                    x=16,
-                                    y=mul(
-                                        x=n_feature_pixel,
-                                        y=n_feature_pixel,
-                                    ),
+                                    x=n_feature_pixel,
+                                    y=n_feature_pixel,
                                 ),
                             ),
+                        ),
                         out_channel=1,
                         hidden_channel=512,
                         n_linear=2,

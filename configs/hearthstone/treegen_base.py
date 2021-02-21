@@ -22,7 +22,7 @@ params = {
     "metric_top_n": [1],
     "metric_threshold": 1.0,
     "metric": "bleu@1",
-    "n_evaluate_process": 2,
+    "n_evaluate_process": None,
 }
 
 normalize_dataset = Apply(
@@ -176,7 +176,7 @@ model = torch.nn.Sequential(
                                         n_decoder_block=params.n_block,
                                     ),
                                     in_keys=[
-                                            ["reference_features", "nl_query_features"],
+                                        ["reference_features", "nl_query_features"],
                                         "action_query_features",
                                         "action_features",
                                         "action_rule_features",

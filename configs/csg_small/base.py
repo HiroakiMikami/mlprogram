@@ -1,4 +1,4 @@
-tparser = mlprogram.languages.csg.Parser()
+parser = mlprogram.languages.csg.Parser()
 n_pixel = mul(x=option.size, y=option.resolution)
 n_feature_pixel = intdiv(lhs=n_pixel, rhs=2)
 dataset = mlprogram.languages.csg.Dataset(

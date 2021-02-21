@@ -1,8 +1,5 @@
 imports = ["base.py"]
-device = torch.device(
-    type_str="cuda",
-    index=0,
-)
+device = torch.device(type_str="cuda", index=0)
 transform = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
@@ -64,9 +61,7 @@ main = mlprogram.entrypoint.train_supervised(
                 [
                     "pick",
                     mlprogram.nn.Function(
-                        f=Pick(
-                            key="action_sequence_loss",
-                        ),
+                        f=Pick(key="action_sequence_loss"),
                     ),
                 ],
             ],
@@ -79,30 +74,28 @@ main = mlprogram.entrypoint.train_supervised(
         top_n=params.metric_top_n,
         n_process=params.n_evaluate_process,
     ),
-    metric=params.metric,
-    threshold=params.metric_threshold,
+    metric=train_params.metric,
+    threshold=train_params.metric_threshold,
     collate=mlprogram.functools.Compose(
         funcs=collections.OrderedDict(
             items=[
                 [
                     "transform",
-                    mlprogram.functools.Map(
-                        func=transform,
-                    ),
+                    mlprogram.functools.Map(func=transform),
                 ],
                 ["collate", collate.collate],
             ],
         ),
     ),
-    batch_size=params.batch_size,
+    batch_size=train_params.batch_size,
     length=mlprogram.entrypoint.train.Epoch(
-        n=params.n_epoch,
+        n=train_params.n_epoch,
     ),
     evaluation_interval=mlprogram.entrypoint.train.Epoch(
-        n=params.eval_interval,
+        n=train_params.eval_interval,
     ),
     snapshot_interval=mlprogram.entrypoint.train.Epoch(
-        n=params.snapshot_interval,
+        n=train_params.snapshot_interval,
     ),
     device=device,
 )
