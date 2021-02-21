@@ -91,6 +91,8 @@ class Interpreter(BaseInterpreter[AST, None, np.ndarray, str, None]):
         next.environment[ref] = value
 
         if self.delete_used_reference:
+            deleted = set()
+
             def _visit(code: AST):
                 if isinstance(code, Circle) or isinstance(code, Rectangle):
                     return
@@ -102,12 +104,15 @@ class Interpreter(BaseInterpreter[AST, None, np.ndarray, str, None]):
                     _visit(code.b)
                     return
                 if isinstance(code, Reference):
+                    deleted.add(code)
                     if code not in next.environment:
                         logger.warning(f"reference {code} is not found in environment")
-                    else:
-                        del next.environment[code]
-                        del next.type_environment[code]
             _visit(code)
+
+            for code in deleted:
+                del next.environment[code]
+                del next.type_environment[code]
+
         return next
 
     @lru_cache(maxsize=100)

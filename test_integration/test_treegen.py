@@ -5,8 +5,12 @@ import sys
 import tempfile
 from collections import OrderedDict
 
-import fairseq.optim as optim
+try:
+    import fairseq.optim as optim
+except:  # noqa
+    optim = None
 import numpy as np
+import pytest
 import torch
 import torch.nn as nn
 from torchnlp.encoders import LabelEncoder
@@ -322,6 +326,7 @@ class TestTreeGen(object):
             )
         return encoder
 
+    @pytest.mark.skipif(optim is None, reason="fairseq is not installed")
     def test(self):
         torch.manual_seed(1)
         np.random.seed(1)

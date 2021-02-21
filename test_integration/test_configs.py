@@ -2,6 +2,13 @@ import logging
 import os
 import sys
 import tempfile
+
+import pytest
+
+try:
+    from fairseq import optim
+except:  # noqa
+    optim = None
 from typing import List, Tuple
 
 from tools.launch import launch_multiprocess
@@ -37,6 +44,7 @@ class TestConfig(object):
              0),
         ])
 
+    @pytest.mark.skipif(optim is None, reason="fairseq is not installed")
     def test_hearthstone_treegen(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "treegen_train.py"), 0),
@@ -54,38 +62,20 @@ class TestConfig(object):
 
     def test_csg_small_pbe_baseline(self):
         self.launch_config([
-            (os.path.join("configs", "csg",
-                          "baseline_train_small.py"), 0),
-            (os.path.join("configs", "csg",
-                          "baseline_evaluate_small.py"), 0)
-        ])
-
-    def test_csg_large_pbe_baseline(self):
-        self.launch_config([
-            (os.path.join("configs", "csg",
-                          "baseline_train_large.py"), 0),
-            (os.path.join("configs", "csg",
-                          "baseline_evaluate_large.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "baseline_train.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "baseline_evaluate.py"), 0)
         ])
 
     def test_csg_small_pbe_with_repl(self):
         self.launch_config([
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_pretrain_small.py"), 0),
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_train_small.py"), 0),
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_evaluate_small.py"), 0)
-        ])
-
-    def test_csg_large_pbe_with_repl(self):
-        self.launch_config([
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_pretrain_large.py"), 0),
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_train_large.py"), 0),
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_evaluate_large.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "pbe_with_repl_pretrain.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "pbe_with_repl_train.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "pbe_with_repl_evaluate.py"), 0)
         ])
 
     def test_deepfix_baseline(self):
@@ -98,8 +88,8 @@ class TestConfig(object):
 
     def test_csg_small_rl_synthesizer(self):
         self.launch_config([
-            (os.path.join("configs", "csg",
-                          "rl_synthesizer_train_small.py"), 0),
-            (os.path.join("configs", "csg",
-                          "rl_synthesizer_evaluate_small.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "rl_synthesizer_train.py"), 0),
+            (os.path.join("configs", "csg_small",
+                          "rl_synthesizer_evaluate.py"), 0),
         ])

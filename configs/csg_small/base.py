@@ -1,12 +1,6 @@
 parser = mlprogram.languages.csg.Parser()
-n_pixel = mul(
-    x=option.size,
-    y=option.resolution,
-)
-n_feature_pixel = intdiv(
-    lhs=n_pixel,
-    rhs=2,
-)
+n_pixel = mul(x=option.size, y=option.resolution)
+n_feature_pixel = intdiv(lhs=n_pixel, rhs=2)
 dataset = mlprogram.languages.csg.Dataset(
     canvas_size=option.size,
     min_object=1,

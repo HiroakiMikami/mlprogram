@@ -28,7 +28,7 @@ collate_fn = mlprogram.functools.Sequence(
         ],
     ),
 )
-batch_size = params.batch_size
+batch_size = train_params.batch_size
 loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
         items=[
@@ -86,13 +86,13 @@ main = mlprogram.entrypoint.train_supervised(
     collate=collate_fn,
     batch_size=batch_size,
     length=mlprogram.entrypoint.train.Epoch(
-        n=params.n_epoch,
+        n=train_params.n_epoch,
     ),
     evaluation_interval=mlprogram.entrypoint.train.Epoch(
-        n=params.eval_interval,
+        n=train_params.eval_interval,
     ),
     snapshot_interval=mlprogram.entrypoint.train.Epoch(
-        n=params.snapshot_interval,
+        n=train_params.snapshot_interval,
     ),
     device=device,
 )

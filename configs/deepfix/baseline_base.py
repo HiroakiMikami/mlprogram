@@ -1,17 +1,22 @@
-params = {
+dataset_params = {
     "word_threshold": 3,
     "token_threshold": 100,
+}
+model_params = {
     "node_type_embedding_size": 64,
     "embedding_size": 128,
     "hidden_size": 256,
     "attr_hidden_size": 50,
     "dropout": 0.2,
+}
+train_params = {
     "batch_size": 8,
     "n_epoch": 50,
     "eval_interval": 10,
     "snapshot_interval": 1,
-    "particle_size": 15,
-    "n_evaluate_process": 8,
+}
+params = {
+    "n_evaluate_process": None,
     "seed": 0,
     "max_mutation": 5,
     "mutation_seed": 1,
@@ -65,7 +70,7 @@ encoder = {
                 extract_reference=lexer.tokenize,
                 query_key="code",
             ),
-            min_occurrences=params.word_threshold,
+            min_occurrences=dataset_params.word_threshold,
         ),
     ),
     "action_sequence_encoder": with_file_cache(
@@ -77,7 +82,7 @@ encoder = {
                 dataset=train_dataset,
                 parser=parser,
             ),
-            token_threshold=params.token_threshold,
+            token_threshold=dataset_params.token_threshold,
         ),
     ),
 }
@@ -85,117 +90,115 @@ embedding = mlprogram.nn.action_sequence.ActionsEmbedding(
     n_rule=encoder.action_sequence_encoder._rule_encoder.vocab_size,
     n_token=encoder.action_sequence_encoder._token_encoder.vocab_size,
     n_node_type=encoder.action_sequence_encoder._node_type_encoder.vocab_size,
-    node_type_embedding_size=params.node_type_embedding_size,
-    embedding_size=params.embedding_size,
+    node_type_embedding_size=model_params.node_type_embedding_size,
+    embedding_size=model_params.embedding_size,
 )
-model = torch.share_memory_(
-    model=torch.nn.Sequential(
-        modules=collections.OrderedDict(
-            items=[
-                [
-                    "encoder",
-                    torch.nn.Sequential(
-                        modules=collections.OrderedDict(
-                            items=[
-                                [
-                                    "embedding",
-                                    Apply(
-                                        module=mlprogram.nn.EmbeddingWithMask(
-                                            n_id=encoder.word_encoder.vocab_size,
-                                            embedding_size=params.embedding_size,
-                                            ignore_id=-1,
-                                        ),
-                                        in_keys=[["word_nl_query", "x"]],
-                                        out_key="word_nl_feature",
+model = torch.nn.Sequential(
+    modules=collections.OrderedDict(
+        items=[
+            [
+                "encoder",
+                torch.nn.Sequential(
+                    modules=collections.OrderedDict(
+                        items=[
+                            [
+                                "embedding",
+                                Apply(
+                                    module=mlprogram.nn.EmbeddingWithMask(
+                                        n_id=encoder.word_encoder.vocab_size,
+                                        embedding_size=model_params.embedding_size,
+                                        ignore_id=-1,
                                     ),
-                                ],
-                                [
-                                    "lstm",
-                                    Apply(
-                                        module=mlprogram.nn.BidirectionalLSTM(
-                                            input_size=params.embedding_size,
-                                            hidden_size=params.hidden_size,
-                                            dropout=params.dropout,
-                                        ),
-                                        in_keys=[["word_nl_feature", "x"]],
-                                        out_key="reference_features",
-                                    ),
-                                ],
-                            ]
-                        )
-                    ),
-                ],
-                [
-                    "decoder",
-                    torch.nn.Sequential(
-                        modules=collections.OrderedDict(
-                            items=[
-                                [
-                                    "embedding",
-                                    Apply(
-                                        module=embedding,
-                                        in_keys=[
-                                            "actions",
-                                            "previous_actions",
-                                        ],
-                                        out_key="action_features",
-                                    ),
-                                ],
-                                [
-                                    "decoder",
-                                    Apply(
-                                        module=mlprogram.nn.action_sequence.LSTMTreeDecoder(
-                                            inject_input=mlprogram.nn.action_sequence.AttentionInput(
-                                                attn_hidden_size=params.attr_hidden_size
-                                            ),
-                                            input_feature_size=params.hidden_size,
-                                            action_feature_size=embedding.output_size,
-                                            output_feature_size=params.hidden_size,
-                                            dropout=params.dropout,
-                                        ),
-                                        in_keys=[
-                                            ["reference_features", "input_feature"],
-                                            "actions",
-                                            "action_features",
-                                            "history",
-                                            "hidden_state",
-                                            "state",
-                                        ],
-                                        out_key=[
-                                            "action_features",
-                                            "history",
-                                            "hidden_state",
-                                            "state",
-                                        ],
-                                    ),
-                                ],
-                                [
-                                    "predictor",
-                                    Apply(
-                                        module=mlprogram.nn.action_sequence.Predictor(
-                                            feature_size=params.hidden_size,
-                                            reference_feature_size=params.hidden_size,
-                                            hidden_size=params.attr_hidden_size,
-                                            rule_size=encoder.action_sequence_encoder._rule_encoder.vocab_size,
-                                            token_size=encoder.action_sequence_encoder._token_encoder.vocab_size,
-                                        ),
-                                        in_keys=[
-                                            "reference_features",
-                                            "action_features",
-                                        ],
-                                        out_key=[
-                                            "rule_probs",
-                                            "token_probs",
-                                            "reference_probs",
-                                        ],
-                                    ),
-                                ],
+                                    in_keys=[["word_nl_query", "x"]],
+                                    out_key="word_nl_feature",
+                                ),
                             ],
-                        ),
-                    ),
-                ],
+                            [
+                                "lstm",
+                                Apply(
+                                    module=mlprogram.nn.BidirectionalLSTM(
+                                        input_size=model_params.embedding_size,
+                                        hidden_size=model_params.hidden_size,
+                                        dropout=model_params.dropout,
+                                    ),
+                                    in_keys=[["word_nl_feature", "x"]],
+                                    out_key="reference_features",
+                                ),
+                            ],
+                        ]
+                    )
+                ),
             ],
-        ),
+            [
+                "decoder",
+                torch.nn.Sequential(
+                    modules=collections.OrderedDict(
+                        items=[
+                            [
+                                "embedding",
+                                Apply(
+                                    module=embedding,
+                                    in_keys=[
+                                        "actions",
+                                        "previous_actions",
+                                    ],
+                                    out_key="action_features",
+                                ),
+                            ],
+                            [
+                                "decoder",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.LSTMTreeDecoder(
+                                        inject_input=mlprogram.nn.action_sequence.AttentionInput(
+                                            attn_hidden_size=model_params.attr_hidden_size
+                                        ),
+                                        input_feature_size=model_params.hidden_size,
+                                        action_feature_size=embedding.output_size,
+                                        output_feature_size=model_params.hidden_size,
+                                        dropout=model_params.dropout,
+                                    ),
+                                    in_keys=[
+                                        ["reference_features", "input_feature"],
+                                        "actions",
+                                        "action_features",
+                                        "history",
+                                        "hidden_state",
+                                        "state",
+                                    ],
+                                    out_key=[
+                                        "action_features",
+                                        "history",
+                                        "hidden_state",
+                                        "state",
+                                    ],
+                                ),
+                            ],
+                            [
+                                "predictor",
+                                Apply(
+                                    module=mlprogram.nn.action_sequence.Predictor(
+                                        feature_size=model_params.hidden_size,
+                                        reference_feature_size=model_params.hidden_size,
+                                        hidden_size=model_params.attr_hidden_size,
+                                        rule_size=encoder.action_sequence_encoder._rule_encoder.vocab_size,
+                                        token_size=encoder.action_sequence_encoder._token_encoder.vocab_size,
+                                    ),
+                                    in_keys=[
+                                        "reference_features",
+                                        "action_features",
+                                    ],
+                                    out_key=[
+                                        "rule_probs",
+                                        "token_probs",
+                                        "reference_probs",
+                                    ],
+                                ),
+                            ],
+                        ],
+                    ),
+                ),
+            ],
+        ],
     ),
 )
 collate = mlprogram.utils.data.Collate(
