@@ -93,6 +93,7 @@ class TestEvaluateSynthesizer(object):
                       True, 0.0) == results.results[2]
 
     def test_multiprocess(self):
+        # TODO
         accuracy = use_environment(
             Accuracy(), in_keys=["actual", ["ground_truth", "expected"]],
             value_key="actual"
@@ -112,8 +113,7 @@ class TestEvaluateSynthesizer(object):
             ),
         ])
         results = EvaluateSynthesizer(dataset, synthesize,
-                                      metrics={"accuracy": accuracy},
-                                      n_process=2)()
+                                      metrics={"accuracy": accuracy})()
 
         assert results.metrics == {1: {"accuracy": 1.0 / 3},
                                    3: {"accuracy": 2.0 / 3}}
@@ -213,6 +213,7 @@ class TestEvaluate(object):
                 os.path.join(output, "result_metrics.json"))
 
     def test_multiprocess(self):
+        # TODO
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
             ws = os.path.join(tmpdir, "workspace")
@@ -236,7 +237,7 @@ class TestEvaluate(object):
                              in_keys=["actual", ["ground_truth", "expected"]],
                              value_key="actual",
                          ),
-                     }, n_process=2)
+                     })
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))

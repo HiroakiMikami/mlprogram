@@ -1,10 +1,10 @@
 import json
+import multiprocessing as mp
 import os
 import tempfile
-import pytest
-import multiprocessing as mp
 
 import numpy as np
+import pytest
 import torch
 from pytorch_pfn_extras.reporting import report
 from torch import nn, optim

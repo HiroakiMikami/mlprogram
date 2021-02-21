@@ -60,7 +60,6 @@ main = mlprogram.entrypoint.train_supervised(
         synthesizer=synthesizer,
         metrics={},
         top_n=[],
-        n_process=None,
     ),
     metric="generation_rate",
     threshold=1.0,

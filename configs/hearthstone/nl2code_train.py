@@ -78,7 +78,6 @@ main = mlprogram.entrypoint.train_supervised(
         synthesizer=synthesizer,
         metrics=metrics,
         top_n=params.metric_top_n,
-        n_process=params.n_evaluate_process,
     ),
     metric=params.metric,
     threshold=params.metric_threshold,

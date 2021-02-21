@@ -85,7 +85,6 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
                  synthesizer: Synthesizer[Environment, Code],
                  metrics: Mapping[str, Callable[[Environment, Code], float]],
                  top_n: List[int] = [1, 3],
-                 n_process: Optional[int] = None,
                  n_samples: Optional[int] = None):
         super().__init__()
         self.dataset = dataset
@@ -94,7 +93,6 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
         self.synthesizer = synthesizer
         self.metrics = metrics
         self.top_n = top_n
-        self.n_process = n_process
 
     @logger.function_block("__call__")
     def __call__(self) -> EvaluationResult[Code, GroundTruth]:
@@ -110,25 +108,13 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
             EvaluateSample(self.synthesizer, self.metrics, self.top_n)
 
         results: List[Result[Code, GroundTruth]] = []
-        if self.n_process is None:
-            logger.info(f"Evalute with {len(self.dataset)} samples")
-            results = [
-                evaluate_sample(elem)
-                for elem in tqdm(
-                    total=len(self.dataset),
-                    iterable=logger.iterable_block("evaluate_sample",
-                                                   enumerate(self.dataset)))]
-        else:
-            logger.info(
-                f"Evalute with {len(self.dataset)} samples "
-                f"using {self.n_process} processes")
-            results = []
-            with ctx.Pool(processes=self.n_process) as pool:
-                with tqdm(total=len(self.dataset)) as _t:
-                    for _r in pool.imap_unordered(evaluate_sample,
-                                                  enumerate(self.dataset)):
-                        _t.update(1)
-                        results.append(_r)
+        logger.info(f"Evalute with {len(self.dataset)} samples")
+        results = [
+            evaluate_sample(elem)
+            for elem in tqdm(
+                total=len(self.dataset),
+                iterable=logger.iterable_block("evaluate_sample",
+                                               enumerate(self.dataset)))]
 
         logger.info("Summarize results")
         for result in results:
@@ -166,7 +152,6 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              metrics: Mapping[str, Callable[[Environment, Code], float]],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
-             n_process: Optional[int] = None,
              n_samples: Optional[int] = None) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -175,7 +160,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     model.to(device)
 
     evaluate_synthesizer = EvaluateSynthesizer[Code, GroundTruth](
-        valid_dataset, synthesizer, metrics, top_n, n_process, n_samples)
+        valid_dataset, synthesizer, metrics, top_n, n_samples)
 
     model_dir = os.path.join(input_dir, "model")
     if len(os.listdir(model_dir)) > 1:
