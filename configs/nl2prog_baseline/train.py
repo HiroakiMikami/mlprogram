@@ -1,5 +1,5 @@
 imports = ["base.py"]
-device = torch.device(type_str="cuda", index=0)
+device = torch.device(type_str="cpu", index=0)
 transform = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[

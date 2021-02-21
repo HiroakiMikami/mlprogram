@@ -64,6 +64,7 @@ def is_main_process() -> bool:
 
 def rank(group: Optional[torch.distributed.group] = None) -> int:
     if torch.distributed.is_initialized():
+        group = group or torch.distributed.group.WORLD
         return cast(int, torch.distributed.get_rank(group=group))
     else:
         return 0
@@ -71,6 +72,7 @@ def rank(group: Optional[torch.distributed.group] = None) -> int:
 
 def size(group: Optional[torch.distributed.group] = None) -> int:
     if torch.distributed.is_initialized():
+        group = group or torch.distributed.group.WORLD
         return cast(int, torch.distributed.get_world_size(group=group))
     else:
         return 1

@@ -16,7 +16,6 @@ train_params = {
     "snapshot_interval": 1,
 }
 params = {
-    # "particle_size": 15,
     "n_evaluate_process": None,
     "seed": 0,
     "max_mutation": 5,

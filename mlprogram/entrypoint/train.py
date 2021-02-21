@@ -195,7 +195,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      snapshot_interval: Optional[Length] = None,
                      maximize: bool = True,
                      threshold: Optional[float] = None,
-                     n_dataloader_worker: int = 2,
+                     n_dataloader_worker: int = 1,
                      device: torch.device = torch.device("cpu")) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -205,9 +205,10 @@ def train_supervised(workspace_dir: str, output_dir: str,
     model.train()
 
     group = get_world_process_group(device)
+    global_batch_size = batch_size * distributed.size(group)
 
     if hasattr(dataset, "__len__"):
-        iter_per_epoch = len(dataset) // batch_size
+        iter_per_epoch = len(dataset) // global_batch_size
     else:
         iter_per_epoch = 1
 

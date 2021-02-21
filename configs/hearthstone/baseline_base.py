@@ -19,9 +19,12 @@ train_params = {
     "metric_threshold": 1.0,
     "metric": "bleu@1",
 }
-params = {
+inference_params = {
     "beam_size": 15,
     "max_step_size": 350,
+    "inference_timeout_sec": 10,  # TODO
+}
+params = {
     "metric_top_n": [1],
     "n_evaluate_process": None,
 }
