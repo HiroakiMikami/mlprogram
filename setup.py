@@ -27,7 +27,6 @@ extras = {
         "mypy",
         "timeout-decorator",
         "pytest",
-        "pytest-parallel",
         "fairseq @ git+https://github.com/pytorch/fairseq",
     ],
 }
