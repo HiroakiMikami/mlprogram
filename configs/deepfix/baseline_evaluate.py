@@ -14,5 +14,4 @@ main = mlprogram.entrypoint.evaluate(
     metrics={},
     top_n=[],
     device=device,
-    n_process=params.n_evaluate_process,
 )

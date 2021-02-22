@@ -1,6 +1,6 @@
 imports = ["rl_synthesizer_base.py"]
 device = torch.device(
-    type_str="cuda",
+    type_str="cpu",
     index=0,
 )
 batch_size = 32
@@ -60,7 +60,6 @@ main = mlprogram.entrypoint.train_supervised(
         synthesizer=synthesizer,
         metrics={},
         top_n=[],
-        n_process=None,
     ),
     metric="generation_rate",
     threshold=1.0,

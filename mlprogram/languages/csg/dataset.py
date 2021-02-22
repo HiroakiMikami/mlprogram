@@ -28,7 +28,7 @@ class Dataset(IterableDataset):
         self.canvas_size = canvas_size
         self.min_object = min_object
         self.max_object = max_object
-        s = self.canvas_size // 2
+        s = self.canvas_size // 2  # TODO
         self.size_candidates = \
             list(range(1, s + 1))[::length_stride]
         self.length_candidates = list(range(-s, s + 1))[::length_stride]

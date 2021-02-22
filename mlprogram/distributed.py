@@ -1,9 +1,13 @@
 import os
-from typing import Callable, Optional, cast
+import pickle
+from typing import Callable, List, Optional, TypeVar, cast
 
+import numpy as np
 import torch
 
 from mlprogram import logging
+
+V = TypeVar("V")
 
 logger = logging.Logger(__name__)
 
@@ -81,3 +85,35 @@ def size(group: Optional[torch.distributed.group] = None) -> int:
 def call(f: Callable, *args, **kwargs):
     if torch.distributed.is_initialized():
         return f(*args, **kwargs)
+
+
+def all_gather(x: V,
+               group: Optional[torch.distributed.group] = None,
+               device=torch.device("cpu")) -> List[V]:
+    if not torch.distributed.is_initialized():
+        return [x]
+
+    group = group or torch.distributed.group.WORLD
+    data = pickle.dumps(x)
+    length = [torch.zeros((), device=device, dtype=torch.long)
+              for _ in range(size(group))]
+    torch.distributed.all_gather(
+        length,
+        torch.tensor(len(data)),
+        group=group
+    )
+    max_length = max(length)
+    dst = [torch.zeros((max_length,), device=device, dtype=torch.uint8)
+           for _ in range(size(group))]
+    data += bytes(max_length - len(data))
+    src = torch.from_numpy(np.frombuffer(data, dtype=np.uint8))
+    torch.distributed.all_gather(
+        dst,
+        src,
+        group=group
+    )
+
+    def load(length, data):
+        return pickle.loads(data.cpu().numpy().tobytes()[:length])
+
+    return [load(l_, d_) for l_, d_ in zip(length, dst)]

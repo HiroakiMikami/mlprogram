@@ -20,7 +20,7 @@ prof.export_chrome_trace(os.path.join(args.output, "trace.json"))
 with open(os.path.join(args.output, "trace.json")) as file:
     trace = json.load(file)
 trace = [event for event in trace if "mlprogram" in event["name"]]
-with open(os.path.join(args.output, "trace.json"), "w") as file:
+with open(os.path.join(args.output, "trace-filtered.json"), "w") as file:
     json.dump(trace, file)
 
 with open(os.path.join(args.output, "cumtime_stats.txt"), "w") as file:

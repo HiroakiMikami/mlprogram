@@ -1,14 +1,19 @@
+import multiprocessing as mp
 import os
 import tempfile
 
+import pytest
 import torch
 
+from mlprogram import distributed
 from mlprogram.builtins import Environment
 from mlprogram.entrypoint import evaluate
 from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
 from mlprogram.metrics import Accuracy, Bleu, use_environment
 from mlprogram.synthesizers import Result as DecoderResult
 from mlprogram.utils.data import ListDataset
+
+context = mp.get_context("spawn")
 
 
 class MockModel:
@@ -92,6 +97,11 @@ class TestEvaluateSynthesizer(object):
                       {1: {"accuracy": 0.0}, 3: {"accuracy": 0.0}},
                       True, 0.0) == results.results[2]
 
+    def _run(self, init_dir, dataset, metrics, rank):
+        distributed.initialize(init_dir, rank, 2)
+        return EvaluateSynthesizer(dataset, synthesize,
+                                   metrics=metrics)()
+
     def test_multiprocess(self):
         accuracy = use_environment(
             Accuracy(), in_keys=["actual", ["ground_truth", "expected"]],
@@ -111,10 +121,23 @@ class TestEvaluateSynthesizer(object):
                 set(["ground_truth"])
             ),
         ])
-        results = EvaluateSynthesizer(dataset, synthesize,
-                                      metrics={"accuracy": accuracy},
-                                      n_process=2)()
 
+        with tempfile.TemporaryDirectory() as init_dir:
+            with context.Pool(2) as pool:
+                procs = []
+                for i in range(2):
+                    p = pool.apply_async(
+                        self._run,
+                        args=(init_dir, dataset, {"accuracy": accuracy}, i),
+                    )
+                    procs.append(p)
+                out = [p.get() for p in procs]
+        r0 = out[0]
+        r1 = out[1]
+
+        assert r0 == r1
+
+        results = r0
         assert results.metrics == {1: {"accuracy": 1.0 / 3},
                                    3: {"accuracy": 2.0 / 3}}
         assert 3 == len(results.results)
@@ -139,20 +162,26 @@ class TestEvaluateSynthesizer(object):
                       True, 0.0) == results.results[2]
 
 
+@pytest.fixture
+def dataset():
+    return ListDataset([
+        Environment({"query": "query", "ground_truth": "name0"},
+                    set(["ground_truth"]))
+    ])
+
+
+@pytest.fixture
+def model():
+    return MockModel()
+
+
+@pytest.fixture
+def synthesizer(model):
+    return MockSynthesizer(model)
+
+
 class TestEvaluate(object):
-    def prepare_dataset(self):
-        return ListDataset([
-            Environment({"query": "query", "ground_truth": "name0"},
-                        set(["ground_truth"]))
-        ])
-
-    def prepare_model(self):
-        return MockModel()
-
-    def prepare_synthesizer(self, model):
-        return MockSynthesizer(model)
-
-    def test_happy_path(self):
+    def test_happy_path(self, dataset, model, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
             ws = os.path.join(tmpdir, "workspace")
@@ -161,10 +190,8 @@ class TestEvaluate(object):
             os.makedirs(os.path.join(input, "model"))
             torch.save({"score": 1.0, "model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
-            dataset = self.prepare_dataset()
-            model = self.prepare_model()
             evaluate(input, ws, output, dataset,
-                     model, self.prepare_synthesizer(model),
+                     model, synthesizer,
                      {
                          "accuracy": use_environment(
                              Accuracy(),
@@ -181,7 +208,7 @@ class TestEvaluate(object):
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))
 
-    def test_multiple_models(self):
+    def test_multiple_models(self, dataset, model, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
             ws = os.path.join(tmpdir, "workspace")
@@ -192,10 +219,8 @@ class TestEvaluate(object):
                        os.path.join(input, "model", "0"))
             torch.save({"score": 1.0, "model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "1"))
-            dataset = self.prepare_dataset()
-            model = self.prepare_model()
             evaluate(input, ws, output, dataset,
-                     model, self.prepare_synthesizer(model),
+                     model, synthesizer,
                      {
                          "accuracy": use_environment(
                              Accuracy(),
@@ -212,7 +237,26 @@ class TestEvaluate(object):
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))
 
-    def test_multiprocess(self):
+    def _run(self, init_dir, input, ws, output, model, synthesizer, dataset, rank):
+        distributed.initialize(init_dir, rank, 2)
+        evaluate(
+            input, ws, output, dataset,
+            model, synthesizer,
+            {
+                "accuracy": use_environment(
+                    Accuracy(),
+                    in_keys=["actual", ["ground_truth", "expected"]],
+                    value_key="actual",
+                ),
+                "bleu": use_environment(
+                    Bleu(),
+                    in_keys=["actual", ["ground_truth", "expected"]],
+                    value_key="actual",
+                ),
+            }
+        )
+
+    def test_multiprocess(self, dataset, model, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
             ws = os.path.join(tmpdir, "workspace")
@@ -221,22 +265,18 @@ class TestEvaluate(object):
             os.makedirs(os.path.join(input, "model"))
             torch.save({"score": 0.5, "model": {"score": 0.5, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
-            dataset = self.prepare_dataset()
-            model = self.prepare_model()
-            evaluate(input, ws, output, dataset,
-                     model, self.prepare_synthesizer(model),
-                     {
-                         "accuracy": use_environment(
-                             Accuracy(),
-                             in_keys=["actual", ["ground_truth", "expected"]],
-                             value_key="actual",
-                         ),
-                         "bleu": use_environment(
-                             Bleu(),
-                             in_keys=["actual", ["ground_truth", "expected"]],
-                             value_key="actual",
-                         ),
-                     }, n_process=2)
+
+            with tempfile.TemporaryDirectory() as init_dir:
+                with context.Pool(2) as pool:
+                    procs = []
+                    for i in range(2):
+                        p = pool.apply_async(
+                            self._run,
+                            args=(init_dir, input, ws, output, model, synthesizer,
+                                  dataset, i),
+                        )
+                        procs.append(p)
+                    [p.get() for p in procs]
             assert os.path.exists(os.path.join(output, "result.pt"))
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))

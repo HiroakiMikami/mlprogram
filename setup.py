@@ -5,11 +5,11 @@ from setuptools import find_packages, setup
 requires = [
     "torch==1.7.1",
     "pytorch-nlp==0.5.0",
+    "pytorch-pfn-extras==0.3.2",
     "requests",
     "transpyle",
     "nltk",
     "bashlex",
-    "pytorch-pfn-extras==0.3.1",
     "tqdm",
     "pycparser",
     "python-config @ git+https://github.com/HiroakiMikami/python-config",

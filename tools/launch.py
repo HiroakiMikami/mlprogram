@@ -96,6 +96,10 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                     value["workspace_dir"] = \
                         f"{tmpdir}/workspace.{random.randint(0, 100)}"
                     value["output_dir"] = f"{tmpdir}/output"
+                elif value["type"] in set([
+                    "mlprogram.entrypoint.EvaluateSynthesizer"
+                ]):
+                    value["n_samples"] = 0
                 elif value["type"] in set(["mlprogram.entrypoint.evaluate"]):
                     value["n_samples"] = 1
                     value["workspace_dir"] = \

@@ -25,5 +25,4 @@ inference_params = {
 }
 params = {
     "metric_top_n": [1, 3],
-    "n_evaluate_process": None,
 }

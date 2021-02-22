@@ -11,7 +11,7 @@ from pytorch_pfn_extras.reporting import report
 from torch import nn
 from tqdm import tqdm
 
-from mlprogram import logging
+from mlprogram import distributed, logging
 from mlprogram.builtins import Environment
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
@@ -85,7 +85,6 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
                  synthesizer: Synthesizer[Environment, Code],
                  metrics: Mapping[str, Callable[[Environment, Code], float]],
                  top_n: List[int] = [1, 3],
-                 n_process: Optional[int] = None,
                  n_samples: Optional[int] = None):
         super().__init__()
         self.dataset = dataset
@@ -94,10 +93,12 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
         self.synthesizer = synthesizer
         self.metrics = metrics
         self.top_n = top_n
-        self.n_process = n_process
 
     @logger.function_block("__call__")
-    def __call__(self) -> EvaluationResult[Code, GroundTruth]:
+    def __call__(
+            self,
+            group: Optional[torch.distributed.group] = None,
+    ) -> EvaluationResult[Code, GroundTruth]:
         total = {}
         generated = []
         times = []
@@ -110,25 +111,23 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
             EvaluateSample(self.synthesizer, self.metrics, self.top_n)
 
         results: List[Result[Code, GroundTruth]] = []
-        if self.n_process is None:
-            logger.info(f"Evalute with {len(self.dataset)} samples")
-            results = [
-                evaluate_sample(elem)
-                for elem in tqdm(
-                    total=len(self.dataset),
-                    iterable=logger.iterable_block("evaluate_sample",
-                                                   enumerate(self.dataset)))]
-        else:
-            logger.info(
-                f"Evalute with {len(self.dataset)} samples "
-                f"using {self.n_process} processes")
-            results = []
-            with ctx.Pool(processes=self.n_process) as pool:
-                with tqdm(total=len(self.dataset)) as _t:
-                    for _r in pool.imap_unordered(evaluate_sample,
-                                                  enumerate(self.dataset)):
-                        _t.update(1)
-                        results.append(_r)
+        rank = distributed.rank(group=group)
+        size = distributed.size(group=group)
+        n_sample = (len(self.dataset) + size - 1) // size
+        logger.info(f"Evalute with {len(self.dataset)} samples w/ {size} processes " +
+                    f"({n_sample} per process)")
+
+        samples = self.dataset[rank * n_sample:(rank + 1) * n_sample]
+        results = [
+            evaluate_sample(elem)
+            for elem in tqdm(
+                total=len(samples),
+                iterable=logger.iterable_block("evaluate_sample",
+                                               enumerate(samples)))]
+        gathered_results = distributed.all_gather(results)
+        results = []
+        for r in gathered_results:
+            results.extend(r)
 
         logger.info("Summarize results")
         for result in results:
@@ -166,7 +165,6 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              metrics: Mapping[str, Callable[[Environment, Code], float]],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
-             n_process: Optional[int] = None,
              n_samples: Optional[int] = None) \
         -> None:
     os.makedirs(workspace_dir, exist_ok=True)
@@ -175,7 +173,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     model.to(device)
 
     evaluate_synthesizer = EvaluateSynthesizer[Code, GroundTruth](
-        valid_dataset, synthesizer, metrics, top_n, n_process, n_samples)
+        valid_dataset, synthesizer, metrics, top_n, n_samples)
 
     model_dir = os.path.join(input_dir, "model")
     if len(os.listdir(model_dir)) > 1:
@@ -199,15 +197,16 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     result = evaluate_synthesizer()
 
     logger.info("Save result to output_dir")
-    os.makedirs(output_dir, exist_ok=True)
-    torch.save(result, os.path.join(output_dir, "result.pt"))
-    with open(os.path.join(output_dir, "result_metrics.json"),
-              "w") as file:
-        json.dump(
-            {
-                "metrics": result.metrics,
-                "generation_rate": result.generation_rate,
-                "generation_time": result.generation_time
-            },
-            file
-        )
+    if distributed.is_main_process():
+        os.makedirs(output_dir, exist_ok=True)
+        torch.save(result, os.path.join(output_dir, "result.pt"))
+        with open(os.path.join(output_dir, "result_metrics.json"),
+                  "w") as file:
+            json.dump(
+                {
+                    "metrics": result.metrics,
+                    "generation_rate": result.generation_rate,
+                    "generation_time": result.generation_time
+                },
+                file
+            )
