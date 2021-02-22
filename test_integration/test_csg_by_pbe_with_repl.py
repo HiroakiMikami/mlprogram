@@ -13,6 +13,7 @@ import mlprogram.nn
 import mlprogram.nn.action_sequence as a_s
 import mlprogram.samplers
 from mlprogram import metrics
+from mlprogram.builtins import Environment
 from mlprogram.builtins import Apply, Div, Flatten, Mul, Pick, Threshold
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.entrypoint import EvaluateSynthesizer
@@ -28,6 +29,12 @@ from mlprogram.languages.csg import (
     IsSubtype,
     Parser,
     get_samples,
+    Circle,
+    Rectangle,
+    Translation,
+    Rotation,
+    Union,
+    Difference
 )
 from mlprogram.languages.csg.transforms import (
     AddTestCases,
@@ -51,7 +58,8 @@ from mlprogram.transforms.action_sequence import (
     GroundTruthToActionSequence,
 )
 from mlprogram.transforms.pbe import ToEpisode
-from mlprogram.utils.data import Collate, CollateOptions, to_map_style_dataset
+from mlprogram.utils.data import Collate, CollateOptions
+from mlprogram.utils.data import ListDataset
 from mlprogram.utils.data import transform as data_transform
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
@@ -201,7 +209,7 @@ class TestCsgByPbeWithREPL(object):
                 ),
                 1.0
             )
-            return SMC(4, 20, sampler, rng=np.random.RandomState(0),
+            return SMC(3, 1, sampler, rng=np.random.RandomState(0),
                        to_key=Pick("interpreter_state"), max_try_num=1)
         else:
             sampler = SamplerWithValueNetwork(
@@ -230,8 +238,9 @@ class TestCsgByPbeWithREPL(object):
                 ])))
 
             synthesizer = SynthesizerWithTimeout(
-                SMC(4, 20, sampler, rng=np.random.RandomState(0),
-                    to_key=Pick("interpreter_state")),
+                SMC(3, 1, sampler, rng=np.random.RandomState(0),
+                    to_key=Pick("interpreter_state"),
+                    max_try_num=1),
                 1
             )
             return FilteredSynthesizer(
@@ -311,8 +320,43 @@ class TestCsgByPbeWithREPL(object):
         return torch.load(os.path.join(dir, "result.pt"))
 
     def pretrain(self, output_dir):
-        dataset = Dataset(2, 1, 2, 1, 45, seed=1)
-        train_dataset = to_map_style_dataset(dataset, 10)
+        dataset = Dataset(4, 1, 2, 1, 45, seed=0)
+        """
+        """
+        train_dataset = ListDataset([
+            Environment(
+                {"ground_truth": Circle(1)},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Rectangle(1, 2)},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Rectangle(1, 1)},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Rotation(45, Rectangle(1, 1))},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Translation(1, 1, Rectangle(1, 1))},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Difference(Circle(1), Circle(1))},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Union(Rectangle(1, 2), Circle(1))},
+                set(["ground_truth"]),
+            ),
+            Environment(
+                {"ground_truth": Difference(Rectangle(1, 1), Circle(1))},
+                set(["ground_truth"]),
+            ),
+        ])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             interpreter = self.interpreter()
@@ -414,7 +458,8 @@ class TestCsgByPbeWithREPL(object):
                          ("loss",
                           Apply(
                               module=mlprogram.nn.action_sequence.Loss(
-                                  reduction="none"),
+                                  reduction="none"
+                              ),
                               in_keys=[
                                   "rule_probs",
                                   "token_probs",
@@ -442,14 +487,14 @@ class TestCsgByPbeWithREPL(object):
                                  [("value", "input"),
                                   ("value_loss_target", "target")],
                                  "value_loss",
-                                 torch.nn.BCELoss(reduction='sum')))
+                                 torch.nn.BCELoss(reduction='sum'))),
+                         ("reweight",
+                             Apply(
+                                 [("value_loss", "lhs")],
+                                 "value_loss",
+                                 mlprogram.nn.Function(Mul()),
+                                 constants={"rhs": 1e-2})),
                      ]))),
-                    ("reweight",
-                     Apply(
-                         [("value_loss", "lhs")],
-                         "value_loss",
-                         mlprogram.nn.Function(Mul()),
-                         constants={"rhs": 1e-2})),
                     ("aggregate",
                      Apply(
                          ["action_sequence_loss", "value_loss"],
@@ -489,7 +534,7 @@ class TestCsgByPbeWithREPL(object):
                 Epoch(10), evaluation_interval=Epoch(10),
                 snapshot_interval=Epoch(10),
                 use_pretrained_model=True,
-                use_pretrained_optimizer=False,
+                use_pretrained_optimizer=True,
                 threshold=1.0)
 
     def test(self):
@@ -500,4 +545,4 @@ class TestCsgByPbeWithREPL(object):
             encoder, dataset = self.pretrain(tmpdir)
             self.reinforce(dataset, encoder, tmpdir)
             result = self.evaluate(dataset, encoder, tmpdir)
-        assert 0.9 <= result.generation_rate
+        assert np.allclose(1.0, result.generation_rate)

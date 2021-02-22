@@ -231,6 +231,8 @@ class ActionSequenceSampler(Sampler[Environment, AST, Environment],
                 for i, ids in enumerate(ref_ids):
                     for ref_id in ids:
                         # merge token and reference pred
+                        # Add to unknown probability
+                        # if there is not the corresponding token.
                         token_pred[ref_id] += reference_pred[i]
                         if ref_id != 0:
                             reference_pred[i] = 0.0

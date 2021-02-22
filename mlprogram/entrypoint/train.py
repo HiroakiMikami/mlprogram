@@ -260,7 +260,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
                     with logger.block("forward"):
                         bloss = train_model(batch)
                     with logger.block("backward"):
-                        optimizer.zero_grad()
+                        optimizer.zero_grad(set_to_none=True)
                         bloss.backward()
                     with logger.block("optimizer.step"):
                         optimizer.step()
@@ -392,7 +392,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                         train_model.train()
                         bloss = train_model(batch2)
                     with logger.block("backward"):
-                        optimizer.zero_grad()
+                        optimizer.zero_grad(set_to_none=True)
                         bloss.backward()
                     with logger.block("optimizer.step"):
                         optimizer.step()
