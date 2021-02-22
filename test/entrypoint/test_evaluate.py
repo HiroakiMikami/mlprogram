@@ -1,8 +1,8 @@
+import multiprocessing as mp
 import os
 import tempfile
-import multiprocessing as mp
-import pytest
 
+import pytest
 import torch
 
 from mlprogram import distributed

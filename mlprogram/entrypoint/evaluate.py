@@ -11,7 +11,7 @@ from pytorch_pfn_extras.reporting import report
 from torch import nn
 from tqdm import tqdm
 
-from mlprogram import logging, distributed
+from mlprogram import distributed, logging
 from mlprogram.builtins import Environment
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
@@ -201,7 +201,7 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
         os.makedirs(output_dir, exist_ok=True)
         torch.save(result, os.path.join(output_dir, "result.pt"))
         with open(os.path.join(output_dir, "result_metrics.json"),
-                "w") as file:
+                  "w") as file:
             json.dump(
                 {
                     "metrics": result.metrics,

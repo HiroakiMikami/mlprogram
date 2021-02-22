@@ -13,8 +13,7 @@ import mlprogram.nn
 import mlprogram.nn.action_sequence as a_s
 import mlprogram.samplers
 from mlprogram import metrics
-from mlprogram.builtins import Environment
-from mlprogram.builtins import Apply, Div, Flatten, Mul, Pick, Threshold
+from mlprogram.builtins import Apply, Div, Environment, Flatten, Mul, Pick, Threshold
 from mlprogram.encoders import ActionSequenceEncoder
 from mlprogram.entrypoint import EvaluateSynthesizer
 from mlprogram.entrypoint import evaluate as eval
@@ -23,18 +22,18 @@ from mlprogram.entrypoint.modules.torch import Optimizer, Reshape
 from mlprogram.entrypoint.train import Epoch
 from mlprogram.functools import Compose, Map, Sequence
 from mlprogram.languages.csg import (
+    Circle,
     Dataset,
+    Difference,
     Expander,
     Interpreter,
     IsSubtype,
     Parser,
-    get_samples,
-    Circle,
     Rectangle,
-    Translation,
     Rotation,
+    Translation,
     Union,
-    Difference
+    get_samples,
 )
 from mlprogram.languages.csg.transforms import (
     AddTestCases,
@@ -58,8 +57,7 @@ from mlprogram.transforms.action_sequence import (
     GroundTruthToActionSequence,
 )
 from mlprogram.transforms.pbe import ToEpisode
-from mlprogram.utils.data import Collate, CollateOptions
-from mlprogram.utils.data import ListDataset
+from mlprogram.utils.data import Collate, CollateOptions, ListDataset
 from mlprogram.utils.data import transform as data_transform
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)

@@ -1,8 +1,8 @@
 import os
-import numpy as np
 import pickle
-from typing import Callable, Optional, cast, List, TypeVar
+from typing import Callable, List, Optional, TypeVar, cast
 
+import numpy as np
 import torch
 
 from mlprogram import logging
