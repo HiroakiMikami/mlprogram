@@ -1,6 +1,6 @@
 imports = ["rl_synthesizer_base.py"]
 device = torch.device(
-    type_str="cuda",
+    type_str="cpu",
     index=0,
 )
 batch_size = 32

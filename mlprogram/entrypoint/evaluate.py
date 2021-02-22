@@ -11,7 +11,7 @@ from pytorch_pfn_extras.reporting import report
 from torch import nn
 from tqdm import tqdm
 
-from mlprogram import logging
+from mlprogram import logging, distributed
 from mlprogram.builtins import Environment
 from mlprogram.synthesizers import Synthesizer
 from mlprogram.utils.data import ListDataset
@@ -95,7 +95,10 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
         self.top_n = top_n
 
     @logger.function_block("__call__")
-    def __call__(self) -> EvaluationResult[Code, GroundTruth]:
+    def __call__(
+            self,
+            group: Optional[torch.distributed.group] = None,
+    ) -> EvaluationResult[Code, GroundTruth]:
         total = {}
         generated = []
         times = []
@@ -108,13 +111,23 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
             EvaluateSample(self.synthesizer, self.metrics, self.top_n)
 
         results: List[Result[Code, GroundTruth]] = []
-        logger.info(f"Evalute with {len(self.dataset)} samples")
+        rank = distributed.rank(group=group)
+        size = distributed.size(group=group)
+        n_sample = (len(self.dataset) + size - 1) // size
+        logger.info(f"Evalute with {len(self.dataset)} samples w/ {size} processes " +
+                    f"({n_sample} per process)")
+
+        samples = self.dataset[rank * n_sample:(rank + 1) * n_sample]
         results = [
             evaluate_sample(elem)
             for elem in tqdm(
-                total=len(self.dataset),
+                total=len(samples),
                 iterable=logger.iterable_block("evaluate_sample",
-                                               enumerate(self.dataset)))]
+                                               enumerate(samples)))]
+        gathered_results = distributed.all_gather(results)
+        results = []
+        for r in gathered_results:
+            results.extend(r)
 
         logger.info("Summarize results")
         for result in results:
@@ -184,15 +197,16 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
     result = evaluate_synthesizer()
 
     logger.info("Save result to output_dir")
-    os.makedirs(output_dir, exist_ok=True)
-    torch.save(result, os.path.join(output_dir, "result.pt"))
-    with open(os.path.join(output_dir, "result_metrics.json"),
-              "w") as file:
-        json.dump(
-            {
-                "metrics": result.metrics,
-                "generation_rate": result.generation_rate,
-                "generation_time": result.generation_time
-            },
-            file
-        )
+    if distributed.is_main_process():
+        os.makedirs(output_dir, exist_ok=True)
+        torch.save(result, os.path.join(output_dir, "result.pt"))
+        with open(os.path.join(output_dir, "result_metrics.json"),
+                "w") as file:
+            json.dump(
+                {
+                    "metrics": result.metrics,
+                    "generation_rate": result.generation_rate,
+                    "generation_time": result.generation_time
+                },
+                file
+            )

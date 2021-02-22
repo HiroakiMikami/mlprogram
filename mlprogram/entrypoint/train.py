@@ -79,16 +79,16 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
         extensions.FailOnNonNumber(),
         trigger=Trigger(evaluation_interval_iter, n_iter)
     )
+    if evaluate is not None:
+        manager.extend(
+            Call(evaluate),
+            trigger=Trigger(evaluation_interval_iter, n_iter),
+        )
     if distributed.is_main_process():
         manager.extend(
             extensions.LogReport(trigger=Trigger(100, n_iter))
         )
         manager.extend(extensions.ProgressBar())
-        if evaluate is not None:
-            manager.extend(
-                Call(evaluate),
-                trigger=Trigger(evaluation_interval_iter, n_iter),
-            )
         manager.extend(
             SaveTopKModel(model_dir, 1, metric, model, maximize=maximize),
             trigger=Trigger(evaluation_interval_iter, n_iter),
