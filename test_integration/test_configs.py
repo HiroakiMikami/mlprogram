@@ -33,23 +33,23 @@ class TestConfig(object):
     def test_hearthstone_baseline(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "baseline_train.py"), 0),
-            (os.path.join("configs", "hearthstone", "baseline_evaluate.py"),
-             0),
+            (os.path.join("configs", "hearthstone", "baseline_evaluate_short.py"), 0),
+            (os.path.join("configs", "hearthstone", "baseline_evaluate_long.py"), 0),
         ])
 
     def test_hearthstone_nl2code(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "nl2code_train.py"), 0),
-            (os.path.join("configs", "hearthstone", "nl2code_evaluate.py"),
-             0),
+            (os.path.join("configs", "hearthstone", "nl2code_evaluate_short.py"), 0),
+            (os.path.join("configs", "hearthstone", "nl2code_evaluate_long.py"), 0),
         ])
 
     @pytest.mark.skipif(optim is None, reason="fairseq is not installed")
     def test_hearthstone_treegen(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "treegen_train.py"), 0),
-            (os.path.join("configs", "hearthstone", "treegen_evaluate.py"),
-             0)
+            (os.path.join("configs", "hearthstone", "treegen_evaluate_short.py"), 0),
+            (os.path.join("configs", "hearthstone", "treegen_evaluate_long.py"), 0),
         ])
 
     """

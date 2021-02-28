@@ -1,4 +1,5 @@
-imports = ["treegen_base.py"]
+imports = ["treegen_base.py", "benchmark.py"]
+benchmark = "short"
 output_dir = "output/output"
 
 device = torch.device(

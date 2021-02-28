@@ -275,7 +275,7 @@ transform_action_sequence = mlprogram.functools.Compose(
         ],
     ),
 )
-synthesizer = mlprogram.synthesizers.BeamSearch(
+base_synthesizer = mlprogram.synthesizers.BeamSearch(
     beam_size=inference_params.beam_size,
     max_step_size=inference_params.max_step_size,
     sampler=mlprogram.samplers.transform(
