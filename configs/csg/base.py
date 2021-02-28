@@ -1,10 +1,18 @@
+dataset_option = {
+    "train_max_object": 13,
+    "evaluate_max_object": 30,
+    "size": 16,
+    "resolution": 1,
+    "n_evaluate_dataset": 30,
+}
+
 parser = mlprogram.languages.csg.Parser()
-n_pixel = mul(x=option.size, y=option.resolution)
+n_pixel = mul(x=dataset_option.size, y=dataset_option.resolution)
 n_feature_pixel = intdiv(lhs=n_pixel, rhs=2)
 dataset = mlprogram.languages.csg.Dataset(
-    canvas_size=option.size,
+    canvas_size=dataset_option.size,
     min_object=1,
-    max_object=option.train_max_object,
+    max_object=dataset_option.train_max_object,
     length_stride=1,
     degree_stride=15,
 )
@@ -33,14 +41,14 @@ train_dataset = mlprogram.utils.data.transform(
 test_dataset = mlprogram.utils.data.transform(
     dataset=mlprogram.utils.data.to_map_style_dataset(
         dataset=mlprogram.languages.csg.Dataset(
-            canvas_size=option.size,
-            min_object=option.train_max_object,
-            max_object=option.evaluate_max_object,
+            canvas_size=dataset_option.size,
+            min_object=dataset_option.train_max_object,
+            max_object=dataset_option.evaluate_max_object,
             length_stride=1,
             degree_stride=15,
             seed=10000,
         ),
-        n=option.n_evaluate_dataset,
+        n=dataset_option.n_evaluate_dataset,
     ),
     transform=Apply(
         module=mlprogram.languages.csg.transforms.AddTestCases(
@@ -54,14 +62,14 @@ test_dataset = mlprogram.utils.data.transform(
 valid_dataset = mlprogram.utils.data.transform(
     dataset=mlprogram.utils.data.to_map_style_dataset(
         dataset=mlprogram.languages.csg.Dataset(
-            canvas_size=option.size,
-            min_object=option.train_max_object,
-            max_object=option.evaluate_max_object,
+            canvas_size=dataset_option.size,
+            min_object=dataset_option.train_max_object,
+            max_object=dataset_option.evaluate_max_object,
             length_stride=1,
             degree_stride=15,
             seed=20000,
         ),
-        n=option.n_evaluate_dataset,
+        n=dataset_option.n_evaluate_dataset,
     ),
     transform=Apply(
         module=mlprogram.languages.csg.transforms.AddTestCases(
@@ -73,8 +81,8 @@ valid_dataset = mlprogram.utils.data.transform(
     ),
 )
 interpreter = mlprogram.languages.csg.Interpreter(
-    width=option.size,
-    height=option.size,
-    resolution=option.resolution,
+    width=dataset_option.size,
+    height=dataset_option.size,
+    resolution=dataset_option.resolution,
     delete_used_reference=True,
 )
