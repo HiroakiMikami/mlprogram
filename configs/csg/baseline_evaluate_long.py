@@ -1,4 +1,5 @@
-imports = ["pbe_with_repl_base.py"]
+imports = ["baseline_base.py", "benchmark.py"]
+benchmark = "long"
 output_dir = "output/output"
 device = torch.device(
     type_str="cpu",
@@ -10,7 +11,7 @@ main = mlprogram.entrypoint.evaluate(
     output_dir=output_dir,
     valid_dataset=valid_dataset,
     model=model,
-    synthesizer=evaluate_synthesizer,
+    synthesizer=synthesizer,
     metrics={},
     top_n=[],
     device=device,

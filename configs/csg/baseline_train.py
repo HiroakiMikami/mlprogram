@@ -1,4 +1,5 @@
-imports = ["baseline_base.py"]
+imports = ["baseline_base.py", "benchmark.py"]
+option = select(options=benchmark_dict, key="short")
 device = torch.device(
     type_str="cpu",
     index=0,
@@ -70,13 +71,13 @@ main = mlprogram.entrypoint.train_supervised(
     collate=collate_fn,
     batch_size=batch_size,
     length=mlprogram.entrypoint.train.Iteration(
-        n=option.n_pretrain_iteration,
+        n=train_option.n_train_iteration,
     ),
     evaluation_interval=mlprogram.entrypoint.train.Iteration(
-        n=option.interval_iter,
+        n=train_option.interval_iter,
     ),
     snapshot_interval=mlprogram.entrypoint.train.Iteration(
-        n=option.interval_iter,
+        n=train_option.interval_iter,
     ),
     device=device,
 )

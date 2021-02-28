@@ -1,10 +1,9 @@
 imports = ["base.py"]
 
 option = {
-    "n_pretrain_iteration": 5000,
-    "n_train_iteration": 15000,
-    "timeout_sec": 5,
-    "interval_iter": 3000,
+    "n_pretrain_iteration": 156250,
+    "n_train_iteration": 281250,
+    "interval_iter": 50000,
 }
 reference = True
 model = torch.nn.Sequential(
@@ -377,53 +376,35 @@ train_synthesizer = mlprogram.synthesizers.SMC(
         key="interpreter_state",
     ),
 )
-evaluate_synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
-    synthesizer=mlprogram.synthesizers.SynthesizerWithTimeout(
-        synthesizer=mlprogram.synthesizers.SMC(
-            max_step_size=mul(
-                x=option.evaluate_max_object,
-                y=5,
-            ),
-            initial_particle_size=100,
-            sampler=mlprogram.samplers.SamplerWithValueNetwork(
-                sampler=sampler,
-                transform=transform_input,
-                collate=collate,
-                value_network=torch.nn.Sequential(
-                    modules=collections.OrderedDict(
-                        items=[
-                            ["encoder", model.encoder],
-                            ["value", model.value],
-                            [
-                                "pick",
-                                mlprogram.nn.Function(
-                                    f=Pick(
-                                        key="value",
-                                    ),
-                                ),
-                            ],
-                        ],
-                    ),
-                ),
-                batch_size=1,
-            ),
-            to_key=Pick(
-                key="interpreter_state",
+base_synthesizer = mlprogram.synthesizers.SMC(
+    max_step_size=mul(
+        x=option.evaluate_max_object,
+        y=5,
+    ),
+    initial_particle_size=100,
+    sampler=mlprogram.samplers.SamplerWithValueNetwork(
+        sampler=sampler,
+        transform=transform_input,
+        collate=collate,
+        value_network=torch.nn.Sequential(
+            modules=collections.OrderedDict(
+                items=[
+                    ["encoder", model.encoder],
+                    ["value", model.value],
+                    [
+                        "pick",
+                        mlprogram.nn.Function(
+                            f=Pick(
+                                key="value",
+                            ),
+                        ),
+                    ],
+                ],
             ),
         ),
-        timeout_sec=option.timeout_sec,
+        batch_size=1,
     ),
-    score=mlprogram.metrics.use_environment(
-        metric=mlprogram.metrics.TestCaseResult(
-            interpreter=interpreter,
-            metric=mlprogram.metrics.use_environment(
-                metric=mlprogram.metrics.Iou(),
-                in_keys=["expected", "actual"],
-                value_key="actual",
-            ),
-        ),
-        in_keys=["test_cases", "actual"],
-        value_key="actual",
+    to_key=Pick(
+        key="interpreter_state",
     ),
-    threshold=0.9,
 )

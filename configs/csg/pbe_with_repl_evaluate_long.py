@@ -1,4 +1,5 @@
-imports = ["baseline_base.py"]
+imports = ["pbe_with_repl_base.py", "benchmark.py"]
+benchmark = "long"
 output_dir = "output/output"
 device = torch.device(
     type_str="cpu",

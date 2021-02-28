@@ -62,34 +62,33 @@ class TestConfig(object):
 
     def test_csg_pbe_baseline(self):
         self.launch_config([
-            (os.path.join("configs", "csg",
-                          "baseline_train.py"), 0),
-            (os.path.join("configs", "csg",
-                          "baseline_evaluate.py"), 0)
+            (os.path.join("configs", "csg", "baseline_train.py"), 0),
+            (os.path.join("configs", "csg", "baseline_evaluate_short.py"), 0),
+            (os.path.join("configs", "csg", "baseline_evaluate_long.py"), 0),
+            (
+                os.path.join(
+                    "configs", "csg", "baseline_evaluate_rl_synthesizer_short.py"
+                ),
+                0
+            ),
+            (
+                os.path.join(
+                    "configs", "csg", "baseline_evaluate_rl_synthesizer_long.py"
+                ),
+                0
+            ),
         ])
 
     def test_csg_pbe_with_repl(self):
         self.launch_config([
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_pretrain.py"), 0),
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_train.py"), 0),
-            (os.path.join("configs", "csg",
-                          "pbe_with_repl_evaluate.py"), 0)
+            (os.path.join("configs", "csg", "pbe_with_repl_pretrain.py"), 0),
+            (os.path.join("configs", "csg", "pbe_with_repl_train.py"), 0),
+            (os.path.join("configs", "csg", "pbe_with_repl_evaluate_short.py"), 0),
+            (os.path.join("configs", "csg", "pbe_with_repl_evaluate_long.py"), 0),
         ])
 
     def test_deepfix_baseline(self):
         self.launch_config([
-            (os.path.join("configs", "deepfix",
-                          "baseline_train.py"), 0),
-            (os.path.join("configs", "deepfix",
-                          "baseline_evaluate.py"), 0),
-        ])
-
-    def test_csg_rl_synthesizer(self):
-        self.launch_config([
-            (os.path.join("configs", "csg",
-                          "rl_synthesizer_train.py"), 0),
-            (os.path.join("configs", "csg",
-                          "rl_synthesizer_evaluate.py"), 0),
+            (os.path.join("configs", "deepfix", "baseline_train.py"), 0),
+            (os.path.join("configs", "deepfix", "baseline_evaluate.py"), 0),
         ])

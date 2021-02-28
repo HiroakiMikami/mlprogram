@@ -1,9 +1,8 @@
 imports = ["base.py"]
 
-option = {
-    "n_pretrain_iteration": 18000,
-    "timeout_sec": 180,  # 5,
-    "interval_iter": 3000,
+train_option = {
+    "n_train_iteration": 6000,
+    "interval_iter": 2000,
 }
 reference = False
 model = torch.nn.Sequential(
@@ -256,36 +255,18 @@ sampler = mlprogram.samplers.transform(
     ),
     transform=parser.unparse,
 )
-synthesizer = mlprogram.synthesizers.FilteredSynthesizer(
-    synthesizer=mlprogram.synthesizers.SynthesizerWithTimeout(
-        synthesizer=mlprogram.synthesizers.SMC(
-            max_step_size=mul(
-                x=5,
-                y=mul(
-                    x=5,
-                    y=dataset_option.evaluate_max_object,
-                ),
-            ),
-            initial_particle_size=100,
-            max_try_num=50,
-            sampler=sampler,
-            to_key=Pick(
-                key="action_sequence",
-            ),
+base_synthesizer = mlprogram.synthesizers.SMC(
+    max_step_size=mul(
+        x=5,
+        y=mul(
+            x=5,
+            y=dataset_option.evaluate_max_object,
         ),
-        timeout_sec=option.timeout_sec,
     ),
-    score=mlprogram.metrics.use_environment(
-        metric=mlprogram.metrics.TestCaseResult(
-            interpreter=interpreter,
-            metric=mlprogram.metrics.use_environment(
-                metric=mlprogram.metrics.Iou(),
-                in_keys=["expected", "actual"],
-                value_key="actual",
-            ),
-        ),
-        in_keys=["test_cases", "actual"],
-        value_key="actual",
+    initial_particle_size=100,
+    max_try_num=50,
+    sampler=sampler,
+    to_key=Pick(
+        key="action_sequence",
     ),
-    threshold=0.9,
 )
