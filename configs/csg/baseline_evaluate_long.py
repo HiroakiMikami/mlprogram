@@ -1,8 +1,8 @@
-imports = ["treegen_base.py"]
+imports = ["baseline_base.py", "benchmark.py"]
+benchmark = "long"
 output_dir = "output/output"
-
 device = torch.device(
-    type_str="cuda",
+    type_str="cpu",
     index=0,
 )
 main = mlprogram.entrypoint.evaluate(
@@ -12,7 +12,7 @@ main = mlprogram.entrypoint.evaluate(
     valid_dataset=valid_dataset,
     model=model,
     synthesizer=synthesizer,
-    metrics=metrics,
-    top_n=params.metric_top_n,
+    metrics={},
+    top_n=[],
     device=device,
 )

@@ -15,5 +15,5 @@
 !/configs/**/*.py
 !/tools/*.py
 !/tools/*.ipynb
-!/result/**/*.log
+!/result/**/*.json
 !/images/*.png

@@ -13,7 +13,7 @@ model_params = {
 }
 train_params = {
     "batch_size": 1,
-    "n_epoch": 50,
+    "n_epoch": 20,
     "eval_interval": 10,
     "snapshot_interval": 1,
     "metric_threshold": 1.0,

@@ -1,4 +1,5 @@
-imports = ["nl2code_base.py"]
+imports = ["nl2code_base.py", "benchmark.py"]
+benchmark = "short"
 output_dir = "output/output"
 device = torch.device(
     type_str="cuda",

@@ -1,4 +1,6 @@
-imports = ["rl_synthesizer_base.py"]
+imports = ["baseline_base.py", "benchmark.py"]
+benchmark = "short"
+option = select(options=benchmark_dict, key="short")
 device = torch.device(
     type_str="cpu",
     index=0,
@@ -14,7 +16,9 @@ collate_fn = mlprogram.functools.Sequence(
         items=[
             [
                 "transform",
-                mlprogram.functools.Map(func=transform),
+                mlprogram.functools.Map(
+                    func=transform,
+                ),
             ],
             ["collate", collate.collate],
         ],
@@ -23,27 +27,28 @@ collate_fn = mlprogram.functools.Sequence(
 loss_fn = torch.nn.Sequential(
     modules=collections.OrderedDict(
         items=[
-            ["loss", action_sequence_loss_fn],
             [
-                "aggregate",
+                "loss",
                 Apply(
-                    in_keys=["loss"],
-                    out_key="loss",
-                    module=mlprogram.nn.AggregatedLoss(),
-                ),
-            ],
-            [
-                "normalize",
-                Apply(
-                    in_keys=[["loss", "lhs"]],
-                    out_key="loss",
-                    module=mlprogram.nn.Function(f=Div()),
-                    constants={"rhs": batch_size},
+                    module=mlprogram.nn.action_sequence.Loss(
+                        reduction="mean",
+                    ),
+                    in_keys=[
+                        "rule_probs",
+                        "token_probs",
+                        "reference_probs",
+                        "ground_truth_actions",
+                    ],
+                    out_key="action_sequence_loss",
                 ),
             ],
             [
                 "pick",
-                mlprogram.nn.Function(f=Pick(key="loss")),
+                mlprogram.nn.Function(
+                    f=Pick(
+                        key="action_sequence_loss",
+                    ),
+                ),
             ],
         ],
     ),
@@ -67,13 +72,13 @@ main = mlprogram.entrypoint.train_supervised(
     collate=collate_fn,
     batch_size=batch_size,
     length=mlprogram.entrypoint.train.Iteration(
-        n=option.n_train_iteration,
+        n=train_option.n_train_iteration,
     ),
     evaluation_interval=mlprogram.entrypoint.train.Iteration(
-        n=option.interval_iter,
+        n=train_option.interval_iter,
     ),
     snapshot_interval=mlprogram.entrypoint.train.Iteration(
-        n=option.interval_iter,
+        n=train_option.interval_iter,
     ),
     device=device,
 )

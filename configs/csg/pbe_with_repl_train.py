@@ -1,4 +1,5 @@
-imports = ["pbe_with_repl_base.py"]
+imports = ["pbe_with_repl_base.py", "benchmark.py"]
+benchmark = "short"
 device = torch.device(
     type_str="cpu",
     index=0,

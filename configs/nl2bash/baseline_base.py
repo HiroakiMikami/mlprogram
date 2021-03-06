@@ -26,3 +26,5 @@ inference_params = {
 params = {
     "metric_top_n": [1, 3],
 }
+
+synthesizer = base_synthesizer
