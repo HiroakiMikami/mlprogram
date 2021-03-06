@@ -1,4 +1,5 @@
 imports = ["baseline_base.py", "benchmark.py"]
+benchmark = "short"
 option = select(options=benchmark_dict, key="short")
 device = torch.device(
     type_str="cpu",

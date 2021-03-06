@@ -32,7 +32,7 @@ Feature Lists and Plans
         * (TODO) Spider: [Spider 1.0 Yale Semantic Parsing and Text-to-SQL Challenge](https://yale-lily.github.io/spider)
     * Programming by Examples
         * 2D CSG
-        * (TODO) DeepCode
+        * (TODO) DeepCoder
         * (TODO) ShapeNet
 * Deep Learning Models
     * Attention Based LSTM
@@ -46,6 +46,31 @@ Feature Lists and Plans
     * [TreeGen](https://arxiv.org/abs/1911.09983): [the official repository](https://github.com/zysszy/TreeGen)
     * [PbE with REPL](http://arxiv.org/abs/1906.04604): [the official repository](https://github.com/flxsosa/ProgramSearch)
 
+
+Benchmark
+---
+
+### NL2Prog (Hearthstone)
+
+|Method|#params [MiB]|training time [min]|max time per example [sec]|BLEU@top1|config name|
+:-----|-------------:|------------------:|-------------------------:|--------:|:----------|
+|tree LSTM|       7.7|                 92|                        15|  0.75020|`hearthstone/baseline_evaluate_short`|
+|tree LSTM|       7.7|                 92|                       180|  0.76540|`hearthstone/baseline_evaluate_long`|
+
+
+### Programming by Example without Inputs (CSG)
+
+|Method                          |#params [MiB]|training time [min]|max time per example [sec]|generation rate|config file|
+|:-------------------------------|------------:|------------------:|-------------------------:|---------------:|:----------|
+|tree LSTM                       |16           |75                 |30                        |18/30|`csg/baseline_evaluate_short`|
+|tree LSTM                       |16           |75                 |360                       |22/30|`csg/baseline_evaluate_long`|
+|tree LSTM + REINFORCESynthesizer|16           |75                 |30                        |18/30|`csg/baseline_evaluate_rl_synthesizer_short`|
+|tree LSTM + REINFORCESynthesizer|16           |75                 |360                       |22/30|`csg/baseline_evaluate_rl_synthesizer_short`|
+
+
+### Auto Repair
+
+TODO
 
 Usage Examples
 ---
