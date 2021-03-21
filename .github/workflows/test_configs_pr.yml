@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: test (integration)
+name: test (configs)
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.8"]
+        python-version: ["3.6", "3.9"]
 
     steps:
     - uses: actions/checkout@v2
@@ -33,4 +33,4 @@ jobs:
         python ./tools/create_dummy_dataset.py
     - name: Test
       run: |
-        timeout 20m make test_integration
+        timeout 20m make test_configs
