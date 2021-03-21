@@ -37,8 +37,7 @@ optimizer = torch.optim.Optimizer(
     model=model,
 )
 main = mlprogram.entrypoint.train_supervised(
-    workspace_dir="output/workspace",
-    output_dir=output_dir,
+    output_dir=train_artifact_dir,
     dataset=train_dataset,
     model=model,
     optimizer=optimizer,

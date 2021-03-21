@@ -23,8 +23,9 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
         for key, value in configs.items():
             if key == "device" and isinstance(value, dict):
                 value["type_str"] = "cpu"
-            elif key == "output_dir":
-                value = f"{tmpdir}/output"
+            elif key.endswith("_artifact_dir"):
+                name = key.replace("_artifact_dir", "")
+                value = f"{tmpdir}/{name}"
             elif isinstance(value, dict) and "type" in value:
                 if value["type"] in set([
                     "mlprogram.entrypoint.train_supervised",
@@ -41,16 +42,12 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
                         "type": "mlprogram.entrypoint.train.Iteration",
                         "n": 2
                     }
-                    value["workspace_dir"] = \
-                        f"{tmpdir}/workspace.{random.randint(0, 100)}"
                 elif value["type"] in set([
                     "mlprogram.entrypoint.EvaluateSynthesizer"
                 ]):
                     value["n_samples"] = 1
                 elif value["type"] in set(["mlprogram.entrypoint.evaluate"]):
                     value["n_samples"] = 1
-                    value["workspace_dir"] = \
-                        f"{tmpdir}/workspace.{random.randint(0, 100)}"
                 elif value["type"] in set(["mlprogram.synthesizers.BeamSearch",
                                            "mlprogram.synthesizers.SMC"]):
                     value["max_step_size"] = 2
@@ -93,8 +90,6 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                         "type": "mlprogram.entrypoint.train.Iteration",
                         "n": 2
                     }
-                    value["workspace_dir"] = \
-                        f"{tmpdir}/workspace.{random.randint(0, 100)}"
                     value["output_dir"] = f"{tmpdir}/output"
                 elif value["type"] in set([
                     "mlprogram.entrypoint.EvaluateSynthesizer"
@@ -102,8 +97,6 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                     value["n_samples"] = 0
                 elif value["type"] in set(["mlprogram.entrypoint.evaluate"]):
                     value["n_samples"] = 1
-                    value["workspace_dir"] = \
-                        f"{tmpdir}/workspace.{random.randint(0, 100)}"
                     value["output_dir"] = f"{tmpdir}/output"
                     if "n_process" in value:
                         value["n_process"] = None
@@ -131,7 +124,7 @@ def launch(config_file: str, option: Optional[str], tmpdir: str,
         configs = modify_config_for_test(configs, tmpdir)
     elif option == "profile":
         logger.info("Modify configs for profiling")
-        output_dir = configs["output_dir"]  # TODO
+        output_dir = "artifact"  # TODO
         configs = modify_config_for_profile(configs, tmpdir)
 
     distributed.initialize(tmpdir, rank, n_process)

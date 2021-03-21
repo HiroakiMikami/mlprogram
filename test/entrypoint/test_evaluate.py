@@ -184,13 +184,12 @@ class TestEvaluate(object):
     def test_happy_path(self, dataset, model, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
-            ws = os.path.join(tmpdir, "workspace")
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
             torch.save({"score": 1.0, "model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "0"))
-            evaluate(input, ws, output, dataset,
+            evaluate(input, output, dataset,
                      model, synthesizer,
                      {
                          "accuracy": use_environment(
@@ -211,7 +210,6 @@ class TestEvaluate(object):
     def test_multiple_models(self, dataset, model, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
-            ws = os.path.join(tmpdir, "workspace")
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
@@ -219,7 +217,7 @@ class TestEvaluate(object):
                        os.path.join(input, "model", "0"))
             torch.save({"score": 1.0, "model": {"score": 1.0, "name": "tmp"}},
                        os.path.join(input, "model", "1"))
-            evaluate(input, ws, output, dataset,
+            evaluate(input, output, dataset,
                      model, synthesizer,
                      {
                          "accuracy": use_environment(
@@ -237,10 +235,10 @@ class TestEvaluate(object):
             assert os.path.exists(
                 os.path.join(output, "result_metrics.json"))
 
-    def _run(self, init_dir, input, ws, output, model, synthesizer, dataset, rank):
+    def _run(self, init_dir, input, output, model, synthesizer, dataset, rank):
         distributed.initialize(init_dir, rank, 2)
         evaluate(
-            input, ws, output, dataset,
+            input, output, dataset,
             model, synthesizer,
             {
                 "accuracy": use_environment(
@@ -259,7 +257,6 @@ class TestEvaluate(object):
     def test_multiprocess(self, dataset, model, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
             input = os.path.join(tmpdir, "input")
-            ws = os.path.join(tmpdir, "workspace")
             output = os.path.join(tmpdir, "output")
             os.makedirs(input)
             os.makedirs(os.path.join(input, "model"))
@@ -272,7 +269,7 @@ class TestEvaluate(object):
                     for i in range(2):
                         p = pool.apply_async(
                             self._run,
-                            args=(init_dir, input, ws, output, model, synthesizer,
+                            args=(init_dir, input, output, model, synthesizer,
                                   dataset, i),
                         )
                         procs.append(p)

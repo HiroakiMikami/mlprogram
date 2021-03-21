@@ -21,6 +21,8 @@ params = {
     "mutation_seed": 1,
     "timeout_sec": 10,
 }
+train_artifact_dir = "artifacts/train"
+evaluate_artifact_dir = "artifacts/evaluate"
 lexer = mlprogram.languages.LexerWithLineNumber(
     lexer=mlprogram.datasets.deepfix.Lexer()
 )
@@ -60,7 +62,7 @@ valid_dataset = mlprogram.utils.data.transform(
 encoder = {
     "word_encoder": with_file_cache(
         path=os.path.join(
-            args=[output_dir, "word_encoder.pt"],
+            args=[train_artifact_dir, "word_encoder.pt"],
         ),
         config=torchnlp.encoders.LabelEncoder(
             # TODO use not seeded dataset
@@ -74,7 +76,7 @@ encoder = {
     ),
     "action_sequence_encoder": with_file_cache(
         path=os.path.join(
-            args=[output_dir, "action_sequence_encoder.pt"],
+            args=[train_artifact_dir, "action_sequence_encoder.pt"],
         ),
         config=mlprogram.encoders.ActionSequenceEncoder(
             samples=mlprogram.utils.data.get_samples(

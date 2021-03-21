@@ -214,73 +214,69 @@ class TestNL2Code(object):
         )
 
     def evaluate(self, qencoder, aencoder, dir):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            model = self.prepare_model(qencoder, aencoder)
-            eval(
-                dir, tmpdir, dir,
-                test_dataset, model,
-                self.prepare_synthesizer(model, qencoder, aencoder),
-                {"accuracy": use_environment(
-                    metric=Accuracy(),
-                    in_keys=["actual", ["ground_truth", "expected"]],
-                    value_key="actual"
-                )},
-                top_n=[5],
-            )
+        model = self.prepare_model(qencoder, aencoder)
+        eval(
+            dir, dir,
+            test_dataset, model,
+            self.prepare_synthesizer(model, qencoder, aencoder),
+            {"accuracy": use_environment(
+                metric=Accuracy(),
+                in_keys=["actual", ["ground_truth", "expected"]],
+                value_key="actual"
+            )},
+            top_n=[5],
+        )
         return torch.load(os.path.join(dir, "result.pt"))
 
     def train(self, output_dir):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            loss_fn = nn.Sequential(OrderedDict([
-                ("loss",
-                 Apply(
-                     module=Loss(),
-                     in_keys=[
-                         "rule_probs",
-                         "token_probs",
-                         "reference_probs",
-                         "ground_truth_actions",
-                     ],
-                     out_key="action_sequence_loss",
-                 )),
-                ("pick",
-                 mlprogram.nn.Function(
-                     Pick("action_sequence_loss")))
-            ]))
-            collate = Collate(
-                word_nl_query=CollateOptions(True, 0, -1),
-                nl_query_features=CollateOptions(True, 0, -1),
-                reference_features=CollateOptions(True, 0, -1),
-                actions=CollateOptions(True, 0, -1),
-                previous_actions=CollateOptions(True, 0, -1),
-                previous_action_rules=CollateOptions(True, 0, -1),
-                history=CollateOptions(False, 1, 0),
-                hidden_state=CollateOptions(False, 0, 0),
-                state=CollateOptions(False, 0, 0),
-                ground_truth_actions=CollateOptions(True, 0, -1)
-            ).collate
+        loss_fn = nn.Sequential(OrderedDict([
+            ("loss",
+             Apply(
+                 module=Loss(),
+                 in_keys=[
+                     "rule_probs",
+                     "token_probs",
+                     "reference_probs",
+                     "ground_truth_actions",
+                 ],
+                 out_key="action_sequence_loss",
+             )),
+            ("pick",
+             mlprogram.nn.Function(
+                 Pick("action_sequence_loss")))
+        ]))
+        collate = Collate(
+            word_nl_query=CollateOptions(True, 0, -1),
+            nl_query_features=CollateOptions(True, 0, -1),
+            reference_features=CollateOptions(True, 0, -1),
+            actions=CollateOptions(True, 0, -1),
+            previous_actions=CollateOptions(True, 0, -1),
+            previous_action_rules=CollateOptions(True, 0, -1),
+            history=CollateOptions(False, 1, 0),
+            hidden_state=CollateOptions(False, 0, 0),
+            state=CollateOptions(False, 0, 0),
+            ground_truth_actions=CollateOptions(True, 0, -1)
+        ).collate
 
-            qencoder, aencoder = \
-                self.prepare_encoder(train_dataset, Parser())
-            transform = Map(self.transform_cls(qencoder, aencoder,
-                                               Parser()))
-            model = self.prepare_model(qencoder, aencoder)
-            optimizer = self.prepare_optimizer(model)
-            train_supervised(
-                tmpdir, output_dir,
-                train_dataset, model, optimizer,
-                loss_fn,
-                EvaluateSynthesizer(
-                    test_dataset,
-                    self.prepare_synthesizer(model, qencoder, aencoder),
-                    {"accuracy": Accuracy()}, top_n=[5]
-                ),
-                "accuracy@5",
-                lambda x: collate(transform(x)),
-                1, Epoch(100), evaluation_interval=Epoch(100),
-                snapshot_interval=Epoch(100),
-                threshold=1.0
-            )
+        qencoder, aencoder = self.prepare_encoder(train_dataset, Parser())
+        transform = Map(self.transform_cls(qencoder, aencoder, Parser()))
+        model = self.prepare_model(qencoder, aencoder)
+        optimizer = self.prepare_optimizer(model)
+        train_supervised(
+            output_dir,
+            train_dataset, model, optimizer,
+            loss_fn,
+            EvaluateSynthesizer(
+                test_dataset,
+                self.prepare_synthesizer(model, qencoder, aencoder),
+                {"accuracy": Accuracy()}, top_n=[5]
+            ),
+            "accuracy@5",
+            lambda x: collate(transform(x)),
+            1, Epoch(100), evaluation_interval=Epoch(100),
+            snapshot_interval=Epoch(100),
+            threshold=1.0
+        )
         return qencoder, aencoder
 
     def test(self):
