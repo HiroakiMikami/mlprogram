@@ -8,8 +8,8 @@
 !/setup.py
 !/pyproject.toml
 !/setup.cfg
+!/Makefile
 !/mlprogram/**/*.py
-!/bin/*.bash
 !/test/**/*.py
 !/test_integration/**/*.py
 !/configs/**/*.py
