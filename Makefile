@@ -1,4 +1,4 @@
-.PHONY: check format mypy test_all test test_integration
+.PHONY: check format mypy test test_module test_configs test_integration
 
 check:
 	black . --diff || exit 1
@@ -33,10 +33,13 @@ mypy:
 # --disallow-any-unimported
 # --check-untyped-defs
 
-test_all: test test_integration
+test: test_module test_configs test_integration
 
-test:
-	pytest test || exit 1
+test_module:
+	pytest test/mlprogram || exit 1
+
+test_configs:
+	pytest test/configs || exit 1
 
 test_integration:
 	pytest -s -vv test_integration || exit 1
