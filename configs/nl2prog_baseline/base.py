@@ -21,7 +21,7 @@ valid_dataset = mlprogram.utils.data.transform(
 encoder = {
     "word_encoder": with_file_cache(
         path=os.path.join(
-            args=[output_dir, "word_encoder.pt"],
+            args=[train_artifact_dir, "word_encoder.pt"],
         ),
         config=torchnlp.encoders.LabelEncoder(
             sample=mlprogram.utils.data.get_words(
@@ -33,7 +33,7 @@ encoder = {
     ),
     "action_sequence_encoder": with_file_cache(
         path=os.path.join(
-            args=[output_dir, "action_sequence_encoder.pt"],
+            args=[train_artifact_dir, "action_sequence_encoder.pt"],
         ),
         config=mlprogram.encoders.ActionSequenceEncoder(
             samples=mlprogram.utils.data.get_samples(

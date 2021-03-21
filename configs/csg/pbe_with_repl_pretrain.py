@@ -4,7 +4,6 @@ device = torch.device(
     index=0,
 )
 batch_size = 32
-output_dir = "output/output"
 optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
     model=model,
@@ -50,8 +49,7 @@ loss_fn = torch.nn.Sequential(
     ),
 )
 main = mlprogram.entrypoint.train_supervised(
-    workspace_dir="output/workspace_pretraining",
-    output_dir=output_dir,
+    output_dir=pretrain_artifact_dir,
     dataset=train_dataset,
     model=model,
     optimizer=optimizer,

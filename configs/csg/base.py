@@ -18,7 +18,7 @@ dataset = mlprogram.languages.csg.Dataset(
 )
 encoder = with_file_cache(
     path=os.path.join(
-        args=[output_dir, "encoder.pt"],
+        args=[train_artifact_dir, "encoder.pt"],
     ),
     config=mlprogram.encoders.ActionSequenceEncoder(
         samples=mlprogram.languages.csg.get_samples(

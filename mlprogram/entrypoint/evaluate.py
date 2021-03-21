@@ -158,7 +158,7 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
         return r
 
 
-def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
+def evaluate(input_dir: str, output_dir: str,
              valid_dataset: torch.utils.data.Dataset,
              model: nn.Module,
              synthesizer: Synthesizer,
@@ -167,8 +167,6 @@ def evaluate(input_dir: str, workspace_dir: str, output_dir: str,
              device: torch.device = torch.device("cpu"),
              n_samples: Optional[int] = None) \
         -> None:
-    os.makedirs(workspace_dir, exist_ok=True)
-
     logger.info("Prepare model")
     model.to(device)
 

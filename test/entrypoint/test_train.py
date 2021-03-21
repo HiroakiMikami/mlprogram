@@ -130,9 +130,8 @@ def _run(init_dir, dataset, model, loss_fn, optimizer, rank):
     with tempfile.TemporaryDirectory() as tmpdir:
         distributed.initialize(init_dir, rank, 2)
 
-        ws = os.path.join(tmpdir, "ws")
         output = os.path.join(tmpdir, "out")
-        train_supervised(ws, output,
+        train_supervised(output,
                          dataset,
                          model,
                          optimizer,
@@ -141,7 +140,7 @@ def _run(init_dir, dataset, model, loss_fn, optimizer, rank):
                          collate.collate, 1, Epoch(2),
                          n_dataloader_worker=0)
         if rank == 0:
-            assert os.path.exists(os.path.join(ws, "snapshot_iter_2"))
+            assert os.path.exists(os.path.join(output, "snapshot_iter_2"))
 
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
@@ -152,7 +151,7 @@ def _run(init_dir, dataset, model, loss_fn, optimizer, rank):
             assert os.path.exists(os.path.join(output, "model.pt"))
             assert os.path.exists(os.path.join(output, "optimizer.pt"))
         else:
-            assert not os.path.exists(os.path.join(ws, "snapshot_iter_2"))
+            assert not os.path.exists(os.path.join(output, "snapshot_iter_2"))
             assert not os.path.exists(os.path.join(output, "log.json"))
             assert not os.path.exists(os.path.join(output, "model"))
         return model.state_dict(), optimizer.state_dict()
@@ -161,9 +160,8 @@ def _run(init_dir, dataset, model, loss_fn, optimizer, rank):
 class TestTrainSupervised(object):
     def test_happy_path(self, dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model,
                              optimizer,
@@ -171,14 +169,7 @@ class TestTrainSupervised(object):
                              MockEvaluate("key"), "key",
                              collate.collate, 1, Epoch(2))
             assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_6"))
-            assert os.path.exists(os.path.join(ws, "log"))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            assert isinstance(log, list)
-            assert 1 == len(log)
-            assert 1 == len(os.listdir(os.path.join(ws, "model")))
-
+                os.path.join(output, "snapshot_iter_6"))
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -227,25 +218,16 @@ class TestTrainSupervised(object):
                 report({self.key: 0.0})
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
             model = DummyModel()
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model,
                              torch.optim.SGD(model.parameters(), lr=0.1),
                              loss_fn,
                              MockEvaluate("key", model), "key",
                              collate.collate, 1, Epoch(2))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_6"))
-            assert os.path.exists(os.path.join(ws, "log"))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            assert isinstance(log, list)
-            assert 1 == len(log)
-            assert 1 == len(os.listdir(os.path.join(ws, "model")))
-
+            assert os.path.exists(os.path.join(output, "snapshot_iter_6"))
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -257,9 +239,8 @@ class TestTrainSupervised(object):
 
     def test_threshold(self, dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model,
                              optimizer,
@@ -267,32 +248,21 @@ class TestTrainSupervised(object):
                              MockEvaluate("key"), "key",
                              collate.collate, 1, Epoch(2),
                              threshold=0.0)
-            assert 1 == len(os.listdir(os.path.join(ws, "model")))
-
             assert 1 == len(os.listdir(os.path.join(output, "model")))
             assert os.path.exists(os.path.join(output, "model.pt"))
             assert os.path.exists(os.path.join(output, "optimizer.pt"))
 
     def test_skip_evaluation(self, dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model,
                              optimizer,
                              loss_fn,
                              None, "key",
                              collate.collate, 1, Epoch(2))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_6"))
-            assert os.path.exists(os.path.join(ws, "log"))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            assert isinstance(log, list)
-            assert 1 == len(log)
-            assert 0 == len(os.listdir(os.path.join(ws, "model")))
-
+            assert os.path.exists(os.path.join(output, "snapshot_iter_6"))
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -304,22 +274,19 @@ class TestTrainSupervised(object):
 
     def test_remove_old_snapshots(self, dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model, optimizer,
                              loss_fn,
                              MockEvaluate("key"), "key",
                              collate.collate, 1, Epoch(2))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_6"))
+            assert os.path.exists(os.path.join(output, "snapshot_iter_6"))
 
     def test_resume_from_checkpoint(self, dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model, optimizer,
                              loss_fn,
@@ -328,14 +295,13 @@ class TestTrainSupervised(object):
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
 
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model, optimizer,
                              loss_fn,
                              MockEvaluate("key"), "key",
                              collate.collate, 1, Epoch(2))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_6"))
+            assert os.path.exists(os.path.join(output, "snapshot_iter_6"))
             with open(os.path.join(output, "log.json")) as file:
                 log2 = json.load(file)
             assert log[0] == log2[0]
@@ -343,9 +309,8 @@ class TestTrainSupervised(object):
 
     def test_finish_by_iteration(self, dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              dataset,
                              model,
                              optimizer,
@@ -353,15 +318,7 @@ class TestTrainSupervised(object):
                              MockEvaluate("key"), "key",
                              collate.collate, 1, Iteration(2),
                              evaluation_interval=Iteration(1))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_2"))
-            assert os.path.exists(os.path.join(ws, "log"))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            assert isinstance(log, list)
-            assert 1 == len(log)
-            assert 1 == len(os.listdir(os.path.join(ws, "model")))
-
+            assert os.path.exists(os.path.join(output, "snapshot_iter_2"))
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -371,9 +328,8 @@ class TestTrainSupervised(object):
 
     def test_iterable_dataset(self, iterable_dataset, model, loss_fn, optimizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_supervised(ws, output,
+            train_supervised(output,
                              iterable_dataset,
                              model,
                              optimizer,
@@ -381,15 +337,7 @@ class TestTrainSupervised(object):
                              MockEvaluate("key"), "key",
                              collate.collate, 1, Iteration(2),
                              evaluation_interval=Iteration(1))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_2"))
-            assert os.path.exists(os.path.join(ws, "log"))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            assert isinstance(log, list)
-            assert 1 == len(log)
-            assert 1 == len(os.listdir(os.path.join(ws, "model")))
-
+            assert os.path.exists(os.path.join(output, "snapshot_iter_2"))
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -405,9 +353,8 @@ class TestTrainREINFORCE(object):
 
     def test_happy_path(self, dataset, model, loss_fn, optimizer, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             output = os.path.join(tmpdir, "out")
-            train_REINFORCE(output, ws, output,
+            train_REINFORCE(output, output,
                             dataset,
                             synthesizer,
                             model,
@@ -417,15 +364,7 @@ class TestTrainREINFORCE(object):
                             reward,
                             collate.collate,
                             1, 1, Epoch(2))
-            assert os.path.exists(
-                os.path.join(ws, "snapshot_iter_6"))
-            assert os.path.exists(os.path.join(ws, "log"))
-            with open(os.path.join(ws, "log")) as file:
-                log = json.load(file)
-            assert isinstance(log, list)
-            assert 1 == len(log)
-            assert 1 == len(os.listdir(os.path.join(ws, "model")))
-
+            assert os.path.exists(os.path.join(output, "snapshot_iter_6"))
             assert os.path.exists(os.path.join(output, "log.json"))
             with open(os.path.join(output, "log.json")) as file:
                 log = json.load(file)
@@ -433,20 +372,19 @@ class TestTrainREINFORCE(object):
             assert 1 == len(log)
             assert 1 == len(os.listdir(os.path.join(output, "model")))
             assert os.path.exists(os.path.join(output, "model.pt"))
-            assert os.path.exists(
-                os.path.join(output, "optimizer.pt"))
+            assert os.path.exists(os.path.join(output, "optimizer.pt"))
 
     def test_pretrained_model(self, dataset, model, loss_fn, optimizer, synthesizer):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             input = os.path.join(tmpdir, "in")
             output = os.path.join(tmpdir, "out")
-            model2 = DummyModel()
-            model2.m.bias[:] = np.nan
+            with torch.no_grad():
+                model2 = DummyModel()
+                model2.m.bias[:] = np.nan
             os.makedirs(input)
             torch.save(model2.state_dict(), os.path.join(input, "model.pt"))
 
-            train_REINFORCE(input, ws, output,
+            train_REINFORCE(input, output,
                             dataset,
                             synthesizer,
                             model,
@@ -457,13 +395,12 @@ class TestTrainREINFORCE(object):
                             collate.collate,
                             1, 1, Epoch(2),
                             use_pretrained_model=True)
-            assert not os.path.exists(os.path.join(ws, "log"))
+            assert not os.path.exists(os.path.join(output, "log.json"))
 
     def test_pretrained_optimizer(
         self, dataset, model, loss_fn, optimizer, synthesizer
     ):
         with tempfile.TemporaryDirectory() as tmpdir:
-            ws = os.path.join(tmpdir, "ws")
             input = os.path.join(tmpdir, "in")
             output = os.path.join(tmpdir, "out")
             optimizer = torch.optim.SGD(model.parameters(), lr=np.nan)
@@ -471,7 +408,7 @@ class TestTrainREINFORCE(object):
             torch.save(optimizer.state_dict(),
                        os.path.join(input, "optimizer.pt"))
 
-            train_REINFORCE(input, ws, output,
+            train_REINFORCE(input, output,
                             dataset,
                             synthesizer,
                             model,
@@ -482,4 +419,4 @@ class TestTrainREINFORCE(object):
                             collate.collate,
                             1, 1, Epoch(2),
                             use_pretrained_optimizer=True)
-            assert not os.path.exists(os.path.join(ws, "log"))
+            assert not os.path.exists(os.path.join(output, "log.json"))

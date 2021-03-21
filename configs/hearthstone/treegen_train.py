@@ -1,11 +1,7 @@
 imports = ["treegen_base.py", "benchmark.py"]
 benchmark = "short"
-output_dir = "output/output"
 
-device = torch.device(
-    type_str="cuda",
-    index=0,
-)
+device = torch.device(type_str="cuda", index=0)
 transform = mlprogram.functools.Sequence(
     funcs=collections.OrderedDict(
         items=[
@@ -43,8 +39,7 @@ optimizer = torch.optim.Optimizer(
     model=model,
 )
 main = mlprogram.entrypoint.train_supervised(
-    workspace_dir="output/workspace",
-    output_dir=output_dir,
+    output_dir=train_artifact_dir,
     dataset=train_dataset,
     model=model,
     optimizer=optimizer,

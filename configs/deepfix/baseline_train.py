@@ -3,7 +3,6 @@ device = torch.device(
     type_str="cuda",
     index=0,
 )
-output_dir = "output/output"
 optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
     model=model,
@@ -70,8 +69,7 @@ loss_fn = torch.nn.Sequential(
     ),
 )
 main = mlprogram.entrypoint.train_supervised(
-    workspace_dir="output/workspace",
-    output_dir=output_dir,
+    output_dir=train_artifact_dir,
     dataset=train_dataset,
     model=model,
     optimizer=optimizer,

@@ -5,6 +5,9 @@ option = {
     "n_train_iteration": 281250,
     "interval_iter": 50000,
 }
+pretrain_artifact_dir = "artifacts/pretrain"
+train_artifact_dir = "artifacts/train"
+evaluate_artifact_dir = "artifacts/evaluate"
 reference = True
 model = torch.nn.Sequential(
     modules=collections.OrderedDict(

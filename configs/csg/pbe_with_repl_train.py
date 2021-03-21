@@ -6,7 +6,6 @@ device = torch.device(
 )
 batch_size = 1
 n_rollout = 16
-output_dir = "output/output"
 optimizer = torch.optim.Optimizer(
     optimizer_cls=torch.optim.Adam(),
     model=model,
@@ -114,9 +113,8 @@ loss_fn = torch.nn.Sequential(
     ),
 )
 main = mlprogram.entrypoint.train_REINFORCE(
-    input_dir=output_dir,
-    workspace_dir="output/workspace",
-    output_dir=output_dir,
+    input_dir=pretrain_artifact_dir,
+    output_dir=train_artifact_dir,
     dataset=train_dataset,
     synthesizer=train_synthesizer,
     model=model,

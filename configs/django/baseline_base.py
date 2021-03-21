@@ -25,4 +25,6 @@ inference_params = {
 params = {
     "metric_top_n": [1],
 }
+train_artifact_dir = "artifacts/train"
+evaluate_artifact_dir = "artifacts/evaluate"
 synthesizer = base_synthesizer

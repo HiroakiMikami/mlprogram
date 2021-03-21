@@ -4,6 +4,8 @@ train_option = {
     "n_train_iteration": 6000,
     "interval_iter": 2000,
 }
+train_artifact_dir = "artifacts/train"
+evaluate_artifact_dir = "artifacts/evaluate"
 reference = False
 model = torch.nn.Sequential(
     modules=collections.OrderedDict(

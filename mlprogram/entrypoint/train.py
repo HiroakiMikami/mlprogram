@@ -1,5 +1,4 @@
 import os
-import shutil
 import traceback
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional, Union
@@ -64,14 +63,14 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
                               evaluate: Optional[Callable[[], None]],
                               metric: str, maximize: bool,
                               threshold: Optional[float],
-                              workspace_dir: str,
+                              output_dir: str,
                               report_metrics: Optional[List[str]] = None):
-    model_dir = os.path.join(workspace_dir, "model")
+    model_dir = os.path.join(output_dir, "model")
 
     logger.info("Prepare pytorch-pfn-extras")
     manager = ppe.training.ExtensionsManager(
         model, optimizer, n_iter / iter_per_epoch,
-        out_dir=workspace_dir,
+        out_dir=os.path.join(output_dir),
         extensions=[],
         iters_per_epoch=iter_per_epoch,
     )
@@ -86,7 +85,10 @@ def create_extensions_manager(n_iter: int, evaluation_interval_iter: int,
         )
     if distributed.is_main_process():
         manager.extend(
-            extensions.LogReport(trigger=Trigger(100, n_iter))
+            extensions.LogReport(
+                trigger=Trigger(100, n_iter),
+                filename="log.json",
+            )
         )
         manager.extend(extensions.ProgressBar())
         manager.extend(
@@ -171,28 +173,15 @@ def setup_distributed_training(
         )
 
 
-def save_results(workspace_dir: str, output_dir: str,
+def save_results(output_dir: str,
                  model: nn.Module, optimizer: torch.optim.Optimizer) -> None:
     if distributed.is_main_process():
-        model_dir = os.path.join(workspace_dir, "model")
-        logger.info("Copy log to output_dir")
-        if os.path.exists(os.path.join(workspace_dir, "log")):
-            os.makedirs(output_dir, exist_ok=True)
-            shutil.copyfile(os.path.join(workspace_dir, "log"),
-                            os.path.join(output_dir, "log.json"))
-
-        logger.info("Copy models to output_dir")
-        out_model_dir = os.path.join(output_dir, "model")
-        if os.path.exists(out_model_dir):
-            shutil.rmtree(out_model_dir)
-        shutil.copytree(model_dir, out_model_dir)
-
         logger.info("Dump the last model")
         torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
         torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
 
 
-def train_supervised(workspace_dir: str, output_dir: str,
+def train_supervised(output_dir: str,
                      dataset: torch.utils.data.Dataset,
                      model: nn.Module,
                      optimizer: torch.optim.Optimizer,
@@ -209,8 +198,6 @@ def train_supervised(workspace_dir: str, output_dir: str,
                      n_dataloader_worker: int = 1,
                      device: torch.device = torch.device("cpu")) \
         -> None:
-    os.makedirs(workspace_dir, exist_ok=True)
-
     logger.info("Prepare model")
     model.to(device)
     model.train()
@@ -236,8 +223,7 @@ def train_supervised(workspace_dir: str, output_dir: str,
             n_iter, evaluation_interval_iter, snapshot_interval_iter,
             iter_per_epoch,
             model, optimizer,
-            evaluate, metric, maximize, threshold,
-            workspace_dir)
+            evaluate, metric, maximize, threshold, output_dir)
 
     train_model = setup_distributed_training(model, loss, group)
 
@@ -275,10 +261,10 @@ def train_supervised(workspace_dir: str, output_dir: str,
     except RuntimeError as e:  # noqa
         logger.critical(traceback.format_exc())
 
-    save_results(workspace_dir, output_dir, model, optimizer)
+    save_results(output_dir, model, optimizer)
 
 
-def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
+def train_REINFORCE(input_dir: str, output_dir: str,
                     dataset: torch.utils.data.Dataset,
                     synthesizer: Synthesizer,
                     model: nn.Module,
@@ -300,8 +286,6 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
                     n_dataloader_worker: int = 2,
                     device: torch.device = torch.device("cpu")) \
         -> None:
-    os.makedirs(workspace_dir, exist_ok=True)
-
     logger.info("Prepare model")
     model.to(device)
     model.train()
@@ -339,8 +323,7 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
             n_iter, evaluation_interval_iter, snapshot_interval_iter,
             iter_per_epoch,
             model, optimizer,
-            evaluate, metric, maximize, threshold,
-            workspace_dir,
+            evaluate, metric, maximize, threshold, output_dir,
             report_metrics=["reward"])
 
     train_model = setup_distributed_training(model, loss, group)
@@ -410,4 +393,4 @@ def train_REINFORCE(input_dir: str, workspace_dir: str, output_dir: str,
     except RuntimeError as e:  # noqa
         logger.critical(traceback.format_exc())
 
-    save_results(workspace_dir, output_dir, model, optimizer)
+    save_results(output_dir, model, optimizer)

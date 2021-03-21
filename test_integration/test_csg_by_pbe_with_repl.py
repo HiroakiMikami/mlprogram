@@ -304,17 +304,16 @@ class TestCsgByPbeWithREPL(object):
         )
 
     def evaluate(self, dataset, encoder, dir):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            interpreter = self.interpreter()
-            model = self.prepare_model(encoder)
-            eval(
-                dir, tmpdir, dir,
-                dataset,
-                model,
-                self.prepare_synthesizer(model, encoder, interpreter,
-                                         rollout=False),
-                {}, top_n=[],
-            )
+        interpreter = self.interpreter()
+        model = self.prepare_model(encoder)
+        eval(
+            os.path.join(dir, "RL"), dir,
+            dataset,
+            model,
+            self.prepare_synthesizer(model, encoder, interpreter,
+                                     rollout=False),
+            {}, top_n=[],
+        )
         return torch.load(os.path.join(dir, "result.pt"))
 
     def pretrain(self, output_dir):
@@ -356,184 +355,183 @@ class TestCsgByPbeWithREPL(object):
             ),
         ])
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            interpreter = self.interpreter()
-            train_dataset = data_transform(
-                train_dataset,
-                Apply(
-                    module=AddTestCases(interpreter),
-                    in_keys=["ground_truth"],
-                    out_key="test_cases",
-                    is_out_supervision=False,
-                ))
-            encoder = self.prepare_encoder(dataset, Parser())
-
-            collate = Collate(
-                test_case_tensor=CollateOptions(False, 0, 0),
-                variables_tensor=CollateOptions(True, 0, 0),
-                previous_actions=CollateOptions(True, 0, -1),
-                hidden_state=CollateOptions(False, 0, 0),
-                state=CollateOptions(False, 0, 0),
-                ground_truth_actions=CollateOptions(True, 0, -1)
+        interpreter = self.interpreter()
+        train_dataset = data_transform(
+            train_dataset,
+            Apply(
+                module=AddTestCases(interpreter),
+                in_keys=["ground_truth"],
+                out_key="test_cases",
+                is_out_supervision=False,
             )
-            collate_fn = Sequence(OrderedDict([
-                ("to_episode", Map(self.to_episode(encoder,
-                                                   interpreter))),
-                ("flatten", Flatten()),
-                ("transform", Map(self.transform(
-                    encoder, interpreter, Parser()))),
-                ("collate", collate.collate)
-            ]))
+        )
+        encoder = self.prepare_encoder(dataset, Parser())
 
-            model = self.prepare_model(encoder)
-            optimizer = self.prepare_optimizer(model)
-            train_supervised(
-                tmpdir, output_dir,
-                train_dataset, model, optimizer,
-                torch.nn.Sequential(OrderedDict([
-                    ("loss",
-                     Apply(
-                         module=Loss(
-                             reduction="sum",
-                         ),
-                         in_keys=[
-                             "rule_probs",
-                             "token_probs",
-                             "reference_probs",
-                             "ground_truth_actions",
-                         ],
-                         out_key="action_sequence_loss",
-                     )),
-                    ("normalize",  # divided by batch_size
-                     Apply(
-                         [("action_sequence_loss", "lhs")],
-                         "loss",
-                         mlprogram.nn.Function(Div()),
-                         constants={"rhs": 1})),
-                    ("pick",
-                     mlprogram.nn.Function(
-                         Pick("loss")))
-                ])),
-                None, "score",
-                collate_fn,
-                1, Epoch(100), evaluation_interval=Epoch(10),
-                snapshot_interval=Epoch(100)
-            )
+        collate = Collate(
+            test_case_tensor=CollateOptions(False, 0, 0),
+            variables_tensor=CollateOptions(True, 0, 0),
+            previous_actions=CollateOptions(True, 0, -1),
+            hidden_state=CollateOptions(False, 0, 0),
+            state=CollateOptions(False, 0, 0),
+            ground_truth_actions=CollateOptions(True, 0, -1)
+        )
+        collate_fn = Sequence(OrderedDict([
+            ("to_episode", Map(self.to_episode(encoder,
+                                               interpreter))),
+            ("flatten", Flatten()),
+            ("transform", Map(self.transform(
+                encoder, interpreter, Parser()))),
+            ("collate", collate.collate)
+        ]))
+
+        model = self.prepare_model(encoder)
+        optimizer = self.prepare_optimizer(model)
+        train_supervised(
+            os.path.join(output_dir, "pretrain"),
+            train_dataset, model, optimizer,
+            torch.nn.Sequential(OrderedDict([
+                ("loss",
+                 Apply(
+                     module=Loss(
+                         reduction="sum",
+                     ),
+                     in_keys=[
+                         "rule_probs",
+                         "token_probs",
+                         "reference_probs",
+                         "ground_truth_actions",
+                     ],
+                     out_key="action_sequence_loss",
+                 )),
+                ("normalize",  # divided by batch_size
+                 Apply(
+                     [("action_sequence_loss", "lhs")],
+                     "loss",
+                     mlprogram.nn.Function(Div()),
+                     constants={"rhs": 1})),
+                ("pick",
+                 mlprogram.nn.Function(
+                     Pick("loss")))
+            ])),
+            None, "score",
+            collate_fn,
+            1, Epoch(100), evaluation_interval=Epoch(10),
+            snapshot_interval=Epoch(100)
+        )
         return encoder, train_dataset
 
     def reinforce(self, train_dataset, encoder, output_dir):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            interpreter = self.interpreter()
+        interpreter = self.interpreter()
 
-            collate = Collate(
-                test_case_tensor=CollateOptions(False, 0, 0),
-                variables_tensor=CollateOptions(True, 0, 0),
-                previous_actions=CollateOptions(True, 0, -1),
-                hidden_state=CollateOptions(False, 0, 0),
-                state=CollateOptions(False, 0, 0),
-                ground_truth_actions=CollateOptions(True, 0, -1),
-                reward=CollateOptions(False, 0, 0)
-            )
-            collate_fn = Sequence(OrderedDict([
-                ("to_episode", Map(self.to_episode(encoder,
-                                                   interpreter))),
-                ("flatten", Flatten()),
-                ("transform", Map(self.transform(
-                    encoder, interpreter, Parser()))),
-                ("collate", collate.collate)
-            ]))
+        collate = Collate(
+            test_case_tensor=CollateOptions(False, 0, 0),
+            variables_tensor=CollateOptions(True, 0, 0),
+            previous_actions=CollateOptions(True, 0, -1),
+            hidden_state=CollateOptions(False, 0, 0),
+            state=CollateOptions(False, 0, 0),
+            ground_truth_actions=CollateOptions(True, 0, -1),
+            reward=CollateOptions(False, 0, 0)
+        )
+        collate_fn = Sequence(OrderedDict([
+            ("to_episode", Map(self.to_episode(encoder,
+                                               interpreter))),
+            ("flatten", Flatten()),
+            ("transform", Map(self.transform(
+                encoder, interpreter, Parser()))),
+            ("collate", collate.collate)
+        ]))
 
-            model = self.prepare_model(encoder)
-            optimizer = self.prepare_optimizer(model)
-            train_REINFORCE(
-                output_dir, tmpdir, output_dir,
+        model = self.prepare_model(encoder)
+        optimizer = self.prepare_optimizer(model)
+        train_REINFORCE(
+            os.path.join(output_dir, "pretrain"), os.path.join(output_dir, "RL"),
+            train_dataset,
+            self.prepare_synthesizer(model, encoder, interpreter),
+            model, optimizer,
+            torch.nn.Sequential(OrderedDict([
+                ("policy",
+                 torch.nn.Sequential(OrderedDict([
+                     ("loss",
+                      Apply(
+                          module=mlprogram.nn.action_sequence.Loss(
+                              reduction="none"
+                          ),
+                          in_keys=[
+                              "rule_probs",
+                              "token_probs",
+                              "reference_probs",
+                              "ground_truth_actions",
+                          ],
+                          out_key="action_sequence_loss",
+                      )),
+                     ("weight_by_reward",
+                      Apply(
+                          [("reward", "lhs"),
+                           ("action_sequence_loss", "rhs")],
+                          "action_sequence_loss",
+                          mlprogram.nn.Function(Mul())))
+                 ]))),
+                ("value",
+                 torch.nn.Sequential(OrderedDict([
+                     ("reshape_reward",
+                      Apply(
+                          [("reward", "x")],
+                          "value_loss_target",
+                          Reshape([-1, 1]))),
+                     ("BCE",
+                      Apply(
+                          [("value", "input"),
+                           ("value_loss_target", "target")],
+                          "value_loss",
+                          torch.nn.BCELoss(reduction='sum'))),
+                     ("reweight",
+                      Apply(
+                          [("value_loss", "lhs")],
+                          "value_loss",
+                          mlprogram.nn.Function(Mul()),
+                          constants={"rhs": 1e-2})),
+                 ]))),
+                ("aggregate",
+                 Apply(
+                     ["action_sequence_loss", "value_loss"],
+                     "loss",
+                     AggregatedLoss())),
+                ("normalize",
+                 Apply(
+                     [("loss", "lhs")],
+                     "loss",
+                     mlprogram.nn.Function(Div()),
+                     constants={"rhs": 1})),
+                ("pick",
+                 mlprogram.nn.Function(
+                     Pick("loss")))
+            ])),
+            EvaluateSynthesizer(
                 train_dataset,
-                self.prepare_synthesizer(model, encoder, interpreter),
-                model, optimizer,
-                torch.nn.Sequential(OrderedDict([
-                    ("policy",
-                     torch.nn.Sequential(OrderedDict([
-                         ("loss",
-                          Apply(
-                              module=mlprogram.nn.action_sequence.Loss(
-                                  reduction="none"
-                              ),
-                              in_keys=[
-                                  "rule_probs",
-                                  "token_probs",
-                                  "reference_probs",
-                                  "ground_truth_actions",
-                              ],
-                              out_key="action_sequence_loss",
-                          )),
-                         ("weight_by_reward",
-                             Apply(
-                                 [("reward", "lhs"),
-                                  ("action_sequence_loss", "rhs")],
-                                 "action_sequence_loss",
-                                 mlprogram.nn.Function(Mul())))
-                     ]))),
-                    ("value",
-                     torch.nn.Sequential(OrderedDict([
-                         ("reshape_reward",
-                             Apply(
-                                 [("reward", "x")],
-                                 "value_loss_target",
-                                 Reshape([-1, 1]))),
-                         ("BCE",
-                             Apply(
-                                 [("value", "input"),
-                                  ("value_loss_target", "target")],
-                                 "value_loss",
-                                 torch.nn.BCELoss(reduction='sum'))),
-                         ("reweight",
-                             Apply(
-                                 [("value_loss", "lhs")],
-                                 "value_loss",
-                                 mlprogram.nn.Function(Mul()),
-                                 constants={"rhs": 1e-2})),
-                     ]))),
-                    ("aggregate",
-                     Apply(
-                         ["action_sequence_loss", "value_loss"],
-                         "loss",
-                         AggregatedLoss())),
-                    ("normalize",
-                     Apply(
-                         [("loss", "lhs")],
-                         "loss",
-                         mlprogram.nn.Function(Div()),
-                         constants={"rhs": 1})),
-                    ("pick",
-                     mlprogram.nn.Function(
-                         Pick("loss")))
-                ])),
-                EvaluateSynthesizer(
-                    train_dataset,
-                    self.prepare_synthesizer(model, encoder, interpreter,
-                                             rollout=False),
-                    {}, top_n=[]),
-                "generation_rate",
-                metrics.use_environment(
-                    metric=metrics.TestCaseResult(
-                        interpreter=interpreter,
-                        metric=metrics.use_environment(
-                            metric=metrics.Iou(),
-                            in_keys=["actual", "expected"],
-                            value_key="actual",
-                        )
-                    ),
-                    in_keys=["test_cases", "actual"],
-                    value_key="actual",
-                    transform=Threshold(threshold=0.9, dtype="float"),
+                self.prepare_synthesizer(model, encoder, interpreter,
+                                         rollout=False),
+                {}, top_n=[]),
+            "generation_rate",
+            metrics.use_environment(
+                metric=metrics.TestCaseResult(
+                    interpreter=interpreter,
+                    metric=metrics.use_environment(
+                        metric=metrics.Iou(),
+                        in_keys=["actual", "expected"],
+                        value_key="actual",
+                    )
                 ),
-                collate_fn,
-                1, 1,
-                Epoch(10), evaluation_interval=Epoch(10),
-                snapshot_interval=Epoch(10),
-                use_pretrained_model=True,
-                use_pretrained_optimizer=True,
-                threshold=1.0)
+                in_keys=["test_cases", "actual"],
+                value_key="actual",
+                transform=Threshold(threshold=0.9, dtype="float"),
+            ),
+            collate_fn,
+            1, 1,
+            Epoch(10), evaluation_interval=Epoch(10),
+            snapshot_interval=Epoch(10),
+            use_pretrained_model=True,
+            use_pretrained_optimizer=True,
+            threshold=1.0)
 
     def test(self):
         torch.manual_seed(0)
