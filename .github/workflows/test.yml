@@ -4,6 +4,8 @@
 name: Python application
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -28,15 +30,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install .
         pip install ."[test]"
-    - name: Create dummy dataset
-      run: |
-        python ./tools/create_dummy_dataset.py
-    - name: Check type hits with mypy
-      run: |
-        ./bin/mypy.bash
-    - name: Lint
-      run: |
-        ./bin/lint.bash true
     - name: Test
       run: |
-        timeout 20m ./bin/run_test.bash all
+        make test
