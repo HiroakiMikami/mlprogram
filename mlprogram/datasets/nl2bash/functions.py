@@ -3,7 +3,7 @@ from typing import List
 
 from nltk import tokenize
 
-from mlprogram.languages import Token
+from mlprogram.languages.token import Token
 
 tokenizer = tokenize.WhitespaceTokenizer()
 

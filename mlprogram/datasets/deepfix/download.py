@@ -8,10 +8,10 @@ from shutil import copyfileobj
 from typing import Callable
 
 from mlprogram import logging
-from mlprogram.builtins import Environment
-from mlprogram.datasets import DEFAULT_CACHE_DIR
-from mlprogram.functools import file_cache
-from mlprogram.utils.data import ListDataset
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.datasets.constants import DEFAULT_CACHE_DIR
+from mlprogram.functools.cache import file_cache
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 
@@ -19,8 +19,7 @@ BASE_PATH = "https://www.cse.iitk.ac.in/users/karkare/prutor/prutor-deepfix-09-1
 
 
 def default_get(src: str, dst: str):
-    with urllib.request.urlopen(src) as src_file, \
-            open(dst, "wb") as dst_file:
+    with urllib.request.urlopen(src) as src_file, open(dst, "wb") as dst_file:
         copyfileobj(src_file, dst_file)
 
 

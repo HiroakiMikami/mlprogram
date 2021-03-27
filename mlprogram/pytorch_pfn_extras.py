@@ -6,7 +6,7 @@ from pytorch_pfn_extras.training import extension
 from torch import nn
 
 from mlprogram import logging
-from mlprogram.collections import TopKElement
+from mlprogram.collections.top_k_element import TopKElement
 
 logger = logging.Logger(__name__)
 

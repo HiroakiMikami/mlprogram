@@ -2,7 +2,8 @@ from typing import Any, Generic, List, Tuple, TypeVar
 
 from torch import nn
 
-from mlprogram.languages import Analyzer, Interpreter
+from mlprogram.languages.analyzer import Analyzer
+from mlprogram.languages.interpreter import Interpreter
 
 Code = TypeVar("Code")
 Error = TypeVar("Error")

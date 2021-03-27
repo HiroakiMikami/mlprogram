@@ -51,8 +51,8 @@ SOFTWARE.
 import re
 from typing import Callable, List, Optional
 
-from mlprogram.languages import AST
-from mlprogram.languages.python import Parser as BaseParser
+from mlprogram.languages.ast import AST
+from mlprogram.languages.python.parser import Parser as BaseParser
 
 p_elif = re.compile(r'^elif\s?')
 p_else = re.compile(r'^else\s?')

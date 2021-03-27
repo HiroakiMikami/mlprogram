@@ -4,10 +4,10 @@ from typing import Callable, Dict
 import requests
 
 from mlprogram import logging
-from mlprogram.builtins import Environment
-from mlprogram.datasets import DEFAULT_CACHE_DIR
-from mlprogram.functools import file_cache
-from mlprogram.utils.data import ListDataset
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.datasets.constants import DEFAULT_CACHE_DIR
+from mlprogram.functools.cache import file_cache
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 
@@ -19,8 +19,7 @@ def default_get(path: str) -> str:
     return requests.get(path).text
 
 
-def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR,
-                                            "hearthstone.pt"),
+def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "hearthstone.pt"),
              base_path: str = BASE_PATH,
              get: Callable[[str], str] = default_get) \
         -> Dict[str, ListDataset]:

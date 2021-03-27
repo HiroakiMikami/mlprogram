@@ -4,11 +4,11 @@ from typing import Callable, Dict, Tuple
 import requests
 
 from mlprogram import logging
-from mlprogram.builtins import Environment
-from mlprogram.datasets import DEFAULT_CACHE_DIR
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.datasets.constants import DEFAULT_CACHE_DIR
 from mlprogram.datasets.django.format_annotations import format_annotations
-from mlprogram.functools import file_cache
-from mlprogram.utils.data import ListDataset
+from mlprogram.functools.cache import file_cache
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 
@@ -29,8 +29,7 @@ def download(cache_path: str = os.path.join(DEFAULT_CACHE_DIR, "django.pt"),
     @file_cache(cache_path)
     def _download():
         return {
-            "annotation": format_annotations(
-                get(BASE_PATH + "all.anno").split("\n")),
+            "annotation": format_annotations(get(BASE_PATH + "all.anno").split("\n")),
             "code": get(BASE_PATH + "all.code").split("\n")
         }
     data = _download()

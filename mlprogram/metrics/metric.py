@@ -3,9 +3,11 @@ from typing import Callable, Generic, Optional, TypeVar, cast
 
 from torch import nn
 
-from mlprogram.builtins import Apply, Environment, Pick
-from mlprogram.functools import Sequence
-from mlprogram.nn import Function
+from mlprogram.builtins.apply import Apply
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.builtins.pick import Pick
+from mlprogram.functools.functions import Sequence
+from mlprogram.nn.function import Function
 
 Value = TypeVar("Value")
 

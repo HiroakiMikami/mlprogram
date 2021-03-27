@@ -1,3 +1,4 @@
+from mlprogram.entrypoint import modules  # noqa
 from mlprogram.entrypoint.evaluate import EvaluateSample  # noqa
 from mlprogram.entrypoint.evaluate import EvaluateSynthesizer  # noqa
 from mlprogram.entrypoint.evaluate import evaluate  # noqa
