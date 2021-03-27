@@ -5,8 +5,7 @@ import torch
 from torchnlp.encoders import LabelEncoder
 
 from mlprogram import logging
-from mlprogram.actions import (
-    ActionSequence,
+from mlprogram.actions.action import (
     ApplyRule,
     CloseVariadicFieldRule,
     ExpandTreeRule,
@@ -14,7 +13,8 @@ from mlprogram.actions import (
     NodeType,
     Rule,
 )
-from mlprogram.languages import Token
+from mlprogram.actions.action_sequence import ActionSequence
+from mlprogram.languages.token import Token
 
 logger = logging.Logger(__name__)
 

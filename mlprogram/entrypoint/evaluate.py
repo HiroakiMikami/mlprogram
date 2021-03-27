@@ -12,9 +12,9 @@ from torch import nn
 from tqdm import tqdm
 
 from mlprogram import distributed, logging
-from mlprogram.builtins import Environment
-from mlprogram.synthesizers import Synthesizer
-from mlprogram.utils.data import ListDataset
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.synthesizers.synthesizer import Synthesizer
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 

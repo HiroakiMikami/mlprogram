@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from nltk import tokenize
 
-from mlprogram.languages import Token
+from mlprogram.languages.token import Token
 
 tokenizer = tokenize.WhitespaceTokenizer()
 
@@ -52,8 +52,7 @@ class TokenizeQuery:
             else:
                 reference.append(Token[str, str](None, word, word))
 
-            vars = list(filter(lambda x: len(x) > 0,
-                               word.split('.')))  # split by '.'
+            vars = list(filter(lambda x: len(x) > 0, word.split('.')))  # split by '.'
             if len(vars) > 1:
                 for v in vars:
                     reference.append(Token(None, v, v))

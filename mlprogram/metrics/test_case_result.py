@@ -2,8 +2,8 @@ from typing import Callable, Generic, List, Optional, Tuple, TypeVar
 
 from torch import nn
 
-from mlprogram.builtins import Environment
-from mlprogram.languages import Interpreter
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.languages.interpreter import Interpreter
 from mlprogram.metrics.accuracy import Accuracy
 from mlprogram.metrics.metric import use_environment
 

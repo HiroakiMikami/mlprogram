@@ -28,15 +28,10 @@ import mlprogram.transforms.action_sequence
 import mlprogram.transforms.pbe
 import mlprogram.transforms.text
 import mlprogram.utils.data
+from mlprogram.entrypoint.modules.fairseq import types as fairseq_types
 from mlprogram.entrypoint.modules.numpy import types as numpy_types
 from mlprogram.entrypoint.modules.torch import types as torch_types
 from mlprogram.entrypoint.modules.torchnlp import types as torchnlp_types
-
-try:
-    from mlprogram.entrypoint.modules.fairseq import types as fairseq_types
-except:  # noqa
-    fairseq_types = {}
-    pass
 
 types = {
     "select": lambda key, options: options[key],

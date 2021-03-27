@@ -44,8 +44,8 @@ import re
 from typing import List, Optional, Tuple
 
 from mlprogram import logging
-from mlprogram.languages import Lexer as BaseLexer
-from mlprogram.languages import Token
+from mlprogram.languages.lexer import Lexer as BaseLexer
+from mlprogram.languages.token import Token
 
 logger = logging.Logger(__name__)
 

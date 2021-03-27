@@ -10,9 +10,9 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from mlprogram import distributed, logging
-from mlprogram.builtins import Environment
+from mlprogram.builtins.datatypes import Environment
 from mlprogram.pytorch_pfn_extras import SaveTopKModel, StopByThreshold
-from mlprogram.synthesizers import Synthesizer
+from mlprogram.synthesizers.synthesizer import Synthesizer
 
 logger = logging.Logger(__name__)
 

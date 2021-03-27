@@ -5,7 +5,7 @@ import python_config
 from pytorch_pfn_extras.config import Config
 
 from mlprogram.entrypoint.types import types
-from mlprogram.functools import file_cache
+from mlprogram.functools.cache import file_cache
 
 
 def with_file_cache(path, config, types):

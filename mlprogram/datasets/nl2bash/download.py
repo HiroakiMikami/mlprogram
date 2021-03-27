@@ -4,10 +4,10 @@ import tempfile
 from typing import Dict
 
 from mlprogram import logging
-from mlprogram.builtins import Environment
-from mlprogram.datasets import DEFAULT_CACHE_DIR
-from mlprogram.functools import file_cache
-from mlprogram.utils.data import ListDataset
+from mlprogram.builtins.datatypes import Environment
+from mlprogram.datasets.constants import DEFAULT_CACHE_DIR
+from mlprogram.functools.cache import file_cache
+from mlprogram.utils.data.utils import ListDataset
 
 logger = logging.Logger(__name__)
 

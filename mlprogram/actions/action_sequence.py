@@ -13,7 +13,7 @@ from mlprogram.actions.action import (
     NodeType,
     Rule,
 )
-from mlprogram.languages import AST, Field, Leaf, Node, Root
+from mlprogram.languages.ast import AST, Field, Leaf, Node, Root
 
 logger = logging.Logger(__name__)
 

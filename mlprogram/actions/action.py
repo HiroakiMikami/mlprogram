@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
-from mlprogram.languages import Root
+from mlprogram.languages.ast import Root
 
 Value = TypeVar("Value")
 

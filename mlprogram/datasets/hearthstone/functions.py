@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from mlprogram.languages import Token
+from mlprogram.languages.token import Token
 
 
 class TokenizeQuery:
