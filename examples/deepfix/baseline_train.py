@@ -40,25 +40,24 @@ loss_fn = torch.nn.Sequential(OrderedDict(
 ))
 
 
-def main():
-    mlprogram.tasks.train_supervised(
-        output_dir=global_options.train_artifact_dir,
-        dataset=base.train_dataset,
-        model=base.model,
-        optimizer=optimizer,
-        loss=loss_fn,
-        evaluate=mlprogram.tasks.EvaluateSynthesizer(
-            dataset=base.test_dataset,
-            synthesizer=base.synthesizer,
-            metrics={},
-            top_n=[],
-            n_samples=global_options.n_test_sample,
-        ),
-        metric="generation_rate",
-        collate=collate_fn,
-        batch_size=global_options.batch_size,
-        length=global_options.n_epoch,
-        evaluation_interval=global_options.eval_interval,
-        snapshot_interval=global_options.snapshot_interval,
-        device=device,
-    )
+mlprogram.tasks.train_supervised(
+    output_dir=global_options.train_artifact_dir,
+    dataset=base.train_dataset,
+    model=base.model,
+    optimizer=optimizer,
+    loss=loss_fn,
+    evaluate=mlprogram.tasks.EvaluateSynthesizer(
+        dataset=base.test_dataset,
+        synthesizer=base.synthesizer,
+        metrics={},
+        top_n=[],
+        n_samples=global_options.n_test_sample,
+    ),
+    metric="generation_rate",
+    collate=collate_fn,
+    batch_size=global_options.batch_size,
+    length=global_options.n_epoch,
+    evaluation_interval=global_options.eval_interval,
+    snapshot_interval=global_options.snapshot_interval,
+    device=device,
+)

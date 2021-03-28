@@ -76,11 +76,6 @@ def launch(
     logger.info("Setup options from command line arguments")
     global_options.set_args(args)
 
-    logger.info(f"Load file {file}")
-    spec = importlib.util.spec_from_file_location("module.name", file)
-    main = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(main)
-
     distributed.initialize(tmpdir, rank, n_process)
 
     rank = distributed.rank()
@@ -91,17 +86,23 @@ def launch(
     np.random.seed(rng.randint(0, 2**32 - 1))
     random.seed(rng.randint(0, 2**32 - 1))
 
-    logger.info("Run main")
+    logger.info(f"Load file {file}")
+
+    logger.info("Run file {file}")
     if option == "profile":
         cprofile = cProfile.Profile()
         cprofile.enable()
         with profile() as torch_prof:
-            main.main()
+            spec = importlib.util.spec_from_file_location("module.name", file)
+            main = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(main)
         cprofile.disable()
         torch.save(torch_prof, os.path.join("profile", f"torch_profiler-{rank}.pt"))
         cprofile.dump_stats(os.path.join("profile", f"cprofile-{rank}.pt"))
     else:
-        main.main()
+        spec = importlib.util.spec_from_file_location("module.name", file)
+        main = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(main)
 
 
 def launch_multiprocess(

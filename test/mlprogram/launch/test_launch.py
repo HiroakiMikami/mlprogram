@@ -19,8 +19,7 @@ def test_launch(tmpdir):
     with open(run, "w") as f:
         f.write("""
 import sys
-def main():
-    print("executed", file=sys.stderr)
+print("executed", file=sys.stderr)
 """)
 
     stderr = io.StringIO()
@@ -36,8 +35,7 @@ def test_launch_with_options(tmpdir):
 import sys
 from mlprogram.launch import global_options
 global_options["arg"] = "value"
-def main():
-    print(global_options.arg, file=sys.stderr)
+print(global_options.arg, file=sys.stderr)
 """)
     stderr = io.StringIO()
     with redirect_stderr(stderr):
