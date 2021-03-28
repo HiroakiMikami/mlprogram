@@ -37,4 +37,5 @@ def run(
         metrics=metrics,
         top_n=metric_top_n,
         device=device,
+        n_sample=global_options.n_validate_sample,
     )

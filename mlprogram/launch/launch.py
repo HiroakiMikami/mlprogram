@@ -86,9 +86,8 @@ def launch(
     np.random.seed(rng.randint(0, 2**32 - 1))
     random.seed(rng.randint(0, 2**32 - 1))
 
-    logger.info(f"Load file {file}")
-
-    logger.info("Run file {file}")
+    # TODO clear options
+    logger.info(f"Run file {file}")
     if option == "profile":
         cprofile = cProfile.Profile()
         cprofile.enable()

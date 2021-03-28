@@ -24,13 +24,6 @@ class TestConfig(object):
             for config, n_process in configs:
                 launch_multiprocess(config, "test", tmpdir, n_process)
 
-    def test_hearthstone_baseline(self):
-        self.launch_config([
-            (os.path.join("configs", "hearthstone", "baseline_train.py"), 0),
-            (os.path.join("configs", "hearthstone", "baseline_evaluate_short.py"), 0),
-            (os.path.join("configs", "hearthstone", "baseline_evaluate_long.py"), 0),
-        ])
-
     def test_hearthstone_nl2code(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "nl2code_train.py"), 0),
