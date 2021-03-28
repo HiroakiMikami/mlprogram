@@ -16,13 +16,15 @@ groups = {}
 
 def initialize(tmpdir: str,
                rank: Optional[int] = None, world_size: Optional[int] = None):
+    if torch.distributed.is_initialized():
+        logger.warning("torch.distributed is already initialized")
+        return
+
     if rank is None and "RANK" not in os.environ:
-        logger.warning(
-            "Abort torch.distributed.initialization (rank is not set)")
+        logger.warning("Abort torch.distributed.initialize (rank is not set)")
         return
     if world_size is None and "WORLD_SIZE" not in os.environ:
-        logger.warning(
-            "Abort torch.distributed.initialization (world_size is not set)")
+        logger.warning("Abort torch.distributed.initialize (world_size is not set)")
         return
 
     if rank is None:
