@@ -1,9 +1,11 @@
-parser = mlprogram.languages.bash.Parser(
-    split_value=mlprogram.datasets.nl2bash.SplitValue(),
-)
-extract_reference = mlprogram.datasets.nl2bash.TokenizeQuery()
-is_subtype = mlprogram.languages.bash.IsSubtype()
-dataset = mlprogram.datasets.nl2bash.download()
+import mlprogram
+import mlprogram.datasets.nl2bash as nl2bash
+import mlprogram.languages.bash as bash
+
+parser = bash.Parser(split_value=nl2bash.SplitValue())
+extract_reference = nl2bash.TokenizeQuery()
+is_subtype = bash.IsSubtype()
+dataset = nl2bash.download()
 metrics = {
     "accuracy": mlprogram.metrics.use_environment(
         metric=mlprogram.metrics.Accuracy(),
