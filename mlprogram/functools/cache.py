@@ -33,3 +33,10 @@ def file_cache(path: str) -> Callable[[Callable[[], V]], FileCache[V]]:
     def wrapper(f: Callable[[], V]):
         return FileCache(path, f)
     return wrapper
+
+
+def with_file_cache(path: str, f: Callable, *args, **kwargs):
+    @file_cache(path)
+    def g():
+        return f(*args, **kwargs)
+    return g()

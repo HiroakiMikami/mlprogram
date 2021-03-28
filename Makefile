@@ -42,6 +42,7 @@ test_module:
 
 test_configs:
 	pytest test/configs || exit 1
+	pytest test/examples || exit 1
 
 test_integration:
 	pytest -s -vv test_integration || exit 1

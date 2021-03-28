@@ -85,11 +85,11 @@ class EvaluateSynthesizer(Generic[Code, GroundTruth]):
                  synthesizer: Synthesizer[Environment, Code],
                  metrics: Mapping[str, Callable[[Environment, Code], float]],
                  top_n: List[int] = [1, 3],
-                 n_samples: Optional[int] = None):
+                 n_sample: Optional[int] = None):
         super().__init__()
         self.dataset = dataset
-        if n_samples is not None:
-            self.dataset = ListDataset([self.dataset[i] for i in range(n_samples)])
+        if n_sample is not None:
+            self.dataset = ListDataset([self.dataset[i] for i in range(n_sample)])
         self.synthesizer = synthesizer
         self.metrics = metrics
         self.top_n = top_n
@@ -165,13 +165,13 @@ def evaluate(input_dir: str, output_dir: str,
              metrics: Mapping[str, Callable[[Environment, Code], float]],
              top_n: List[int] = [1],
              device: torch.device = torch.device("cpu"),
-             n_samples: Optional[int] = None) \
+             n_sample: Optional[int] = None) \
         -> None:
     logger.info("Prepare model")
     model.to(device)
 
     evaluate_synthesizer = EvaluateSynthesizer[Code, GroundTruth](
-        valid_dataset, synthesizer, metrics, top_n, n_samples)
+        valid_dataset, synthesizer, metrics, top_n, n_sample)
 
     model_dir = os.path.join(input_dir, "model")
     if len(os.listdir(model_dir)) > 1:

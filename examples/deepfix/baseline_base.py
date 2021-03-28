@@ -12,7 +12,7 @@ import mlprogram.languages.linediff as linediff
 from mlprogram import nn
 from mlprogram import transforms as T
 from mlprogram.builtins import Apply, Constant, Pick
-from mlprogram.functools import file_cache
+from mlprogram.functools import with_file_cache
 from mlprogram.launch import global_options
 from mlprogram.tasks.train import Epoch
 
@@ -82,33 +82,24 @@ valid_dataset = mlprogram.utils.data.transform(
     dataset=dataset["with_error"], transform=linediff.AddTestCases()
 )
 
-
 # define encoders
-@file_cache(os.path.join(global_options.train_artifact_dir, "word_encoder.pt"))
-def mk_word_encoder():
-    return torchnlp.encoders.LabelEncoder(
-        # TODO use not seeded dataset
-        sample=mlprogram.utils.data.get_words(
-            dataset=splitted["train"],
-            extract_reference=lexer.tokenize,
-            query_key="code",
-        ),
-        min_occurrences=global_options.word_threshold,
-    )
-
-
-@file_cache(
-    os.path.join(global_options.train_artifact_dir, "action_sequence_encoder.pt")
+word_encoder = with_file_cache(
+    os.path.join(global_options.train_artifact_dir, "word_encoder.pt"),
+    torchnlp.encoders.LabelEncoder,
+    # TODO use not seeded dataset
+    sample=mlprogram.utils.data.get_words(
+        dataset=splitted["train"],
+        extract_reference=lexer.tokenize,
+        query_key="code",
+    ),
+    min_occurrences=global_options.word_threshold,
 )
-def mk_action_sequence_encoder():
-    return mlprogram.encoders.ActionSequenceEncoder(
-        samples=mlprogram.utils.data.get_samples(dataset=train_dataset, parser=parser),
-        token_threshold=global_options.token_threshold,
-    )
-
-
-word_encoder = mk_word_encoder()
-action_sequence_encoder = mk_action_sequence_encoder()
+action_sequence_encoder = with_file_cache(
+    os.path.join(global_options.train_artifact_dir, "action_sequence_encoder.pt"),
+    mlprogram.encoders.ActionSequenceEncoder,
+    samples=mlprogram.utils.data.get_samples(dataset=train_dataset, parser=parser),
+    token_threshold=global_options.token_threshold,
+)
 
 # define module
 embedding = nn.action_sequence.ActionsEmbedding(

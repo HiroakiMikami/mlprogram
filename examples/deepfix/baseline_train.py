@@ -51,7 +51,7 @@ mlprogram.tasks.train_supervised(
         synthesizer=base.synthesizer,
         metrics={},
         top_n=[],
-        n_samples=global_options.n_test_sample,
+        n_sample=global_options.n_test_sample,
     ),
     metric="generation_rate",
     collate=collate_fn,

@@ -22,6 +22,13 @@ def launch_config(files: List[Tuple[str, int]]):
             launch_multiprocess(config, "test", tmpdir, n_process, [])
 
 
+def test_django_baseline():
+    launch_config([
+        (os.path.join("examples", "django", "baseline_train.py"), 0),
+        (os.path.join("examples", "django", "baseline_evaluate.py"), 0),
+    ])
+
+
 def test_deepfix_baseline():
     launch_config([
         (os.path.join("examples", "deepfix", "baseline_train.py"), 0),

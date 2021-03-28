@@ -19,5 +19,5 @@ mlprogram.tasks.evaluate(
     metrics={},
     top_n=[],
     device=device,
-    n_samples=global_options.n_validate_sample,
+    n_sample=global_options.n_validate_sample,
 )

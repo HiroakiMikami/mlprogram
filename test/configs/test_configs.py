@@ -24,12 +24,6 @@ class TestConfig(object):
             for config, n_process in configs:
                 launch_multiprocess(config, "test", tmpdir, n_process)
 
-    def test_django_baseline(self):
-        self.launch_config([
-            (os.path.join("configs", "django", "baseline_train.py"), 0),
-            (os.path.join("configs", "django", "baseline_evaluate.py"), 0),
-        ])
-
     def test_hearthstone_baseline(self):
         self.launch_config([
             (os.path.join("configs", "hearthstone", "baseline_train.py"), 0),

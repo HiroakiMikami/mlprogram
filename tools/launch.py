@@ -45,9 +45,9 @@ def modify_config_for_test(configs: Any, tmpdir: str) -> Any:
                 elif value["type"] in set([
                     "mlprogram.entrypoint.EvaluateSynthesizer"
                 ]):
-                    value["n_samples"] = 1
+                    value["n_sample"] = 1
                 elif value["type"] in set(["mlprogram.entrypoint.evaluate"]):
-                    value["n_samples"] = 1
+                    value["n_sample"] = 1
                 elif value["type"] in set(["mlprogram.synthesizers.BeamSearch",
                                            "mlprogram.synthesizers.SMC"]):
                     value["max_step_size"] = 2
@@ -94,9 +94,9 @@ def modify_config_for_profile(configs: Any, tmpdir: str) -> Any:
                 elif value["type"] in set([
                     "mlprogram.entrypoint.EvaluateSynthesizer"
                 ]):
-                    value["n_samples"] = 0
+                    value["n_sample"] = 0
                 elif value["type"] in set(["mlprogram.entrypoint.evaluate"]):
-                    value["n_samples"] = 1
+                    value["n_sample"] = 1
                     value["output_dir"] = f"{tmpdir}/output"
                     if "n_process" in value:
                         value["n_process"] = None
