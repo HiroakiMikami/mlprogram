@@ -4,11 +4,13 @@ check:
 	black . --diff || exit 1
 	black configs --diff || exit 1
 	isort . --diff || exit 1
+	python -m flatpython $(shell find ./examples -name "*.py") || exit 1
 
 format:
 	black .
 	black configs
 	isort .
+	python -m flatpython $(shell find ./examples -name "*.py") || exit 1
 
 mypy:
 	mypy --no-site-packages \

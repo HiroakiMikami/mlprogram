@@ -11,9 +11,9 @@ from torch import nn, optim
 
 from mlprogram import distributed
 from mlprogram.builtins import Environment
-from mlprogram.entrypoint import train_REINFORCE, train_supervised
-from mlprogram.entrypoint.train import Epoch, Iteration
 from mlprogram.synthesizers import Result
+from mlprogram.tasks import train_REINFORCE, train_supervised
+from mlprogram.tasks.train import Epoch, Iteration
 from mlprogram.utils.data import Collate, CollateOptions, ListDataset
 
 context = mp.get_context("spawn")

@@ -34,7 +34,7 @@ def launch(
             name = key.replace("_artifact_dir", "")
             value = os.path.join(tmpdir, name)
             return value
-        elif _type in set(Epoch, Iteration):
+        elif _type in set([Epoch, Iteration]):
             return Iteration(2)
         elif key == "n_validate_sample":
             return 1
@@ -54,7 +54,7 @@ def launch(
             name = key.replace("_artifact_dir", "")
             value = os.path.join(tmpdir, name)
             return value
-        elif _type in set(Epoch, Iteration):
+        elif _type in set([Epoch, Iteration]):
             return Iteration(2)
         elif key == "n_validate_sample":
             return 1

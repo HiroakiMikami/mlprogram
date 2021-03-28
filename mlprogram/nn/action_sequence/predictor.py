@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from mlprogram.nn import PointerNet
+from mlprogram.nn.pointer_net import PointerNet
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 

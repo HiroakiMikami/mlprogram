@@ -12,7 +12,7 @@
 !/mlprogram/**/*.py
 !/test/**/*.py
 !/test_integration/**/*.py
-!/configs/**/*.py
+!/examples/**/*.py
 !/tools/*.py
 !/tools/*.ipynb
 !/result/**/*.json

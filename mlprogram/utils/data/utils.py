@@ -15,7 +15,10 @@ class ListDataset(torch.utils.data.Dataset, Generic[V]):
         return len(self.elems)
 
     def __getitem__(self, idx):
-        return self.elems[idx]
+        if isinstance(idx, int) or isinstance(idx, slice):
+            return self.elems[idx]
+        else:
+            return [self.elems[x] for x in idx]
 
 
 class TransformedDataset(torch.utils.data.Dataset, Generic[V0, V1]):

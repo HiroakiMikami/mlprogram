@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from mlprogram.nn import EmbeddingWithMask
+from mlprogram.nn.embedding import EmbeddingWithMask
 from mlprogram.nn.utils.rnn import PaddedSequenceWithMask
 
 

@@ -7,10 +7,10 @@ import torch
 
 from mlprogram import distributed
 from mlprogram.builtins import Environment
-from mlprogram.entrypoint import evaluate
-from mlprogram.entrypoint.evaluate import EvaluateSynthesizer, Result
 from mlprogram.metrics import Accuracy, Bleu, use_environment
 from mlprogram.synthesizers import Result as DecoderResult
+from mlprogram.tasks import evaluate
+from mlprogram.tasks.evaluate import EvaluateSynthesizer, Result
 from mlprogram.utils.data import ListDataset
 
 context = mp.get_context("spawn")

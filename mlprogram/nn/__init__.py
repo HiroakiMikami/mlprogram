@@ -1,3 +1,4 @@
+import mlprogram.nn.action_sequence  # noqa
 from mlprogram.nn.aggregated_loss import AggregatedLoss  # noqa
 from mlprogram.nn.bidirectional_lstm import BidirectionalLSTM  # noqa
 from mlprogram.nn.cnn import CNN2d  # noqa

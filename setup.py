@@ -28,6 +28,7 @@ extras = {
         "timeout-decorator",
         "pytest",
         "fairseq @ git+https://github.com/pytorch/fairseq",
+        "flatpython @ https://github.com/HiroakiMikami/flatpython",
     ],
 }
 
