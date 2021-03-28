@@ -17,10 +17,18 @@ def test_options():
     assert opt.options == {"foo": int, "bar": str}
 
 
-def test_overwrite_options_by_args():
+def test_set_hook():
     opt = Options()
     opt["foo"] = 10
     opt["bar"] = "bar"
-    opt.overwrite_options_by_args(["--foo", 0])
+    opt.set_hook(lambda x, y: "v")
+    assert opt.bar == "v"
+
+
+def test_set_args():
+    opt = Options()
+    opt["foo"] = 10
+    opt["bar"] = "bar"
+    opt.set_args(["--foo", 0])
     assert opt.foo == 0
     assert opt.bar == "bar"

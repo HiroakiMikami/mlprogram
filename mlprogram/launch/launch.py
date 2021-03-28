@@ -3,7 +3,7 @@ import importlib
 import logging as L
 import os
 import random
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import numpy as np
 import torch
@@ -11,50 +11,10 @@ from torch import multiprocessing
 from torch.autograd.profiler import profile
 
 from mlprogram import distributed, logging
-from mlprogram.launch.options import Options, global_options
+from mlprogram.launch.options import global_options
 from mlprogram.tasks.train import Epoch, Iteration
 
 logger = logging.Logger(__name__)
-
-
-def setup_test_options(tmpdir: str, options: Options):
-    for key, _type in options.options.items():
-        if key == "device_type":
-            options.overwrite_option(key, "cpu")
-        elif key.endswith("_artifact_dir"):
-            name = key.replace("_artifact_dir", "")
-            value = f"{tmpdir}/{name}"
-            options.overwrite_option(key, value)
-        elif _type in set(Epoch, Iteration):
-            options.overwrite_option(key, Iteration(2))
-        elif key == "n_validate_sample":
-            options.overwrite_option(key, 1)
-        elif key == "n_test_sample":
-            options.overwrite_option(key, 1)
-        elif key == "max_step_size":
-            options.overwrite_option(key, 2)
-        elif key == "timeout_sec":
-            options.overwrite_option(key, 0.5)
-
-
-def setup_profile_options(tmpdir: str, options: Options):
-    for key, _type in options.options.items():
-        if key == "device_type":
-            options.overwrite_option(key, "cpu")
-        elif key.endswith("_artifact_dir"):
-            name = key.replace("_artifact_dir", "")
-            value = f"{tmpdir}/{name}"
-            options.overwrite_option(key, value)
-        elif _type in set(Epoch, Iteration):
-            options.overwrite_option(key, Iteration(2))
-        elif key == "n_validate_sample":
-            options.overwrite_option(key, 1)
-        elif key == "n_test_sample":
-            options.overwrite_option(key, 0)
-        elif key == "max_step_size":
-            options.overwrite_option(key, 2)
-        elif key == "timeout_sec":
-            options.overwrite_option(key, 2)
 
 
 def launch(
@@ -67,19 +27,59 @@ def launch(
 ):
     logging.set_level(L.INFO)
 
+    def test_options_hook(key: str, _type: Type):
+        if key == "device_type":
+            return "cpu"
+        elif key.endswith("_artifact_dir"):
+            name = key.replace("_artifact_dir", "")
+            value = os.path.join(tmpdir, name)
+            return value
+        elif _type in set(Epoch, Iteration):
+            return Iteration(2)
+        elif key == "n_validate_sample":
+            return 1
+        elif key == "n_test_sample":
+            return 1
+        elif key == "max_step_size":
+            return 2
+        elif key == "timeout_sec":
+            return 0.5
+        else:
+            return None
+
+    def profile_options_hook(key: str, _type: Type):
+        if key == "device_type":
+            return "cpu"
+        elif key.endswith("_artifact_dir"):
+            name = key.replace("_artifact_dir", "")
+            value = os.path.join(tmpdir, name)
+            return value
+        elif _type in set(Epoch, Iteration):
+            return Iteration(2)
+        elif key == "n_validate_sample":
+            return 1
+        elif key == "n_test_sample":
+            return 0
+        elif key == "max_step_size":
+            return 2
+        elif key == "timeout_sec":
+            return 2
+        else:
+            return None
+
+    if option == "test":
+        logger.info("Setup options for testing")
+        global_options.set_hook(test_options_hook)
+    elif option == "profile":
+        logger.info("Setup options for profiling")
+        global_options.set_hook(profile_options_hook)
+    logger.info("Setup options from command line arguments")
+    global_options.set_args(args)
+
     logger.info(f"Load file {file}")
     spec = importlib.util.spec_from_file_location("module.name", file)
     main = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(main)
-
-    if option == "test":
-        logger.info("Setup options for testing")
-        setup_test_options(tmpdir, global_options)
-    elif option == "profile":
-        logger.info("Setup options for profiling")
-        setup_profile_options(tmpdir, global_options)
-    logger.info("Setup options from command line arguments")
-    global_options.overwrite_options_by_args(args)
 
     distributed.initialize(tmpdir, rank, n_process)
 
